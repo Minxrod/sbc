@@ -1,0 +1,37 @@
+#include "console.h"
+
+#include "system.h"
+
+#include <stdio.h>
+
+void cmd_print(struct ptc* p){
+	struct console* c = &p->console;
+	
+	u32 i = 0;
+	while (i < p->stack.stack_i){
+		struct stack_entry* e = &p->stack.entry[i];
+		
+		if (e->type & STACK_NUMBER){
+			iprintf("%.12f", e->value.number / 4096.0);
+		} else if (e->type & STACK_STRING) {
+			//TODO: Check string type before printing!
+			iprintf("len=%d ", *((unsigned char*)e->value.ptr+1));
+			iprintf("%.*s", *((unsigned char*)e->value.ptr+1), (char*)e->value.ptr+2);
+		} else if (e->type & STACK_VARIABLE) {
+			//TODO: Convert variable to value type!
+			iprintf("name=%.*s", *((unsigned char*)e->value.ptr+1), (char*)e->value.ptr+2);
+		}
+		iprintf("\n");
+		i++;
+	}
+	c->text[c->x][c->y] = 0;
+	p->stack.stack_i = 0; //PRINT consumes all stack items
+}
+
+void cmd_color(struct ptc* p){
+	++p;
+}
+
+void cmd_locate(struct ptc* p){
+	++p;
+}

@@ -1,0 +1,194 @@
+#pragma once
+
+#include "common.h"
+#include "stack.h"
+
+#define CONSOLE_WIDTH 32
+#define CONSOLE_HEIGHT 24
+
+#define BG_WIDTH 64
+#define BG_HEIGHT 64
+
+#define SPRITE_MAX 100
+
+#define GRAPHICS_WIDTH 256
+#define GRAPHICS_HEIGHT 192
+
+struct console {
+	u16 x;
+	u16 y;
+	u32 tabstep;
+	u16 text[CONSOLE_WIDTH][CONSOLE_HEIGHT];
+	// low 4 bits: fg color; high 4: bg color
+	u8 color[CONSOLE_WIDTH][CONSOLE_HEIGHT];
+};
+
+struct bg {
+	s32 x;
+	s32 y;
+	u16 tiles[BG_WIDTH][BG_HEIGHT];
+};
+
+struct spr {
+	/// Is the sprite currently enabled?
+	bool active;
+	/// Sprite ID (control number)
+	u8 id;
+	/// Character code [0-511]
+	u16 chr;
+	/// Palette [0-15]
+	u8 pal;
+	/// Width of sprite (pixels)
+	u8 w;
+	/// Height of sprite (pixels)
+	u8 h;
+	/// Sprite draw priority [0-3]
+	u8 prio;
+	/// Is sprite flipped horizontally?
+	bool flip_x;
+	/// Is sprite flipper vertically?
+	bool flip_y;
+	
+	/// Sprite home x component (pixels)
+	s32 home_x;
+	/// Sprite home y component (pixels)
+	s32 home_y;
+	
+	/// Struct for sprite position.
+	struct {
+		/// Sprite current x position (pixels)
+		s32 x;
+		/// Sprite current y position (pixels)
+		s32 y;
+		/// Change in x position (pixels/frame)
+		s32 dx;
+		/// Change in y position (pixels/frame)
+		s32 dy;
+		/// Remaining time to move sprite (frames)
+		/// If -1, sprite is done moving.
+		s32 time;
+	} pos;
+	
+	/// Struct for sprite scaling.
+	struct {
+		/// Current scale multiplier [0.0-2.0]
+		s32 s;
+		/// Change in scale over time (step/frame)
+		s32 ds;
+		/// Remaining time to scale sprite (frames)
+		/// If 0, sprite is done resizing.
+		u32 time;
+	} scale;
+	
+	/// Struct for sprite rotation
+	struct {
+		/// Current sprite angle (degrees)
+		s32 a;
+		/// Change in angle (degrees/frame)
+		s32 da;
+		/// Remaining time rotate sprite (frames)
+		/// If 0, sprite is done rotating.
+		u32 time;
+	} angle;
+	
+	/// Struct for sprite collision detection.
+	struct {
+		/// Displacement x (pixels)
+		s32 dx;
+		/// Displacement y (pixels)
+		s32 dy;
+		/// Hitbox x coordinate (pixels)
+		s32 x;
+		/// Hitbox y coordinate (pixels)
+		s32 y;
+		/// Width of hitbox (pixels)
+		s32 w;
+		/// Height of hitbox (pixels)
+		s32 h;
+		/// Should hitbox change with sprite scale?
+		bool scale_adjust;
+		/// Collision mask
+		u8 mask;
+	} hit;
+	
+	/// Struct for sprite animation
+	struct {
+		/// Number of characters to animate through (number of animation frames)
+		u32 chrs;
+		/// Time to stay on one character (frames)
+		u32 frames_per_chr;
+		/// How many times remaining to loop
+		u32 loop;
+		/// Should animation loop forever?
+		bool loop_forever;
+		/// Current animation frame
+		u32 current_frame;
+		/// Current animation character
+		u32 current_chr;
+	} anim;
+	
+	/// Sprite variables (used by `SPSETV`, `SPGETV`)
+	s32 vars[8];
+};
+
+struct background {
+	struct bg layer[2];
+};
+
+struct sprites {
+	struct spr s[100];
+};
+
+struct grp {
+	// arranged as character data
+	u8 data[GRAPHICS_WIDTH*GRAPHICS_WIDTH];
+};
+
+struct graphics {
+	struct grp page[4];
+};
+
+struct panel {
+	struct console text;
+	struct bg background;
+	struct sprites keys;
+};
+
+struct ptc {
+	// upper screen stuff
+	struct console console;
+	struct background background;
+	struct sprites sprites;
+	struct graphics graphics;
+	// lower screen stuff
+	struct panel panel;
+	
+	struct stack stack;
+	
+	// actual system stuff
+	/// Max variables in use
+	u32 vars_max;
+	/// Variable table
+	struct named_var* vars;
+	
+	/// Size of allocated array data block
+	u32 arr_data_size;
+	/// Next array data offset
+	u32 arr_data_next;
+	/// Pointer to array data (can contain 20.12fp numbers or string ptrs)
+	void* arr_data;
+	
+	/// Max strings allocated
+	u32 strs_max;
+	/// String info array
+	struct string* strings;
+	/// String data
+	void* str_data;
+};
+
+struct ptc* system_init();
+
+void init_mem_var(struct ptc* s, int var_count);
+void init_mem_arr(struct ptc* s, int element_count);
+void init_mem_str(struct ptc* s, int string_count, char string_type);
+
