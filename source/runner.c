@@ -33,6 +33,7 @@ void print_name(const char* names, int data){
 
 void run(struct program* code, struct ptc* p) {
 	u32 index = 0;
+	p->stack.stack_i = 0;
 	
 	while (index < code->size){
 		// get one instruction and execute it
@@ -85,8 +86,9 @@ void run(struct program* code, struct ptc* p) {
 		}
 		iprintf("\n");
 	}
-	
+	/*
 	for (u32 i = 0; i < p->stack.stack_i; ++i){
 		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);
 	}
+	*/
 }

@@ -163,13 +163,13 @@ struct ptc {
 	// lower screen stuff
 	struct panel panel;
 	
+	// actual system stuff
+	/// The evaluator stack
 	struct stack stack;
 	
-	// actual system stuff
-	/// Max variables in use
-	u32 vars_max;
-	/// Variable table
-	struct named_var* vars;
+	struct variables vars;
+	
+	struct strings strs;
 	
 	/// Size of allocated array data block
 	u32 arr_data_size;
@@ -178,17 +178,9 @@ struct ptc {
 	/// Pointer to array data (can contain 20.12fp numbers or string ptrs)
 	void* arr_data;
 	
-	/// Max strings allocated
-	u32 strs_max;
-	/// String info array
-	struct string* strings;
-	/// String data
-	void* str_data;
 };
 
 struct ptc* system_init();
 
-void init_mem_var(struct ptc* s, int var_count);
 void init_mem_arr(struct ptc* s, int element_count);
-void init_mem_str(struct ptc* s, int string_count, char string_type);
 

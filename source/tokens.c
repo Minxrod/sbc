@@ -69,25 +69,6 @@ bool is_name(const char c){
 }
 
 // Note: Expects null-terminated string
-bool tok_in_str(const char* str, const char* dat, struct token* tok){
-	bool good;
-	do {
-		good = true;
-		for (size_t i = 0; i < tok->len; ++i){
-			if (dat[tok->ofs + i] != *str){
-				good = false;
-			}
-			str++;
-			if (!good) break;
-		}
-		if (good) break;
-	} while (*str != '\0');
-	if (is_alpha(dat[tok->ofs + tok->len]))
-		good = false; // Substring continues
-	return good;
-}
-
-// Note: Expects null-terminated string
 int tok_in_str_index(const char* str, const char* data, struct token* tok){
 	int index;
 	size_t start = 0;
@@ -103,16 +84,20 @@ int tok_in_str_index(const char* str, const char* data, struct token* tok){
 			str += MAX_SPECIAL_NAME_SIZE;
 			start += MAX_SPECIAL_NAME_SIZE;
 		} else {
-			break;
+			char c = *(str + tok->len);
+			if (tok->len < MAX_SPECIAL_NAME_SIZE && c != ' ' && c != '\0'){
+				//not a proper match; try again
+				index = -1;
+				str += MAX_SPECIAL_NAME_SIZE;
+				start += MAX_SPECIAL_NAME_SIZE;
+			} else {
+				break; //have a valid match: exit
+			}
 		}
 	} while (*str != '\0');
-	char c = *(str + tok->len);
-	if (tok->len < MAX_SPECIAL_NAME_SIZE && c != ' ' && c != '\0')
-		return -1; // not a proper match
 	
 	return index;
 }
-
 
 void print_token(struct tokenizer* state, struct token t){
 	iprintf("ofs:%d len:%d type:%d ", t.ofs, t.len, t.type);
@@ -257,7 +242,7 @@ void tok_code(struct tokenizer* state){
 			data[(*size)++] = BC_OPERATOR;
 			
 			data[(*size)++] = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
-			
+			iprintf("%d", data[*size-1]);
 		} else if (state->tokens[i].type == function){
 			data[(*size)++] = BC_FUNCTION;
 			
@@ -306,7 +291,11 @@ void tok_eval(struct tokenizer* state){
 		print_token(state, state->tokens[i]);
 		
 		if (state->tokens[i].type == operation && prio % 8 == 0) {
-			// ()[] removed
+			if (state->source->data[state->tokens[i].ofs] == '=' && state->tokens[i].len == 1){
+				e.op_stack[e.op_i++] = &state->tokens[i];
+			} else {
+				// ()[] removed
+			}
 		} else if (state->tokens[i].type == operation && prio == 1) {
 			// comma or semicolon
 			tok_eval_clean_stack(&e, prio);
@@ -431,7 +420,6 @@ void tok_none(struct tokenizer* state){
 	if (is_name_start(c)){
 		tok_name(state);
 	} else if (c == '?'){
-//		state->state = TKR_PRINT; //print requires special parsing...
 		tok_single(state, command);
 	} else if (c == '\r' || c == ':'){
 		tok_single(state, newline);
@@ -499,15 +487,15 @@ void tok_name(struct tokenizer* state){
 		state->cursor++;
 	} while (is_name(state->source->data[state->cursor]));
 	//additional checking for special strings
-	if (0 < tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i])){
+	if (0 <= tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = command;
-	} else if (0 < tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i])){
+	} else if (0 <= tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = function;
-	} else if (0 < tok_in_str_index(operations, state->source->data, &state->tokens[state->token_i])){
+	} else if (0 <= tok_in_str_index(operations, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = operation;
-	} else if (0 < tok_in_str_index(labels, state->source->data, &state->tokens[state->token_i])){
+	} else if (0 <= tok_in_str_index(labels, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = label;
-	} else if (0 < tok_in_str_index(comments, state->source->data, &state->tokens[state->token_i])){
+	} else if (0 <= tok_in_str_index(comments, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = comment;
 	}
 	

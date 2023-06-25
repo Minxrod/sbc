@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 
-
 char* code = 
 "?\"Hello world!\",23\r"
 "?12345.67\r"
@@ -19,6 +18,9 @@ char* code =
 "?5,PI(),5\r"
 "?PI(1,2,4,8)\r"
 "?AA,B,C\r"
+"A=B+C\r"
+"PRINT a,b\r"
+"A(8,B)=C+56*7+8\r"
 ;
 
 char out[4096];
@@ -43,7 +45,7 @@ int main(void){
 	run(&output, &ptc);
 	
 	// measure size of program file size vs original's memory vs remake's memory use
-	iprintf("file:%d ptc:%d sbc:%d", program.size, program.size*2, output.size);
+	iprintf("file:%d ptc:%d sbc:%d\n", program.size, program.size*2, output.size);
 	
 	return 0;
 }
