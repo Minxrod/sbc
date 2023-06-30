@@ -1,7 +1,9 @@
 #include "runner.h"
 #include "system.h"
 
+// TODO: Move these files to a subdirectory?
 #include "console.h"
+#include "operators.h"
 
 #include "tokens.h"
 #include "ptc.h"
@@ -21,6 +23,15 @@ const ptc_call ptc_commands[] = {
 	cmd_color,
 };
 
+const ptc_call ptc_operators[] = {
+	op_add,
+	op_comma,
+	op_sub,
+	op_mult,
+	op_div,
+	op_semi,
+	op_assign,
+};
 
 /// Debug function for checking command/function names from IDs
 void print_name(const char* names, int data){
@@ -62,6 +73,11 @@ void run(struct program* code, struct ptc* p) {
 			ptc_commands[(u32)data](p);
 		} else if (instr == BC_OPERATOR){
 			print_name(bc_conv_operations, data);
+			
+			if ((u8)data > sizeof(ptc_operators)/sizeof(ptc_operators[0])){
+				return;
+			}
+			ptc_operators[(u32)data](p);
 		} else if (instr == BC_FUNCTION){
 			print_name(functions, data);
 		} else if (instr == BC_NUMBER){
@@ -76,7 +92,24 @@ void run(struct program* code, struct ptc* p) {
 			iprintf("num=%.12f", number / 4096.0);
 		} else if (instr == BC_VARIABLE_NAME){
 			iprintf("name=");
-			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){STACK_VARIABLE, {.ptr = (void*)&code->data[index-2]}};
+			//TODO: 
+			enum var_type t;
+			void* x;
+			struct named_var* v;
+			
+			if (code->data[(u8)data] == '$'){
+				t = VAR_STRING;
+				v = get_var(&p->vars, &code->data[index], data, t);
+				if (!v) return;
+				x = v->value.ptr;
+			} else {
+				t = VAR_NUMBER;
+				v = get_var(&p->vars, &code->data[index], data, t);
+				if (!v) return;
+				x = (void*)&v->value.number;
+			}
+			
+			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){STACK_VARIABLE, {.ptr = x}};
 			for (size_t i = 0; i < (u32)data; ++i){
 				iprintf("%c", code->data[index++]);
 			}

@@ -2,8 +2,6 @@
 
 #include "common.h"
 
-#define MAX_STRLEN 256
-
 enum var_type {
 	VAR_NUMBER,
 	VAR_STRING,
@@ -14,6 +12,10 @@ enum var_type {
 	VAR_EMPTY,
 };
 
+#define VALUE_NUM(v) v->type & STACK_VARIABLE ? *(s32*)v->value.ptr : v->value.number
+#define VALUE_STR(v) v->type & STACK_VARIABLE ? *(struct string**)v->value.ptr : (struct string*)v->value.ptr
+
+
 // This file defines the data structures used to store variable information.
 
 // Notes on vars:
@@ -23,6 +25,7 @@ enum var_type {
 // 
 
 // Contains either a pointer to string/array data or a number
+// Or pointer to variable (this takes the form of a pointer to number or pointer to string/array)
 union value {
 	s32 number;
 	void* ptr;
@@ -41,36 +44,6 @@ struct named_var {
 	union value value;
 };
 
-
-// number can be stored directly
-
-enum string_type {
-	STRING_EMPTY = 's',
-	STRING_CHAR = 'S',
-	STRING_WIDE = 'W',
-};
-
-// string meta
-// type can be 'S' or 'W'
-struct string {
-	char type;
-	u8 len;
-	union data {
-		struct string_data* s;
-		struct wstring_data* w;
-	} data;
-};
-
-struct string_data {
-	u32 uses;
-	u8 s[MAX_STRLEN];
-};
-
-struct wstring_data {
-	u32 uses;
-	u16 s[MAX_STRLEN];
-};
-
 // dim_2 = 0xffffffff -> 1d array else 2d array
 // value* either points to array of numbers or array of pointers to strings
 struct array {
@@ -86,23 +59,10 @@ struct variables {
 	struct named_var* vars;
 };
 
-struct strings {
-	/// Max strings allocated
-	u32 strs_max;
-	/// Next string data offset
-	u32 str_next;
-	/// String info array
-	struct string* strs;
-	/// String data
-	void* str_data;
-};
-
 int var_name_hash(char*, u32, u32);
 bool namecmp(char* a, u32 len, char b[16]);
 
 // allocate var table for `var_count` variables
 void init_mem_var(struct variables* v, int var_count);
-// allocate str table and memory for `str_count` max strings
-void init_mem_str(struct strings* s, int str_count, enum string_type str_type);
 
 struct named_var* get_var(struct variables* v, char*, u32, enum var_type type);

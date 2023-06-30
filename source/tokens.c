@@ -31,7 +31,8 @@ const char* operations =
 "AND     NOT     OR      XOR     ";
 
 const char* bc_conv_operations = 
-"+       -       *       /       %       "
+"+       ,       -       *       /       ;       =       "
+"%       "
 "AND     OR      NOT     XOR     -       !       "
 ">       >=      <       <=      ==      !=      "
 "=       ,       ;       ";

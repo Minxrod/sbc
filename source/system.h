@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "stack.h"
+#include "strs.h"
 
 #define CONSOLE_WIDTH 32
 #define CONSOLE_HEIGHT 24

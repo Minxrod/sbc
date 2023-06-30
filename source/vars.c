@@ -35,30 +35,11 @@ void init_mem_var(struct variables* v, int var_count){
 	}
 }
 
-/// Allocate memory for strs
-void init_mem_str(struct strings* s, int str_count, enum string_type str_type){
-	s->strs_max = str_count;
-	s->strs = calloc(str_count, sizeof(struct string));
-	if (str_type == STRING_CHAR){
-		s->str_data = calloc(str_count, sizeof(struct string_data));
-	} else if (str_type == STRING_WIDE) {
-		s->str_data = calloc(str_count, sizeof(struct wstring_data));
-	} else {
-		// ERROR TODO
-	}
-}
-
-/// Finds a usable string slot.
-struct string* get_new_str(struct strings* s){
-	++s;
-	return NULL;
-}
-
 /// Retrieves a var from the variable table contained within the ptc struct.
 /// If the variable does not exist, creates it and then returns it.
 /// If the variable can not be created, returns NULL.
 struct named_var* get_var(struct variables* v, char* name, u32 len, enum var_type type){
-	struct named_var* var;
+	struct named_var* var = NULL;
 	int hash = var_name_hash(name, len, v->vars_max);
 	u32 step = 0;
 	

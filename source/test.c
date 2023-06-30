@@ -7,7 +7,9 @@
 
 #include <stdio.h>
 
-char* code = 
+char* code = "A=B+C\r";
+
+/*
 "?\"Hello world!\",23\r"
 "?12345.67\r"
 "COLOR 0\r"
@@ -21,7 +23,7 @@ char* code =
 "A=B+C\r"
 "PRINT a,b\r"
 "A(8,B)=C+56*7+8\r"
-;
+;*/
 
 char out[4096];
 
@@ -41,6 +43,8 @@ int main(void){
 	tokenize(&program, &output);
 	
 	struct ptc ptc;
+	
+	init_mem_var(&ptc.vars, 2048);
 	
 	run(&output, &ptc);
 	
