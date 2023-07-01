@@ -38,7 +38,7 @@ void init_mem_var(struct variables* v, int var_count){
 /// Retrieves a var from the variable table contained within the ptc struct.
 /// If the variable does not exist, creates it and then returns it.
 /// If the variable can not be created, returns NULL.
-struct named_var* get_var(struct variables* v, char* name, u32 len, enum var_type type){
+struct named_var* get_var(struct variables* v, char* name, u32 len, enum types type){
 	struct named_var* var = NULL;
 	int hash = var_name_hash(name, len, v->vars_max);
 	u32 step = 0;

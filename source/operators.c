@@ -11,13 +11,16 @@ void op_add(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & STACK_NUMBER){
+	if (a->type & b->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){STACK_NUMBER, {x + y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x + y}});
+	} else {
+		iprintf("Types not correct!!!\n");
+		abort();
 	}
 }
 
@@ -39,13 +42,13 @@ void op_mult(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & STACK_NUMBER){
+	if (a->type & b->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){STACK_NUMBER, {x * y >> 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
 	}
 }
 
@@ -54,13 +57,13 @@ void op_div(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & STACK_NUMBER){
+	if (a->type & b->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){STACK_NUMBER, {x / y << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x / y << 12}});
 	}
 }
 
@@ -69,13 +72,13 @@ void op_sub(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & STACK_NUMBER){
+	if (a->type & b->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){STACK_NUMBER, {x - y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x - y}});
 	}
 }
 
@@ -84,8 +87,8 @@ void op_assign(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & STACK_NUMBER){
-		if (a->type & STACK_VARIABLE){
+	if (a->type & b->type & VAR_NUMBER){
+		if (a->type & VAR_VARIABLE){
 			s32 x = VALUE_NUM(b);
 			
 			*(s32*)a->value.ptr = x;

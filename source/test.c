@@ -7,7 +7,10 @@
 
 #include <stdio.h>
 
-char* code = "A=B+C\r";
+char* code = "B=5\r"
+"C=8\r"
+"A=B+C\r"
+"?A,B,C\r";
 
 /*
 "?\"Hello world!\",23\r"
@@ -47,6 +50,9 @@ int main(void){
 	init_mem_var(&ptc.vars, 2048);
 	
 	run(&output, &ptc);
+	
+//	struct named_var* v = get_var(&ptc.vars, "A", 1, VAR_NUMBER);
+//	iprintf("%d", v->value.number);
 	
 	// measure size of program file size vs original's memory vs remake's memory use
 	iprintf("file:%d ptc:%d sbc:%d\n", program.size, program.size*2, output.size);

@@ -2,18 +2,17 @@
 
 #include "common.h"
 
-enum var_type {
-	VAR_NUMBER,
-	VAR_STRING,
-	VAR_ARRAY_NUMBER,
-	VAR_ARRAY_STRING,
-	VAR_ARRAY2D_NUMBER,
-	VAR_ARRAY2D_STRING,
-	VAR_EMPTY,
+enum types {
+	VAR_NUMBER=1,
+	VAR_STRING=2,
+	VAR_VARIABLE=4,
+	VAR_ARRAY=8,
+	VAR_EMPTY=16,
+	STACK_OP=32,
 };
 
-#define VALUE_NUM(v) v->type & STACK_VARIABLE ? *(s32*)v->value.ptr : v->value.number
-#define VALUE_STR(v) v->type & STACK_VARIABLE ? *(struct string**)v->value.ptr : (struct string*)v->value.ptr
+#define VALUE_NUM(v) v->type & VAR_VARIABLE ? *(s32*)v->value.ptr : v->value.number
+#define VALUE_STR(v) v->type & VAR_VARIABLE ? *(struct string**)v->value.ptr : (struct string*)v->value.ptr
 
 
 // This file defines the data structures used to store variable information.
@@ -65,4 +64,4 @@ bool namecmp(char* a, u32 len, char b[16]);
 // allocate var table for `var_count` variables
 void init_mem_var(struct variables* v, int var_count);
 
-struct named_var* get_var(struct variables* v, char*, u32, enum var_type type);
+struct named_var* get_var(struct variables* v, char*, u32, enum types type);

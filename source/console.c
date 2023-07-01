@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 void cmd_print(struct ptc* p){
+//	struct stack* s = &p->stack;
 	struct console* c = &p->console;
 	
 	u32 i = 0;
@@ -12,13 +13,14 @@ void cmd_print(struct ptc* p){
 		struct stack_entry* e = &p->stack.entry[i];
 		
 		//TODO: Print to the actual console and not the logs/debug console
-		if (e->type & STACK_NUMBER){
-			iprintf("%.3f", e->value.number / 4096.0);
-		} else if (e->type & STACK_STRING) {
+		if (e->type & VAR_NUMBER){
+			s32 x = VALUE_NUM(e);
+			iprintf("%.3f", x / 4096.0);
+		} else if (e->type & VAR_STRING) {
 			//TODO: Check string type before printing!
 			iprintf("len=%d ", *((unsigned char*)e->value.ptr+1));
 			iprintf("%.*s", *((unsigned char*)e->value.ptr+1), (char*)e->value.ptr+2);
-		} else if (e->type & STACK_VARIABLE) {
+		} else if (e->type & VAR_VARIABLE) {
 			//TODO: Convert variable to value type!
 			iprintf("name=%.*s", *((unsigned char*)e->value.ptr+1), (char*)e->value.ptr+2);
 			

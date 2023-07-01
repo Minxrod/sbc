@@ -57,12 +57,12 @@ void run(struct program* code, struct ptc* p) {
 			iprintf("val=%d", data);
 			if (data >= 0 && data <= 99){
 				// push a SMALL_NUMBERS[data] to the stack
-				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){STACK_NUMBER, {((u32)data) << 12}};
+				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << 12}};
 			}
 		} else if (instr == BC_STRING){
 			iprintf("len=%d ", data);
 			// push string pointer to the stack
-			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){STACK_STRING, {.ptr = (void*)&code->data[index-2]}};
+			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_STRING, {.ptr = (void*)&code->data[index-2]}};
 			for (size_t i = 0; i < (u32)data; ++i){
 				iprintf("%c", code->data[index++]);
 			}
@@ -88,16 +88,16 @@ void run(struct program* code, struct ptc* p) {
 			number |= (unsigned char)code->data[index++] << 8;
 			number |= (unsigned char)code->data[index++];
 			
-			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){STACK_NUMBER, {number}};
+			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {number}};
 			iprintf("num=%.12f", number / 4096.0);
 		} else if (instr == BC_VARIABLE_NAME){
 			iprintf("name=");
 			//TODO: 
-			enum var_type t;
+			enum types t;
 			void* x;
 			struct named_var* v;
 			
-			if (code->data[(u8)data] == '$'){
+			if (code->data[index+(u8)data-1] == '$'){
 				t = VAR_STRING;
 				v = get_var(&p->vars, &code->data[index], data, t);
 				if (!v) return;
@@ -109,11 +109,13 @@ void run(struct program* code, struct ptc* p) {
 				x = (void*)&v->value.number;
 			}
 			
-			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){STACK_VARIABLE, {.ptr = x}};
+			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
 			for (size_t i = 0; i < (u32)data; ++i){
 				iprintf("%c", code->data[index++]);
 			}
 			if (index % 2) index++;
+			//debug
+			stack_print(&p->stack);
 		} else {
 			iprintf("Unknown BC: %c %d", instr, data);
 		}
