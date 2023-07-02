@@ -1,5 +1,7 @@
 #include "tokens.h"
+
 #include "ptc.h"
+#include "program.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -171,6 +173,32 @@ struct eval {
 	size_t result_i; // first unused entry
 };
 
+s32 tok_to_num(struct tokenizer* state, struct token* t){
+	s32 number = 0;
+	s32 fraction = 0;
+	s32 maximum = 1;
+	for (size_t j = 0; j < t->len; ++j){
+		char c = state->source->data[t->ofs + j];
+		if (is_number(c)){
+			number *= 10;
+			number += c - '0';
+		} else if (c == '.'){
+			++j;
+			for (size_t k = j; k < t->len; ++k){
+				c = state->source->data[t->ofs + k];
+				fraction *= 10;
+				maximum *= 10;
+				fraction += c - '0';
+			}
+			break;
+		}
+	}
+	number = number * 4096 + 4096 * fraction / maximum;
+	
+	iprintf("Number := %f", (double)number);
+	return number;
+}
+
 void tok_code(struct tokenizer* state){
 	// assume the order is fixed
 	char* data = state->output->data;
@@ -201,26 +229,7 @@ void tok_code(struct tokenizer* state){
 				data[(*size)++] = BC_SMALL_NUMBER;
 				data[(*size)++] = 10*(state->source->data[state->tokens[i].ofs] - '0') + (state->source->data[state->tokens[i].ofs+1] - '0');
 			} else {
-				double number = 0;
-				size_t decimals = 0;
-				for (size_t j = 0; j < state->tokens[i].len; ++j){
-					char c = state->source->data[state->tokens[i].ofs + j];
-					number *= 10;
-					if (is_number(c)){
-						number += c - '0';
-						if (decimals > 0) {
-							++decimals;
-						}
-					} else if (c == '.'){
-						number /= 10;
-						++decimals;
-					}
-				}
-				for (size_t j = 0; j < decimals-1; ++j)
-					number /= 10;
-					
-				iprintf("Number := %f", number);
-				int fp = (int)(number * 4096.0);
+				s32 fp = tok_to_num(state, &state->tokens[i]);
 				
 				// large number
 				data[(*size)++] = BC_NUMBER;
@@ -253,14 +262,19 @@ void tok_code(struct tokenizer* state){
 			//Find variable if it exists in table
 			//Create variable if it does not exist
 			//Get ID based on this index
-			//Optional: Maybe have a small name cache?
+			//Note: Small name becomes 
 			data[(*size)++] = BC_VARIABLE_NAME;
-			data[(*size)++] = state->tokens[i].len;
-			for (int j = 0; j < state->tokens[i].len; ++j){
-				data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
-			}
-			if (*size % 2){
-				(*size)++; // pad one null to keep instructions aligned
+			if (state->tokens[i].len == 1){
+				// Name is a single char: replace length (always less than 'A')
+				data[(*size)++] = state->source->data[state->tokens[i].ofs];
+			} else {
+				data[(*size)++] = state->tokens[i].len;
+				for (int j = 0; j < state->tokens[i].len; ++j){
+					data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
+				}
+				if (*size % 2){
+					(*size)++; // pad one null to keep instructions aligned
+				}
 			}
 		} else {
 			iprintf("Unknown token: ");

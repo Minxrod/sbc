@@ -7,6 +7,7 @@
 
 #include "tokens.h"
 #include "ptc.h"
+#include "program.h"
 
 #include <stdio.h>
 
@@ -97,23 +98,35 @@ void run(struct program* code, struct ptc* p) {
 			void* x;
 			struct named_var* v;
 			
-			if (code->data[index+(u8)data-1] == '$'){
-				t = VAR_STRING;
-				v = get_var(&p->vars, &code->data[index], data, t);
-				if (!v) return;
-				x = v->value.ptr;
+			if (data < 'A'){
+				if (code->data[index+(u8)data-1] == '$'){
+					t = VAR_STRING;
+					v = get_var(&p->vars, &code->data[index], data, t);
+					if (!v) return;
+					x = v->value.ptr;
+				} else {
+					t = VAR_NUMBER;
+					v = get_var(&p->vars, &code->data[index], data, t);
+					if (!v) return;
+					x = (void*)&v->value.number;
+				}
 			} else {
+				// name is stored in data
 				t = VAR_NUMBER;
-				v = get_var(&p->vars, &code->data[index], data, t);
+				v = get_var(&p->vars, &data, 1, t);
 				if (!v) return;
 				x = (void*)&v->value.number;
 			}
 			
 			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
-			for (size_t i = 0; i < (u32)data; ++i){
-				iprintf("%c", code->data[index++]);
+			if (data < 'A'){
+				for (size_t i = 0; i < (u32)data; ++i){
+					iprintf("%c", code->data[index++]);
+				}
+				if (index % 2) index++;
+			} else {
+				iprintf("%c", code->data[index-1]);
 			}
-			if (index % 2) index++;
 			//debug
 			stack_print(&p->stack);
 		} else {

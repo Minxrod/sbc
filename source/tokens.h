@@ -9,14 +9,6 @@ extern const char* functions;
 extern const char* operations;
 extern const char* bc_conv_operations;
 
-// Program source loaded from ex. PTC file?
-struct program {
-	// Size of program (characters/bytes)
-	u32 size;
-	// Program data
-	char* data;
-};
-
 enum tokenizer_state {
 	TKR_NONE,
 	TKR_NAME,
@@ -48,6 +40,8 @@ struct token {
 	u8 len;
 	u16 prio;
 };
+
+struct program;
 
 struct tokenizer {
 	// Program info
