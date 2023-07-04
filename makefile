@@ -5,11 +5,11 @@ objs = $(filter-out source/main.c source/test.c, $(objects))
 
 main: source/*.c source/*.h
 	echo $(objs)
-	gcc -g -Wall -Werror -Wextra -Wpedantic -Isource/ $(objs) source/test.c -o test
+	gcc -g -std=c99 -Wall -Werror -Wextra -Wpedantic -Isource/ $(objs) source/test.c -o test
 
 test: source/*.c source/*.h tests/*.c
 	echo $(objs)
-	gcc -g -Wall -Werror -Wextra -Wpedantic -Isource/ $(objs) tests/test_main.c -o test
+	gcc -g -std=c99 -Wall -Werror -Wextra -Wpedantic -Isource/ $(objs) tests/test_main.c -o test
 
 .phony clean:
 	rm test

@@ -13,6 +13,7 @@ enum string_type {
 };
 
 // string table info
+// Note that this table doesn't necessarily contain actual data.
 struct string {
 	/// Type of string
 	char type;
@@ -23,9 +24,9 @@ struct string {
 	/// Pointer to string data
 	union {
 		/// 8-bit char string pointer
-		u8 **s;
+		u8 *s;
 		/// 16-bit wide string pointer
-		u16 **w;
+		u16 *w;
 	} ptr;
 };
 
@@ -37,8 +38,12 @@ struct strings {
 	u32 str_next;
 	/// String info array
 	struct string* strs;
-	/// String data
+	/// Empty string (init_mem_str fills this with correct values)
+	struct string empty;
+	/// String data (memory allocated for u8[MAX_STRLEN] or u16[MAX_STRLEN])
 	void* str_data;
+	/// Type of strings created via get_new_str
+	char type;
 };
 
 // allocate str table and memory for `str_count` max strings
@@ -50,10 +55,13 @@ struct string* get_new_str(struct strings* s);
 u16 to_wide(u8 c);
 
 // Copy a string of variable type to a wide string buffer
-void str_copy(void* src, u16* dest);
+void str_wide_copy(void* src, u16* dest);
 
 // Compare two strings for equality
-void str_comp(void* str1, void* str2);
+bool str_comp(void* str1, void* str2);
+
+// Copy str1 to str2
+void str_copy(void* str1, void* str2);
 
 // Concatenate two strings
 void str_concat(void* str1, void* str2, void* dest);

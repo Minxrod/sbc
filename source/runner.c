@@ -103,7 +103,7 @@ void run(struct program* code, struct ptc* p) {
 					t = VAR_STRING;
 					v = get_var(&p->vars, &code->data[index], data, t);
 					if (!v) return;
-					x = v->value.ptr;
+					x = &v->value.ptr;
 				} else {
 					t = VAR_NUMBER;
 					v = get_var(&p->vars, &code->data[index], data, t);

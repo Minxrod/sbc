@@ -22,6 +22,9 @@ void run_code(char* code, struct ptc* ptc){
 	tokenize(&p, &o);
 	// init vars memory
 	init_mem_var(&ptc->vars, 16);
+	// init strs memory
+	init_mem_str(&ptc->strs, 32, STRING_CHAR);
+	ptc->vars.strs = &ptc->strs;
 	// run code
 	run(&o, ptc);
 	
@@ -65,6 +68,24 @@ int test_int_vars(){
 		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 36777, "[decimal] A=8.979");
 		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 37847, "[decimal] B=9.24");
 		ASSERT(test_var(&ptc.vars, "C", VAR_NUMBER)->value.number == 74489, "[decimal] C=18.186");
+		free(ptc.vars.vars);
+	}
+	
+	{
+		struct ptc ptc;
+		char* code = "A$=\"~Wow!~\"\r";
+		char* str2 = "S\006~Wow!~";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		//TODO
+		struct named_var* v = get_var(&ptc.vars, "A$", 2, VAR_STRING);
+		struct string* s = (struct string*)v->value.ptr;
+		
+		ASSERT(s->type == STRING_CHAR, "[assign] Correct string type");
+		ASSERT(s->len == 6, "[assign] Correct string length");
+		ASSERT(str_comp(s, str2), "[assign] Assign string");
+		
 		free(ptc.vars.vars);
 	}
 	

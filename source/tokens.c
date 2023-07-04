@@ -497,10 +497,12 @@ void tok_name(struct tokenizer* state){
 	state->tokens[state->token_i].type = name;
 	state->tokens[state->token_i].len = 0;
 	state->tokens[state->token_i].ofs = state->cursor;
+	char c;
 	do {
 		state->tokens[state->token_i].len++;
 		state->cursor++;
-	} while (is_name(state->source->data[state->cursor]));
+		c = state->source->data[state->cursor];
+	} while (c == '$' || is_name(c));
 	//additional checking for special strings
 	if (0 <= tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = command;

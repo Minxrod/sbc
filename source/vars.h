@@ -51,9 +51,13 @@ struct array {
 	union value* value;
 };
 
+struct strings;
+
 struct variables {
 	/// Max variables in use
 	u32 vars_max;
+	/// Strings table
+	struct strings* strs;
 	/// Variable table
 	struct named_var* vars;
 };

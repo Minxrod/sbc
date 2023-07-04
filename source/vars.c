@@ -1,5 +1,6 @@
 #include "vars.h"
 #include "system.h"
+#include "strings.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -69,6 +70,11 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 		}
 		//TODO: SET VALUE!
 		//Initialize string if needed
+		if (type & VAR_NUMBER){
+			var->value.number = 0;
+		} else if (type & VAR_STRING) {
+			var->value.ptr = (void*)&v->strs->empty;
+		}
 	}
 	
 	return var;

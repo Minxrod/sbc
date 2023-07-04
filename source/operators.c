@@ -96,8 +96,26 @@ void op_assign(struct ptc* p){
 			iprintf("Can't assign to literal!\n");
 			abort();
 		}
+	} else if (a->type & b->type & VAR_STRING){
+		if (a->type & VAR_VARIABLE){
+			// A = variable containing pointer to struct string*
+			struct string** str = (struct string**)a->value.ptr;
+			// a->value.ptr is a struct string*. The variable stored value would be... struct string**.
+			// to assign to s, need to take the stack string b, which could contain:
+			if ((*str)->type == STRING_EMPTY){
+				// select new struct string* to store within variable (?)
+				*str = get_new_str(&p->strs);
+			}
+			str_copy(b->value.ptr, *str);
+		} else {
+			iprintf("Can't assign to literal!\n");
+			abort();
+		}
+		
+//		iprintf("String assignment not yet implemented\n");
+//		abort();
 	} else {
-		iprintf("String assignment not yet implemented\n");
+		iprintf("Invalid variable type for assignment\n");
 		abort();
 	}
 }

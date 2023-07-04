@@ -132,15 +132,19 @@ int test_vars(){
 	// Check that names can be shared between differing types (as different vars)
 	{
 		struct variables v;
+		struct strings s;
+		v.strs = &s;
+		
 		init_mem_var(&v, 8);
+		init_mem_str(&s, 16, STRING_CHAR);
 		
 		char* name1 = "A";
-		char* name2 = "A";
+		char* name2 = "A$";
 		
 		struct named_var *var1, *var2;
 		
 		var1 = get_var(&v, name1, 1, VAR_NUMBER);
-		var2 = get_var(&v, name2, 1, VAR_STRING);
+		var2 = get_var(&v, name2, 2, VAR_STRING);
 		
 		ASSERT(var1 != var2, "[get_var] Same name different types are different vars");
 	}
