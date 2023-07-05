@@ -180,4 +180,25 @@ void str_copy(void* src, void* src_dest){
 	}
 }
 
+void str_concat(void* src1, void* src2, void* dest){
+	if (str_len(src1) + str_len(src2) > MAX_STRLEN){
+		// Copy fails
+		//TODO: error status
+		return;
+	}
+	
+	str_copy(src1, dest);
+	struct string* d = (struct string*)dest;
+	if (d->type == STRING_CHAR){
+		// copy to after
+		str_char_copy(src2, &(d->ptr.s[str_len(src1)]));
+		d->len = str_len(src1) + str_len(src2);
+	} else if (d->type == STRING_WIDE){
+		iprintf("Unimplemented: Wide string destination\n");
+		abort();
+	} else {
+		iprintf("Error: Invalid destination type\n");
+		abort();
+	}
+}
 

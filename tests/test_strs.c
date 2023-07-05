@@ -32,7 +32,7 @@ int test_strs(){
 		ASSERT(&strs.strs[1] == new_str, "[get_new_str] Get fresh string memory");
 	}
 	
-	// String conversion
+	// String comparison appears to work
 	{
 		char* s1 = "S\006ABC345";
 		struct string s2 = {STRING_CHAR, 6, 1, {.s = (u8*)&s1[2]}};
@@ -40,6 +40,7 @@ int test_strs(){
 		
 		s2.ptr.s = (u8*)&s1[2];
 		
+		ASSERT(str_comp(s1, s1), "[str_comp] Compare same string (true)");
 		ASSERT(str_comp(s1, &s2), "[str_comp] Compare two strings (true)");
 		DENY(str_comp(&s2, s3), "[str_comp] Compare two strings (false)");
 		DENY(str_comp(s1, s3), "[str_comp] Compare two strings (false)");
@@ -56,6 +57,22 @@ int test_strs(){
 		ASSERT(s2.type == STRING_CHAR, "[str_copy] Type is copied");
 		ASSERT(s2.len == 6, "[str_copy] Length is copied");
 		ASSERT(str_comp(&s1, &s2), "[str_copy] Strings compare the same");
+	}
+	
+	// String concatenate
+	{
+		char* a = "abcdef";
+		char* b = "1234";
+		char* c = "S\012abcdef1234";
+		char buf[16];
+		
+		struct string s1 = {STRING_CHAR, 6, 1, {(u8*)a}};
+		struct string s2 = {STRING_CHAR, 4, 1, {(u8*)b}};
+		struct string s3 = {STRING_CHAR, 0, 0, {(u8*)buf}};
+		
+		str_concat(&s1, &s2, &s3);
+		ASSERT(s3.len == 10, "[str_concat] Length of combined strings is correct");
+		ASSERT(str_comp(&s3, c), "[str_concat] Concatenate works correctly");
 	}
 	
 	printf("test_strs success\n");
