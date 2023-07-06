@@ -18,6 +18,16 @@ void op_add(struct ptc* p){
 		y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x + y}});
+	} else if (a->type & b->type & VAR_STRING){
+		struct string* x, * y, * z;
+		
+		x = VALUE_STR(a);
+		y = VALUE_STR(b);
+		z = get_new_str(&p->strs);
+		
+		str_concat(x, y, z);
+		
+		stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = z}});
 	} else {
 		iprintf("Types not correct!!!\n");
 		abort();

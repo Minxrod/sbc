@@ -89,6 +89,22 @@ int test_int_vars(){
 		free(ptc.vars.vars);
 	}
 	
+	{
+		struct ptc ptc;
+		char* code = "A$=\"ABC\"+\"DEFGH\"\r";
+		char* str2 = "S\010ABCDEFGH";
+		
+		run_code(code, &ptc);
+		
+		struct named_var* v = get_var(&ptc.vars, "A$", 2, VAR_STRING);
+		struct string* s = (struct string*)v->value.ptr;
+		
+		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
+		ASSERT(s->len == 8, "[concat] Correct string length");
+		ASSERT(str_comp(s, str2), "[concat] Correct string value");
+		
+		free(ptc.vars.vars);
+	}
 	
 	iprintf("test_int_vars successful\n");
 	return 0;
