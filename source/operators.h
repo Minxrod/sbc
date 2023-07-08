@@ -11,3 +11,5 @@ void op_assign(struct ptc* p);
 
 void op_comma(struct ptc* p);
 void op_semi(struct ptc* p);
+
+void op_negate(struct ptc* p);

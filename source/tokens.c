@@ -33,7 +33,7 @@ const char* operations =
 "AND     NOT     OR      XOR     ";
 
 const char* bc_conv_operations = 
-"+       ,       -       *       /       ;       =       "
+"+       ,       -       *       /       ;       =       (-)     "
 "%       "
 "AND     OR      NOT     XOR     -       !       "
 ">       >=      <       <=      ==      !=      "
@@ -251,7 +251,12 @@ void tok_code(struct tokenizer* state){
 		} else if (state->tokens[i].type == operation) {
 			data[(*size)++] = BC_OPERATOR;
 			
-			data[(*size)++] = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
+			int op = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
+			if (state->tokens[i].prio % 8 == 6 && op == OP_SUBTRACT){
+				op = OP_NEGATE;
+			}
+			data[(*size)++] = op;
+			
 			iprintf("%d", data[*size-1]);
 		} else if (state->tokens[i].type == function){
 			data[(*size)++] = BC_FUNCTION;
@@ -284,6 +289,7 @@ void tok_code(struct tokenizer* state){
 	state->token_i = 0;
 }
 
+// Remove operators until priority reaches prio
 // eval state struct
 // prio to clean to
 void tok_eval_clean_stack(struct eval* e, u16 prio){
@@ -297,6 +303,8 @@ void tok_eval_clean_stack(struct eval* e, u16 prio){
 // once again based on
 // https://en.wikipedia.org/wiki/Shunting_yard_algorithm
 // This one is infinitely less bad than than the PTC-EmkII attempt. :)
+// That one was awful. Go look at it if you want to laugh at bad code.
+// I'm still amazed it worked in the end.
 void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
 	
@@ -317,22 +325,26 @@ void tok_eval(struct tokenizer* state){
 			e.result[e.result_i++] = state->tokens[i];
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
-			if (!e.op_i || e.op_stack[e.op_i-1]->prio <= prio){
+			if (!e.op_i || e.op_stack[e.op_i-1]->prio <= prio - (prio % 6 == 0)){
+				// if the current operator is higher or equal prio to that
+				// on the stack top, push it to the stack
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			} else {
+				// the current operator is lower priority than the stack
+				// remove arguments from the stack, then push current operator
 				tok_eval_clean_stack(&e, prio);
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			}
 		} else if (state->tokens[i].type == newline){ 
 			// ignore
 		} else {
+			// values
+			// TODO: this needs special case for unary ops? maybe?
 			e.result[e.result_i++] = state->tokens[i];
 		}
 	}
 	
 	//cleanup
-//	e.op_i--;
-//	e.value_i--;
 	tok_eval_clean_stack(&e, 0);
 	
 	iprintf("Result size: %ld\n",e.result_i);

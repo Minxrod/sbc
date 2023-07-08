@@ -4,13 +4,16 @@
 #include "tokens.h"
 #include "runner.h"
 #include "system.h"
+#include "program.h"
 
 #include <stdio.h>
 
 char* code = "B=5\r"
 "C=8\r"
 "A=B+C\r"
-"?A,B,C\r";
+"?A,B,C\r"
+"B$=\"Abc\"+\"deF\"\r"
+"?B$,\"1234\"\r";
 
 /*
 "?\"Hello world!\",23\r"
@@ -48,6 +51,8 @@ int main(void){
 	struct ptc ptc;
 	
 	init_mem_var(&ptc.vars, 2048);
+	init_mem_str(&ptc.strs, 4096, STRING_CHAR);
+	ptc.vars.strs = &ptc.strs; //TODO: Move to init_ptc or whatever I call it
 	
 	run(&output, &ptc);
 	

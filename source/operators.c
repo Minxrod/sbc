@@ -92,6 +92,19 @@ void op_sub(struct ptc* p){
 	}
 }
 
+void op_negate(struct ptc* p){
+	struct stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & VAR_NUMBER){
+		s32 x;
+		
+		x = VALUE_NUM(a);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {-x}});
+	}
+}
+
 void op_assign(struct ptc* p){
 	struct stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);

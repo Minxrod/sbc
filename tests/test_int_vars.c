@@ -91,7 +91,7 @@ int test_int_vars(){
 	
 	{
 		struct ptc ptc;
-		char* code = "A$=\"ABC\"+\"DEFGH\"\r";
+		char* code = "A$=\"ABC\"+\"DEFGH\"\rB$=\"DEFGH\"\r?A$,B$\r";
 		char* str2 = "S\010ABCDEFGH";
 		
 		run_code(code, &ptc);
@@ -103,6 +103,85 @@ int test_int_vars(){
 		ASSERT(s->len == 8, "[concat] Correct string length");
 		ASSERT(str_comp(s, str2), "[concat] Correct string value");
 		
+		free(ptc.vars.vars);
+	}
+	
+	// Test that exists to troubleshoot test.c not working when it worked here
+	// (missing init code was the reason)
+	{
+		struct ptc ptc;
+		char* code = "B=5\r"
+		"C=8\r"
+		"A=B+C\r"
+		"?A,B,C\r"
+		"B$=\"Abc\"+\"deF\"\r"
+		"?B$,\"1234\"\r";
+		char* str2 = "S\006AbcdeF";
+		
+		run_code(code, &ptc);
+		
+		struct named_var* v = get_var(&ptc.vars, "B$", 2, VAR_STRING);
+		struct string* s = (struct string*)v->value.ptr;
+		
+		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
+		ASSERT(s->len == 6, "[concat] Correct string length");
+		ASSERT(str_comp(s, str2), "[concat] Correct string value");
+		
+		free(ptc.vars.vars);
+	}
+	
+	// Extrmemely basic unary op test
+	{
+		struct ptc ptc;
+		char* code = "A=-1\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
+		free(ptc.vars.vars);
+	}
+	
+	// Extrmemely basic unary op test II
+	{
+		struct ptc ptc;
+		char* code = "A=---1+--1+-1\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
+		free(ptc.vars.vars);
+	}
+	
+	// Extrmemely basic unary op test II
+	{
+		struct ptc ptc;
+		char* code = "A=-(-(-1))+(--1+-1*--1)\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1 (but more complicated)");
+		free(ptc.vars.vars);
+	}
+	
+	// More unary tests
+	{
+		struct ptc ptc;
+		char* code = "A=---1-(----1)\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -8192, "[decimal] A=-2");
+		free(ptc.vars.vars);
+	}
+	
+	// More unary tests
+	{
+		struct ptc ptc;
+		char* code = "A=2-3-5-8\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -(14<<12), "[decimal] A=-14");
 		free(ptc.vars.vars);
 	}
 	

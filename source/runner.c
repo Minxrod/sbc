@@ -32,6 +32,7 @@ const ptc_call ptc_operators[] = {
 	op_div,
 	op_semi,
 	op_assign,
+	op_negate,
 };
 
 /// Debug function for checking command/function names from IDs
@@ -75,7 +76,8 @@ void run(struct program* code, struct ptc* p) {
 		} else if (instr == BC_OPERATOR){
 			print_name(bc_conv_operations, data);
 			
-			if ((u8)data > sizeof(ptc_operators)/sizeof(ptc_operators[0])){
+			if ((u8)data >= sizeof(ptc_operators)/sizeof(ptc_operators[0])){
+				iprintf("Error: Unimplemented operator!\n");
 				return;
 			}
 			ptc_operators[(u32)data](p);
