@@ -308,6 +308,10 @@ void tok_eval_clean_stack(struct eval* e, u16 prio){
 void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
 	
+	// s: ---1----1
+	// r: 1 - - - 
+	// o: - 
+	
 	for (size_t i = 0; i < state->token_i; ++i){
 		u16 prio = state->tokens[i].prio;
 		iprintf("[tok_eval]");
@@ -325,12 +329,12 @@ void tok_eval(struct tokenizer* state){
 			e.result[e.result_i++] = state->tokens[i];
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
-			if (!e.op_i || e.op_stack[e.op_i-1]->prio <= prio - (prio % 6 == 0)){
-				// if the current operator is higher or equal prio to that
+			if (!e.op_i || e.op_stack[e.op_i-1]->prio < prio + (prio % 8 == 6)){
+				// if the current operator is higher prio to that
 				// on the stack top, push it to the stack
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			} else {
-				// the current operator is lower priority than the stack
+				// the current operator is lower or same priority than the stack
 				// remove arguments from the stack, then push current operator
 				tok_eval_clean_stack(&e, prio);
 				e.op_stack[e.op_i++] = &state->tokens[i];
@@ -339,7 +343,7 @@ void tok_eval(struct tokenizer* state){
 			// ignore
 		} else {
 			// values
-			// TODO: this needs special case for unary ops? maybe?
+			// TODO: this needs special case(s)? for unary ops? maybe?
 			e.result[e.result_i++] = state->tokens[i];
 		}
 	}
