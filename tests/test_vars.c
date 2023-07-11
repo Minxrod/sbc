@@ -149,6 +149,5 @@ int test_vars(){
 		ASSERT(var1 != var2, "[get_var] Same name different types are different vars");
 	}
 	
-	printf("test_vars success\n");
-	return 0;
+	SUCCESS("test_vars success");
 }

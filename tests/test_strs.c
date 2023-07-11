@@ -75,6 +75,5 @@ int test_strs(){
 		ASSERT(str_comp(&s3, c), "[str_concat] Concatenate works correctly");
 	}
 	
-	printf("test_strs success\n");
-	return 0;
+	SUCCESS("test_strs success");
 }

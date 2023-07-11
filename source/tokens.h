@@ -34,7 +34,8 @@ struct token {
 		function,
 		label,
 		comment,
-		newline
+		newline,
+		array,
 	} type;
 	u32 ofs;
 	u8 len;

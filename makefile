@@ -7,7 +7,7 @@ main: source/*.c source/*.h
 	echo $(objs)
 	gcc -g -std=c99 -Wall -Werror -Wextra -Wpedantic -Isource/ $(objs) source/test.c -o test
 
-test: source/*.c source/*.h tests/*.c
+test: source/*.c source/*.h tests/*.c tests/*.h
 	echo $(objs)
 	gcc -g -std=c99 -Wall -Werror -Wextra -Wpedantic -Isource/ $(objs) tests/test_main.c -o test
 

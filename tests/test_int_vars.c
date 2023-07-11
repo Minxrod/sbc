@@ -174,7 +174,7 @@ int test_int_vars(){
 		free(ptc.vars.vars);
 	}
 	
-	// More unary tests
+	// Order of non-associative ops test
 	{
 		struct ptc ptc;
 		char* code = "A=2-3-5-8\r";
@@ -185,6 +185,5 @@ int test_int_vars(){
 		free(ptc.vars.vars);
 	}
 	
-	iprintf("test_int_vars successful\n");
-	return 0;
+	SUCCESS("test_int_vars success");
 }

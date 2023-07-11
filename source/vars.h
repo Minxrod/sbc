@@ -21,7 +21,7 @@ enum types {
 // There are 6 types of variables.
 // Number - 20.12 fixed point
 // String - 0-256 character sequence
-// 
+// Array - One of the above types, but an array.
 
 // Contains either a pointer to string/array data or a number
 // Or pointer to variable (this takes the form of a pointer to number or pointer to string/array)
@@ -30,25 +30,10 @@ union value {
 	void* ptr;
 };
 
-/*
-struct variable {
-	u32 type;
-	union value value;
-};
-*/
-
 struct named_var {
 	u32 type;
 	char name[16];
 	union value value;
-};
-
-// dim_2 = 0xffffffff -> 1d array else 2d array
-// value* either points to array of numbers or array of pointers to strings
-struct array {
-	u32 dim_1_size;
-	u32 dim_2_size;
-	union value* value;
 };
 
 struct strings;

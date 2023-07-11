@@ -3,6 +3,7 @@
 #include "common.h"
 #include "stack.h"
 #include "strs.h"
+#include "arrays.h"
 
 #define CONSOLE_WIDTH 32
 #define CONSOLE_HEIGHT 24
@@ -172,16 +173,8 @@ struct ptc {
 	
 	struct strings strs;
 	
-	/// Size of allocated array data block
-	u32 arr_data_size;
-	/// Next array data offset
-	u32 arr_data_next;
-	/// Pointer to array data (can contain 20.12fp numbers or string ptrs)
-	void* arr_data;
-	
+	struct arrays arrs;
 };
 
 struct ptc* system_init();
-
-void init_mem_arr(struct ptc* s, int element_count);
 

@@ -7,8 +7,12 @@
 #include <stdint.h>
 
 const int MAX_SPECIAL_NAME_SIZE = 8;
+
 const char* commands =
-"PRINT   LOCATE  COLOR   ";
+"PRINT   LOCATE  COLOR   DIM     ";
+
+// oh well
+const char* dim = "DIM     ";
 
 /*
 "ACLS    APPEND  "
@@ -329,6 +333,15 @@ void tok_eval(struct tokenizer* state){
 			e.result[e.result_i++] = state->tokens[i];
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
+			if (tok_in_str_index(dim, state->source->data, &state->tokens[i]) >= 0){
+				// command is DIM: set array-creation-mode for following tokens
+				// arrays with prio 7: flag the.. type, len, ofs, prio?
+				// probably best to change the type to array(?)
+				// name access isn't even implemented here yet...
+				// if name and prio 7 then => array; mark as array if DIM else
+				// unnecessary and just read element
+			}
+			
 			if (!e.op_i || e.op_stack[e.op_i-1]->prio < prio + (prio % 8 == 6)){
 				// if the current operator is higher prio to that
 				// on the stack top, push it to the stack
