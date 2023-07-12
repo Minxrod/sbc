@@ -72,6 +72,10 @@ void run(struct program* code, struct ptc* p) {
 		} else if (instr == BC_COMMAND){
 			print_name(commands, data);
 			//run command using current stack
+			if ((u8)data >= sizeof(ptc_commands)/sizeof(ptc_commands[0])){
+				iprintf("Error: Unimplemented command!\n");
+				return;
+			}
 			ptc_commands[(u32)data](p);
 		} else if (instr == BC_OPERATOR){
 			print_name(bc_conv_operations, data);
@@ -83,6 +87,11 @@ void run(struct program* code, struct ptc* p) {
 			ptc_operators[(u32)data](p);
 		} else if (instr == BC_FUNCTION){
 			print_name(functions, data);
+			
+			/*if ((u8)data >= sizeof(ptc_functions)/sizeof(ptc_functions[0])){
+				iprintf("Error: Unimplemented function!\n");
+				return;
+			}*/
 		} else if (instr == BC_NUMBER){
 			s32 number = 0;
 			

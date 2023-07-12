@@ -144,9 +144,57 @@ int test_vars(){
 		struct named_var *var1, *var2;
 		
 		var1 = get_var(&v, name1, 1, VAR_NUMBER);
-		var2 = get_var(&v, name2, 2, VAR_STRING);
+		var2 = get_var(&v, name2, 1, VAR_STRING);
 		
 		ASSERT(var1 != var2, "[get_var] Same name different types are different vars");
+	}
+	
+	// Check that default initialization of array works as expected
+	{
+		struct variables v;
+		struct arrays a;
+		v.arrs = &a;
+		
+		init_mem_var(&v, 8);
+		init_mem_arr(&a, 8, 32);
+		
+		char* name1 = "A";
+		
+		struct named_var *var1;
+		union value* val1;
+		val1 = get_arr_entry(&v, name1, 1, VAR_NUMBER | VAR_ARRAY, 3, ARR_DIM2_UNUSED);
+		// must be after or else array has no memory pointer
+		var1 = get_var(&v, name1, 1, VAR_NUMBER | VAR_ARRAY);
+		
+		ASSERT(var1 != NULL, "[get_var] Array variable exists from get_var");
+		ASSERT(var1->type == (VAR_NUMBER | VAR_ARRAY), "[get_var] Variable has array type");
+		ASSERT(var1->value.ptr != NULL, "[get_var] Variable has pointer to array data");
+		
+		ASSERT(arr_size(var1->value.ptr, ARR_DIM1) == 10, "[get_var] Default array size is correct");
+		ASSERT(arr_size(var1->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[get_var] Default array size is correct");
+		ASSERT(val1->number == 0, "[get_arr_entry] Initalized value is zero");
+	}
+	
+	// Create an array via get_new_arr_var; 2-dimensional array
+	{
+		struct variables v;
+		struct arrays a;
+		v.arrs = &a;
+		
+		init_mem_var(&v, 8);
+		init_mem_arr(&a, 8, 32);
+		
+		char* name1 = "ARR";
+		
+		struct named_var *var1;
+		var1 = get_new_arr_var(&v, name1, 3, VAR_NUMBER | VAR_ARRAY, 6, 4);
+		// must be after or else array has no memory pointer	
+		ASSERT(var1 != NULL, "[get_new_arr_var] Array variable exists");
+		ASSERT(var1->type == (VAR_NUMBER | VAR_ARRAY), "[get_new_arr_var] Variable has array type");
+		ASSERT(var1->value.ptr != NULL, "[get_new_arr_var] Variable has pointer to array data");
+		
+		ASSERT(arr_size(var1->value.ptr, ARR_DIM1) == 6, "[get_new_arr_var] Default array size is correct");
+		ASSERT(arr_size(var1->value.ptr, ARR_DIM2) == 4, "[get_new_arr_var] Default array size is correct");
 	}
 	
 	SUCCESS("test_vars success");
