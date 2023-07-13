@@ -35,7 +35,8 @@ struct token {
 		label,
 		comment,
 		newline,
-		array,
+		dim_arr,
+		arg_count,
 	} type;
 	u32 ofs;
 	u8 len;

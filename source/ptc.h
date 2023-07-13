@@ -2,6 +2,7 @@
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
 	BC_COMMAND = 'C',
+	BC_DIM = 'D',
 	BC_FUNCTION = 'F',
 	BC_GOTO = 'G',
 	BC_OPERATOR = 'O',

@@ -171,6 +171,9 @@ struct eval {
 	size_t value_i;
 	struct token* op_stack[100];
 	size_t op_i;
+	/// Arguments stack
+	size_t argc_stack[64];
+	size_t argc_i;
 	// reordered tokens for conversion
 	struct token result[100];
 	size_t result_values; // base of current expression
@@ -209,74 +212,47 @@ void tok_code(struct tokenizer* state){
 	u32* size = &state->output->size;
 	
 	for (size_t i = 0; i < state->token_i; ++i){
-		if (state->tokens[i].type == command){
-			// convert token to command
-			if (state->source->data[state->tokens[i].ofs] == '?'){
-				data[(*size)++] = BC_COMMAND;
-				data[(*size)++] = (char)CMD_PRINT;
-			} else {
-				int j = tok_in_str_index(commands, state->source->data, &state->tokens[i]);
-				iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
-				if (j >= 0){
+		switch (state->tokens[i].type){
+			case command:
+				// convert token to command
+				if (state->source->data[state->tokens[i].ofs] == '?'){
 					data[(*size)++] = BC_COMMAND;
-					data[(*size)++] = (char)(j);
+					data[(*size)++] = (char)CMD_PRINT;
 				} else {
-					iprintf("Invalid command: %d, %d\n", j, state->tokens[i].ofs);
+					int j = tok_in_str_index(commands, state->source->data, &state->tokens[i]);
+					iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
+					if (j >= 0){
+						data[(*size)++] = BC_COMMAND;
+						data[(*size)++] = (char)(j);
+					} else {
+						iprintf("Invalid command: %d, %d\n", j, state->tokens[i].ofs);
+					}
 				}
-			}
-		} else if (state->tokens[i].type == number){
-			// oops i need to convert strings to numbers - do that later...
-			if (state->tokens[i].len == 1){
-				data[(*size)++] = BC_SMALL_NUMBER;
-				data[(*size)++] = state->source->data[state->tokens[i].ofs] - '0';
-			} else if (state->tokens[i].len == 2){ 
-				data[(*size)++] = BC_SMALL_NUMBER;
-				data[(*size)++] = 10*(state->source->data[state->tokens[i].ofs] - '0') + (state->source->data[state->tokens[i].ofs+1] - '0');
-			} else {
-				s32 fp = tok_to_num(state, &state->tokens[i]);
-				
-				// large number
-				data[(*size)++] = BC_NUMBER;
-				data[(*size)++] = 0x0; //ignored
-				data[(*size)++] = (fp >> 24) & 0xff;
-				data[(*size)++] = (fp >> 16) & 0xff;
-				data[(*size)++] = (fp >> 8) & 0xff;
-				data[(*size)++] = (fp >> 0) & 0xff;
-			}
-		} else if (state->tokens[i].type == string){
-			data[(*size)++] = BC_STRING;
-			data[(*size)++] = state->tokens[i].len;
-			for (int j = 0; j < state->tokens[i].len; ++j){
-				data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
-			}
-			if (*size % 2){
-				(*size)++; // pad one null to keep instructions aligned
-			}
-		} else if (state->tokens[i].type == operation) {
-			data[(*size)++] = BC_OPERATOR;
+				break;
 			
-			int op = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
-			if (state->tokens[i].prio % 8 == 6 && op == OP_SUBTRACT){
-				op = OP_NEGATE;
-			}
-			data[(*size)++] = op;
+			case number:
+				// oops i need to convert strings to numbers - do that later...
+				if (state->tokens[i].len == 1){
+					data[(*size)++] = BC_SMALL_NUMBER;
+					data[(*size)++] = state->source->data[state->tokens[i].ofs] - '0';
+				} else if (state->tokens[i].len == 2){ 
+					data[(*size)++] = BC_SMALL_NUMBER;
+					data[(*size)++] = 10*(state->source->data[state->tokens[i].ofs] - '0') + (state->source->data[state->tokens[i].ofs+1] - '0');
+				} else {
+					s32 fp = tok_to_num(state, &state->tokens[i]);
+					
+					// large number
+					data[(*size)++] = BC_NUMBER;
+					data[(*size)++] = 0x0; //ignored
+					data[(*size)++] = (fp >> 24) & 0xff;
+					data[(*size)++] = (fp >> 16) & 0xff;
+					data[(*size)++] = (fp >> 8) & 0xff;
+					data[(*size)++] = (fp >> 0) & 0xff;
+				}
+				break;
 			
-			iprintf("%d", data[*size-1]);
-		} else if (state->tokens[i].type == function){
-			data[(*size)++] = BC_FUNCTION;
-			
-			data[(*size)++] = tok_in_str_index(functions, state->source->data, &state->tokens[i]);
-		} else if (state->tokens[i].type == name) {
-			//TODO: actual ID calculation
-			//Find variable if it exists in table
-			//Create variable if it does not exist
-			//Get ID based on this index
-			//Note: Small name becomes 
-			data[(*size)++] = BC_VARIABLE_NAME;
-			if (state->tokens[i].len == 1){
-				// Name is a single char: replace length (always less than 'A')
-				data[(*size)++] = state->source->data[state->tokens[i].ofs];
-			} else {
+			case string:
+				data[(*size)++] = BC_STRING;
 				data[(*size)++] = state->tokens[i].len;
 				for (int j = 0; j < state->tokens[i].len; ++j){
 					data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
@@ -284,10 +260,56 @@ void tok_code(struct tokenizer* state){
 				if (*size % 2){
 					(*size)++; // pad one null to keep instructions aligned
 				}
-			}
-		} else {
-			iprintf("Unknown token: ");
-			print_token(state, state->tokens[i]);
+				break;
+				
+			case operation:
+				data[(*size)++] = BC_OPERATOR;
+				
+				int op = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
+				if (state->tokens[i].prio % 8 == 6 && op == OP_SUBTRACT){
+					op = OP_NEGATE;
+				}
+				data[(*size)++] = op;
+				
+				iprintf("%d", data[*size-1]);
+				break;
+				
+			case function:
+				data[(*size)++] = BC_FUNCTION;
+				
+				data[(*size)++] = tok_in_str_index(functions, state->source->data, &state->tokens[i]);
+				break;
+				
+			case name:
+			case dim_arr:
+				//TODO: actual ID calculation
+				//Find variable if it exists in table
+				//Create variable if it does not exist
+				//Get ID based on this index
+				//Note: Small name becomes 
+				data[(*size)++] = state->tokens[i].type == name ? BC_VARIABLE_NAME : BC_DIM;
+				if (state->tokens[i].len == 1){
+					// Name is a single char: replace length (always less than 'A')
+					data[(*size)++] = state->source->data[state->tokens[i].ofs];
+				} else {
+					data[(*size)++] = state->tokens[i].len;
+					for (int j = 0; j < state->tokens[i].len; ++j){
+						data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
+					}
+					if (*size % 2){
+						(*size)++; // pad one null to keep instructions aligned
+					}
+				}
+				break;
+				
+			case arg_count:
+				data[(*size)++] = BC_ARGCOUNT;
+				data[(*size)++] = state->tokens[i].len;
+				break;
+				
+			default:
+				iprintf("Unknown token: ");
+				print_token(state, state->tokens[i]);
 		}
 	}
 	state->token_i = 0;
@@ -311,47 +333,75 @@ void tok_eval_clean_stack(struct eval* e, u16 prio){
 // I'm still amazed it worked in the end.
 void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
+	bool is_dim = false;
 	
-	// s: ---1----1
-	// r: 1 - - - 
-	// o: - 
+	// DIM A(10,6+B[5])
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		u16 prio = state->tokens[i].prio;
+		char first = state->source->data[state->tokens[i].ofs];
 		iprintf("[tok_eval]");
 		print_token(state, state->tokens[i]);
 		
 		if (state->tokens[i].type == operation && prio % 8 == 0) {
-			if (state->source->data[state->tokens[i].ofs] == '=' && state->tokens[i].len == 1){
+			// operation of prio 0: ( ) [ ] =
+			if (first == '=' && state->tokens[i].len == 1){
 				e.op_stack[e.op_i++] = &state->tokens[i];
-			} else {
-				// ()[] removed
+			} else if (first == '(' || first == '['){
+				e.argc_i++;
+				// down a level; default # args is 1 (no commas, not ()
+				e.argc_stack[e.argc_i] = 1;
+			} else { // assumed ) or ]
+				// handle 0-args PI(), BUTTON() case
+				if (state->source->data[state->tokens[i-1].ofs] == '(' && state->tokens[i-1].type == operation){
+					e.argc_stack[e.argc_i] = 0;
+				}
+				// TODO: Don't create argcount for DIM command
+				// (unnecessary, implied by stack size?)
+				// also might just keep this way for simplicity
+				state->tokens[i].type = arg_count;
+				state->tokens[i].len = e.argc_stack[e.argc_i--];
+				tok_eval_clean_stack(&e, prio);
+				e.op_stack[e.op_i++] = &state->tokens[i];
 			}
 		} else if (state->tokens[i].type == operation && prio == 1) {
-			// comma or semicolon
+			// comma or semicolon at lowest nest level
+			e.argc_stack[e.argc_i]++;
 			tok_eval_clean_stack(&e, prio);
-			e.result[e.result_i++] = state->tokens[i];
+			if (state->source->data[state->tokens[i].ofs] == ';'
+				|| (state->source->data[state->tokens[i].ofs] == ',' && state->tokens[i+1].type == newline)){
+				e.result[e.result_i++] = state->tokens[i];
+			}
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
+			// TODO: replace this comparison with something less dumb
 			if (tok_in_str_index(dim, state->source->data, &state->tokens[i]) >= 0){
 				// command is DIM: set array-creation-mode for following tokens
-				// arrays with prio 7: flag the.. type, len, ofs, prio?
-				// probably best to change the type to array(?)
-				// name access isn't even implemented here yet...
+				is_dim = true;
+				continue;
+				// Note: Do not need to write token as command, wouldn't do anything
+			} else if (state->tokens[i].type == command){
+				is_dim = false;
+			} else if (state->tokens[i].type == name && prio == 7 && is_dim){
+				// arrays with prio 7: flag the type for array creation
 				// if name and prio 7 then => array; mark as array if DIM else
 				// unnecessary and just read element
+				state->tokens[i].type = dim_arr;
 			}
 			
 			if (!e.op_i || e.op_stack[e.op_i-1]->prio < prio + (prio % 8 == 6)){
 				// if the current operator is higher prio to that
 				// on the stack top, push it to the stack
-				e.op_stack[e.op_i++] = &state->tokens[i];
 			} else {
 				// the current operator is lower or same priority than the stack
 				// remove arguments from the stack, then push current operator
 				tok_eval_clean_stack(&e, prio);
-				e.op_stack[e.op_i++] = &state->tokens[i];
 			}
+			// DON'T push a comma, as this is implied from argument ordering/structure
+			if (state->source->data[state->tokens[i].ofs] != ',')
+				e.op_stack[e.op_i++] = &state->tokens[i];
+			else
+				e.argc_stack[e.argc_i]++;
 		} else if (state->tokens[i].type == newline){ 
 			// ignore
 		} else {
@@ -580,42 +630,3 @@ void tok_number(struct tokenizer* state){
 	state->token_i++;
 }
 
-// I have taken one class on languages so let's see if I learned anything here
-// 
-// state		on				to			
-// [default]	[A-Za-z_]		[alphanum]	
-// [default]	[?]				[PRINT]
-// [PRINT]		[]
-// [operator]	[+-*/%<=>!]		[operator]	
-// [alphanum]	[A-Za-z0-9_]	[alphanum]	
-// [alphanum]	[+-*/%<=>!]		[operator]	
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-
-// instructions:
-//  [args] cmd
-//  [args] func
-//  sysvar
-//  [args] op
-//  label -> index into instr
-//  strings -> index into strings
-//  numbers -> encode
-//  separator -> none, used to delimit special parsing cases I guess
-//  comment -> discard or use as error message
-//  variable -> index into vars
-
-// #1 #1 + c
-// f
-// s
-// o
-// @
-// "
-// #
-// :
-// '
-// v

@@ -5,6 +5,7 @@
 #include "program.h"
 #include "tokens.h"
 #include "runner.h"
+#include "arrays.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -24,12 +25,13 @@ void run_code(char* code, struct ptc* ptc){
 	init_mem_var(&ptc->vars, 16);
 	// init strs memory
 	init_mem_str(&ptc->strs, 32, STRING_CHAR);
+	init_mem_arr(&ptc->arrs, 16, 64);
 	ptc->vars.strs = &ptc->strs;
+	ptc->vars.arrs = &ptc->arrs;
 	// run code
 	run(&o, ptc);
 	
 	free(o.data);
-//	free(ptc->vars.vars);
 }
 
 int test_int_vars(){
@@ -184,6 +186,15 @@ int test_int_vars(){
 		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -(14<<12), "[decimal] A=-14");
 		free(ptc.vars.vars);
 	}
+	
+/*	{
+		// check output for correctness
+		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
+		ASSERT(a != NULL, "[dim] A exists");
+		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
+		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 16, "[dim] A has correct size");
+		free(ptc.vars.vars);
+	}*/
 	
 	SUCCESS("test_int_vars success");
 }
