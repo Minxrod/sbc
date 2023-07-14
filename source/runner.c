@@ -10,6 +10,7 @@
 #include "program.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 //0-9
 const s32 SMALL_NUMBERS[] = {
@@ -47,6 +48,7 @@ void print_name(const char* names, int data){
 void run(struct program* code, struct ptc* p) {
 	u32 index = 0;
 	p->stack.stack_i = 0;
+	u32 argcount = 0;
 	
 	while (index < code->size){
 		// get one instruction and execute it
@@ -103,30 +105,46 @@ void run(struct program* code, struct ptc* p) {
 			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {number}};
 			iprintf("num=%.12f", number / 4096.0);
 		} else if (instr == BC_VARIABLE_NAME){
+			// this is both array accesses and regular vars
+			// difference determined by whether or not ARGCOUNT was set
+			// before reading variable
 			iprintf("name=");
-			//TODO: 
-			enum types t;
-			void* x;
-			struct named_var* v;
 			
+			// type of variable
+			enum types t;
+			// pointer to variable value
+			void* x;
+			// variable struct
+			char* name;
+			// length of variable name
+			u8 len;
 			if (data < 'A'){
-				if (code->data[index+(u8)data-1] == '$'){
-					t = VAR_STRING;
-					v = get_var(&p->vars, &code->data[index], data, t);
-					if (!v) return;
-					x = &v->value.ptr;
-				} else {
-					t = VAR_NUMBER;
-					v = get_var(&p->vars, &code->data[index], data, t);
-					if (!v) return;
-					x = (void*)&v->value.number;
-				}
+				name = &code->data[index];
+				len = code->data[index+(u8)data-1] == '$' ? data-1 : data;
+				t = code->data[index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER; 
 			} else {
-				// name is stored in data
+				name = &data;
+				len = 1;
 				t = VAR_NUMBER;
-				v = get_var(&p->vars, &data, 1, t);
-				if (!v) return;
-				x = (void*)&v->value.number;
+			}
+			
+			if (!argcount){
+				struct named_var* v = get_var(&p->vars, name, len, t);
+				if (!v){
+					iprintf("Error: Variable failed to allocate!\n");
+					abort();
+				}
+				x = t & VAR_NUMBER ? (void*)&v->value.number : &v->value.ptr;
+			} else {
+				u32 a;
+				u32 b = ARR_DIM2_UNUSED;
+				if (argcount == 2){
+					b = stack_pop(&p->stack)->value.number >> 12;
+				}
+				a = stack_pop(&p->stack)->value.number >> 12;
+				
+				union value* val = get_arr_entry(&p->vars, name, len, t | VAR_ARRAY, a, b);
+				x = t & VAR_NUMBER ? (void*)&val->number : &val->ptr;
 			}
 			
 			p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
@@ -139,10 +157,43 @@ void run(struct program* code, struct ptc* p) {
 				iprintf("%c", code->data[index-1]);
 			}
 			//debug
-			stack_print(&p->stack);
+//			stack_print(&p->stack);
+		} else if (instr == BC_DIM){
+			//TODO: error checking for strings here
+			u32 a;
+			u32 b = ARR_DIM2_UNUSED;
+			if (argcount == 2){
+				b = stack_pop(&p->stack)->value.number >> 12;
+			}
+			a = stack_pop(&p->stack)->value.number >> 12;
+			
+			iprintf("name=");
+			if (data >= 'A'){
+				iprintf("%c ", data);
+				get_new_arr_var(&p->vars, &data, 1, VAR_NUMBER | VAR_ARRAY, a, b);
+			} else {
+				for (size_t i = 0; i < (u32)data; ++i){
+					iprintf("%c ", code->data[index++]);
+				}
+				if (index % 2) index++;
+				
+				enum types t = code->data[index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER;
+				
+				get_new_arr_var(&p->vars, &code->data[index], data, t | VAR_ARRAY, a, b);
+			}
+			
+			iprintf("dim=%d,%d", a, b);
+		} else if (instr == BC_ARGCOUNT){
+			argcount = data;
+			
+			iprintf("argc=%d", argcount);
 		} else {
 			iprintf("Unknown BC: %c %d", instr, data);
 		}
+		if (instr != BC_ARGCOUNT){
+			argcount = 0; // zero after use to avoid reading vars as arrays
+		}
+		
 		iprintf("\n");
 	}
 	/*

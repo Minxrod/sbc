@@ -9,8 +9,8 @@ int main(){
 	test_vars();
 	test_strs();
 	test_arrs();
-	test_int_vars();
 	test_tokens();
+	test_int_vars();
 	
 	return 0;
 }

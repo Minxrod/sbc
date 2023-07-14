@@ -137,10 +137,10 @@ union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types 
 		}
 	}
 	// array exists and is stored in a->ptr
-	if (0 < ix && ix < arr_size(a->value.ptr, ARR_DIM1)){
+	if (ix < arr_size(a->value.ptr, ARR_DIM1)){
 		if (iy == ARR_DIM2_UNUSED){
 			return arr_entry(a->value.ptr, ix, 0);
-		} else if(0 < iy && iy < arr_size(a->value.ptr, ARR_DIM2)){
+		} else if (iy < arr_size(a->value.ptr, ARR_DIM2)){
 			return arr_entry(a->value.ptr, ix, iy);
 		} else {
 			iprintf("Error: Index iy out of range\n");

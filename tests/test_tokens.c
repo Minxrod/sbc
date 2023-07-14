@@ -138,7 +138,51 @@ int test_tokens(void){
 		}
 		iprintf("\n");
 	}
-
+	
+	// Tokenization of function call with variable lengths
+	{
+		char* code = "?ATAN(ABS(2),ABS(6))\r";
+		char code2[64];
+		// run program
+		struct program p = {
+			strlen(code), code,
+		};
+		struct program o = {
+			0, code2,
+		};
+		
+		char* bytecode = "n\002A\001F\000n\006A\001F\000A\002F\002C\000";
+		// compile program
+		tokenize(&p, &o);
+		for (int i = 0; i < 18; i+=1){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM with enclosed array access");
+		}
+		iprintf("\n");
+	}
+	
+	// Tokenization of function call with variable lengths
+	{
+		char* code = "A[0]=7\r";
+		char code2[64];
+		// run program
+		struct program p = {
+			strlen(code), code,
+		};
+		struct program o = {
+			0, code2,
+		};
+		
+		char* bytecode = "n\000A\001VAn\007O\006";
+		// compile program
+		tokenize(&p, &o);
+		for (int i = 0; i < 10; i+=1){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Array access assignment");
+		}
+		iprintf("\n");
+	}
+	
 	
 	SUCCESS("test_tokens success");
 }

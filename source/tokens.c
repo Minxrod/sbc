@@ -346,6 +346,7 @@ void tok_eval(struct tokenizer* state){
 		if (state->tokens[i].type == operation && prio % 8 == 0) {
 			// operation of prio 0: ( ) [ ] =
 			if (first == '=' && state->tokens[i].len == 1){
+				tok_eval_clean_stack(&e, prio);
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			} else if (first == '(' || first == '['){
 				e.argc_i++;

@@ -81,7 +81,7 @@ int test_int_vars(){
 		run_code(code, &ptc);
 		// check output for correctness
 		//TODO
-		struct named_var* v = get_var(&ptc.vars, "A$", 2, VAR_STRING);
+		struct named_var* v = get_var(&ptc.vars, "A", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
 		
 		ASSERT(s->type == STRING_CHAR, "[assign] Correct string type");
@@ -98,7 +98,7 @@ int test_int_vars(){
 		
 		run_code(code, &ptc);
 		
-		struct named_var* v = get_var(&ptc.vars, "A$", 2, VAR_STRING);
+		struct named_var* v = get_var(&ptc.vars, "A", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
 		
 		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
@@ -122,7 +122,7 @@ int test_int_vars(){
 		
 		run_code(code, &ptc);
 		
-		struct named_var* v = get_var(&ptc.vars, "B$", 2, VAR_STRING);
+		struct named_var* v = get_var(&ptc.vars, "B", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
 		
 		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
@@ -187,14 +187,72 @@ int test_int_vars(){
 		free(ptc.vars.vars);
 	}
 	
-/*	{
-		// check output for correctness
+	// Array declaration code test
+	{
+		struct ptc ptc;
+		char* code = "DIM A[16]\rDIM B[4,4]\r";
+		// run program
+		run_code(code, &ptc);
+		
+		// check result for correctness
 		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
 		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 16, "[dim] A has correct size");
+		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[dim] A has correct size II");
+		
+		struct named_var* b = test_var(&ptc.vars, "B", VAR_NUMBER | VAR_ARRAY);
+		ASSERT(b != NULL, "[dim] B exists");
+		ASSERT(b->value.ptr != NULL, "[dim] B is allocated");
+		ASSERT(b->value.ptr != a->value.ptr, "[dim] B is not A");
+		ASSERT(arr_size(b->value.ptr, ARR_DIM1) == 4, "[dim] B has correct size");
+		ASSERT(arr_size(b->value.ptr, ARR_DIM2) == 4, "[dim] B has correct size II");
+		
 		free(ptc.vars.vars);
-	}*/
+	}
+	
+	// Array write and read test
+	{
+		struct ptc ptc;
+		char* code = "DIM A[3]\rA[0]=7\rA(1)=8\rA[2)=9\rA=4\r";
+		// run program
+		run_code(code, &ptc);
+		// check DIM for correctness
+		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
+		ASSERT(a != NULL, "[dim] A exists");
+		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
+		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 3, "[dim] A has correct size");		
+		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[dim] A has correct size II");		
+		// check values correct
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 4<<12, "[arrays] Var A=4, separate from arr A");
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->number == 7<<12, "[arrays] A[0]=7");
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->number == 8<<12, "[arrays] A[1]=8");
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->number == 9<<12, "[arrays] A[2]=9");
+		
+		free(ptc.vars.vars);
+	}
+	
+	// 2D Array write and read test
+	{
+		struct ptc ptc;
+		char* code = "DIM A[2,2]\rA[0,0]=7\rA(1,0)=8\rA[0,1)=9\rA(1,1]=10\r";
+		// run program
+		run_code(code, &ptc);
+		// check DIM for correctness
+		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
+		ASSERT(a != NULL, "[dim] A exists");
+		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
+		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 2, "[dim] A has correct size");		
+		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == 2, "[dim] A has correct size II");		
+		// check values correct
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 0)->number == 7<<12, "[arrays] A[0,0]=7");
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 0)->number == 8<<12, "[arrays] A[1,0]=8");
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 1)->number == 9<<12, "[arrays] A[0,1]=9");
+		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 1)->number == 10<<12, "[arrays] A[1,1]=10");
+		
+		free(ptc.vars.vars);
+	}
+
 	
 	SUCCESS("test_int_vars success");
 }
