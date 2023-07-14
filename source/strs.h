@@ -54,6 +54,9 @@ struct string* get_new_str(struct strings* s);
 //Convert char to wide char
 u16 to_wide(u8 c);
 
+// Get string length
+u32 str_len(void* src);
+
 // Compare two strings for equality
 bool str_comp(void* str1, void* str2);
 

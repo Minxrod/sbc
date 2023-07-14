@@ -110,7 +110,7 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 		if (type & VAR_NUMBER){
 			var->value.number = 0;
 		} else if (type & VAR_STRING) {
-			var->value.ptr = (void*)&v->strs->empty;
+			var->value.ptr = NULL;
 		} else if (type & VAR_ARRAY) {
 			// Can't directly initialize here
 			var->value.ptr = NULL;

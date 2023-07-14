@@ -36,7 +36,7 @@ struct string* get_new_str(struct strings* s){
 		}
 	}
 	strs[i].type = s->type;
-	strs[i].uses = 1; // this is first usage
+	strs[i].uses = 0;
 	if (s->type == STRING_CHAR){
 		strs[i].ptr.s = &((u8*)s->str_data)[i*MAX_STRLEN];
 	} else if (s->type == STRING_WIDE){

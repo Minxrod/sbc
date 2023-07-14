@@ -6,17 +6,22 @@
 #include "tokens.h"
 #include "runner.h"
 #include "arrays.h"
+#include "strs.h"
+#include "ptc.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+// Test code (needs to persist after exec for reading some test results)
+char outcode[2048];
 
 void run_code(char* code, struct ptc* ptc){
 	struct program p = {
 		strlen(code), code,
 	};
 	struct program o = {
-		0, calloc(strlen(code), 2),
+		0, outcode,
 	};
 	
 	// compile program
@@ -30,8 +35,6 @@ void run_code(char* code, struct ptc* ptc){
 	ptc->vars.arrs = &ptc->arrs;
 	// run code
 	run(&o, ptc);
-	
-	free(o.data);
 }
 
 int test_int_vars(){
@@ -81,10 +84,10 @@ int test_int_vars(){
 		run_code(code, &ptc);
 		// check output for correctness
 		struct named_var* v = get_var(&ptc.vars, "A", 1, VAR_STRING);
-		struct string* s = (struct string*)v->value.ptr;
+		char* s = (char*)v->value.ptr;
 		
-		ASSERT(s->type == STRING_CHAR, "[assign] Correct string type");
-		ASSERT(s->len == 6, "[assign] Correct string length");
+		ASSERT(*s == BC_STRING, "[assign] Correct string type");
+		ASSERT(str_len(s) == 6, "[assign] Correct string length");
 		ASSERT(str_comp(s, str2), "[assign] Assign string");
 		
 		free(ptc.vars.vars);
@@ -273,15 +276,15 @@ int test_int_vars(){
 		struct string* s2 = (struct string*)get_arr_entry(&ptc.vars, "A", 1, VAR_STRING | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->ptr;
 		struct string* s3 = (struct string*)get_arr_entry(&ptc.vars, "A", 1, VAR_STRING | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->ptr;
 		
-		ASSERT(s1->type == STRING_CHAR, "[array] Correct string type");
-		ASSERT(s1->len == 1, "[array] Correct string length");
+		ASSERT(s1->type == BC_STRING, "[array] Correct string type 1");
+		ASSERT(str_len(s1) == 1, "[array] Correct string length");
 		ASSERT(str_comp(s1, strA), "[array] Assign string");
 		
-		ASSERT(s2->type == STRING_CHAR, "[array] Correct string type");
-		ASSERT(s2->len == 1, "[array] Correct string length");
+		ASSERT(s2->type == BC_STRING, "[array] Correct string type 2");
+		ASSERT(str_len(s2) == 1, "[array] Correct string length");
 		ASSERT(str_comp(s2, strB), "[array] Assign string");
 		
-		ASSERT(s3->type == STRING_CHAR, "[array] Correct string type");
+		ASSERT(s3->type == STRING_CHAR, "[array] Correct string type 3");
 		ASSERT(s3->len == 2, "[array] Correct string length");
 		ASSERT(str_comp(s3, strBA), "[array] Assign string");
 		
