@@ -109,6 +109,7 @@ void op_assign(struct ptc* p){
 	struct stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
+	// a = b
 	
 	if (a->type & b->type & VAR_NUMBER){
 		if (a->type & VAR_VARIABLE){
@@ -125,7 +126,7 @@ void op_assign(struct ptc* p){
 			struct string** str = (struct string**)a->value.ptr;
 			// a->value.ptr is a struct string*. The variable stored value would be... struct string**.
 			// to assign to s, need to take the stack string b, which could contain:
-			if ((*str)->type == STRING_EMPTY){
+			if ((*str) == NULL || (*str)->type == STRING_EMPTY){
 				// select new struct string* to store within variable (?)
 				*str = get_new_str(&p->strs);
 			}

@@ -335,8 +335,6 @@ void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
 	bool is_dim = false;
 	
-	// DIM A(10,6+B[5])
-	
 	for (size_t i = 0; i < state->token_i; ++i){
 		u16 prio = state->tokens[i].prio;
 		char first = state->source->data[state->tokens[i].ofs];
@@ -404,7 +402,8 @@ void tok_eval(struct tokenizer* state){
 			else
 				e.argc_stack[e.argc_i]++;
 		} else if (state->tokens[i].type == newline){ 
-			// ignore
+			// dim ends
+			is_dim = false;
 		} else {
 			// values
 			// TODO: this needs special case(s)? for unary ops? maybe?

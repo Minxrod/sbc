@@ -94,7 +94,7 @@ void str_wide_copy(void* src, u16* dest){
 			}
 			return;
 		default:
-			iprintf("Unimplemented/Not a valid string type!\n");
+			iprintf("Unimplemented/Not a valid string type! (Copy u16)\n");
 			abort();
 	}
 }
@@ -119,7 +119,7 @@ void str_char_copy(void* src, u8* dest){
 			}
 			return;
 		default:
-			iprintf("Unimplemented/Not a valid string type!\n");
+			iprintf("Unimplemented/Not a valid string type! (Copy u8)\n");
 			abort();
 	}
 }
@@ -135,7 +135,7 @@ u32 str_len(void* src){
 		case BC_STRING:
 			return ((u8*)src)[1];
 		default:
-			iprintf("Unimplemented/Not a valid string type!\n");
+			iprintf("Unimplemented/Not a valid string type! (Length)\n");
 			abort();
 	}
 }
@@ -175,7 +175,7 @@ void str_copy(void* src, void* src_dest){
 			iprintf("Error: Attempted to copy to read-only string!\n");
 			abort();
 		default:
-			iprintf("Unimplemented/Not a valid string type!\n");
+			iprintf("Unimplemented/Not a valid string type! (Copy)\n");
 			abort();
 	}
 }

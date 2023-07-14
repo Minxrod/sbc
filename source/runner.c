@@ -138,6 +138,7 @@ void run(struct program* code, struct ptc* p) {
 			} else {
 				u32 a;
 				u32 b = ARR_DIM2_UNUSED;
+				// TODO: check for strings here before reading
 				if (argcount == 2){
 					b = stack_pop(&p->stack)->value.number >> 12;
 				}
@@ -172,17 +173,19 @@ void run(struct program* code, struct ptc* p) {
 				iprintf("%c ", data);
 				get_new_arr_var(&p->vars, &data, 1, VAR_NUMBER | VAR_ARRAY, a, b);
 			} else {
+				char* x = &code->data[index];
 				for (size_t i = 0; i < (u32)data; ++i){
-					iprintf("%c ", code->data[index++]);
+					iprintf("%c", code->data[index++]);
 				}
 				if (index % 2) index++;
 				
-				enum types t = code->data[index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER;
+				enum types t = x[(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER;
+				u32 len = t & VAR_NUMBER ? data : data-1;
 				
-				get_new_arr_var(&p->vars, &code->data[index], data, t | VAR_ARRAY, a, b);
+				get_new_arr_var(&p->vars, x, len, t | VAR_ARRAY, a, b);
 			}
 			
-			iprintf("dim=%d,%d", a, b);
+			iprintf(" dim=%d,%d", a, b);
 		} else if (instr == BC_ARGCOUNT){
 			argcount = data;
 			
