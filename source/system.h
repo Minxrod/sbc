@@ -5,8 +5,7 @@
 #include "strs.h"
 #include "arrays.h"
 
-#define CONSOLE_WIDTH 32
-#define CONSOLE_HEIGHT 24
+#include "console.h"
 
 #define BG_WIDTH 64
 #define BG_HEIGHT 64
@@ -15,15 +14,6 @@
 
 #define GRAPHICS_WIDTH 256
 #define GRAPHICS_HEIGHT 192
-
-struct console {
-	u16 x;
-	u16 y;
-	u32 tabstep;
-	u16 text[CONSOLE_WIDTH][CONSOLE_HEIGHT];
-	// low 4 bits: fg color; high 4: bg color
-	u8 color[CONSOLE_WIDTH][CONSOLE_HEIGHT];
-};
 
 struct bg {
 	s32 x;

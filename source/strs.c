@@ -50,6 +50,66 @@ struct string* get_new_str(struct strings* s){
 	return &strs[i];
 }
 
+// Convert 20.12 fixed point number to string
+// Using PTC rounding rules
+void str_num(s32 num, u8* str){
+//	u16* begin = str;
+	if (num < 0){
+		(*str++) = '-';
+		num = -num;
+	}
+	u32 integer = num >> 12;
+	u32 decimal = ((((num & 0x00000fff) + 2) * 1000) >> 12);
+	u32 divisor = 100000;
+	// Loop until divisor is zero (to get all digits)
+	if (integer){
+		while (divisor > 0){
+			// integer > divisor:
+			if (divisor > integer){
+				divisor /= 10;
+				continue;
+			}
+			
+			*str = '0';
+			while (integer >= divisor){
+				integer -= divisor;
+				*str += 1;
+			}
+			divisor /= 10;
+			str++;
+		}
+	} else {
+		// zero is special case
+		*str++ = '0';
+	}
+	// Only add decimal if it doesn't exist
+	if (decimal){
+		*str++ = '.';
+		// loop until number is gone (does not keep trailing zeros)
+		divisor = 100;
+		while (decimal > 0){
+			// integer > divisor:
+			*str = '0';
+			if (divisor > decimal){
+				divisor /= 10;
+				str++;
+				continue;
+			}
+			
+			while (decimal >= divisor){
+				decimal -= divisor;
+				*str += 1;
+			}
+			divisor /= 10;
+			str++;
+		}
+	}
+	// Null-terminate
+	*str = '\0';
+	// TODO: String length?
+	// (str - begin)/ sizeof u8?;
+}
+
 /// Converts PTC's extended ASCII to UTF16/UCS2 
 u16 to_wide(u8 c){
 	if (c < 0x21){

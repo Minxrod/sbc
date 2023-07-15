@@ -1,5 +1,7 @@
 #include "strs.h"
 
+#include <string.h>
+
 int test_strs(){
 	/*
 	string creation tests
@@ -73,6 +75,76 @@ int test_strs(){
 		str_concat(&s1, &s2, &s3);
 		ASSERT(s3.len == 10, "[str_concat] Length of combined strings is correct");
 		ASSERT(str_comp(&s3, c), "[str_concat] Concatenate works correctly");
+	}
+	
+	// Number to string conversion
+	{
+		//TODO: Turn these cases into macros because this is stupid
+		// setup
+		u8 buf[32];
+		buf[0] = 'S';
+		u8* str = &buf[2];
+		
+		// tests
+		str_num(1235<<12, str);
+		buf[1] = strlen((char*)str); // sign never matters here
+		iprintf("%s\n", (char*)buf);
+		ASSERT(str_comp("S\0041235", (void*)buf), "[str_num] Convert 1235 to string");
+		
+		str_num(0, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\0010", (void*)buf), "[str_num] Convert 0 to string");
+		
+		str_num(5570, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\0041.36", (void*)buf), "[str_num] Convert 1.36 to string");
+		
+		str_num(11386, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\0042.78", (void*)buf), "[str_num] Convert 2.78 to string");
+		
+		str_num(4, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\0050.001", (void*)buf), "[str_num] Convert 0.001 to string");
+		
+		str_num(524287<<12, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\006524287", (void*)buf), "[str_num] Convert largest number to string");
+		
+		str_num(-(524287<<12), str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\007-524287", (void*)buf), "[str_num] Convert smallest number to string");
+		
+		str_num(-(23456<<12), str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\006-23456", (void*)buf), "[str_num] Convert negative number to string");
+		
+		str_num(-4, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\006-0.001", (void*)buf), "[str_num] Convert -0.001 number to string");
+		
+		str_num(-2, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\002-0", (void*)buf), "[str_num] Convert -2/4096 number to string");
+		
+		str_num(2, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\0010", (void*)buf), "[str_num] Convert 2/4096 number to string");
+		
+		str_num(3, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\0050.001", (void*)buf), "[str_num] Convert 3/4096 number to string");
 	}
 	
 	SUCCESS("test_strs success");

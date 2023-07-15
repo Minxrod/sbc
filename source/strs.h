@@ -54,6 +54,15 @@ struct string* get_new_str(struct strings* s);
 //Convert char to wide char
 u16 to_wide(u8 c);
 
+// Convert number to string PTC style
+void str_num(s32 num, u8* str);
+
+// Copy to u8 str
+void str_char_copy(void* src, u8* dest);
+
+// Copy to u16 str
+void str_wide_copy(void* src, u16* dest);
+
 // Get string length
 u32 str_len(void* src);
 
