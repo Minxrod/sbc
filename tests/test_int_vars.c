@@ -105,6 +105,7 @@ int test_int_vars(){
 		
 		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
 		ASSERT(s->len == 8, "[concat] Correct string length");
+		ASSERT(s->uses == 1, "[concat] Correct string usage count")
 		ASSERT(str_comp(s, str2), "[concat] Correct string value");
 		
 		free(ptc.vars.vars);
@@ -129,6 +130,7 @@ int test_int_vars(){
 		
 		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
 		ASSERT(s->len == 6, "[concat] Correct string length");
+		ASSERT(s->uses == 1, "[concat] Connect string usages");
 		ASSERT(str_comp(s, str2), "[concat] Correct string value");
 		
 		free(ptc.vars.vars);
@@ -286,10 +288,41 @@ int test_int_vars(){
 		
 		ASSERT(s3->type == STRING_CHAR, "[array] Correct string type 3");
 		ASSERT(s3->len == 2, "[array] Correct string length");
+		ASSERT(s3->uses == 1, "[array] Correct string uses");
 		ASSERT(str_comp(s3, strBA), "[array] Assign string");
 		
 		// check DIM for correctness
 		// check values correct
+	}
+	
+	// String reference counting
+	{
+		struct ptc ptc;
+		// note: to force string alloc, add an empty string to end
+		char* code = "A$=\"AB\"+\"C\"\rB$=A$\rC$=B$\rD$=C$+\"D\"\rC$=\"A\"+\"\"\r";
+		char* strABC = "S\003ABC";
+		char* strABCD = "S\004ABCD";
+		char* strA = "S\001A";
+		
+		// run code
+		run_code(code, &ptc);
+		// check results
+		struct named_var* a = test_var(&ptc.vars, "A", VAR_STRING);
+		struct named_var* d = test_var(&ptc.vars, "D", VAR_STRING);
+		struct named_var* c = test_var(&ptc.vars, "C", VAR_STRING);
+		
+		ASSERT(a != NULL, "[str_uses] A exists");
+		ASSERT(str_comp(a->value.ptr, strABC), "[str_uses] Correct string A");
+		ASSERT(((struct string*)a->value.ptr)->uses == 2, "[str_uses] Correct usage count A");
+		
+		ASSERT(d != NULL, "[str_uses] D exists");
+		ASSERT(str_comp(d->value.ptr, strABCD), "[str_uses] Correct string D");
+		ASSERT(((struct string*)d->value.ptr)->uses == 1, "[str_uses] Correct usage count D");
+		
+		ASSERT(c != NULL, "[str_uses] C exists");
+		ASSERT(((struct string*)c->value.ptr)->type == STRING_CHAR, "[str_uses] Correct string type C");
+		ASSERT(str_comp(c->value.ptr, strA), "[str_uses] Correct string C");
+		ASSERT(((struct string*)c->value.ptr)->uses == 1, "[str_uses] Correct usage count C");
 	}
 	
 	SUCCESS("test_int_vars success");

@@ -22,7 +22,15 @@ void op_add(struct ptc* p){
 		struct string* x, * y, * z;
 		
 		x = VALUE_STR(a);
+		// if string is alloc'd and only exists on stack:
+		// decrease usage as it was popped
+		if (x->type == STRING_CHAR && !(a->type & VAR_VARIABLE)){
+			x->uses--;
+		}
 		y = VALUE_STR(b);
+		if (y->type == STRING_CHAR && !(b->type & VAR_VARIABLE)){
+			y->uses--;
+		}
 		z = get_new_str(&p->strs);
 		z->uses = 1;
 		
@@ -61,6 +69,7 @@ void op_mult(struct ptc* p){
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
 	}
+	// TODO: String * Number
 }
 
 void op_div(struct ptc* p){
@@ -133,12 +142,13 @@ void op_assign(struct ptc* p){
 				// OK: has persistence
 			} else {
 				// will lose usage on assignment
-				src->uses--;
+				if (src->type == STRING_CHAR)
+					src->uses--;
 			}
 			
 			if (src == *dest)
 				return; // no change
-			if (*dest == NULL || *(char*)dest == BC_STRING){
+			if (*dest == NULL || **(char**)dest == BC_STRING){
 				// if dest is currently NOT writable string
 				if (src == NULL){
 					(*dest) = NULL; // assign empty string, done
@@ -149,17 +159,27 @@ void op_assign(struct ptc* p){
 				} else if (src->type == BC_STRING){
 					(*dest) = src;
 					// no uses: read only
+				} else {
+					iprintf("Unknown source string type!\n");
+					abort();
 				}
-			} else if (*(char*)dest == STRING_CHAR){
+			} else if (**(char**)dest == STRING_CHAR){
 				// dest is writable: replace it here
 				(*dest)->uses--;
 				if (src == NULL || src->type == STRING_CHAR){
 					*dest = src;
-					(*dest)->uses++;
+					if (src)
+						(*dest)->uses++;
 				} else if (src->type == BC_STRING){
 					// replace with string
 					(*dest) = src;
+				} else {
+					iprintf("Unknown source string type!\n");
+					abort();
 				}
+			} else {
+				iprintf("Unknown destination string type!\n");
+				abort();
 			}
 			
 /*			// a->value.ptr is a struct string*. The variable stored value would be... struct string**.
