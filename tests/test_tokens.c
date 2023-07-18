@@ -204,7 +204,27 @@ int test_tokens(void){
 		}
 		iprintf("\n");
 	}
-
+	
+	{
+		char* code = "PRINT A,B,,C;D,E,;F G\r";
+		char code2[64];
+		// run program
+		struct program p = {
+			strlen(code), code,
+		};
+		struct program o = {
+			0, code2,
+		};
+		
+		char* bytecode = "VAO\1VBO\1O\1VCO\5VDO\1VEO\1O\5VFVGC\0";
+		// compile program
+		tokenize(&p, &o);
+		for (int i = 0; i < 30; i+=1){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[tokens] PRINT implicit and explicit commas/semis");
+		}
+		iprintf("\n");
+	}
 	
 	
 	SUCCESS("test_tokens success");

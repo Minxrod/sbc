@@ -11,8 +11,12 @@ const int MAX_SPECIAL_NAME_SIZE = 8;
 const char* commands =
 "PRINT   LOCATE  COLOR   DIM     ";
 
-// oh well
+// DIM must be listed twice:
+// once for command tokeinzation in `commands`
+// once for evaluation as a special comparison
 const char* dim = "DIM     ";
+// Same for PRINT
+const char* print = "PRINT   ";
 
 /*
 "ACLS    APPEND  "
@@ -258,7 +262,7 @@ void tok_code(struct tokenizer* state){
 					data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
 				}
 				if (*size % 2){
-					(*size)++; // pad one null to keep instructions aligned
+					data[(*size)++] = 0; // pad one null to keep instructions aligned
 				}
 				break;
 				
@@ -297,7 +301,7 @@ void tok_code(struct tokenizer* state){
 						data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
 					}
 					if (*size % 2){
-						(*size)++; // pad one null to keep instructions aligned
+						data[(*size)++] = 0; // pad one null to keep instructions aligned
 					}
 				}
 				break;
@@ -334,6 +338,7 @@ void tok_eval_clean_stack(struct eval* e, u16 prio){
 void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
 	bool is_dim = false;
+	bool implicit_commas = true;
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		u16 prio = state->tokens[i].prio;
@@ -367,18 +372,31 @@ void tok_eval(struct tokenizer* state){
 			// comma or semicolon at lowest nest level
 			e.argc_stack[e.argc_i]++;
 			tok_eval_clean_stack(&e, prio);
-			if (state->source->data[state->tokens[i].ofs] == ';'
-				|| (state->source->data[state->tokens[i].ofs] == ',' && state->tokens[i+1].type == newline)){
+			if (implicit_commas){
+				// don't push commas unless they are prior to another comma or at the end of the line
+				if (state->source->data[state->tokens[i].ofs] == ';'){
+					e.result[e.result_i++] = state->tokens[i];
+				} else { // must be a comma here
+					if (state->tokens[i+1].type == newline || state->tokens[i+1].prio % 8 == 1){
+						e.result[e.result_i++] = state->tokens[i];
+					}
+				}
+			} else {
+				// commas and semicolons should be pushed.
 				e.result[e.result_i++] = state->tokens[i];
 			}
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
-			// TODO: replace this comparison with something less dumb
+			// TODO: replace this comparison with something less dumb (maybe)
 			if (tok_in_str_index(dim, state->source->data, &state->tokens[i]) >= 0){
 				// command is DIM: set array-creation-mode for following tokens
 				is_dim = true;
 				continue;
 				// Note: Do not need to write token as command, wouldn't do anything
+			} else if (tok_in_str_index(print, state->source->data, &state->tokens[i]) >= 0
+				|| state->source->data[state->tokens[i].ofs] == '?'){
+				// command is PRINT: Treat semicolons as implied, commas are explicit
+				implicit_commas = false;
 			} else if (state->tokens[i].type == command){
 				is_dim = false;
 			} else if (state->tokens[i].type == name && prio == 7 && is_dim){
@@ -404,6 +422,7 @@ void tok_eval(struct tokenizer* state){
 		} else if (state->tokens[i].type == newline){ 
 			// dim ends
 			is_dim = false;
+			implicit_commas = true;
 		} else {
 			// values
 			// TODO: this needs special case(s)? for unary ops? maybe?

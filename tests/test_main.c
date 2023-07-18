@@ -5,12 +5,17 @@
 
 #include "test_int_vars.c"
 
+#include "test_console.c"
+
 int main(){
 	test_vars();
 	test_strs();
 	test_arrs();
 	test_tokens();
+	
 	test_int_vars();
+	
+	test_console();
 	
 	return 0;
 }
