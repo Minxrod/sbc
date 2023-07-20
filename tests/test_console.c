@@ -37,6 +37,7 @@ int test_console(void){
 	/*
 	 * Console program tests
 	 */
+	// Tabs test
 	{
 		struct ptc ptc = {0};
 		struct console* c = &ptc.console;
@@ -47,10 +48,47 @@ int test_console(void){
 		ASSERT(con_text_getc(c, 0, 0) == to_wide('0'), "[console] Console contents 0");
 		ASSERT(con_text_getc(c, 4, 0) == to_wide('0'), "[console] Console contents 4");
 		ASSERT(con_text_getc(c, 8, 0) == to_wide('0'), "[console] Console contents 8");
+		ASSERT(c->x == 12, "[console] Trailing tab works");
 		
 		free_code(&ptc);
 	}
 	
+	// Tabs test
+	{
+		struct ptc ptc = {0};
+		struct console* c = &ptc.console;
+		char* code = "?,,,,,,,,0\r";
+		
+		run_code(code, &ptc);
+		
+		ASSERT(con_text_getc(c, 0, 1) == to_wide('0'), "[console] After 8 tabs 0");
+		ASSERT(c->x == 0, "[console] Tab works x");
+		ASSERT(c->y == 2, "[console] Tab works y");
+		
+		free_code(&ptc);
+	}
+	
+	// Mixed test I (ends in newline)
+	{
+		struct ptc ptc = {0};
+		struct console* c = &ptc.console;
+		char* code = "PRINT 7,8;9;10,11\r";
+		
+		run_code(code, &ptc);
+		
+		ASSERT(con_text_getc(c, 0, 0) == to_wide('7'), "[console] 7 at 0,0");
+		ASSERT(con_text_getc(c, 4, 0) == to_wide('8'), "[console] 8 after tab");
+		ASSERT(con_text_getc(c, 5, 0) == to_wide('9'), "[console] 9 after semi");
+		ASSERT(con_text_getc(c, 6, 0) == to_wide('1'), "[console] 10 after semi");
+		ASSERT(con_text_getc(c, 7, 0) == to_wide('0'), "[console] 10 after semi II");
+		ASSERT(con_text_getc(c, 12, 0) == to_wide('1'), "[console] 11 after tab");
+		ASSERT(con_text_getc(c, 13, 0) == to_wide('1'), "[console] 11 after tab II");
+		
+		ASSERT(c->x == 0, "[console] Mixed test I x");
+		ASSERT(c->y == 1, "[console] Mixed test I y");
+		
+		free_code(&ptc);
+	}
 	
 	SUCCESS("test_console success");
 }

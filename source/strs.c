@@ -61,12 +61,15 @@ void str_num(s32 num, u8* str){
 	u32 integer = num >> 12;
 	u32 decimal = ((((num & 0x00000fff) + 2) * 1000) >> 12);
 	u32 divisor = 100000;
+	bool trailing = false;
 	// Loop until divisor is zero (to get all digits)
 	if (integer){
 		while (divisor > 0){
 			// integer > divisor:
 			if (divisor > integer){
 				divisor /= 10;
+				if (trailing)
+					*str++ = '0';
 				continue;
 			}
 			
@@ -77,6 +80,7 @@ void str_num(s32 num, u8* str){
 			}
 			divisor /= 10;
 			str++;
+			trailing = true;
 		}
 	} else {
 		// zero is special case

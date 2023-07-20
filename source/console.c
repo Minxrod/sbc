@@ -16,6 +16,23 @@ void con_advance(struct console* c){
 	}
 }
 
+void con_newline(struct console* c){
+	c->x = 0;
+	c->y++;
+	// TODO optimize (scroll all at once?)
+	while (c->y >= CONSOLE_HEIGHT){
+		c->y--;
+		// newline: scroll console up
+		// TODO optimize this (memcpy?)
+		for (u32 i = 1; i < CONSOLE_HEIGHT; ++i){
+			for (u32 j = 0; j < CONSOLE_WIDTH; ++i){
+				c->text[i-1][j] = c->text[i][j];
+				c->color[i-1][j] = c->color[i][j];
+			}
+		}
+	}
+}
+
 void con_init(struct console* c){
 	c->tabstep = 4;
 }
@@ -26,18 +43,7 @@ void con_put(struct console* c, u16 w){
 	
 	c->x++;
 	if (c->x >= CONSOLE_WIDTH){
-		c->y++;
-		c->x = 0;
-		if (c->y >= CONSOLE_HEIGHT){
-			c->y--;
-			// newline: scroll console up
-			for (u32 i = 1; i < CONSOLE_HEIGHT; ++i){
-				for (u32 j = 0; j < CONSOLE_WIDTH; ++i){
-					c->text[i-1][j] = c->text[i][j];
-					c->color[i-1][j] = c->color[i][j];
-				}
-			}
-		}
+		con_newline(c);
 	}
 }
 
@@ -80,6 +86,9 @@ void cmd_print(struct ptc* p){
 				do {
 					con_advance(c);
 				} while (c->x % c->tabstep != 0);
+				if (c->y == CONSOLE_HEIGHT){
+					con_newline(c);
+				}
 			} else if (e->value.number == OP_SEMICOLON){
 				// do nothing lol
 			} else {
@@ -98,6 +107,7 @@ void cmd_print(struct ptc* p){
 		// no newline!
 	} else {
 		// newline!
+		con_newline(c);
 	}
 	
 	p->stack.stack_i = 0; //PRINT consumes all stack items

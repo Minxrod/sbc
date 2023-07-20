@@ -129,22 +129,27 @@ int test_strs(){
 		str_num(-4, str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
-		ASSERT(str_comp("S\006-0.001", (void*)buf), "[str_num] Convert -0.001 number to string");
+		ASSERT(str_comp("S\006-0.001", (void*)buf), "[str_num] Convert -0.001 to string");
 		
 		str_num(-2, str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
-		ASSERT(str_comp("S\002-0", (void*)buf), "[str_num] Convert -2/4096 number to string");
+		ASSERT(str_comp("S\002-0", (void*)buf), "[str_num] Convert -2/4096 to string");
 		
 		str_num(2, str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
-		ASSERT(str_comp("S\0010", (void*)buf), "[str_num] Convert 2/4096 number to string");
+		ASSERT(str_comp("S\0010", (void*)buf), "[str_num] Convert 2/4096 to string");
 		
 		str_num(3, str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
-		ASSERT(str_comp("S\0050.001", (void*)buf), "[str_num] Convert 3/4096 number to string");
+		ASSERT(str_comp("S\0050.001", (void*)buf), "[str_num] Convert 3/4096 to string");
+		
+		str_num(10<<12, str);
+		iprintf("%s\n", (char*)buf);
+		buf[1] = strlen((char*)str); // sign never matters here
+		ASSERT(str_comp("S\00210", (void*)buf), "[str_num] Convert 10 to string");
 	}
 	
 	SUCCESS("test_strs success");
