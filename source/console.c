@@ -2,6 +2,7 @@
 
 #include "system.h"
 #include "ptc.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,13 +94,13 @@ void cmd_print(struct ptc* p){
 				// do nothing lol
 			} else {
 				// error
-				iprintf("How did this operator get here? (type:%d)\n", e->value.number);
-				abort();
+				p->exec.error = ERR_PRINT_INVALID_OP;
+				return;
 			}
 		} else {
 			// what
-			iprintf("What did you put on the stack? (type:%d)\n", e->type);
-			abort();
+			p->exec.error = ERR_PRINT_INVALID_STACK;
+			return;
 		}
 		i++;
 	}

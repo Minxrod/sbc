@@ -2,6 +2,7 @@
 
 #include "system.h"
 #include "ptc.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +39,7 @@ void op_add(struct ptc* p){
 		
 		stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = z}});
 	} else {
-		iprintf("Types not correct!!!\n");
-		abort();
+		p->exec.error = ERR_OP_DIFFERENT_TYPES;
 	}
 }
 
@@ -68,8 +68,12 @@ void op_mult(struct ptc* p){
 		y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
+	} else if (a->type & VAR_NUMBER && b->type & VAR_STRING){
+		// TODO: String * Number
+		p->exec.error = ERR_UNIMPLEMENTED;
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
-	// TODO: String * Number
 }
 
 void op_div(struct ptc* p){
@@ -84,6 +88,8 @@ void op_div(struct ptc* p){
 		y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x / y << 12}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
 }
 
@@ -99,6 +105,8 @@ void op_sub(struct ptc* p){
 		y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x - y}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
 }
 
@@ -112,6 +120,8 @@ void op_negate(struct ptc* p){
 		x = VALUE_NUM(a);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {-x}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPE;
 	}
 }
 
@@ -127,8 +137,7 @@ void op_assign(struct ptc* p){
 			
 			*(s32*)a->value.ptr = x;
 		} else {
-			iprintf("Can't assign to literal!\n");
-			abort();
+			p->exec.error = ERR_OP_ASSIGN_TO_LITERAL;
 		}
 	} else if (a->type & b->type & VAR_STRING){
 		if (a->type & VAR_VARIABLE){
@@ -181,35 +190,11 @@ void op_assign(struct ptc* p){
 				iprintf("Unknown destination string type!\n");
 				abort();
 			}
-			
-/*			// a->value.ptr is a struct string*. The variable stored value would be... struct string**.
-			// to assign to s, need to take the stack string b, which could contain:
-			if ((*str) == NULL || (*str)->type == STRING_EMPTY){
-				// destination does not exist: shallow copy to a
-				*str = b->value.ptr;
-				(*str)->uses++; // this string is now used once more
-			} else if ((*str)->type == BC_STRING){ 
-				// destination is RO: must allocate string
-				
-			} else if ((*str)->uses > 1){
-				// destination exists and is used more than once
-				(*str)->uses--; //remove one string usage of destination
-				// select new struct string* to store within variable (?)
-				// and write to new string
-				*str = get_new_str(&p->strs);
-				str_copy(b->value.ptr, *str);
-			} else {
-				// string not empty and not used twice: used once
-				// just overwrite destination
-				str_copy(b->value.ptr, *str);
-			}*/
 		} else {
-			iprintf("Can't assign to literal!\n");
-			abort();
+			p->exec.error = ERR_OP_ASSIGN_TO_LITERAL;
 		}
 	} else {
-		iprintf("Invalid variable type for assignment\n");
-		abort();
+		p->exec.error = ERR_OP_ASSIGN_INVALID_TYPE;
 	}
 }
 

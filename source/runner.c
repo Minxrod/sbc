@@ -171,8 +171,8 @@ void run(struct program* code, struct ptc* p) {
 			if (!r->argcount){
 				struct named_var* v = get_var(&p->vars, name, len, t);
 				if (!v){
-					iprintf("Error: Variable failed to allocate!\n");
-					abort();
+					r->error = ERR_VARIABLE_CREATION_FAIL;
+					break;
 				}
 				x = t & VAR_NUMBER ? (void*)&v->value.number : &v->value.ptr;
 			} else {

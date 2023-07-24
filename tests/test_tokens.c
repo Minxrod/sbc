@@ -248,6 +248,5 @@ int test_tokens(void){
 		iprintf("\n");
 	}
 	
-	
 	SUCCESS("test_tokens success");
 }
