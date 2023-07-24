@@ -86,7 +86,7 @@ void str_num(s32 num, u8* str){
 		// zero is special case
 		*str++ = '0';
 	}
-	// Only add decimal if it doesn't exist
+	// Only add decimal if it exists
 	if (decimal){
 		*str++ = '.';
 		// loop until number is gone (does not keep trailing zeros)

@@ -4,6 +4,7 @@
 #include "stack.h"
 #include "strs.h"
 #include "arrays.h"
+#include "runner.h"
 
 #include "console.h"
 
@@ -146,6 +147,7 @@ struct panel {
 	struct sprites keys;
 };
 
+// note: members here are stored directly (why?)
 struct ptc {
 	// upper screen stuff
 	struct console console;
@@ -156,8 +158,12 @@ struct ptc {
 	struct panel panel;
 	
 	// actual system stuff
-	/// The evaluator stack
-	struct stack stack;
+	/// The value/variable stack 
+	struct runner exec;
+	
+	struct value_stack stack;
+	
+	struct call_stack calls; 
 	
 	struct variables vars;
 	

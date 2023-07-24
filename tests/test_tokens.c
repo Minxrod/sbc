@@ -205,6 +205,7 @@ int test_tokens(void){
 		iprintf("\n");
 	}
 	
+	// PRINT special eval rules
 	{
 		char* code = "PRINT A,B,,C;D,E,;F G\r";
 		char code2[64];
@@ -222,6 +223,27 @@ int test_tokens(void){
 		for (int i = 0; i < 30; i+=1){
 			iprintf("%c:%d,", o.data[i], o.data[i]);
 			ASSERT(o.data[i] == bytecode[i], "[tokens] PRINT implicit and explicit commas/semis");
+		}
+		iprintf("\n");
+	}
+	
+	{
+		char* code = "FOR I=0 TO 9:?I:NEXT\r";
+		char code2[64];
+		// run program
+		struct program p = {
+			strlen(code), code,
+		};
+		struct program o = {
+			0, code2,
+		};
+		
+		char* bytecode = "VIC\4n\0O\6n\11C\5B\0VIC\0C\7";
+		// compile program
+		tokenize(&p, &o);
+		for (int i = 0; i < 20; i+=1){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Test FOR tokenization");
 		}
 		iprintf("\n");
 	}

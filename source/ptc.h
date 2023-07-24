@@ -1,21 +1,23 @@
 
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
+	BC_BEGIN_LOOP = 'B',
 	BC_COMMAND = 'C',
 	BC_DIM = 'D',
 	BC_FUNCTION = 'F',
 	BC_GOTO = 'G',
+	BC_VARIABLE_ID = 'I', //for ID based variable system
 	BC_OPERATOR = 'O',
-	BC_SMALL_NUMBER = 'n', //special case for tiny numbers
+	BC_SMALL_NUMBER = 'n', //special case for tiny numbers TODO make capital?
 	BC_NUMBER = 'N',
 	BC_STRING = 'S', //read-only
-	BC_VARIABLE_ID = 'v', //for ID based variables
 	BC_VARIABLE_NAME = 'V', //for name based variables
 	BC_WIDE_STRING = 'W', //read-only
 };
 
 enum command_ids {
 	CMD_PRINT=0, CMD_LOCATE, CMD_COLOR, CMD_DIM,
+	CMD_FOR, CMD_TO, CMD_STEP, CMD_NEXT
 	/*
 	CMD_ACLS, CMD_APPEND, CMD_BEEP, CMD_BGCLIP, CMD_BGCLR, CMD_BGCOPY, CMD_BGFILL, CMD_BGMCLEAR, 
 	CMD_BGMPLAY, CMD_BGMPRG, CMD_BGMSET, CMD_BGMSETD, CMD_BGMSETV, CMD_BGMSTOP, CMD_BGMVOL, 

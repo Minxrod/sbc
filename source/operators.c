@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 void op_add(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
@@ -44,20 +44,20 @@ void op_add(struct ptc* p){
 }
 
 void op_comma(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){STACK_OP, {.number = OP_COMMA}});
 }
 
 void op_semi(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){STACK_OP, {.number = OP_SEMICOLON}});
 }
 
 
 void op_mult(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
@@ -73,7 +73,7 @@ void op_mult(struct ptc* p){
 }
 
 void op_div(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
@@ -88,7 +88,7 @@ void op_div(struct ptc* p){
 }
 
 void op_sub(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
@@ -103,7 +103,7 @@ void op_sub(struct ptc* p){
 }
 
 void op_negate(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & VAR_NUMBER){
@@ -116,7 +116,7 @@ void op_negate(struct ptc* p){
 }
 
 void op_assign(struct ptc* p){
-	struct stack* s = &p->stack;
+	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	// a = b

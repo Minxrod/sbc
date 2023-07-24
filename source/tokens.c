@@ -9,14 +9,16 @@
 const int MAX_SPECIAL_NAME_SIZE = 8;
 
 const char* commands =
-"PRINT   LOCATE  COLOR   DIM     ";
+"PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    ";
 
 // DIM must be listed twice:
-// once for command tokeinzation in `commands`
+// once for command tokenization in `commands`
 // once for evaluation as a special comparison
 const char* dim = "DIM     ";
 // Same for PRINT
 const char* print = "PRINT   ";
+// This is similar
+const char* for_ = "FOR     ";
 
 /*
 "ACLS    APPEND  "
@@ -129,7 +131,7 @@ void print_token(struct tokenizer* state, struct token t){
 }
 
 void tokenize(struct program* src, struct program* out){
-	struct tokenizer state;
+	struct tokenizer state = {0};
 	state.source = src;
 	state.output = out;
 	state.cursor = 0;
@@ -311,6 +313,11 @@ void tok_code(struct tokenizer* state){
 				data[(*size)++] = state->tokens[i].len;
 				break;
 				
+			case loop_begin:
+				data[(*size)++] = BC_BEGIN_LOOP;
+				data[(*size)++] = 0;
+				break;
+				
 			default:
 				iprintf("Unknown token: ");
 				print_token(state, state->tokens[i]);
@@ -337,6 +344,7 @@ void tok_eval_clean_stack(struct eval* e, u16 prio){
 // I'm still amazed it worked in the end.
 void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
+	bool is_for = false;
 	bool is_dim = false;
 	bool implicit_commas = true;
 	
@@ -397,7 +405,12 @@ void tok_eval(struct tokenizer* state){
 				|| state->source->data[state->tokens[i].ofs] == '?'){
 				// command is PRINT: Treat semicolons as implied, commas are explicit
 				implicit_commas = false;
+			} else if (tok_in_str_index(for_, state->source->data, &state->tokens[i]) >= 0){
+				// command is FOR: must add instruction to execute FOR comparison
+				is_for = true;
 			} else if (state->tokens[i].type == command){
+				// Note: is_for will not be reset because FOR needs to be kept
+				// to the newline, including through other commands TO and STEP
 				is_dim = false;
 			} else if (state->tokens[i].type == name && prio == 7 && is_dim){
 				// arrays with prio 7: flag the type for array creation
@@ -429,9 +442,13 @@ void tok_eval(struct tokenizer* state){
 			e.result[e.result_i++] = state->tokens[i];
 		}
 	}
-	
 	//cleanup
 	tok_eval_clean_stack(&e, 0);
+	
+	// special operation used to handle loop condition (goes at end of 'line')
+	if (is_for){
+		e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
+	}
 	
 	iprintf("Result size: %ld\n",e.result_i);
 	for (size_t i = 0; i < e.result_i; ++i){

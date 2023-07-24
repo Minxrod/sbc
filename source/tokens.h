@@ -19,10 +19,10 @@ enum tokenizer_state {
 	TKR_EXPR,
 };
 
-struct pair {
+/*struct pair {
 	char name[16];
 	u32 value;
-};
+};*/
 
 struct token {
 	enum type {
@@ -37,6 +37,7 @@ struct token {
 		newline,
 		dim_arr,
 		arg_count,
+		loop_begin,
 	} type;
 	u32 ofs;
 	u8 len;
@@ -61,11 +62,11 @@ struct tokenizer {
 	// Values obtained while parsing
 	// TODO: dynamic size?
 	// Label addresses
-	u32 label;
-	struct pair labels[4096];
+/*	u32 label;
+	struct pair labels[4096];*/
 	// Variable indices
-	u32 var;
-	struct pair vars[4096];
+/*	u32 var;
+	struct pair vars[4096];*/
 	
 	struct program* output;
 };
