@@ -15,4 +15,6 @@ const char * error_messages[] = {
 	"Operator argument type invalid",
 	"Can't assign to literal",
 	"Can't assign to provieded type",
+	"Can't find a matching FOR for this NEXT",
+	"Missing variable initialization in FOR",
 };

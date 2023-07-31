@@ -1,0 +1,77 @@
+#include "test_util.h"
+
+#include "vars.h"
+#include "system.h"
+#include "program.h"
+#include "tokens.h"
+#include "runner.h"
+#include "arrays.h"
+#include "strs.h"
+#include "ptc.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+int test_int_code(){
+	// Code searching
+	{
+		char* code = "FOR I=0 TO 9\r\rNEXT\r";
+		char buf[64];
+		struct program p = {
+			strlen(code),
+			code,
+		};
+		struct program o = {0, buf};
+		
+		tokenize(&p, &o);
+		
+		u32 i = bc_scan(&o, 0, BC_OPERATOR);
+		ASSERT(i == 6, "[bc_scan] Find index of operator");
+	}
+	
+	// Code searching (not faked)
+	{
+		char* code = "?\"O=\"+\"O=\"\r";
+		char buf[64];
+		struct program p = {
+			strlen(code),
+			code,
+		};
+		struct program o = {0, buf};
+		
+		tokenize(&p, &o);
+		
+		u32 i = bc_scan(&o, 0, BC_OPERATOR);
+		ASSERT(i == 8, "[bc_scan] Find index of operator without being in string");
+	}
+	
+	// Actual FOR loop
+	{
+		struct ptc ptc = {0};
+		char* code = "FOR I=0 TO 9\r\rNEXT\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 10<<12, "[for] I=10");
+		
+		free_code(&ptc);
+	}
+	
+	// FOR loop with content
+	{
+		struct ptc ptc = {0};
+		char* code = "DIM A[20]\rFOR I=0 TO 19\rA[I]=I\rNEXT\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 20<<12, "[for] I=20");
+		for (int i = 0; i < 20; ++i){
+			ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number == (i << 12), "[for] A[i]=i");
+		}
+		
+		free_code(&ptc);
+	}
+	
+	SUCCESS("test_int_code success");
+}

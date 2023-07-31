@@ -31,8 +31,8 @@ enum types {
 	STACK_OP=32,
 };
 
-#define VALUE_NUM(v) v->type & VAR_VARIABLE ? *(s32*)v->value.ptr : v->value.number
-#define VALUE_STR(v) v->type & VAR_VARIABLE ? *(struct string**)v->value.ptr : (struct string*)v->value.ptr
+#define VALUE_NUM(v) (v->type & VAR_VARIABLE ? *(s32*)v->value.ptr : v->value.number)
+#define VALUE_STR(v) (v->type & VAR_VARIABLE ? *(struct string**)v->value.ptr : (struct string*)v->value.ptr)
 
 
 // This file defines the data structures used to store variable information.

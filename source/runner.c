@@ -12,11 +12,42 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
-//0-9
-const s32 SMALL_NUMBERS[] = {
-	0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 32768, 36864
-};
+#define BC_SCAN_NOT_FOUND UINT_MAX
+
+// Scans for a specific instruction. Special purpose function to handle the
+// various instruction lengths.
+u32 bc_scan(struct program* code, u32 index, u8 find){
+	// search for find in code->data
+	while (index < code->size){ 
+		u8 cur = code->data[index];
+		if (cur == find){
+			return index;
+		}
+		if (cur == BC_STRING){
+			cur = code->data[++index];
+			index ++;
+			index += cur + (cur & 1);
+		} else if (cur == BC_WIDE_STRING){
+			cur = code->data[++index];
+			index ++;
+			index += sizeof(u16) * cur;
+		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME){
+			cur = code->data[++index];
+			if (cur >= 'A'){
+				++index;
+			} else {
+				index += cur + (cur & 1);
+			}
+		} else if (cur == BC_NUMBER){
+			index += 6; // TODO: may need to change if number syntax gets modified
+		} else {
+			index += 2;
+		}
+	}
+	return BC_SCAN_NOT_FOUND;
+}
 
 typedef void(*ptc_call)(struct ptc*);
 
@@ -25,8 +56,18 @@ void cmd_for(struct ptc* p){
 	struct stack_entry* e = &p->stack.entry[0];
 	
 	p->calls.entry[p->calls.stack_i].type = CALL_FOR;
-	// Note: skips instruction OP_ASSIGN
-	p->calls.entry[p->calls.stack_i].address = p->exec.index + 2;
+	//note: this points to just after FOR
+	u32 index = p->exec.index;
+	do {
+		index = bc_scan(p->exec.code, index, BC_OPERATOR);
+	} while (index != BC_SCAN_NOT_FOUND && p->exec.code->data[index+1] != OP_ASSIGN);
+	iprintf("\nIndex of OP_ASSIGN: %d", index);
+	if (index == BC_SCAN_NOT_FOUND){
+		p->exec.error = ERR_MISSING_OP_ASSIGN_FOR;
+		return;
+	}
+	
+	p->calls.entry[p->calls.stack_i].address = index+2;
 	p->calls.entry[p->calls.stack_i].var_type = e->type;
 	p->calls.entry[p->calls.stack_i].var = e->value.ptr;
 	
@@ -41,15 +82,82 @@ void cmd_step(struct ptc* p){
 	p++;
 }
 
+/// PTC command marking the end of a FOR loop.
+/// 
+/// Format: 
+/// * `NEXT [variable]`
+/// 
+/// Arguments:
+/// * variable - Optional variable for iteration
+/// 
+/// @param a Arguments
 void cmd_next(struct ptc* p){
-	p++;
-	// get call stack top
-//	u32 top = p->calls.stack_i-1;
-//	struct call_entry* e = &p->calls.entry[top];
+	struct program for_condition;
 	
+	// get NEXT variable if needed
+	struct stack_entry* e = NULL;
+	if (p->stack.stack_i){
+		// variable ptr
+		e = stack_pop(&p->stack)->value.ptr;
+	}
+	
+	// get call stack top / number of elements
+	s32 stack_i = p->calls.stack_i;
+	if (!stack_i){
+		// empty stack
+		p->exec.error = ERR_NEXT_WITHOUT_FOR;
+		return;
+	}
+	while(true){
+		if (p->calls.entry[--stack_i].type == CALL_FOR){
+			// stack points to FOR call - is it correct?
+			if (e == NULL || p->calls.entry[stack_i].var == e->value.ptr){
+				break;
+			}
+		} else if (stack_i < 0){
+			// did not find FOR anywhere in stack
+			p->exec.error = ERR_NEXT_WITHOUT_FOR;
+			return;
+		}
+	}
+	// this is the FOR call we are processing.
+	struct call_entry* c = &p->calls.entry[stack_i];
+	u32 addr = c->address; //points to just after FOR
+	// march address forward until hitting B command
+	addr = bc_scan(p->exec.code, addr, BC_BEGIN_LOOP);
+	struct program* code = p->exec.code;
+	struct runner temp = p->exec; // copy code state (not stack)
+	
+	// addr points to loop condition setup
+	for_condition.size = addr - c->address;
+	for_condition.data = &code->data[c->address];
+	run(&for_condition, p);
+	p->exec = temp; //restore program state
+	
+	// now stack should contain (END, [STEP])
+	s32* current = (s32*)c->var;
+	s32 end;
+	s32 step;
+	if (p->stack.stack_i == 1){
+		step = 1<<12;
+		end = stack_pop(&p->stack)->value.number;
+	} else {
+		step = stack_pop(&p->stack)->value.number; 
+		end = stack_pop(&p->stack)->value.number;
+	}
+	(*current) += step;
+	s32 val = *current;
 	// check if need to loop
+	if ((step < 0 && end > val) || (step >= 0 && end < val)){
+		// loop ends
+		// REMOVE ENTRY stack_i from the stack
+		// TODO: copy down all further entries
+		p->calls.stack_i--; // decrease stack count
+	} else {
+		// loop continues, jump back to this point
+		p->exec.index = c->address;
+	}
 }
-
 
 const ptc_call ptc_commands[] = {
 	cmd_print,
@@ -90,6 +198,8 @@ void print_name(const char* names, int data){
 
 void run(struct program* code, struct ptc* p) {
 	struct runner* r = &p->exec;
+	r->index = 0;
+	r->code = code;
 	p->stack.stack_i = 0;
 	
 	while (r->index < code->size && !p->exec.error){
@@ -176,13 +286,15 @@ void run(struct program* code, struct ptc* p) {
 				}
 				x = t & VAR_NUMBER ? (void*)&v->value.number : &v->value.ptr;
 			} else {
-				u32 a;
-				u32 b = ARR_DIM2_UNUSED;
+				s32 a;
+				s32 b = ARR_DIM2_UNUSED;
 				// TODO: check for strings here before reading
 				if (r->argcount == 2){
-					b = stack_pop(&p->stack)->value.number >> 12;
+					struct stack_entry* y = stack_pop(&p->stack);
+					b = VALUE_NUM(y) >> 12;
 				}
-				a = stack_pop(&p->stack)->value.number >> 12;
+				struct stack_entry* z = stack_pop(&p->stack);
+				a = VALUE_NUM(z) >> 12;
 				
 				union value* val = get_arr_entry(&p->vars, name, len, t | VAR_ARRAY, a, b);
 				x = t & VAR_NUMBER ? (void*)&val->number : &val->ptr;
@@ -245,9 +357,26 @@ void run(struct program* code, struct ptc* p) {
 			s32 val = *current;
 			if ((step < 0 && end > val) || (step >= 0 && end < val)){
 				// if val + step will never reach end, then skip to NEXT
-				
+				// treat valid NEXT as first in a line
+				int nest = 1;
+				while (nest > 0){
+					instr = code->data[r->index++];
+					data = code->data[r->index++];
+					if (instr == BC_COMMAND){
+						if (data == CMD_NEXT){
+							// TODO: Variable check...
+							// find NEXT, go back one instruction, execute statement if it is VAR?
+							// Found a NEXT
+							nest--;
+						} else if (data == CMD_FOR){
+							// Found a FOR, so we need to search for another NEXT
+							nest++;
+						}
+					}
+				}
+				// index now points to one past the NEXT, the correct location
 			} else {
-				// execution continues as normal
+				// execution continues as normal into the loop
 			}
 		} else {
 			iprintf("Unknown BC: %c %d", instr, data);

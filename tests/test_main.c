@@ -4,6 +4,7 @@
 #include "test_tokens.c"
 
 #include "test_int_vars.c"
+#include "test_int_code.c"
 
 #include "test_console.c"
 
@@ -14,6 +15,7 @@ int main(){
 	test_tokens();
 	
 	test_int_vars();
+	test_int_code();
 	
 	test_console();
 	

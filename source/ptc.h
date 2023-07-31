@@ -1,3 +1,4 @@
+#pragma once
 
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
