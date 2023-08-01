@@ -248,5 +248,27 @@ int test_tokens(void){
 		iprintf("\n");
 	}
 	
+	{
+		char* code = "IF 0+1 THEN ?\"A\" ELSE ?\"B\"\r";
+		char code2[64];
+		// run program
+		struct program p = {
+			strlen(code), code,
+		};
+		struct program o = {
+			0, code2,
+		};
+		
+		char* bytecode = "n\0n\1O\0C\10S\1A\0C\0C\12S\1B\0C\0C\13";
+		// compile program
+		tokenize(&p, &o);
+		for (int i = 0; i < 24; i+=1){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Test IF tokenization");
+		}
+		iprintf("\n");
+	}
+	
+	
 	SUCCESS("test_tokens success");
 }

@@ -9,16 +9,22 @@
 const int MAX_SPECIAL_NAME_SIZE = 8;
 
 const char* commands =
-"PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    ";
+"PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
+"IF      THEN    ELSE            "; //ENDIF
 
 // DIM must be listed twice:
 // once for command tokenization in `commands`
 // once for evaluation as a special comparison
-const char* dim = "DIM     ";
-// Same for PRINT
-const char* print = "PRINT   ";
-// This is similar
+// Same for all the others here:
+// TODO: Use tokenization step to store CMD_* ids, to avoid repeated comparison
+// and duplicate data
+const char* dim_ = "DIM     ";
+const char* print_ = "PRINT   ";
 const char* for_ = "FOR     ";
+const char* if_ = "IF      ";
+const char* then_ = "THEN    ";
+const char* else_ = "ELSE    ";
+// This is similar
 
 /*
 "ACLS    APPEND  "
@@ -45,9 +51,9 @@ const char* operations =
 const char* bc_conv_operations = 
 "+       ,       -       *       /       ;       =       (-)     "
 "%       "
-"AND     OR      NOT     XOR     -       !       "
+"AND     OR      NOT     XOR     !       "
 ">       >=      <       <=      ==      !=      "
-"=       ,       ;       ";
+"(       )       [       ]       ";
 
 const char* labels = "LABEL   ";
 
@@ -113,19 +119,29 @@ int tok_in_str_index(const char* str, const char* data, struct token* tok){
 }
 
 void print_token(struct tokenizer* state, struct token t){
-	iprintf("ofs:%d len:%d type:%d ", t.ofs, t.len, t.type);
-	if (t.prio) {
-		iprintf("prio:%2d ", t.prio);
-	} else {
-		iprintf("        ");
-	}
-	for (size_t c = 0; c < t.len; ++c){
-		char ch = state->source->data[t.ofs + c];
-		if (ch == '\r'){
-			iprintf("\\r");
+	if (t.type != command && t.type != function && t.type != operation){
+		iprintf("ofs:%d len:%d type:%d ", t.ofs, t.len, t.type);
+		if (t.prio) {
+			iprintf("prio:%02d ", t.prio);
 		} else {
-			iprintf("%c", ch);
+			iprintf("        ");
 		}
+		for (size_t c = 0; c < t.len; ++c){
+			char ch = state->source->data[t.ofs + c];
+			if (ch == '\r'){
+				iprintf("\\r");
+			} else {
+				iprintf("%c", ch);
+			}
+		}
+	} else {
+		// op, func, cmd
+		const char* names = t.type == command ? commands : t.type == function ? functions : bc_conv_operations;
+		char name[9] = {0};
+		for (size_t i = 0; i < 8; ++i){
+			name[i] = names[8*t.ofs + i];
+		}
+		iprintf("id:%d type:%d cmd:%s", t.ofs, t.type, name);
 	}
 	iprintf("\n");
 }
@@ -221,19 +237,10 @@ void tok_code(struct tokenizer* state){
 		switch (state->tokens[i].type){
 			case command:
 				// convert token to command
-				if (state->source->data[state->tokens[i].ofs] == '?'){
-					data[(*size)++] = BC_COMMAND;
-					data[(*size)++] = (char)CMD_PRINT;
-				} else {
-					int j = tok_in_str_index(commands, state->source->data, &state->tokens[i]);
-					iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
-					if (j >= 0){
-						data[(*size)++] = BC_COMMAND;
-						data[(*size)++] = (char)(j);
-					} else {
-						iprintf("Invalid command: %d, %d\n", j, state->tokens[i].ofs);
-					}
-				}
+				//TODO: ???
+//				iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
+				data[(*size)++] = BC_COMMAND;
+				data[(*size)++] = state->tokens[i].ofs;
 				break;
 			
 			case number:
@@ -271,7 +278,8 @@ void tok_code(struct tokenizer* state){
 			case operation:
 				data[(*size)++] = BC_OPERATOR;
 				
-				int op = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
+//				int op = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
+				int op = state->tokens[i].ofs;
 				if (state->tokens[i].prio % 8 == 6 && op == OP_SUBTRACT){
 					op = OP_NEGATE;
 				}
@@ -283,7 +291,7 @@ void tok_code(struct tokenizer* state){
 			case function:
 				data[(*size)++] = BC_FUNCTION;
 				
-				data[(*size)++] = tok_in_str_index(functions, state->source->data, &state->tokens[i]);
+				data[(*size)++] = state->tokens[i].ofs;
 				break;
 				
 			case name:
@@ -350,22 +358,23 @@ void tok_eval(struct tokenizer* state){
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		u16 prio = state->tokens[i].prio;
-		char first = state->source->data[state->tokens[i].ofs];
+//		char first = state->source->data[state->tokens[i].ofs];
+		char op = state->tokens[i].ofs;
 		iprintf("[tok_eval]");
 		print_token(state, state->tokens[i]);
 		
 		if (state->tokens[i].type == operation && prio % 8 == 0) {
 			// operation of prio 0: ( ) [ ] =
-			if (first == '=' && state->tokens[i].len == 1){
+			if (op == OP_ASSIGN){
 				tok_eval_clean_stack(&e, prio);
 				e.op_stack[e.op_i++] = &state->tokens[i];
-			} else if (first == '(' || first == '['){
+			} else if (op == OP_OPEN_BRACKET || op == OP_OPEN_PAREN){
 				e.argc_i++;
 				// down a level; default # args is 1 (no commas, not ()
 				e.argc_stack[e.argc_i] = 1;
 			} else { // assumed ) or ]
 				// handle 0-args PI(), BUTTON() case
-				if (state->source->data[state->tokens[i-1].ofs] == '(' && state->tokens[i-1].type == operation){
+				if (state->tokens[i-1].type == operation && state->tokens[i-1].ofs == OP_OPEN_PAREN){
 					e.argc_stack[e.argc_i] = 0;
 				}
 				// TODO: Don't create argcount for DIM command
@@ -382,7 +391,7 @@ void tok_eval(struct tokenizer* state){
 			tok_eval_clean_stack(&e, prio);
 			if (implicit_commas){
 				// don't push commas unless they are prior to another comma or at the end of the line
-				if (state->source->data[state->tokens[i].ofs] == ';'){
+				if (state->tokens[i].ofs == OP_SEMICOLON){
 					e.result[e.result_i++] = state->tokens[i];
 				} else { // must be a comma here
 					if (state->tokens[i+1].type == newline || state->tokens[i+1].prio % 8 == 1){
@@ -396,22 +405,28 @@ void tok_eval(struct tokenizer* state){
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
 			// TODO: replace this comparison with something less dumb (maybe)
-			if (tok_in_str_index(dim, state->source->data, &state->tokens[i]) >= 0){
+			if (state->tokens[i].type == command){
+				if (state->tokens[i].ofs == CMD_DIM){
 				// command is DIM: set array-creation-mode for following tokens
-				is_dim = true;
-				continue;
-				// Note: Do not need to write token as command, wouldn't do anything
-			} else if (tok_in_str_index(print, state->source->data, &state->tokens[i]) >= 0
-				|| state->source->data[state->tokens[i].ofs] == '?'){
-				// command is PRINT: Treat semicolons as implied, commas are explicit
-				implicit_commas = false;
-			} else if (tok_in_str_index(for_, state->source->data, &state->tokens[i]) >= 0){
-				// command is FOR: must add instruction to execute FOR comparison
-				is_for = true;
-			} else if (state->tokens[i].type == command){
-				// Note: is_for will not be reset because FOR needs to be kept
-				// to the newline, including through other commands TO and STEP
-				is_dim = false;
+					is_dim = true;
+					continue; // do not compile as instruction
+				} else if (state->tokens[i].ofs == CMD_PRINT){
+					// Command is PRINT: semicolons are implied if omitted;
+					// commas are always added
+					implicit_commas = false;
+				} else if (state->tokens[i].ofs == CMD_FOR){
+					// Command is FOR: add instruction at end of FOR setup to
+					// properly execute the loop
+					is_for = true;
+				} else {
+					// Any other "normal" command
+					is_dim = false;
+					// Note: is_for will not be reset because FOR needs to be kept
+					// to the newline, including through other commands TO and STEP
+					if (is_for) {
+						// TODO: More accurate loop start placement, reset is_for here
+					}
+				}
 			} else if (state->tokens[i].type == name && prio == 7 && is_dim){
 				// arrays with prio 7: flag the type for array creation
 				// if name and prio 7 then => array; mark as array if DIM else
@@ -428,7 +443,7 @@ void tok_eval(struct tokenizer* state){
 				tok_eval_clean_stack(&e, prio);
 			}
 			// DON'T push a comma, as this is implied from argument ordering/structure
-			if (state->source->data[state->tokens[i].ofs] != ',')
+			if (state->tokens[i].ofs != OP_COMMA)
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			else
 				e.argc_stack[e.argc_i]++;
@@ -469,58 +484,62 @@ void tok_prio(struct tokenizer* state){
 	int nest = 0;
 	for (size_t i = 0; i < state->token_i; i += 1){
 		if (state->tokens[i].type == operation){
-			char c = state->source->data[state->tokens[i].ofs];
-			bool single = state->tokens[i].len == 1;
-			switch (c){
-				case ',':
-				case ';':
+			u8 op_id = state->tokens[i].ofs;
+			switch (op_id){
+				case OP_ASSIGN:
+					state->tokens[i].prio = nest + 0;
+					break;
+				case OP_COMMA:
+				case OP_SEMICOLON:
 					state->tokens[i].prio = nest + 1;
 					break;
-				case 'A':
-				case 'O':
-				case 'X':
+				case OP_AND:
+				case OP_OR:
+				case OP_XOR:
 					state->tokens[i].prio = nest + 2;
 					break;
-				case '<':
-				case '>':
+				case OP_LESS:
+				case OP_LESS_EQUAL:
+				case OP_GREATER_EQUAL:
+				case OP_GREATER:
+				case OP_EQUAL:
+				case OP_NOT_EQUAL:
 					state->tokens[i].prio = nest + 3;
 					break;
-				case '=':
-					state->tokens[i].prio = single ? nest + 0 : nest + 3;
-					break;
-				case '!':
-					state->tokens[i].prio = single ? nest + 6 : nest + 3;
-					break;
-				case '+':
+				case OP_ADD:
 					state->tokens[i].prio = nest + 4;
 					break;
-				case '-':
+				case OP_SUBTRACT:
 					if ((i>0 && state->tokens[i-1].type == number) ||
 							state->tokens[i-1].type == name ||
-							state->source->data[state->tokens[i-1].prio] % 8 == 0){
+							(state->tokens[i-1].type == operation && (
+								state->tokens[i-1].ofs > OP_OPEN_PAREN
+							))){
 						state->tokens[i].prio = nest + 4;
 					} else {
+						state->tokens[i].ofs = OP_NEGATE;
 						state->tokens[i].prio = nest + 6;
 					}
 					break;
-				case '*':
-				case '/':
-				case '%':
+				case OP_MULTIPLY:
+				case OP_DIVIDE:
+				case OP_MODULO:
 					state->tokens[i].prio = nest + 5;
 					break;
-				case 'N':
+				case OP_NOT:
+				case OP_LOGICAL_NOT:
 					state->tokens[i].prio = nest + 6;
 					break;
-				case '(':
-				case '[':
+				case OP_OPEN_BRACKET:
+				case OP_OPEN_PAREN:
 					if (i>0 && state->tokens[i-1].type == name){
 						state->tokens[i-1].prio = nest + 7;
 					}
 					nest += 8;
 					state->tokens[i].prio = nest;
 					break;
-				case ']':
-				case ')':
+				case OP_CLOSE_BRACKET:
+				case OP_CLOSE_PAREN:
 					state->tokens[i].prio = nest;
 					nest -= 8;
 					break;
@@ -550,12 +569,16 @@ void tok_none(struct tokenizer* state){
 	if (is_name_start(c)){
 		tok_name(state);
 	} else if (c == '?'){
-		tok_single(state, command);
+//		tok_single(state, command);
+		state->tokens[state->token_i].type = command;
+		state->tokens[state->token_i].ofs = CMD_PRINT;
+		state->cursor++;
+		state->token_i++;
 	} else if (c == '\r' || c == ':'){
 		tok_single(state, newline);
 		state->state = TKR_CONVERT;
 	} else if (c == ' '){
-		//whitespace
+		//whitespace is ignored
 		state->cursor++;
 	} else if (c == '"'){
 		tok_string(state);
@@ -564,6 +587,7 @@ void tok_none(struct tokenizer* state){
 	} else if (c == ',' || c == ';' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
 			c == '(' || c == ')' || c == '[' || c == ']'){
 		tok_single(state, operation);
+		state->tokens[state->token_i-1].ofs = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
 	} else if (c == '<' || c == '=' || c == '>' || c == '!'){
 		tok_single(state, operation);
 		// check for <= == >= !=
@@ -571,41 +595,11 @@ void tok_none(struct tokenizer* state){
 			state->tokens[state->token_i - 1].len++;
 			state->cursor++;
 		}
+		state->tokens[state->token_i-1].ofs = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
 	} else {
 		iprintf("Unknown transition from NONE on %c\n", c);
 		state->cursor++;
 	}
-}
-
-void tok_print(struct tokenizer* state){
-	char c = '\r';
-	do {
-		tok_expr(state);
-//?		state->cursor++;
-	} while (c != '\r');
-	state->state = TKR_CONVERT;
-}
-
-void tok_expr(struct tokenizer* state){
-//	iprintf("Entered expr\n");
-	char c;
-	do {
-		c = state->source->data[state->cursor];
-		if (is_name_start(c)){
-			tok_name(state);
-		} else if (is_number(c)){
-			tok_number(state);
-		} else if (c == '"'){
-			tok_string(state);
-		} else if (c == ','){
-			tok_single(state, operation);
-		} else if (c != '\r'){
-			//skip!
-			iprintf("Unknown state %d\n", state->source->data[state->cursor]);
-//			state->cursor++;
-		}
-	} while (c != '\r');
-//	iprintf("Exited expr\n");
 }
 
 void tok_name(struct tokenizer* state){
@@ -619,12 +613,17 @@ void tok_name(struct tokenizer* state){
 		c = state->source->data[state->cursor];
 	} while (c == '$' || is_name(c));
 	//additional checking for special strings
-	if (0 <= tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i])){
+	int index;
+	if (0 <= (index = tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = command;
-	} else if (0 <= tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i])){
+		state->tokens[state->token_i].ofs = index;
+	} else if (0 <= (index = tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = function;
-	} else if (0 <= tok_in_str_index(operations, state->source->data, &state->tokens[state->token_i])){
+		state->tokens[state->token_i].ofs = index;
+	} else if (0 <= (index = tok_in_str_index(operations, state->source->data, &state->tokens[state->token_i]))){
+		// note that this is only the bitwise ops
 		state->tokens[state->token_i].type = operation;
+		state->tokens[state->token_i].ofs = index;
 	} else if (0 <= tok_in_str_index(labels, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = label;
 	} else if (0 <= tok_in_str_index(comments, state->source->data, &state->tokens[state->token_i])){
