@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO: Rewrite test cases to use these constants instead of hardcoded strings
+// for ease of modification
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
 	BC_BEGIN_LOOP = 'B',
@@ -18,7 +20,8 @@ enum bytecode_ops {
 
 enum command_ids {
 	CMD_PRINT=0, CMD_LOCATE, CMD_COLOR, CMD_DIM,
-	CMD_FOR, CMD_TO, CMD_STEP, CMD_NEXT
+	CMD_FOR, CMD_TO, CMD_STEP, CMD_NEXT,
+	CMD_IF, CMD_THEN, CMD_ELSE, CMD_ENDIF,
 	/*
 	CMD_ACLS, CMD_APPEND, CMD_BEEP, CMD_BGCLIP, CMD_BGCLR, CMD_BGCOPY, CMD_BGFILL, CMD_BGMCLEAR, 
 	CMD_BGMPLAY, CMD_BGMPRG, CMD_BGMSET, CMD_BGMSETD, CMD_BGMSETV, CMD_BGMSTOP, CMD_BGMVOL, 

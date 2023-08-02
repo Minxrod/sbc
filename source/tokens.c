@@ -10,21 +10,7 @@ const int MAX_SPECIAL_NAME_SIZE = 8;
 
 const char* commands =
 "PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
-"IF      THEN    ELSE            "; //ENDIF
-
-// DIM must be listed twice:
-// once for command tokenization in `commands`
-// once for evaluation as a special comparison
-// Same for all the others here:
-// TODO: Use tokenization step to store CMD_* ids, to avoid repeated comparison
-// and duplicate data
-const char* dim_ = "DIM     ";
-const char* print_ = "PRINT   ";
-const char* for_ = "FOR     ";
-const char* if_ = "IF      ";
-const char* then_ = "THEN    ";
-const char* else_ = "ELSE    ";
-// This is similar
+"IF      THEN    ELSE    [ENDIF] ";
 
 /*
 "ACLS    APPEND  "
@@ -354,6 +340,7 @@ void tok_eval(struct tokenizer* state){
 	struct eval e = {0};
 	bool is_for = false;
 	bool is_dim = false;
+	bool is_if = false;
 	bool implicit_commas = true;
 	
 	for (size_t i = 0; i < state->token_i; ++i){
@@ -404,8 +391,9 @@ void tok_eval(struct tokenizer* state){
 			}
 		} else if (state->tokens[i].type == command || prio > 0){
 			// operator, function or command
-			// TODO: replace this comparison with something less dumb (maybe)
 			if (state->tokens[i].type == command){
+				// These are all of the special cases
+				// (many are flow control commands with unique parsing needs)
 				if (state->tokens[i].ofs == CMD_DIM){
 				// command is DIM: set array-creation-mode for following tokens
 					is_dim = true;
@@ -418,13 +406,32 @@ void tok_eval(struct tokenizer* state){
 					// Command is FOR: add instruction at end of FOR setup to
 					// properly execute the loop
 					is_for = true;
+					// TODO: TO and STEP are unneeded instructions after a FOR
+					// Do not compile those
+				} else if (state->tokens[i].ofs == CMD_IF){
+					// Command is IF: add normally, but needs to indicate that
+					// ENDIF should be added once line end is hit
+					is_if = true;
+				} else if (state->tokens[i].ofs == CMD_THEN){
+					// THEN should be discarded: default IF behavior will be to
+					// continue to next instruction, which can ignore THEN
+					continue;
+				} else if (state->tokens[i].ofs == CMD_ELSE){
+					// ELSE should be placed immediately
+					// similar to commas within a command, it is used as a
+					// separator between TRUE/FALSE paths of the IF.
+					tok_eval_clean_stack(&e, 0);
+					e.result[e.result_i++] = state->tokens[i];
+					continue;
 				} else {
 					// Any other "normal" command
 					is_dim = false;
-					// Note: is_for will not be reset because FOR needs to be kept
-					// to the newline, including through other commands TO and STEP
-					if (is_for) {
-						// TODO: More accurate loop start placement, reset is_for here
+					// Note: is_for will not be always be reset because FOR
+					// needs to be kept to the newline, including through other
+					// commands TO and STEP
+					if (is_for && state->tokens[i].ofs != CMD_TO && state->tokens[i].ofs != CMD_STEP) {
+						e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
+						is_for = false;
 					}
 				}
 			} else if (state->tokens[i].type == name && prio == 7 && is_dim){
@@ -449,8 +456,13 @@ void tok_eval(struct tokenizer* state){
 				e.argc_stack[e.argc_i]++;
 		} else if (state->tokens[i].type == newline){ 
 			// dim ends
+			tok_eval_clean_stack(&e, 0);
 			is_dim = false;
 			implicit_commas = true;
+			if (is_for){
+				e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
+				is_for = false;
+			}
 		} else {
 			// values
 			// TODO: this needs special case(s)? for unary ops? maybe?
@@ -460,9 +472,8 @@ void tok_eval(struct tokenizer* state){
 	//cleanup
 	tok_eval_clean_stack(&e, 0);
 	
-	// special operation used to handle loop condition (goes at end of 'line')
-	if (is_for){
-		e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
+	if (is_if){
+		e.result[e.result_i++] = (struct token){.type=command, .ofs=CMD_ENDIF, .len=1, .prio=0};
 	}
 	
 	iprintf("Result size: %ld\n",e.result_i);
@@ -576,7 +587,8 @@ void tok_none(struct tokenizer* state){
 		state->token_i++;
 	} else if (c == '\r' || c == ':'){
 		tok_single(state, newline);
-		state->state = TKR_CONVERT;
+		if (c == '\r') // : should be handled differently to allow IF
+			state->state = TKR_CONVERT;
 	} else if (c == ' '){
 		//whitespace is ignored
 		state->cursor++;
