@@ -8,6 +8,7 @@ extern const char* commands;
 extern const char* functions;
 extern const char* operations;
 extern const char* bc_conv_operations;
+extern const char* sysvars;
 
 enum tokenizer_state {
 	TKR_NONE,
@@ -38,6 +39,7 @@ struct token {
 		dim_arr,
 		arg_count,
 		loop_begin,
+		sysvar,
 	} type;
 	u32 ofs;
 	u8 len;

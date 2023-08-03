@@ -32,3 +32,24 @@ void free_code(struct ptc* ptc){
 	free(ptc->vars.strs->str_data);
 	free(ptc->vars.arrs->arr_data);
 }
+
+#include "common.h"
+#include <stdio.h>
+
+int token_code(char* code, char* expected, int size){
+	struct program p = { strlen(code), code };
+	struct program o = { 0, outcode };
+	
+	bool error = 0;
+	// compile program
+	tokenize(&p, &o);
+	for (int i = 0; i < size; i+=1){
+		iprintf("%c:%d,", o.data[i], o.data[i]);
+		if (o.data[i] != expected[i]){
+			iprintf("Error\n");
+			error = 1;
+		}
+	}
+	iprintf("\n");
+	return !error;
+}

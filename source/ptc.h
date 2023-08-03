@@ -16,6 +16,7 @@ enum bytecode_ops {
 	BC_STRING = 'S', //read-only
 	BC_VARIABLE_NAME = 'V', //for name based variables
 	BC_WIDE_STRING = 'W', //read-only
+	BC_SYSVAR = 'Y',
 };
 
 enum command_ids {

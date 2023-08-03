@@ -41,6 +41,16 @@ const char* bc_conv_operations =
 ">       >=      <       <=      ==      !=      "
 "(       )       [       ]       ";
 
+const char* sysvars = 
+"TRUE    FALSE   CANCEL  VERSION "
+"TIME$   DATE$   MAINCTNLMAINCNTH"
+"FREEVAR FREEMEM PRGNAME$PACKAGE$RESULT  "
+"TCHST   TCHX    TCHY    TCHTIME "
+"CSRX    CSRY    TABSTEP "
+"SPHITNO SPHITX  SPHITY  SPHITT  "
+"KEYBOARDFUNCNO  ICONPUSEICONPAGEICONPMAX"
+"ERL     ERR     ";
+
 const char* labels = "LABEL   ";
 
 const char* comments = "REM     ";
@@ -105,7 +115,7 @@ int tok_in_str_index(const char* str, const char* data, struct token* tok){
 }
 
 void print_token(struct tokenizer* state, struct token t){
-	if (t.type != command && t.type != function && t.type != operation){
+	if (t.type != command && t.type != function && t.type != operation && t.type != sysvar){
 		iprintf("ofs:%d len:%d type:%d ", t.ofs, t.len, t.type);
 		if (t.prio) {
 			iprintf("prio:%02d ", t.prio);
@@ -121,8 +131,8 @@ void print_token(struct tokenizer* state, struct token t){
 			}
 		}
 	} else {
-		// op, func, cmd
-		const char* names = t.type == command ? commands : t.type == function ? functions : bc_conv_operations;
+		// op, func, cmd, sysvar
+		const char* names = t.type == command ? commands : t.type == function ? functions : t.type == sysvar ? sysvars : bc_conv_operations;
 		char name[9] = {0};
 		for (size_t i = 0; i < 8; ++i){
 			name[i] = names[8*t.ofs + i];
@@ -312,9 +322,15 @@ void tok_code(struct tokenizer* state){
 				data[(*size)++] = 0;
 				break;
 				
+			case sysvar:
+				data[(*size)++] = BC_SYSVAR;
+				data[(*size)++] = state->tokens[i].ofs;
+				break;
+				
 			default:
 				iprintf("Unknown token: ");
 				print_token(state, state->tokens[i]);
+				//TODO: Code generation errors?
 		}
 	}
 	state->token_i = 0;
@@ -415,6 +431,7 @@ void tok_eval(struct tokenizer* state){
 				} else if (state->tokens[i].ofs == CMD_THEN){
 					// THEN should be discarded: default IF behavior will be to
 					// continue to next instruction, which can ignore THEN
+					tok_eval_clean_stack(&e, 0);
 					continue;
 				} else if (state->tokens[i].ofs == CMD_ELSE){
 					// ELSE should be placed immediately
@@ -465,7 +482,6 @@ void tok_eval(struct tokenizer* state){
 			}
 		} else {
 			// values
-			// TODO: this needs special case(s)? for unary ops? maybe?
 			e.result[e.result_i++] = state->tokens[i];
 		}
 	}
@@ -640,6 +656,9 @@ void tok_name(struct tokenizer* state){
 		state->tokens[state->token_i].type = label;
 	} else if (0 <= tok_in_str_index(comments, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = comment;
+	} else if (0 <= (index = tok_in_str_index(sysvars, state->source->data, &state->tokens[state->token_i]))){
+		state->tokens[state->token_i].type = sysvar;
+		state->tokens[state->token_i].ofs = index;
 	}
 	
 	state->token_i++;

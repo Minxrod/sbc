@@ -17,4 +17,5 @@ const char * error_messages[] = {
 	"Can't assign to provieded type",
 	"Can't find a matching FOR for this NEXT",
 	"Missing variable initialization in FOR",
+	"Can't find ELSE or ENDIF",
 };

@@ -3,6 +3,7 @@
 #include "common.h"
 #include "tokens.h"
 #include "program.h"
+#include "ptc.h"
 
 #include <string.h>
 
@@ -227,6 +228,7 @@ int test_tokens(void){
 		iprintf("\n");
 	}
 	
+	// FOR tokenization
 	{
 		char* code = "FOR I=0 TO 9:?I:NEXT\r";
 		char code2[64];
@@ -248,25 +250,41 @@ int test_tokens(void){
 		iprintf("\n");
 	}
 	
+	// IF tokenization
 	{
-		char* code = "IF 0+1 THEN ?\"A\" ELSE A=0:?\"B\"\r";
-		char code2[64];
-		// run program
-		struct program p = {
-			strlen(code), code,
+		ASSERT(
+			token_code(
+				"IF 0+1 THEN ?\"A\" ELSE A=0:?\"B\"\r",
+				"n\0n\1O\0C\10S\1A\0C\0C\12VAn\0O\6S\1B\0C\0C\13",
+				30
+			), "[tokens] Test IF tokenization"
+		);
+	}
+	
+	// Sysvar tokenization
+	{
+		char bc[] = {
+			BC_SYSVAR, SYS_TRUE,
+			BC_COMMAND, CMD_PRINT
 		};
-		struct program o = {
-			0, code2,
-		};
-		
-		char* bytecode = "n\0n\1O\0C\10S\1A\0C\0C\12VAn\0O\6S\1B\0C\0C\13";
-		// compile program
-		tokenize(&p, &o);
-		for (int i = 0; i < 30; i+=1){
-			iprintf("%c:%d,", o.data[i], o.data[i]);
-			CHECK(o.data[i] == bytecode[i], "[tokens] Test IF tokenization");
-		}
-		iprintf("\n");
+		ASSERT(
+			token_code(
+				"?TRUE\r",
+				bc,
+				4
+			), "[tokens] Sysvar tokenization"
+		);
+	}
+	
+	// IF tokenization II
+	{
+		ASSERT(
+			token_code(
+				"IF TRUE THEN A=0:B=1 ELSE B=0:A=1\r",
+				"Y\0C\10VAn\0O\6VBn\1O\6C\12VBn\0O\6VAn\1O\6C\13",
+				30
+			), "[tokens] Test IF tokenization with sysvar"
+		);
 	}
 	
 	SUCCESS("test_tokens success");

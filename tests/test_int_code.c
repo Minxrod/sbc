@@ -73,5 +73,31 @@ int test_int_code(){
 		free_code(&ptc);
 	}
 	
+	// IF construct
+	{
+		struct ptc ptc = {0};
+		char* code = "IF TRUE THEN A=0:B=1 ELSE B=0:A=1\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 0<<12, "[if] A=0");
+		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 1<<12, "[if] B=1");
+		
+		free_code(&ptc);
+	}
+	
+	// IF construct
+	{
+		struct ptc ptc = {0};
+		char* code = "IF FALSE THEN A=0:B=1 ELSE B=0:A=-1\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -(1<<12), "[if] A=1");
+		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 0<<12, "[if] B=0");
+		
+		free_code(&ptc);
+	}
+	
 	SUCCESS("test_int_code success");
 }

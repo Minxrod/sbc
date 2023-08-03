@@ -31,3 +31,5 @@ extern int check_fail;
 
 void run_code(char* code, struct ptc* ptc);
 void free_code(struct ptc* ptc);
+
+int token_code(char* code, char* expected, int size);

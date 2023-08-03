@@ -18,7 +18,7 @@ enum err_code {
 	ERR_OP_ASSIGN_INVALID_TYPE,
 	ERR_NEXT_WITHOUT_FOR,
 	ERR_MISSING_OP_ASSIGN_FOR,
-	
+	ERR_MISSING_ELSE_AND_ENDIF,
 };
 
 extern const char * error_messages[];
