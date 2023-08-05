@@ -9,15 +9,15 @@
 #include "test_console.c"
 
 int main(){
-	test_vars();
-	test_strs();
-	test_arrs();
-	test_tokens();
+	FAST(test_vars());
+	FAST(test_strs());
+	FAST(test_arrs());
+	FAST(test_tokens());
 	
-	test_int_vars();
-	test_int_code();
+	FAST(test_int_vars());
+	FAST(test_int_code());
 	
-	test_console();
+	FAST(test_console());
 	
 	return 0;
 }

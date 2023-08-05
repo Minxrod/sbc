@@ -16,6 +16,9 @@
 	return 1;\
 }
 
+#define FASTEND 1
+#define FAST(f) if (f && FASTEND) { return 1; }
+
 extern int check_fail;
 
 #include "program.h"

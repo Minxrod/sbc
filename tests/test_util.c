@@ -44,7 +44,8 @@ int token_code(char* code, char* expected, int size){
 	// compile program
 	tokenize(&p, &o);
 	for (int i = 0; i < size; i+=1){
-		iprintf("%c:%d,", o.data[i], o.data[i]);
+		char c = o.data[i];
+		iprintf("%c:%d,", c > 32 ? c : '?', o.data[i]);
 		if (o.data[i] != expected[i]){
 			iprintf("Error\n");
 			error = 1;

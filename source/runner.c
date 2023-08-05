@@ -13,44 +13,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
-
-#define BC_SCAN_NOT_FOUND UINT_MAX
-
-// Scans for a specific instruction. Special purpose function to handle the
-// various instruction lengths.
-u32 bc_scan(struct program* code, u32 index, u8 find){
-	// search for find in code->data
-	while (index < code->size){ 
-		u8 cur = code->data[index];
-		if (cur == find){
-			return index;
-		}
-		if (cur == BC_STRING){
-			cur = code->data[++index];
-			index ++;
-			index += cur + (cur & 1);
-		} else if (cur == BC_WIDE_STRING){
-			cur = code->data[++index];
-			index ++;
-			index += sizeof(u16) * cur;
-		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME){
-			cur = code->data[++index];
-			if (cur >= 'A'){
-				++index;
-			} else {
-				index += cur + (cur & 1);
-			}
-		} else if (cur == BC_NUMBER){
-			index += 6; // TODO: may need to change if number syntax gets modified
-		} else {
-			index += 2;
-		}
-	}
-	return BC_SCAN_NOT_FOUND;
-}
-
-typedef void(*ptc_call)(struct ptc*);
 
 void cmd_for(struct ptc* p){
 	// current stack consists of one var ptr
@@ -173,11 +135,13 @@ void cmd_if(struct ptc* p){
 	} else {
 		// false: proceed to ELSE or ENDIF
 		u32 index = p->exec.index;
-		do {
-			index = bc_scan(p->exec.code, index, BC_COMMAND);
-		} while (index != BC_SCAN_NOT_FOUND &&
-			p->exec.code->data[index+1] != CMD_ELSE &&
-			p->exec.code->data[index+1] != CMD_ENDIF);
+		while ((index = bc_scan(p->exec.code, index, BC_COMMAND)) != BC_SCAN_NOT_FOUND){
+			if (p->exec.code->data[index+1] == CMD_ELSE || p->exec.code->data[index+1] == CMD_ENDIF){
+				break; // found ELSE or ENDIF
+			}
+			// continue search past this instruction
+			index += 2;
+		}
 		
 		if (index == BC_SCAN_NOT_FOUND){
 			p->exec.error = ERR_MISSING_ELSE_AND_ENDIF;
@@ -217,22 +181,57 @@ void cmd_endif(struct ptc* p){
 	p++;
 }
 
+void cmd_goto(struct ptc* p){
+	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
+	struct stack_entry* e = stack_pop(&p->stack);
+	if (!(e->type & VAR_STRING)){
+		p->exec.error = ERR_TYPE_MISMATCH;
+		return;
+	} else {
+		char* label = (char*)e->value.ptr;
+		if (label[0] == BC_LABEL_STRING){
+			// Search code for label
+			u32 index = 0;
+			while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
+				// found index: check correctness
+//				iprintf("%c,%c", p->exec.code->data[index], *label);
+				// TODO: fast search/cache label locations?
+				if (str_comp(&p->exec.code->data[index], label)){
+					// this is the index, jump to here
+					break;
+				}
+				
+				index += 2;
+			}
+			p->exec.index = index;
+		} else {
+			// TODO: Implement actual strings as arguments (should be similar)
+			p->exec.error = ERR_UNIMPLEMENTED;
+			return;
+		}
+	}
+}
+
+void cmd_gosub(struct ptc* p){
+	p++;
+}
+
+void cmd_on(struct ptc* p){
+	p++;
+}
+
+typedef void(*ptc_call)(struct ptc*);
 
 const ptc_call ptc_commands[] = {
 	cmd_print, cmd_locate, cmd_color, NULL, // dim
 	cmd_for, cmd_to, cmd_step, cmd_next,
 	cmd_if, cmd_then, cmd_else, cmd_endif,
+	cmd_goto, cmd_gosub, cmd_on
 };
 
 const ptc_call ptc_operators[] = {
-	op_add,
-	op_comma,
-	op_sub,
-	op_mult,
-	op_div,
-	op_semi,
-	op_assign,
-	op_negate,
+	op_add, op_comma, op_sub, op_mult, op_div, op_semi, op_assign, op_negate,
+	op_equal, op_inequal, op_less, op_greater, op_less_equal, op_greater_equal,
 };
 
 const ptc_call ptc_functions[] = {
@@ -276,6 +275,7 @@ void run(struct program* code, struct ptc* p) {
 				}
 				break;
 			
+			case BC_LABEL_STRING:
 			case BC_STRING:
 				iprintf("len=%d ", data);
 				iprintf("%.*s", data, &code->data[r->index]);
@@ -289,6 +289,7 @@ void run(struct program* code, struct ptc* p) {
 				//run command using current stack
 				if ((u8)data >= sizeof(ptc_commands)/sizeof(ptc_commands[0])){
 					r->error = ERR_PTC_COMMAND_INVALID;
+					break;
 				}
 				ptc_commands[(u32)data](p);
 				break;
@@ -298,6 +299,7 @@ void run(struct program* code, struct ptc* p) {
 				
 				if ((u8)data >= sizeof(ptc_operators)/sizeof(ptc_operators[0])){
 					r->error = ERR_PTC_OPERATOR_INVALID;
+					break;
 				}
 				ptc_operators[(u32)data](p);
 				break;
@@ -307,6 +309,7 @@ void run(struct program* code, struct ptc* p) {
 				
 				if ((u8)data >= sizeof(ptc_functions)/sizeof(ptc_functions[0])){
 					r->error = ERR_PTC_FUNCTION_INVALID;
+					break;
 				}
 				ptc_functions[(u32)data](p);
 				break;
@@ -315,6 +318,7 @@ void run(struct program* code, struct ptc* p) {
 				print_name(sysvars, data);
 				if ((u8)data >= sizeof(ptc_sysvars)/sizeof(ptc_sysvars[0])){
 					r->error = ERR_PTC_FUNCTION_INVALID;
+					break;
 				}
 				ptc_sysvars[(u32)data](p);
 				break;
@@ -469,6 +473,12 @@ void run(struct program* code, struct ptc* p) {
 				}
 				break;
 				
+			case BC_LABEL:
+				// ignore these!
+				// TODO: useful for debugging? indicate error label?
+				r->index += data + (data & 1); // to next instruction
+				break;
+				
 			default:
 				iprintf("Unknown BC: %c %d", instr, data);
 				r->error = ERR_INVALID_BC;
@@ -486,4 +496,8 @@ void run(struct program* code, struct ptc* p) {
 		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);
 	}
 	*/
+	if (r->error){
+		iprintf("Error: %s\n", error_messages[r->error]);
+	}
+	
 }

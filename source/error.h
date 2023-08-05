@@ -19,6 +19,7 @@ enum err_code {
 	ERR_NEXT_WITHOUT_FOR,
 	ERR_MISSING_OP_ASSIGN_FOR,
 	ERR_MISSING_ELSE_AND_ENDIF,
+	ERR_TYPE_MISMATCH,
 };
 
 extern const char * error_messages[];

@@ -287,5 +287,20 @@ int test_tokens(void){
 		);
 	}
 	
+	// Label and GOTO tokenization
+	{
+		char bc[] = {
+			BC_LABEL, 4, 'A', 'B', 'C', 'D',
+			BC_LABEL_STRING, 4, 'A', 'B', 'C', 'D',
+			BC_COMMAND, CMD_GOTO,
+		};
+		ASSERT(
+			token_code(
+				"@ABCD\rGOTO @ABCD\r",
+				bc, 14
+			), "[tokens] Label, GOTO tokenization"
+		);
+	}
+	
 	SUCCESS("test_tokens success");
 }

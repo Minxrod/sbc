@@ -99,5 +99,16 @@ int test_int_code(){
 		free_code(&ptc);
 	}
 	
+	// GOTO test
+	{
+		struct ptc ptc = {0};
+		char* code = "@TEST\rI=I+1\rIF I<5 GOTO @TEST\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 5<<12, "[goto] I=5");
+
+	}
+	
 	SUCCESS("test_int_code success");
 }

@@ -198,4 +198,105 @@ void op_assign(struct ptc* p){
 	}
 }
 
+void op_equal(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x == y}});
+	} else {
+		p->exec.error = ERR_UNIMPLEMENTED;
+	}
+}
+
+void op_inequal(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x != y}});
+	} else {
+		p->exec.error = ERR_UNIMPLEMENTED;
+	}
+}
+
+void op_less(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x < y}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_greater(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x > y}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_less_equal(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x <= y}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_greater_equal(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x >= y}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
 

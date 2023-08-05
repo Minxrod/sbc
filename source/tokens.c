@@ -10,7 +10,7 @@ const int MAX_SPECIAL_NAME_SIZE = 8;
 
 const char* commands =
 "PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
-"IF      THEN    ELSE    [ENDIF] ";
+"IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      ";
 
 /*
 "ACLS    APPEND  "
@@ -36,9 +36,9 @@ const char* operations =
 
 const char* bc_conv_operations = 
 "+       ,       -       *       /       ;       =       (-)     "
+"==      !=      <       >       <=      >=      "
 "%       "
 "AND     OR      NOT     XOR     !       "
-">       >=      <       <=      ==      !=      "
 "(       )       [       ]       ";
 
 const char* sysvars = 
@@ -82,6 +82,44 @@ bool is_name_start(const char c){
 bool is_name(const char c){
 	return is_alphanum(c) || c == '_';
 }
+
+bool is_varname(const char c){
+	return is_name(c) || c == '$';
+}
+
+// Scans for a specific instruction. Special purpose function to handle the
+// various instruction lengths.
+u32 bc_scan(struct program* code, u32 index, u8 find){
+	// search for find in code->data
+	while (index < code->size){ 
+		u8 cur = code->data[index];
+		if (cur == find){
+			return index;
+		}
+		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING){
+			cur = code->data[++index];
+			index ++;
+			index += cur + (cur & 1);
+		} else if (cur == BC_WIDE_STRING){
+			cur = code->data[++index];
+			index ++;
+			index += sizeof(u16) * cur;
+		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME){
+			cur = code->data[++index];
+			if (cur >= 'A'){
+				++index;
+			} else {
+				index += cur + (cur & 1);
+			}
+		} else if (cur == BC_NUMBER){
+			index += 6; // TODO: may need to change if number syntax gets modified
+		} else {
+			index += 2;
+		}
+	}
+	return BC_SCAN_NOT_FOUND;
+}
+
 
 // Note: Expects null-terminated string
 int tok_in_str_index(const char* str, const char* data, struct token* tok){
@@ -327,6 +365,18 @@ void tok_code(struct tokenizer* state){
 				data[(*size)++] = state->tokens[i].ofs;
 				break;
 				
+			case label:
+			case label_string:
+				data[(*size)++] = state->tokens[i].type == label ? BC_LABEL : BC_LABEL_STRING;
+				data[(*size)++] = state->tokens[i].len;
+				for (int j = 0; j < state->tokens[i].len; ++j){
+					data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
+				}
+				if (*size % 2){
+					data[(*size)++] = 0; // pad one null to keep instructions aligned
+				}
+				break;
+				
 			default:
 				iprintf("Unknown token: ");
 				print_token(state, state->tokens[i]);
@@ -480,6 +530,14 @@ void tok_eval(struct tokenizer* state){
 				e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
 				is_for = false;
 			}
+		} else if (state->tokens[i].type == label){
+			// label defined
+			if (i != 0){
+				// label is an argument to something like goto
+				// convert to string and use as @
+				state->tokens[i].type = label_string;
+			}
+			e.result[e.result_i++] = state->tokens[i];
 		} else {
 			// values
 			e.result[e.result_i++] = state->tokens[i];
@@ -588,6 +646,18 @@ void tok_single(struct tokenizer* state, enum type type){
 	state->token_i++;
 }
 
+void tok_with_condition(struct tokenizer* state, bool(*condition)(char)){
+	state->tokens[state->token_i].type = name;
+	state->tokens[state->token_i].len = 0;
+	state->tokens[state->token_i].ofs = state->cursor;
+	char c;
+	do {
+		state->tokens[state->token_i].len++;
+		state->cursor++;
+		c = state->source->data[state->cursor];
+	} while (condition(c));
+}
+
 void tok_none(struct tokenizer* state){
 	// This state represents: Whitespace and default state
 	// This state can transition to:
@@ -624,6 +694,11 @@ void tok_none(struct tokenizer* state){
 			state->cursor++;
 		}
 		state->tokens[state->token_i-1].ofs = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
+	} else if (c == '@'){
+		state->cursor++;
+		tok_with_condition(state, is_name);
+		state->tokens[state->token_i].type = label;
+		state->token_i++;
 	} else {
 		iprintf("Unknown transition from NONE on %c\n", c);
 		state->cursor++;
@@ -631,15 +706,7 @@ void tok_none(struct tokenizer* state){
 }
 
 void tok_name(struct tokenizer* state){
-	state->tokens[state->token_i].type = name;
-	state->tokens[state->token_i].len = 0;
-	state->tokens[state->token_i].ofs = state->cursor;
-	char c;
-	do {
-		state->tokens[state->token_i].len++;
-		state->cursor++;
-		c = state->source->data[state->cursor];
-	} while (c == '$' || is_name(c));
+	tok_with_condition(state, is_varname);
 	//additional checking for special strings
 	int index;
 	if (0 <= (index = tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i]))){

@@ -152,6 +152,8 @@ void str_wide_copy(void* src, u16* dest){
 				dest[i] = to_wide((s->ptr.s)[i]);
 			}
 			return;
+		case BC_LABEL_STRING:
+		case BC_LABEL:
 		case BC_STRING:
 			for (size_t i = 0; i < ((u8*)src)[1]; ++i){
 				dest[i] = to_wide(((u8*)src)[2+i]);
@@ -177,6 +179,8 @@ void str_char_copy(void* src, u8* dest){
 				dest[i] = (s->ptr.s)[i];
 			}
 			return;
+		case BC_LABEL_STRING:
+		case BC_LABEL:
 		case BC_STRING:
 			for (size_t i = 0; i < ((u8*)src)[1]; ++i){
 				dest[i] = ((u8*)src)[2+i];
@@ -197,6 +201,9 @@ u32 str_len(void* src){
 		case STRING_CHAR:
 			return s->len;
 		case BC_STRING:
+		case BC_LABEL:
+		case BC_LABEL_STRING:
+		case BC_WIDE_STRING:
 			return ((u8*)src)[1];
 		default:
 			iprintf("Unimplemented/Not a valid string type! (Length)\n");
@@ -236,6 +243,9 @@ void str_copy(void* src, void* src_dest){
 			((struct string*)src_dest)->len = str_len(src);
 			break;
 		case BC_STRING:
+		case BC_LABEL:
+		case BC_LABEL_STRING:
+		case BC_WIDE_STRING:
 			iprintf("Error: Attempted to copy to read-only string!\n");
 			abort();
 		default:

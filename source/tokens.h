@@ -20,10 +20,12 @@ enum tokenizer_state {
 	TKR_EXPR,
 };
 
-/*struct pair {
+#define LABEL_UNKNOWN ((u32)-1)
+
+struct pair {
 	char name[16];
 	u32 value;
-};*/
+};
 
 struct token {
 	enum type {
@@ -40,6 +42,7 @@ struct token {
 		arg_count,
 		loop_begin,
 		sysvar,
+		label_string,
 	} type;
 	u32 ofs;
 	u8 len;
@@ -64,8 +67,8 @@ struct tokenizer {
 	// Values obtained while parsing
 	// TODO: dynamic size?
 	// Label addresses
-/*	u32 label;
-	struct pair labels[4096];*/
+//	u32 label;
+//	struct pair labels[1024];
 	// Variable indices
 /*	u32 var;
 	struct pair vars[4096];*/
@@ -76,10 +79,6 @@ struct tokenizer {
 void tokenize(struct program* src, struct program* output);
 
 void tok_none(struct tokenizer* state);
-
-void tok_print(struct tokenizer* state);
-
-void tok_expr(struct tokenizer* state);
 
 void tok_name(struct tokenizer* state);
 
@@ -95,3 +94,9 @@ void tok_eval(struct tokenizer* state);
 
 void tok_code(struct tokenizer* state);
 
+// Scans for location of some instruction starting from index
+// Returns the index of found string
+u32 bc_scan(struct program* code, u32 index, u8 find);
+
+#include <limits.h>
+#define BC_SCAN_NOT_FOUND UINT_MAX
