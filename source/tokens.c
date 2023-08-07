@@ -10,7 +10,8 @@ const int MAX_SPECIAL_NAME_SIZE = 8;
 
 const char* commands =
 "PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
-"IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      ";
+"IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      RETURN  "
+"END     STOP    ";
 
 /*
 "ACLS    APPEND  "

@@ -119,5 +119,15 @@ int test_int_code(){
 		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 3<<12, "[goto] I=3");
 	}
 	
+	// END, GOSUB test
+	{
+		struct ptc ptc = {0};
+		char* code = "FOR I=0 TO 3\rGOSUB @TEST\rNEXT\rEND\r@TEST\rJ=J+I+1\rRETURN\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "J", VAR_NUMBER)->value.number == 10<<12, "[goto] J=10");
+	}
+	
 	SUCCESS("test_int_code success");
 }

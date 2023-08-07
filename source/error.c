@@ -6,6 +6,7 @@ const char * error_messages[] = {
 	"Invalid command ID",
 	"Invalid function ID",
 	"Invalid operator ID",
+	"Invalid bytecode",
 	"Failed to create variable",
 	"PRINT - Invalid operator provided",
 	"PRINT - Invalid stack item",
@@ -19,4 +20,6 @@ const char * error_messages[] = {
 	"Missing variable initialization in FOR",
 	"Can't find ELSE or ENDIF",
 	"Wrong type provided",
+	"RETURN without GOSUB",
+	"Command should not exist",
 };

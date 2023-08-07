@@ -20,6 +20,8 @@ enum err_code {
 	ERR_MISSING_OP_ASSIGN_FOR,
 	ERR_MISSING_ELSE_AND_ENDIF,
 	ERR_TYPE_MISMATCH,
+	ERR_RETURN_WITHOUT_GOSUB,
+	ERR_COMMAND_EXISTS,
 };
 
 extern const char * error_messages[];
