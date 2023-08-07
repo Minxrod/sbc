@@ -107,7 +107,16 @@ int test_int_code(){
 		run_code(code, &ptc);
 		// check output for correctness
 		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 5<<12, "[goto] I=5");
-
+	}
+	
+	// ON GOTO test
+	{
+		struct ptc ptc = {0};
+		char* code = "ON 2 GOTO @1,@2,@3,@4,@5\r@1\rI=I+1\r@2\rI=I+1\r@3\rI=I+1\r@4\rI=I+1\r@5\rI=I+1\r";
+		// run program
+		run_code(code, &ptc);
+		// check output for correctness
+		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 3<<12, "[goto] I=3");
 	}
 	
 	SUCCESS("test_int_code success");

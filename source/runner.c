@@ -183,32 +183,37 @@ void cmd_endif(struct ptc* p){
 
 void cmd_goto(struct ptc* p){
 	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
-	struct stack_entry* e = stack_pop(&p->stack);
-	if (!(e->type & VAR_STRING)){
-		p->exec.error = ERR_TYPE_MISMATCH;
-		return;
-	} else {
-		char* label = (char*)e->value.ptr;
-		if (label[0] == BC_LABEL_STRING){
-			// Search code for label
-			u32 index = 0;
-			while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
-				// found index: check correctness
+	// TODO: Check that stack has entries
+	struct stack_entry* e = &p->stack.entry[0];
+///	struct stack_entry* e = stack_pop(&p->stack);
+	char* label;
+	if (e->type & VAR_NUMBER){
+		// Rest of stack contains labels in order
+		s32 label_index = e->value.number >> 12;
+		// TODO: Range check
+		label = (char*)p->stack.entry[label_index+1].value.ptr;
+	} else if (e->type & VAR_STRING){
+		label = (char*)e->value.ptr;
+	}
+	if (label[0] == BC_LABEL_STRING){
+		// Search code for label
+		u32 index = 0;
+		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
+			// found index: check correctness
 //				iprintf("%c,%c", p->exec.code->data[index], *label);
-				// TODO: fast search/cache label locations?
-				if (str_comp(&p->exec.code->data[index], label)){
-					// this is the index, jump to here
-					break;
-				}
-				
-				index += 2;
+			// TODO: fast search/cache label locations?
+			if (str_comp(&p->exec.code->data[index], label)){
+				// this is the index, jump to here
+				break;
 			}
-			p->exec.index = index;
-		} else {
-			// TODO: Implement actual strings as arguments (should be similar)
-			p->exec.error = ERR_UNIMPLEMENTED;
-			return;
+			
+			index += 2;
 		}
+		p->exec.index = index;
+	} else {
+		// TODO: Implement actual strings as arguments (should be similar)
+		p->exec.error = ERR_UNIMPLEMENTED;
+		return;
 	}
 }
 
