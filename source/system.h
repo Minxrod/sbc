@@ -151,11 +151,11 @@ struct panel {
 struct ptc {
 	// upper screen stuff
 	struct console console;
-	struct background background;
-	struct sprites sprites;
-	struct graphics graphics;
+//	struct background background;
+//	struct sprites sprites;
+//	struct graphics graphics;
 	// lower screen stuff
-	struct panel panel;
+//	struct panel panel;
 	
 	// actual system stuff
 	/// The value/variable stack 

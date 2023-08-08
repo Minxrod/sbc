@@ -78,7 +78,7 @@ void run(struct program* code, struct ptc* p) {
 			case BC_SMALL_NUMBER:
 				iprintf("val=%d", data);
 				// TODO: small decimals should also be of this form?
-				if (data >= 0 && data <= 99){
+				if ((u8)data <= 99){
 					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << 12}};
 				} else {
 					r->error = ERR_NUM_INVALID;
@@ -229,14 +229,14 @@ void run(struct program* code, struct ptc* p) {
 					get_new_arr_var(&p->vars, x, len, t | VAR_ARRAY, a, b);
 				}
 				
-				iprintf(" dim=%d,%d", a, b);
+				iprintf(" dim=%d,%d", (int)a, (int)b);
 				}
 				break;
 			
 			case BC_ARGCOUNT:
 				r->argcount = data;
 				
-				iprintf("argc=%d", r->argcount);
+				iprintf("argc=%d", (int)r->argcount);
 				break;
 			
 			case BC_BEGIN_LOOP:

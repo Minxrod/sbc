@@ -14,7 +14,7 @@ struct value_stack {
 	u32 stack_i;
 	struct stack_entry {
 		u32 type;
-		union value value; 
+		union value value;
 	} entry[VALUE_STACK_MAX];
 };
 

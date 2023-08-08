@@ -1,3 +1,5 @@
+#include "test_int_vars.h"
+
 #include "test_util.h"
 
 #include "vars.h"

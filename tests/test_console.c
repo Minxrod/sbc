@@ -1,3 +1,4 @@
+#include "test_console.h"
 #include "test_util.h"
 
 #include "common.h"

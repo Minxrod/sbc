@@ -22,7 +22,7 @@ void cmd_for(struct ptc* p){
 	do {
 		index = bc_scan(p->exec.code, index, BC_OPERATOR);
 	} while (index != BC_SCAN_NOT_FOUND && p->exec.code->data[index+1] != OP_ASSIGN);
-	iprintf("\nIndex of OP_ASSIGN: %d", index);
+//	iprintf("\nIndex of OP_ASSIGN: %ld", index);
 	if (index == BC_SCAN_NOT_FOUND){
 		p->exec.error = ERR_MISSING_OP_ASSIGN_FOR;
 		return;
@@ -194,6 +194,11 @@ void cmd_goto(struct ptc* p){
 		label = (char*)p->stack.entry[label_index+1].value.ptr;
 	} else if (e->type & VAR_STRING){
 		label = (char*)e->value.ptr;
+	} else {
+		// Typeless variable? something went wrong
+		p->exec.error = ERR_UNKNOWN_TYPE;
+		p->stack.stack_i = 0;
+		return;
 	}
 	if (label[0] == BC_LABEL_STRING){
 		// Search code for label
@@ -232,6 +237,11 @@ void cmd_gosub(struct ptc* p){
 		label = (char*)p->stack.entry[label_index+1].value.ptr;
 	} else if (e->type & VAR_STRING){
 		label = (char*)e->value.ptr;
+	} else {
+		// Typeless variable? something went wrong
+		p->exec.error = ERR_UNKNOWN_TYPE;
+		p->stack.stack_i = 0;
+		return;
 	}
 	if (label[0] == BC_LABEL_STRING){
 		// Search code for label

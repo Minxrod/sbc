@@ -20,6 +20,6 @@ struct stack_entry* stack_pop(struct value_stack* s){
 void stack_print(struct value_stack* s){
 	iprintf("STACK:\n");
 	for (size_t i = 0; i < s->stack_i; ++i){
-		iprintf("%d:%d\n", s->entry[i].type, s->entry[i].value.number);
+		iprintf("%d:%d\n", (int)s->entry[i].type, (int)s->entry[i].value.number);
 	}
 }

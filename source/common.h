@@ -1,9 +1,11 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdio.h> // debugging
 
 #ifdef ARM9
 #include <nds/ndstypes.h>
+#include <nds.h>
 #endif
 
 // silly hacks for testing without a DS emu

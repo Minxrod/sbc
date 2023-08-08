@@ -155,7 +155,7 @@ int tok_in_str_index(const char* str, const char* data, struct token* tok){
 
 void print_token(struct tokenizer* state, struct token t){
 	if (t.type != command && t.type != function && t.type != operation && t.type != sysvar){
-		iprintf("ofs:%d len:%d type:%d ", t.ofs, t.len, t.type);
+		iprintf("ofs:%d len:%d type:%d ", (int)t.ofs, t.len, t.type);
 		if (t.prio) {
 			iprintf("prio:%02d ", t.prio);
 		} else {
@@ -176,7 +176,7 @@ void print_token(struct tokenizer* state, struct token t){
 		for (size_t i = 0; i < 8; ++i){
 			name[i] = names[8*t.ofs + i];
 		}
-		iprintf("id:%d type:%d cmd:%s", t.ofs, t.type, name);
+		iprintf("id:%d type:%d cmd:%s", (int)t.ofs, t.type, name);
 	}
 	iprintf("\n");
 }
@@ -197,7 +197,7 @@ void tokenize(struct program* src, struct program* out){
 				tok_convert(&state);
 				break;
 			default:
-				iprintf("Tokenizer crash at: %d Char: %c \n", state.cursor, state.source->data[state.cursor]);
+				iprintf("Tokenizer crash at: %d Char: %c \n", (int)state.cursor, state.source->data[state.cursor]);
 				goto crash;
 		}
 	}
@@ -551,7 +551,7 @@ void tok_eval(struct tokenizer* state){
 		e.result[e.result_i++] = (struct token){.type=command, .ofs=CMD_ENDIF, .len=1, .prio=0};
 	}
 	
-	iprintf("Result size: %ld\n",e.result_i);
+	iprintf("Result size: %d\n",(int)e.result_i);
 	for (size_t i = 0; i < e.result_i; ++i){
 		if (e.result[i].len == 0)
 			break;

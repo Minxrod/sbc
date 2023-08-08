@@ -22,4 +22,5 @@ const char * error_messages[] = {
 	"Wrong type provided",
 	"RETURN without GOSUB",
 	"Command should not exist",
+	"Handling for type is unspecified",
 };

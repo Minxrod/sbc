@@ -1,4 +1,9 @@
+#include "test_arrs.h"
+
 #include "arrays.h"
+
+#include "test_util.h"
+#include "common.h"
 
 int test_arrs(){
 	// init_mem_arr works as expected

@@ -22,6 +22,7 @@ enum err_code {
 	ERR_TYPE_MISMATCH,
 	ERR_RETURN_WITHOUT_GOSUB,
 	ERR_COMMAND_EXISTS,
+	ERR_UNKNOWN_TYPE,
 };
 
 extern const char * error_messages[];
