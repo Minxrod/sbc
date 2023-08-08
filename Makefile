@@ -15,7 +15,7 @@ include $(DEVKITARM)/ds_rules
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
-BUILD		:=	build
+BUILD		:=	nds
 SOURCES		:=	gfx source data tests
 INCLUDES	:=	include build source # source is needed for tests
 
