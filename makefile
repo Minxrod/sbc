@@ -8,10 +8,16 @@
 # Source, build settings
 SOURCE = source tests
 BUILD = build/
+CSFML = /home/minxrod/Documents/source/notmine/CSFML/
+CSFML_INCLUDE = $(CSFML)include/
+CSFML_LIB = $(CSFML)lib/
 
 # Compiler settings
 CC = gcc
-CFLAGS = -g -std=c99 -Wall -Werror -Wextra -Wpedantic $(foreach srcdir,$(SOURCE),-I$(srcdir))
+# https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
+# -isystem needed for SFML, which throws a deprecation warning (error) otherwise
+CFLAGS = -g -std=c99 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir))
+CFLAGS += -DPC -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 
 # Some magic makefile nonsense
 # get source files list 
@@ -31,11 +37,12 @@ $(BUILD)%.o: %.c
 main: $(main_objs)
 #	echo $(objects)
 #	echo $(build)
-	$(CC) $(CFLAGS) $(main_objs) -o test
+	# TODO: Better CSFML library location? (How do you install it?)
+	$(CC) $(CFLAGS) $(main_objs) -o test -lcsfml-graphics -lcsfml-window -lcsfml-system
 #	gcc $(CFLAGS) -Isource/ $(objs) source/main.c -o test
 
 test: $(test_objs)
-	$(CC) $(CFLAGS) $(test_objs) -o test
+	$(CC) $(CFLAGS) $(test_objs) -o test -lcsfml-graphics -lcsfml-window -lcsfml-system
 #	gcc $(CFLAGS) -I$(SOURCE) $(BUILD) tests/test_main.c -o test
 
 .phony clean:

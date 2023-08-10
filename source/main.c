@@ -3,26 +3,77 @@ void v(void); //prevent empty translation unit
 #endif
 
 #ifndef ARM9
-//this is the computer-only testing file
+//this is the computer-only file
 
-#include "tokens.h"
-#include "runner.h"
-#include "system.h"
-#include "program.h"
+#include <SFML/System.h>
+#include <SFML/Graphics.h>
+#include <SFML/Window.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
-char* code = "B=5\r"
-"C=8\r"
-"A=B+C\r"
-"?A,B,C\r"
-"B$=\"Abc\"+\"deF\"\r"
-"?B$,\"1234\"\r";
+/*#include "tokens.h"
+#include "runner.h"
+#include "program.h"*/
+#include "resources.h"
+#include "system.h"
 
-char out[4096];
+#include "tilemap.h"
 
-int main(void){
-	// initialize system buffers, etc.
+int main(int argc, char** argv){
+	if (argc == 2){
+		// TODO: Load file as program
+	} else {
+		// Todo: Load default program
+	}
+	
+	struct ptc* ptc = system_init();
+	
+	// https://gist.github.com/def-/fee8bb041719337c8812
+	// used as convenient reference
+	sfRenderWindow* window;
+	
+	window = sfRenderWindow_create((sfVideoMode){256,384,32}, argv[0], sfResize | sfClose, NULL);
+	if (!window){
+		printf("Failed to create the render window!");
+		abort();
+	}
+	
+	FILE* f = fopen("BGF0.PTC", "rb");
+	fread(ptc->res.chr[0], sizeof(u8), 0x30, f); //header skip
+	size_t rc = fread(ptc->res.chr[0], sizeof(u8), CHR_SIZE, f);
+	if (rc < CHR_SIZE){
+		iprintf("fuck\n");
+		abort();
+	}
+	fclose(f);
+	
+	sfEvent event;
+	while (sfRenderWindow_isOpen(window)){
+		while (sfRenderWindow_pollEvent(window, &event)){
+			if (event.type == sfEvtClosed){
+				sfRenderWindow_close(window);
+			}
+			// TODO: Get keyboard and mouse/touch input
+		}
+		
+		sfRenderWindow_clear(window, sfBlack);
+		
+//		sfRenderWindow_drawSprite(window, spr, NULL);
+		
+//		sfRenderWindow_drawVertexArray(window, map.va, &rs);
+		system_draw(window, ptc);
+		
+		sfRenderWindow_display(window);
+	}
+	
+	sfRenderWindow_destroy(window);
+	
+//	struct ptc* ptc;
+	
+	
+	
+/*	// initialize system buffers, etc.
 	struct ptc* ptc = system_init();
 	
 	struct program program;
@@ -44,7 +95,9 @@ int main(void){
 	// measure size of program file size vs original's memory vs remake's memory use
 	iprintf("file:%d ptc:%d sbc:%d\n", program.size, program.size*2, output.size);
 	
-	return 0;
+	return 0;*/
+	
+	// TODO: Clean up memory on exit
 }
 
 

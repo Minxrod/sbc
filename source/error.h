@@ -23,6 +23,7 @@ enum err_code {
 	ERR_RETURN_WITHOUT_GOSUB,
 	ERR_COMMAND_EXISTS,
 	ERR_UNKNOWN_TYPE,
+	ERR_INVALID_RESOURCE_TYPE,
 };
 
 extern const char * error_messages[];
