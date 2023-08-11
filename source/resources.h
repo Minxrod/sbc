@@ -11,6 +11,7 @@
 
 // Format: width*height*unit_size
 /// Size of one CHR bank
+/// Sizes all in bytes
 #define CHR_SIZE (256* 64/2)
 #define GRP_SIZE (256*192*1)
 #define SCR_SIZE ( 64* 64*2)
@@ -67,5 +68,6 @@ void* get_resource(struct ptc* p, char* name, int len);
 struct sfTexture;
 /// PC-only function to generate SFML textures.
 struct sfTexture* gen_chr_texture(u8* src, size_t size);
+struct sfTexture* gen_col_texture(u16* src);
 #endif
 

@@ -39,15 +39,6 @@ int main(int argc, char** argv){
 		abort();
 	}
 	
-	FILE* f = fopen("BGF0.PTC", "rb");
-	fread(ptc->res.chr[0], sizeof(u8), 0x30, f); //header skip
-	size_t rc = fread(ptc->res.chr[0], sizeof(u8), CHR_SIZE, f);
-	if (rc < CHR_SIZE){
-		iprintf("fuck\n");
-		abort();
-	}
-	fclose(f);
-	
 	sfEvent event;
 	while (sfRenderWindow_isOpen(window)){
 		while (sfRenderWindow_pollEvent(window, &event)){

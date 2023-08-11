@@ -41,7 +41,7 @@ void tile(struct tilemap* map, int x, int y, int chr, bool h, bool v){
 
 // sets the color palette of a tile
 void palette(struct tilemap* map, int x, int y, int pal){
-	sfColor col = {pal,0,0,255};
+	sfColor col = {16 * pal,0,0,255};
 	sfVertexArray_getVertex(map->va, 4 * (x + map->width * y) + 0)->color = col;
 	sfVertexArray_getVertex(map->va, 4 * (x + map->width * y) + 1)->color = col;
 	sfVertexArray_getVertex(map->va, 4 * (x + map->width * y) + 2)->color = col;

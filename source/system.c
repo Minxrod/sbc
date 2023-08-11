@@ -37,21 +37,39 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	// TODO: visible
 	// TODO: Every system except text
 	
+	sfShader* shader;
 	sfRenderStates rs = sfRenderStates_default();
 	rs.texture = gen_chr_texture(p->res.chr[0], 256);
+	if (!sfShader_isAvailable()){
+		iprintf("Error: Shaders are unavailable!");
+		abort();
+	} else {
+		if (!(shader = sfShader_createFromFile(NULL, NULL, "resources/bgsp.frag"))){
+			iprintf("Error: Shader failed to load!");
+			abort();
+		}
+	}
+	static sfTexture* col_tex = 0;
+	if (!col_tex)
+		col_tex = gen_col_texture(p->res.col[0]);
+	sfShader_setTextureUniform(shader, "colors", col_tex);
+	sfShader_setCurrentTextureUniform(shader, "texture");
+	sfShader_setFloatUniform(shader, "colbank", 0); //TODO change
+	rs.shader = shader;
 	
 	struct tilemap map;
 	map = tilemap_init(32, 24);
 	
 	for (int x = 0; x < 32; ++x){
 		for (int y = 0; y < 24; ++y){
-			tile(&map, x, y, (u8)con_text_getc(&p->console, x, y), 0, 0);
+			tile(&map, x, y, x+(u8)con_text_getc(&p->console, x, y), 0, 0);
 			// TODO: color palette
 			// TODO: background tile/color
-			palette(&map, x, y, 255);
+			palette(&map, x, y, y % 16);
 		}
 	}
 	
 	sfRenderWindow_drawVertexArray(rw, map.va, &rs);
+//	sfTexture_destroy(col_tex);
 }
 #endif
