@@ -11,14 +11,27 @@ void v(void); //prevent empty translation unit
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <threads.h>
 
-/*#include "tokens.h"
 #include "runner.h"
-#include "program.h"*/
+#include "program.h"
 #include "resources.h"
 #include "system.h"
 
 #include "tilemap.h"
+
+struct launch_info {
+	struct ptc* p;
+	struct program* prg;
+};
+
+int system_launch(void* launch_info){
+	struct launch_info* info = (struct launch_info*)launch_info;
+	
+	// TODO: Check for escapes, pauses, etc.
+	run(info->prg, info->p);
+	return info->p->exec.error;
+}
 
 int main(int argc, char** argv){
 	if (argc == 2){
@@ -28,6 +41,7 @@ int main(int argc, char** argv){
 	}
 	
 	struct ptc* ptc = system_init();
+	struct program program = {16, "S\14Hello world!C\0"};
 	
 	// https://gist.github.com/def-/fee8bb041719337c8812
 	// used as convenient reference
@@ -36,6 +50,20 @@ int main(int argc, char** argv){
 	window = sfRenderWindow_create((sfVideoMode){256,384,32}, argv[0], sfResize | sfClose, NULL);
 	if (!window){
 		printf("Failed to create the render window!");
+		abort();
+	}
+	
+	// THREAD MODEL
+	// WINDOW                    PROGRAM
+	//  Event -> Input ==>        BUTTON, KEYBOARD, etc.
+	//  Stop -> Load Program =>   struct ptc
+	//  Rendering <==             struct ptc ~ display state
+	
+	// Launch the program thread
+	struct launch_info info = {ptc, &program};
+	thrd_t prog_thread;
+	if (thrd_success != thrd_create(&prog_thread, system_launch, &info)){
+		printf("Failed to create the program thread!");
 		abort();
 	}
 	
@@ -50,9 +78,6 @@ int main(int argc, char** argv){
 		
 		sfRenderWindow_clear(window, sfBlack);
 		
-//		sfRenderWindow_drawSprite(window, spr, NULL);
-		
-//		sfRenderWindow_drawVertexArray(window, map.va, &rs);
 		system_draw(window, ptc);
 		
 		sfRenderWindow_display(window);

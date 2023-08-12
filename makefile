@@ -16,7 +16,7 @@ CSFML_LIB = $(CSFML)lib/
 CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
-CFLAGS = -g -std=c99 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir))
+CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir))
 CFLAGS += -DPC -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 
 # Some magic makefile nonsense

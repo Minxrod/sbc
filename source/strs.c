@@ -122,18 +122,47 @@ u16 to_wide(u8 c){
 		if (c == 0x22) return 0x201d;
 		if (c == 0x27) return 0x2019;
 		return (c - 0x20) | 0xff00;
-	} else if (c >= 28 && c < 0x80){
-		return c | 0xff00;
-	} else if (c >= 80 && c < 0xa1){
+	} else if (c >= 0x28 && c < 0x80){
+		return (c - 0x20) | 0xff00;
+	} else if (c >= 0x80 && c < 0xa1){
 		return c;
 	} else if (c >= 0xa1 && c < 0xe0){
+		if (c == 0xb0) return 0xff70;
 		//TODO: katakana
-		iprintf("Error converting to wide char (Katakana)\n");
-		abort();
+		const u8 katakana[] = "\x02\x0c\x0d\x01\xfb\xf2\xa1\xa3\xa5\xa7\xa9\xe3\xe5\xe7"
+		"\xc3?\xa2\xa4\xa6\xa8\xaa\xab\xad\xaf\xb1\xb3\xb5\xb7\xb9\xbb\xbd\xbf"
+		"\xc1\xc4\xc6\xc8\xca\xcb\xcc\xcd\xce\xcf\xd2\xd5\xd8\xdb\xde\xdf\xe0"
+		"\xe1\xe2\xe4\xe6\xe8\xe9\xea\xeb\xec\xed\xef\xf3\x9b\x9c";
+		return katakana[c - 0xa1] | 0x3000;
 	} else if (c >= 0xe0){
 		return c;
 	} else {
 		iprintf("Error converting to wide char (unimplemented)\n");
+		abort();
+	}
+}
+
+u8 to_char(u16 w){
+	u8 wh = (w & 0xff00) >> 8;
+	u8 wl = w & 0x00ff;
+	if (wh == 0){
+		return wl;
+	} else if (wh == 0x20){
+		if (wl == 0x1d) return 0x22;
+		if (wl == 0x19) return 0x27;
+		abort();
+	} else if (wh == 0xff){ //TODO: may be an else? check PTC behavior
+		if (wl == 0x70) return 0xb0;
+		return wl + 0x20;
+	} else if (wh == 0x30){
+		// "".join([chr(x) if x>=0 else '?' for x in [ktk.find(chr(i)) for i in range(0,256)]])
+		const u8 katakana[] = "?\x03\x00?????????\x01\x02?????????????????????????????????????????????????"
+		"\x0f???????????????????????????????????????????????????????????????????????????????????????????" /*trigraph oops*/ "=>"
+		"????\x06\x10\x07\x11\x08\x12\t\x13\n\x14\x15?\x16?\x17?\x18?\x19?\x1a?\x1b?\x1c?\x1d?\x1e?\x1f? ?"
+		"\x0e!?\"?#?$%&\'()??*??+??,?" /*split trigraph, again*/ "?-??./012\x0b""3\x0c""4\r56789:?;??\x05<???????\x04????";
+		return katakana[wl] + 0xa1;
+	} else {
+		iprintf("Error converting u16 to u8 char (unimplemented): %x\n", w);
 		abort();
 	}
 }

@@ -62,10 +62,10 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	
 	for (int x = 0; x < 32; ++x){
 		for (int y = 0; y < 24; ++y){
-			tile(&map, x, y, x+(u8)con_text_getc(&p->console, x, y), 0, 0);
+			tile(&map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
 			// TODO: color palette
 			// TODO: background tile/color
-			palette(&map, x, y, y % 16);
+			palette(&map, x, y, 0);
 		}
 	}
 	

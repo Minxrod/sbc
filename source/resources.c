@@ -23,8 +23,6 @@
 #define VRAM_LOWER_OFS (0x00400000)
 #endif
 
-#define PTC_FILE_HEADER_SIZE 0x30
-
 void resource_init(struct resources* r){
 #ifdef ARM9
 	// Assign pointers into VRAM as needed
@@ -84,7 +82,7 @@ void resource_init(struct resources* r){
 			iprintf("Failed to load file: %s\n", name);
 			abort(); //TODO: Handle gracefully? Fallback generated tiles?
 		}
-		fread(r->chr[i], sizeof(u8), PTC_FILE_HEADER_SIZE, f);
+		fread(r->chr[i], sizeof(u8), HEADER_SIZE, f);
 		fread(r->chr[i], sizeof(u8), CHR_SIZE, f);
 		
 		fclose(f);
@@ -99,7 +97,7 @@ void resource_init(struct resources* r){
 			iprintf("Failed to load file: %s\n", name);
 			abort(); //TODO: Handle gracefully? Fallback generated tiles?
 		}
-		fread(r->col[i], sizeof(u8), PTC_FILE_HEADER_SIZE, f);
+		fread(r->col[i], sizeof(u8), HEADER_SIZE, f);
 		fread(r->col[i], sizeof(u8), COL_SIZE, f);
 		
 		fclose(f);

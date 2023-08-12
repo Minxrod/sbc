@@ -54,6 +54,9 @@ struct string* get_new_str(struct strings* s);
 //Convert char to wide char
 u16 to_wide(u8 c);
 
+//Reverse char to wide char
+u8 to_char(u16 c);
+
 // Convert number to string PTC style
 void str_num(s32 num, u8* str);
 

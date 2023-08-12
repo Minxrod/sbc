@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "header.h"
 
 //PRG: already defined
 //MEM: this is a string

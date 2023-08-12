@@ -81,6 +81,16 @@ int test_strs(){
 		ASSERT(str_comp(&s3, c), "[str_concat] Concatenate works correctly");
 	}
 	
+	// Character conversion is invertible
+	{
+		u8 i = 0;
+		do {
+			iprintf("%d,%x,%d\n", i, to_wide(i), to_char(to_wide(i)));
+			ASSERT(i == to_char(to_wide(i)), "[to_wide,to_char] Conversion inverses");
+			i++; //unsigned overflow OK!
+		} while (i);
+	}
+	
 	// Number to string conversion
 	{
 		//TODO: Turn these cases into macros because this is stupid
