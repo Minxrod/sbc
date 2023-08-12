@@ -27,7 +27,8 @@ const ptc_call ptc_commands[] = {
 	cmd_for, cmd_to, cmd_step, cmd_next,
 	cmd_if, cmd_then, cmd_else, cmd_endif,
 	cmd_goto, cmd_gosub, cmd_on, cmd_return,
-	cmd_end, cmd_stop
+	cmd_end, cmd_stop,
+	cmd_cls, cmd_visible, cmd_acls,
 };
 
 const ptc_call ptc_operators[] = {

@@ -22,11 +22,22 @@ struct ptc* system_init(int var, int str, int arr){
 	// init various ptc items
 	// TODO: subsytem initialization functions?
 	ptc->console.tabstep = 4;
+	ptc->g.visible = VISIBLE_ALL;
 	
 	resource_init(&ptc->res);
 	
 	//allocate ptc struct here?
 	return ptc;
+}
+
+void cmd_acls(struct ptc* p){
+	// TODO: Implement
+	p->stack.stack_i = 0;
+}
+
+void cmd_visible(struct ptc* p){
+	// TODO: Actually work
+	p->stack.stack_i = 0;
 }
 
 #ifdef PC
@@ -64,8 +75,9 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 		for (int y = 0; y < 24; ++y){
 			tile(&map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
 			// TODO: color palette
-			// TODO: background tile/color
-			palette(&map, x, y, 0);
+			// TODO: background tile/color[
+//			iprintf("Color?:%d,%d,%d\n", x,y,p->console.color[x][y] & COL_FG_MASK);
+			palette(&map, x, y, p->console.color[x][y] & COL_FG_MASK);
 		}
 	}
 	

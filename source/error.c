@@ -25,4 +25,5 @@ const char * error_messages[] = {
 	"Handling for type is unspecified",
 	"Resource type is invalid!",
 	"String too long!",
+	"Wrong number of arguments!",
 };

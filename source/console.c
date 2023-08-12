@@ -115,12 +115,45 @@ void cmd_print(struct ptc* p){
 }
 
 void cmd_color(struct ptc* p){
-	++p;
+	struct console* c = &p->console;
+	// TODO: check arguments types, quantity
+	if (p->stack.stack_i == 2){
+		c->col = 0;
+		c->col |= VALUE_NUM(stack_get(&p->stack, 0)) >> 12; // FG
+		c->col |= (VALUE_NUM(stack_get(&p->stack, 1)) >> 12) << 4; // BG
+	} else if (p->stack.stack_i == 1){
+		c->col &= ~COL_FG_MASK; // clear FG value
+		c->col |= (VALUE_NUM(stack_get(&p->stack, 0)) >> 12); // FG
+	} else {
+		p->exec.error = ERR_WRONG_ARG_COUNT;
+	}
+	p->stack.stack_i = 0;
 }
 
 void cmd_locate(struct ptc* p){
-	++p;
+	struct console* c = &p->console;
+	// TODO: check arguments types, quantity
+	if (p->stack.stack_i == 2){
+		// TODO: Use stack_get or whatever instead
+		c->x = VALUE_NUM(stack_get(&p->stack, 0)) >> 12; // BG
+		c->y = VALUE_NUM(stack_get(&p->stack, 1)) >> 12; // FG
+	} else {
+		p->exec.error = ERR_WRONG_ARG_COUNT;
+	}
+	p->stack.stack_i = 0;
 }
+
+void cmd_cls(struct ptc* p){
+	struct console* c = &p->console;
+	// TODO: check arguments types, quantity
+	for (int i = 0; i < CONSOLE_HEIGHT; ++i){
+		for (int j = 0; j < CONSOLE_WIDTH; ++j){
+			c->text[j][i] = 0;
+			c->color[j][i] = 0;
+		}
+	}
+}
+
 
 inline u16 con_text_getc(struct console* c, u32 x, u32 y){
 	return c->text[x][y];

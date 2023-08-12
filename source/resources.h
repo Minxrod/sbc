@@ -22,6 +22,15 @@ struct ptc;
 
 #define CHR_BANKS (4+4+4+8+2)
 
+#define VISIBLE_CONSOLE 1
+#define VISIBLE_BG0 2
+#define VISIBLE_BG1 4
+#define VISIBLE_SPRITE 8
+#define VISIBLE_PANEL 16
+#define VISIBLE_GRAPHICS 32
+#define VISIBLE_ALL 0x3f
+
+
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
@@ -57,6 +66,9 @@ struct graphics {
 	u8* chr_sp_lower;
 	u8* grp_sp_lower;
 	// TODO: Do colors need to be here...?
+	
+	/// State of rendered visible objects
+	int visible;
 };
 
 void resource_init(struct resources* r);

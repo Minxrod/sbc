@@ -6,6 +6,7 @@
 #include "arrays.h"
 #include "runner.h"
 #include "resources.h"
+#include "input.h"
 
 #include "console.h"
 
@@ -17,6 +18,8 @@
 
 // note: members here are stored directly (why?)
 struct ptc {
+	// generic stuff
+	struct input input;
 	// upper screen stuff
 	struct console console;
 //	struct background background;
@@ -46,6 +49,9 @@ struct ptc {
 };
 
 struct ptc* system_init();
+
+void cmd_acls(struct ptc*);
+void cmd_visible(struct ptc*);
 
 #ifdef PC
 struct sfRenderWindow;

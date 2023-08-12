@@ -17,6 +17,9 @@
 
 struct ptc;
 
+#define COL_FG_MASK 0x0f
+#define COL_BG_MASK 0xf0
+
 /**
  * Console structure
  * 

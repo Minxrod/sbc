@@ -304,5 +304,20 @@ int test_tokens(void){
 		);
 	}
 	
+	// LOCATE bc generation
+	{
+		char bc[] = {
+			BC_SMALL_NUMBER, 5,
+			BC_SMALL_NUMBER, 11,
+			BC_COMMAND, CMD_LOCATE,
+		};
+		ASSERT(
+			token_code(
+				"LOCATE 5,11\r",
+				bc, 6
+			), "[tokens] LOCATE tokenization"
+		);
+	}
+	
 	SUCCESS("test_tokens success");
 }

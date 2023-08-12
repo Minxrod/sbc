@@ -70,7 +70,7 @@ void op_mult(struct ptc* p){
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
 	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
 		// TODO: String * Number
-		s32 count = VALUE_NUM(b);
+		s32 count = VALUE_NUM(b) >> 12;
 		struct string* x, * y;
 		
 		x = VALUE_STR(a);
@@ -82,7 +82,7 @@ void op_mult(struct ptc* p){
 		
 		y = get_new_str(&p->strs);
 		y->uses = 1;
-		if (count * str_len(y) > MAX_STRLEN){
+		if (count * str_len(x) > MAX_STRLEN){
 			p->exec.error = ERR_STRING_TOO_LONG;
 			return;
 		}

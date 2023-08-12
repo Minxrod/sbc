@@ -11,8 +11,9 @@ const int MAX_SPECIAL_NAME_SIZE = 8;
 const char* commands =
 "PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
 "IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      RETURN  "
-"END     STOP    ";
-
+"END     STOP    "
+"CLS     VISIBLE ACLS    "
+;
 /*
 "ACLS    APPEND  "
 "BEEP    BGCLIP  BGCLR   BGCOPY  BGFILL  BGMCLEARBGMPLAY BGMPRG  BGMSET  BGMSETD BGMSETV "
@@ -519,7 +520,7 @@ void tok_eval(struct tokenizer* state){
 				tok_eval_clean_stack(&e, prio);
 			}
 			// DON'T push a comma, as this is implied from argument ordering/structure
-			if (state->tokens[i].ofs != OP_COMMA)
+			if (state->tokens[i].type != operation || state->tokens[i].ofs != OP_COMMA)
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			else
 				e.argc_stack[e.argc_i]++;

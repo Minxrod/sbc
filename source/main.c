@@ -106,6 +106,7 @@ int main(int argc, char** argv){
 		for (int i = 0; i < 12; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
 		}
+		set_input(&ptc->input, b);
 		// TODO: Set buttons, touch, keys
 		
 		sfRenderWindow_clear(window, sfBlack);
