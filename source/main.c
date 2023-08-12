@@ -13,6 +13,7 @@ void v(void); //prevent empty translation unit
 #include <stdlib.h>
 #include <threads.h>
 
+#include "tokens.h"
 #include "runner.h"
 #include "program.h"
 #include "resources.h"
@@ -29,27 +30,35 @@ int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
 	
 	// TODO: Check for escapes, pauses, etc.
-	run(info->prg, info->p);
+	struct program bc = {0, malloc(2*info->prg->size)};
+	tokenize(info->prg, &bc);
+	free(info->prg->data); // TODO: remove for debugging purposes?
+	// only needs BC, not source
+	run(&bc, info->p);
 	return info->p->exec.error;
 }
 
 int main(int argc, char** argv){
+	struct program program;
+	char* window_name = "SBC";
 	if (argc == 2){
 		// TODO: Load file as program
+		window_name = argv[1];
+		prg_load(&program, argv[1]);
 	} else {
-		// Todo: Load default program
+		// Load default program: TODO load an actual launcher program
+		prg_load(&program, "SAMPLE1.PTC");
 	}
 	
-	struct ptc* ptc = system_init();
-	struct program program = {16, "S\14Hello world!C\0"};
+	struct ptc* ptc = system_init(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	
 	// https://gist.github.com/def-/fee8bb041719337c8812
 	// used as convenient reference
 	sfRenderWindow* window;
 	
-	window = sfRenderWindow_create((sfVideoMode){256,384,32}, argv[0], sfResize | sfClose, NULL);
+	window = sfRenderWindow_create((sfVideoMode){256,384,32}, window_name, sfResize | sfClose, NULL);
 	if (!window){
-		printf("Failed to create the render window!");
+		printf("Failed to create the render window!\n");
 		abort();
 	}
 	
@@ -63,8 +72,23 @@ int main(int argc, char** argv){
 	struct launch_info info = {ptc, &program};
 	thrd_t prog_thread;
 	if (thrd_success != thrd_create(&prog_thread, system_launch, &info)){
-		printf("Failed to create the program thread!");
+		printf("Failed to create the program thread!\n");
 		abort();
+	}
+	
+	int keys[12];
+	FILE* file = fopen("config.txt", "r");
+	if (!file){
+		printf("Failed to read config file!\n");
+		abort();
+	}
+	for (int i = 0; i < 12; ++i){
+		int r = fscanf(file, "%d", &keys[i]);
+		if (!r || r == EOF){
+			printf("Failed to read key %d\n", 1+i);
+			abort();
+		}
+		printf("%d\n", keys[i]);
 	}
 	
 	sfEvent event;
@@ -74,7 +98,15 @@ int main(int argc, char** argv){
 				sfRenderWindow_close(window);
 			}
 			// TODO: Get keyboard and mouse/touch input
+			
 		}
+		
+		// TODO: SFML 2.6, use scan codes?
+		int b = 0;
+		for (int i = 0; i < 12; ++i){
+			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
+		}
+		// TODO: Set buttons, touch, keys
 		
 		sfRenderWindow_clear(window, sfBlack);
 		

@@ -24,4 +24,5 @@ const char * error_messages[] = {
 	"Command should not exist",
 	"Handling for type is unspecified",
 	"Resource type is invalid!",
+	"String too long!",
 };

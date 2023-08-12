@@ -9,6 +9,12 @@
 
 #include "console.h"
 
+// note that VAR_LIMIT should be a multiple of 2 to ensure that
+// the current hash algorithm works
+#define VAR_LIMIT 2048
+#define STR_LIMIT 4096
+#define ARR_LIMIT 262144
+
 // note: members here are stored directly (why?)
 struct ptc {
 	// upper screen stuff

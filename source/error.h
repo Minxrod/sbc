@@ -24,6 +24,7 @@ enum err_code {
 	ERR_COMMAND_EXISTS,
 	ERR_UNKNOWN_TYPE,
 	ERR_INVALID_RESOURCE_TYPE,
+	ERR_STRING_TOO_LONG,
 };
 
 extern const char * error_messages[];

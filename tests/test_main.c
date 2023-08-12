@@ -12,6 +12,7 @@
 #include "test_int_vars.h"
 #include "test_int_code.h"
 
+#include "test_input.h"
 #include "test_console.h"
 
 int tests(){
@@ -23,6 +24,7 @@ int tests(){
 	FAST(test_int_vars());
 	FAST(test_int_code());
 	
+	FAST(test_input());
 	FAST(test_console());
 	
 	return 0;

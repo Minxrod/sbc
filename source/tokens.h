@@ -64,6 +64,7 @@ struct tokenizer {
 	// Current token index
 	u32 token_i;
 	
+	bool is_comment;
 	// Values obtained while parsing
 	// TODO: dynamic size?
 	// Label addresses

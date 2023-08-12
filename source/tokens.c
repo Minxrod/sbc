@@ -186,6 +186,7 @@ void tokenize(struct program* src, struct program* out){
 	state.source = src;
 	state.output = out;
 	state.cursor = 0;
+	state.is_comment = 0;
 	state.state = TKR_NONE;
 	
 	while (state.cursor < state.source->size){
@@ -664,6 +665,19 @@ void tok_none(struct tokenizer* state){
 	// This state can transition to:
 	char c = state->source->data[state->cursor];
 	
+	if (c == '\r'){
+		tok_single(state, newline);
+		state->is_comment = false;
+		state->state = TKR_CONVERT;
+		// mark comment as ended
+		return;
+	}
+	
+	if (state->is_comment) {
+		state->cursor++;
+		return;
+	}
+	
 	if (is_name_start(c)){
 		tok_name(state);
 	} else if (c == '?'){
@@ -672,10 +686,8 @@ void tok_none(struct tokenizer* state){
 		state->tokens[state->token_i].ofs = CMD_PRINT;
 		state->cursor++;
 		state->token_i++;
-	} else if (c == '\r' || c == ':'){
+	} else if (c == ':'){
 		tok_single(state, newline);
-		if (c == '\r') // : should be handled differently to allow IF
-			state->state = TKR_CONVERT;
 	} else if (c == ' '){
 		//whitespace is ignored
 		state->cursor++;
@@ -700,8 +712,13 @@ void tok_none(struct tokenizer* state){
 		tok_with_condition(state, is_name);
 		state->tokens[state->token_i].type = label;
 		state->token_i++;
+	} else if (c == '\''){
+		// read to newline
+		state->cursor++;
+		//TODO: copy comment text, instead of ignore?
+		state->is_comment = true;
 	} else {
-		iprintf("Unknown transition from NONE on %c\n", c);
+		iprintf("Unknown transition from NONE on %c:%d\n", c, c);
 		state->cursor++;
 	}
 }

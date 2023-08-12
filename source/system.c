@@ -5,7 +5,7 @@
 #include "system.h"
 #include "vars.h"
 
-struct ptc* system_init(){
+struct ptc* system_init(int var, int str, int arr){
 	struct ptc* ptc = malloc(sizeof(struct ptc));
 	if (ptc == NULL){
 		iprintf("Error allocating memory!");
@@ -14,9 +14,9 @@ struct ptc* system_init(){
 	*ptc = (const struct ptc){0};
 	
 	// init vars memory
-	init_mem_var(&ptc->vars, 16);
-	init_mem_str(&ptc->strs, 32, STRING_CHAR);
-	init_mem_arr(&ptc->arrs, 16, 64);
+	init_mem_var(&ptc->vars, var);
+	init_mem_str(&ptc->strs, str, STRING_CHAR);
+	init_mem_arr(&ptc->arrs, var, arr);
 	ptc->vars.strs = &ptc->strs;
 	ptc->vars.arrs = &ptc->arrs;
 	// init various ptc items

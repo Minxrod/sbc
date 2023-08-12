@@ -21,10 +21,11 @@ void init_mem_prg(struct program* p, int prg_size){
 }
 
 
+/// Allocates memory equivalent to the program size!
 void prg_load(struct program* p, const char* filename){
 	FILE* f = fopen(filename, "r");
 	if (!f){
-		iprintf("File %s load failed!", filename);
+		iprintf("File %s load failed!\n", filename);
 		fclose(f);
 		abort();
 	}
@@ -32,21 +33,23 @@ void prg_load(struct program* p, const char* filename){
 	size_t r;
 	
 	/// TODO: I think this only works on little-endian devices...
+	/// (reading into header memory directly)
 	r = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
 	if (r < PRG_HEADER_SIZE || ferror(f)){
-		iprintf("Could not read header correctly!");
+		iprintf("Could not read header correctly!\n");
 		fclose(f);
 		abort();
 	}
 	// load success: read file to buffer
 	
+	p->size = h.prg_size;
+	p->data = malloc(h.prg_size);
 	r = fread(p->data, sizeof(char), h.prg_size, f);
 	if (r < h.prg_size || ferror(f)){
-		iprintf("Could not read file corrcetly!");
+		iprintf("Could not read file corrcetly!\n");
 		fclose(f);
 		abort();
 	}
 	// file read success: close file
 	fclose(f);
-	
 }

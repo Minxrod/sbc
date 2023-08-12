@@ -68,9 +68,30 @@ void op_mult(struct ptc* p){
 		y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
-	} else if (a->type & VAR_NUMBER && b->type & VAR_STRING){
+	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
 		// TODO: String * Number
-		p->exec.error = ERR_UNIMPLEMENTED;
+		s32 count = VALUE_NUM(b);
+		struct string* x, * y;
+		
+		x = VALUE_STR(a);
+		// if string is alloc'd and only exists on stack:
+		// decrease usage as it was popped
+		if (x->type == STRING_CHAR && !(a->type & VAR_VARIABLE)){
+			x->uses--;
+		}
+		
+		y = get_new_str(&p->strs);
+		y->uses = 1;
+		if (count * str_len(y) > MAX_STRLEN){
+			p->exec.error = ERR_STRING_TOO_LONG;
+			return;
+		}
+		
+		for (int i = 0; i < count; ++i){
+			str_concat(y, x, y); //TODO: check that this works??
+		}
+		
+		stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = y}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
