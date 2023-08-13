@@ -40,6 +40,16 @@ void cmd_visible(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+void cmd_vsync(struct ptc* p){
+	// TODO: Actually work
+	p->stack.stack_i = 0;
+}
+
+void cmd_wait(struct ptc* p){
+	// TODO: Actually work
+	p->stack.stack_i = 0;
+}
+
 #ifdef PC
 #include <SFML/Graphics.h>
 #include "tilemap.h"

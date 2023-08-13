@@ -12,7 +12,7 @@ const char* commands =
 "PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
 "IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      RETURN  "
 "END     STOP    "
-"CLS     VISIBLE ACLS    "
+"CLS     VISIBLE ACLS    VSYNC   WAIT    "
 ;
 /*
 "ACLS    APPEND  "
@@ -95,6 +95,7 @@ u32 bc_scan(struct program* code, u32 index, u8 find){
 	// search for find in code->data
 	while (index < code->size){ 
 		u8 cur = code->data[index];
+//		iprintf("%d: %c,%d\n", index, cur >= 32 ? cur : '?', code->data[index+1]);
 		if (cur == find){
 			return index;
 		}
@@ -111,6 +112,7 @@ u32 bc_scan(struct program* code, u32 index, u8 find){
 			if (cur >= 'A'){
 				++index;
 			} else {
+				++index;
 				index += cur + (cur & 1);
 			}
 		} else if (cur == BC_NUMBER){

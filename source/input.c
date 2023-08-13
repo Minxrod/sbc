@@ -1,5 +1,8 @@
 #include "input.h"
 
+#include "common.h"
+#include "system.h"
+#include "error.h"
 
 void init_input(struct input* i){
 	i->button = 0;
@@ -38,4 +41,18 @@ bool check_pressed(struct input* i, int id){
 		}
 	}
 	return false;
+}
+
+void func_btrig(struct ptc* p){
+	struct input* i = &p->input;
+	if (p->exec.argcount){
+		p->exec.error = ERR_WRONG_ARG_COUNT;
+		return;
+	}
+	s32 b = 0;
+	for (int j = 0; j < BUTTON_COUNT; ++j){
+		b |= check_pressed(i, j) << j;
+	}
+	iprintf("button: %d\n", b);
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {b << 12}});
 }

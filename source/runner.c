@@ -28,7 +28,7 @@ const ptc_call ptc_commands[] = {
 	cmd_if, cmd_then, cmd_else, cmd_endif,
 	cmd_goto, cmd_gosub, cmd_on, cmd_return,
 	cmd_end, cmd_stop,
-	cmd_cls, cmd_visible, cmd_acls,
+	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
 };
 
 const ptc_call ptc_operators[] = {
@@ -37,7 +37,7 @@ const ptc_call ptc_operators[] = {
 };
 
 const ptc_call ptc_functions[] = {
-	op_add,
+	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig
 };
 
 const ptc_call ptc_sysvars[] = {
@@ -309,6 +309,11 @@ void run(struct program* code, struct ptc* p) {
 	*/
 	if (r->error){
 		iprintf("Error: %s\n", error_messages[r->error]);
+		con_puts(&p->console, "S\5Error");
+		con_newline(&p->console);
+	} else {
+		con_puts(&p->console, "S\2OK");
+		con_newline(&p->console);
 	}
 	
 }

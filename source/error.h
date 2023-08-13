@@ -26,6 +26,7 @@ enum err_code {
 	ERR_INVALID_RESOURCE_TYPE,
 	ERR_STRING_TOO_LONG,
 	ERR_WRONG_ARG_COUNT,
+	ERR_LABEL_NOT_FOUND,
 };
 
 extern const char * error_messages[];

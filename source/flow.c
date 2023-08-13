@@ -129,12 +129,11 @@ void cmd_if(struct ptc* p){
 	// current stack consists of one item (should be numeric)
 	struct stack_entry* e = stack_pop(&p->stack);
 	// TODO type check
-	
+	u32 index = p->exec.index;
 	if (e->value.number != 0){
 		// true: proceed to next instruction as normal
 	} else {
 		// false: proceed to ELSE or ENDIF
-		u32 index = p->exec.index;
 		while ((index = bc_scan(p->exec.code, index, BC_COMMAND)) != BC_SCAN_NOT_FOUND){
 			if (p->exec.code->data[index+1] == CMD_ELSE || p->exec.code->data[index+1] == CMD_ENDIF){
 				break; // found ELSE or ENDIF
@@ -145,11 +144,32 @@ void cmd_if(struct ptc* p){
 		
 		if (index == BC_SCAN_NOT_FOUND){
 			p->exec.error = ERR_MISSING_ELSE_AND_ENDIF;
+			return;
 		} else {
 			index += 2; // move to instruction past ELSE or ENDIF
-			p->exec.index = index;
 		}
 	}
+	char* label = &p->exec.code->data[index];
+	if (label[0] == BC_LABEL_STRING){
+		// GOTO label
+		index = 0;
+		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
+			// found index: check correctness
+			// TODO: fast search/cache label locations?
+			iprintf("%d\n", index);
+			if (str_comp(&p->exec.code->data[index], label)){
+				// this is the index, jump to here
+				break;
+			}
+			index += 2;
+		}
+		// TODO: Check when label does not exist
+		if (index == BC_SCAN_NOT_FOUND){
+			p->exec.error = ERR_LABEL_NOT_FOUND;
+			return;
+		}
+	}
+	p->exec.index = index;
 	// IF should clear stack [only contains condition]
 	p->stack.stack_i = 0;
 }

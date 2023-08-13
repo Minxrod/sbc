@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-static const u32 LINE_MAX = 100;
+#define TOKENS_LINE_MAX 100
 
 extern const char* commands;
 extern const char* functions;

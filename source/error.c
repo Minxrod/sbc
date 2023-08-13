@@ -26,4 +26,5 @@ const char * error_messages[] = {
 	"Resource type is invalid!",
 	"String too long!",
 	"Wrong number of arguments!",
+	"Label not found!",
 };

@@ -52,3 +52,7 @@ void set_input(struct input* i, int b);
 void set_repeat(struct input* i, int button, int start, int repeat);
 
 bool check_pressed(struct input* i, int id);
+
+struct ptc;
+
+void func_btrig(struct ptc* p);

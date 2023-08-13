@@ -77,7 +77,7 @@ int main(int argc, char** argv){
 	}
 	
 	int keys[12];
-	FILE* file = fopen("config.txt", "r");
+	FILE* file = fopen("resources/config.txt", "r");
 	if (!file){
 		printf("Failed to read config file!\n");
 		abort();
@@ -97,8 +97,6 @@ int main(int argc, char** argv){
 			if (event.type == sfEvtClosed){
 				sfRenderWindow_close(window);
 			}
-			// TODO: Get keyboard and mouse/touch input
-			
 		}
 		
 		// TODO: SFML 2.6, use scan codes?

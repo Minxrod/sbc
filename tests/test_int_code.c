@@ -47,6 +47,14 @@ int test_int_code(){
 		ASSERT(i == 8, "[bc_scan] Find index of operator without being in string");
 	}
 	
+	// Code searching (Variable name)
+	{
+		char* code = "V\3ABC\0L\1A\0";
+		struct program o = {8, code};
+		u32 i = bc_scan(&o, 0, BC_LABEL);
+		ASSERT(i == 6, "[bc_scan] Find index of label past variable name");
+	}
+	
 	// Actual FOR loop
 	{
 		struct ptc ptc = {0};

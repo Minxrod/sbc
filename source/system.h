@@ -52,6 +52,8 @@ struct ptc* system_init();
 
 void cmd_acls(struct ptc*);
 void cmd_visible(struct ptc*);
+void cmd_vsync(struct ptc*);
+void cmd_wait(struct ptc*);
 
 #ifdef PC
 struct sfRenderWindow;
