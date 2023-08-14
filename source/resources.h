@@ -30,23 +30,28 @@ struct ptc;
 #define VISIBLE_GRAPHICS 32
 #define VISIBLE_ALL 0x3f
 
-
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
 	// TODO: PRG type?
 //	struct program* prg;
-	// TODO: MEM type
+	// TODO: MEM type?
 	//BGU,D,F,[SPU,S or SPD,K,S]
-	// 512K of VRAM in use total + 192K~256K RAM (via GRP~SCR)
-	u8* chr[CHR_BANKS*2]; //8K*22*2 -> 44*8 352K (VRAM)
-	// TODO: ordering
+	
+	u8* chr[CHR_BANKS*2]; 
 	
 	u16* scr[2*2]; //8K*4*2 -> 64K (VRAM)
 	
 	u8* grp[4]; //48K*4 -> 192K (RAM) 96K VRAM
 	
 	u16* col[6]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
+	
+	// 512K of VRAM in use total + 192K~256K RAM (via GRP~SCR)
+	// All banks: CHR_SIZE*CHR_BANKS*2 -> 44*8 352K (VRAM)
+	u8* all_banks;
+	// Col banks: COL_SIZE*COL_BANKS*2 -> 3K
+	u16* col_banks;
+	
 };
 
 /// Struct containing graphics to be rendered
@@ -71,7 +76,8 @@ struct graphics {
 	int visible;
 };
 
-void resource_init(struct resources* r);
+void init_resource(struct resources* r);
+void free_resource(struct resources* r);
 
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid

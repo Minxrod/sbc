@@ -19,7 +19,7 @@ void v(void); //prevent empty translation unit
 #include "resources.h"
 #include "system.h"
 
-#include "tilemap.h"
+#include "pc/tilemap.h"
 
 struct launch_info {
 	struct ptc* p;

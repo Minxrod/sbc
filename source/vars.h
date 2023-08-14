@@ -75,6 +75,7 @@ bool namecmp(char* a, u32 len, char b[16]);
 
 // allocate var table for `var_count` variables
 void init_mem_var(struct variables* v, int var_count);
+void free_mem_var(struct variables* v);
 
 // Expects null-terminated name
 struct named_var* test_var(struct variables* v, char*, enum types type);

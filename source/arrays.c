@@ -9,6 +9,10 @@ void init_mem_arr(struct arrays* a, int array_count, int element_count){
 	a->arr_data = calloc(a->arr_data_size, sizeof(union value));
 }
 
+void free_mem_arr(struct arrays* a){
+	free(a->arr_data);
+}
+
 void* get_new_arr(struct arrays* a, u32 size1, u32 size2){
 	u32* new_arr = (u32*)&((union value*)a->arr_data)[a->arr_data_next];
 	if (size2 == ARR_DIM2_UNUSED){

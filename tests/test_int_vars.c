@@ -19,72 +19,67 @@
 
 int test_int_vars(){
 	{
-		struct ptc ptc = {0};
 		char* code = "A=5\rB=8\rC=A+B\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 5<<12, "[assign] A=5");
-		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 8<<12, "[assign] B=8");
-		ASSERT(test_var(&ptc.vars, "C", VAR_NUMBER)->value.number == 13<<12, "[arithmetic] C=13");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 5<<12, "[assign] A=5");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 8<<12, "[assign] B=8");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 13<<12, "[arithmetic] C=13");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Numbers storage test I
 	{
-		struct ptc ptc = {0};
 		char* code = "A=1.36\rB=2.78\rC=0.001\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 5570, "[decimal] A=1.36");
-		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 11386, "[decimal] B=2.78");
-		ASSERT(test_var(&ptc.vars, "C", VAR_NUMBER)->value.number == 4, "[decimal] C=0.001");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 5570, "[decimal] A=1.36");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 11386, "[decimal] B=2.78");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 4, "[decimal] C=0.001");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Numbers storage test II
 	{
-		struct ptc ptc = {0};
 		char* code = "A=8.979\rB=9.24\rC=18.186\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 36777, "[decimal] A=8.979");
-		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 37847, "[decimal] B=9.24");
-		ASSERT(test_var(&ptc.vars, "C", VAR_NUMBER)->value.number == 74489, "[decimal] C=18.186");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 36777, "[decimal] A=8.979");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 37847, "[decimal] B=9.24");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 74489, "[decimal] C=18.186");
 
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	{
-		struct ptc ptc = {0};
 		char* code = "A$=\"~Wow!~\"\r";
 		char* str2 = "S\006~Wow!~";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		struct named_var* v = get_var(&ptc.vars, "A", 1, VAR_STRING);
+		struct named_var* v = get_var(&p->vars, "A", 1, VAR_STRING);
 		char* s = (char*)v->value.ptr;
 		
 		ASSERT(*s == BC_STRING, "[assign] Correct string type");
 		ASSERT(str_len(s) == 6, "[assign] Correct string length");
 		ASSERT(str_comp(s, str2), "[assign] Assign string");
 		
-		free_code(&ptc);
+		free_code(p);
 
 	}
 	
 	{
-		struct ptc ptc = {0};
 		char* code = "A$=\"ABC\"+\"DEFGH\"\rB$=\"DEFGH\"\r?A$,B$\r";
 		char* str2 = "S\010ABCDEFGH";
 		
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		
-		struct named_var* v = get_var(&ptc.vars, "A", 1, VAR_STRING);
+		struct named_var* v = get_var(&p->vars, "A", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
 		
 		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
@@ -92,14 +87,12 @@ int test_int_vars(){
 		ASSERT(s->uses == 1, "[concat] Correct string usage count")
 		ASSERT(str_comp(s, str2), "[concat] Correct string value");
 		
-		free_code(&ptc);
-
+		free_code(p);
 	}
 	
 	// Test that exists to troubleshoot test.c not working when it worked here
 	// (missing init code was the reason)
 	{
-		struct ptc ptc = {0};
 		char* code = "B=5\r"
 		"C=8\r"
 		"A=B+C\r"
@@ -108,9 +101,9 @@ int test_int_vars(){
 		"?B$,\"1234\"\r";
 		char* str2 = "S\006AbcdeF";
 		
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		
-		struct named_var* v = get_var(&ptc.vars, "B", 1, VAR_STRING);
+		struct named_var* v = get_var(&p->vars, "B", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
 		
 		ASSERT(s->type == STRING_CHAR, "[concat] Correct string type");
@@ -118,155 +111,146 @@ int test_int_vars(){
 		ASSERT(s->uses == 1, "[concat] Connect string usages");
 		ASSERT(str_comp(s, str2), "[concat] Correct string value");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Extrmemely basic unary op test
 	{
-		struct ptc ptc = {0};
 		char* code = "A=-1\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Extrmemely basic unary op test II
 	{
-		struct ptc ptc = {0};
 		char* code = "A=---1+--1+-1\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Extrmemely basic unary op test II
 	{
-		struct ptc ptc = {0};
 		char* code = "A=-(-(-1))+(--1+-1*--1)\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1 (but more complicated)");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1 (but more complicated)");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// More unary tests
 	{
-		struct ptc ptc = {0};
 		char* code = "A=---1-(----1)\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -8192, "[decimal] A=-2");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -8192, "[decimal] A=-2");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Order of non-associative ops test
 	{
-		struct ptc ptc = {0};
 		char* code = "A=2-3-5-8\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -(14<<12), "[decimal] A=-14");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -(14<<12), "[decimal] A=-14");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Array declaration code test
 	{
-		struct ptc ptc = {0};
 		char* code = "DIM A[16]\rDIM B[4,4]\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		
 		// check result for correctness
-		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
+		struct named_var* a = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
 		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 16, "[dim] A has correct size");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[dim] A has correct size II");
 		
-		struct named_var* b = test_var(&ptc.vars, "B", VAR_NUMBER | VAR_ARRAY);
+		struct named_var* b = test_var(&p->vars, "B", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(b != NULL, "[dim] B exists");
 		ASSERT(b->value.ptr != NULL, "[dim] B is allocated");
 		ASSERT(b->value.ptr != a->value.ptr, "[dim] B is not A");
 		ASSERT(arr_size(b->value.ptr, ARR_DIM1) == 4, "[dim] B has correct size");
 		ASSERT(arr_size(b->value.ptr, ARR_DIM2) == 4, "[dim] B has correct size II");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// Array write and read test
 	{
-		struct ptc ptc = {0};
 		char* code = "DIM A[3]\rA[0]=7\rA(1)=8\rA[2)=9\rA=4\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check DIM for correctness
-		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
+		struct named_var* a = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
 		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 3, "[dim] A has correct size");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[dim] A has correct size II");
 		// check values correct
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 4<<12, "[arrays] Var A=4, separate from arr A");
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->number == 7<<12, "[arrays] A[0]=7");
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->number == 8<<12, "[arrays] A[1]=8");
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->number == 9<<12, "[arrays] A[2]=9");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 4<<12, "[arrays] Var A=4, separate from arr A");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->number == 7<<12, "[arrays] A[0]=7");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->number == 8<<12, "[arrays] A[1]=8");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->number == 9<<12, "[arrays] A[2]=9");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// 2D Array write and read test
 	{
-		struct ptc ptc = {0};
 		char* code = "DIM A[2,2]\rA[0,0]=7\rA(1,0)=8\rA[0,1)=9\rA(1,1]=10\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check DIM for correctness
-		struct named_var* a = test_var(&ptc.vars, "A", VAR_NUMBER | VAR_ARRAY);
+		struct named_var* a = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
 		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 2, "[dim] A has correct size");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == 2, "[dim] A has correct size II");
 		// check values correct
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 0)->number == 7<<12, "[arrays] A[0,0]=7");
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 0)->number == 8<<12, "[arrays] A[1,0]=8");
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 1)->number == 9<<12, "[arrays] A[0,1]=9");
-		ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 1)->number == 10<<12, "[arrays] A[1,1]=10");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 0)->number == 7<<12, "[arrays] A[0,0]=7");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 0)->number == 8<<12, "[arrays] A[1,0]=8");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 1)->number == 9<<12, "[arrays] A[0,1]=9");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 1)->number == 10<<12, "[arrays] A[1,1]=10");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// String array manipulation
 	{
-		struct ptc ptc = {0};
 		char* code = "DIM A$[3]\rA$[0]=\"A\"\rA$[1]=\"B\"\rA$[2]=A$[1]+A$[0]\r";
 		char* strA = "S\001A";
 		char* strB = "S\001B";
 		char* strBA = "S\002BA";
 		
 		// run code
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check results
-		struct named_var* a = test_var(&ptc.vars, "A", VAR_STRING | VAR_ARRAY);
+		struct named_var* a = test_var(&p->vars, "A", VAR_STRING | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
 		ASSERT(a->value.ptr != NULL, "[dim] A is allocated");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 3, "[dim] A has correct size");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[dim] A has correct size II");
 		
-		struct string* s1 = (struct string*)get_arr_entry(&ptc.vars, "A", 1, VAR_STRING | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->ptr;
-		struct string* s2 = (struct string*)get_arr_entry(&ptc.vars, "A", 1, VAR_STRING | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->ptr;
-		struct string* s3 = (struct string*)get_arr_entry(&ptc.vars, "A", 1, VAR_STRING | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->ptr;
+		struct string* s1 = (struct string*)get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->ptr;
+		struct string* s2 = (struct string*)get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->ptr;
+		struct string* s3 = (struct string*)get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->ptr;
 		
 		ASSERT(s1->type == BC_STRING, "[array] Correct string type 1");
 		ASSERT(str_len(s1) == 1, "[array] Correct string length");
@@ -281,12 +265,11 @@ int test_int_vars(){
 		ASSERT(s3->uses == 1, "[array] Correct string uses");
 		ASSERT(str_comp(s3, strBA), "[array] Assign string");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// String reference counting
 	{
-		struct ptc ptc = {0};
 		// note: to force string alloc, add an empty string to end
 		char* code = "A$=\"AB\"+\"C\"\rB$=A$\rC$=B$\rD$=C$+\"D\"\rC$=\"A\"+\"\"\r";
 		char* strABC = "S\003ABC";
@@ -294,11 +277,11 @@ int test_int_vars(){
 		char* strA = "S\001A";
 		
 		// run code
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check results
-		struct named_var* a = test_var(&ptc.vars, "A", VAR_STRING);
-		struct named_var* d = test_var(&ptc.vars, "D", VAR_STRING);
-		struct named_var* c = test_var(&ptc.vars, "C", VAR_STRING);
+		struct named_var* a = test_var(&p->vars, "A", VAR_STRING);
+		struct named_var* d = test_var(&p->vars, "D", VAR_STRING);
+		struct named_var* c = test_var(&p->vars, "C", VAR_STRING);
 		
 		ASSERT(a != NULL, "[str_uses] A exists");
 		ASSERT(str_comp(a->value.ptr, strABC), "[str_uses] Correct string A");
@@ -313,7 +296,7 @@ int test_int_vars(){
 		ASSERT(str_comp(c->value.ptr, strA), "[str_uses] Correct string C");
 		ASSERT(((struct string*)c->value.ptr)->uses == 1, "[str_uses] Correct usage count C");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_vars success");

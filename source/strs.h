@@ -48,6 +48,7 @@ struct strings {
 
 // allocate str table and memory for `str_count` max strings
 void init_mem_str(struct strings* s, int str_count, enum string_type str_type);
+void free_mem_str(struct strings* s);
 
 struct string* get_new_str(struct strings* s);
 

@@ -4,7 +4,7 @@ int check_fail;
 
 char outcode[2048];
 
-void run_code(char* code, struct ptc* ptc){
+struct ptc* run_code(char* code){
 	struct program p = {
 		strlen(code), code,
 	};
@@ -15,22 +15,16 @@ void run_code(char* code, struct ptc* ptc){
 	// compile program
 	tokenize(&p, &o);
 	// init vars memory
-	init_mem_var(&ptc->vars, 16);
-	init_mem_str(&ptc->strs, 32, STRING_CHAR);
-	init_mem_arr(&ptc->arrs, 16, 64);
-	ptc->vars.strs = &ptc->strs;
-	ptc->vars.arrs = &ptc->arrs;
-	// init various ptc items
-	ptc->console.tabstep = 4;
+	struct ptc* ptc = init_system(16, 32, 64);
+	ptc->console.test_mode = true;
 	// run code
 	run(&o, ptc);
+	
+	return ptc;
 }
 
 void free_code(struct ptc* ptc){
-	free(ptc->vars.vars);
-	free(ptc->vars.strs->strs);
-	free(ptc->vars.strs->str_data);
-	free(ptc->vars.arrs->arr_data);
+	free_system(ptc);
 }
 
 #include "common.h"

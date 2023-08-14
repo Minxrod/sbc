@@ -38,6 +38,12 @@ void init_mem_var(struct variables* v, int var_count){
 	}
 }
 
+/// Freee memory for vars
+void free_mem_var(struct variables* v){
+	free(v->vars);
+}
+
+
 /// Retrieves a var from the variable table contained within the ptc struct.
 /// If the variable does not exist, creates it and then returns it.
 /// If the variable can not be created, returns NULL.

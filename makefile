@@ -6,7 +6,7 @@
 # https://stackoverflow.com/questions/44754190/how-to-use-gccs-i-flag-to-include-multiple-folders
 
 # Source, build settings
-SOURCE = source tests
+SOURCE = source source/pc tests
 BUILD = build/
 CSFML = /home/minxrod/Documents/source/notmine/CSFML/
 CSFML_INCLUDE = $(CSFML)include/

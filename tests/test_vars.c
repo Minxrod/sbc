@@ -89,6 +89,8 @@ int test_vars(){
 		struct named_var* var = get_var(&v, name1, 1, VAR_NUMBER);
 		ASSERT(var->type == VAR_NUMBER, "[get_var] Create var with type number");
 		ASSERT(var->value.number == 0, "[get_var] Create var with value 0");
+		
+		free_mem_var(&v);
 	}
 	
 	// Get and write to a new variable, then read it again
@@ -105,6 +107,8 @@ int test_vars(){
 		
 		ASSERT(var->type == VAR_NUMBER, "[get_var] Get var with type number");
 		ASSERT(var->value.number == 123<<12, "[get_var] Check value is 123");
+		
+		free_mem_var(&v);
 	}
 	
 	// Read and write multiple variables
@@ -129,6 +133,8 @@ int test_vars(){
 		var = get_var(&v, name2, 2, VAR_NUMBER);
 		ASSERT(var->type == VAR_NUMBER, "[get_var] Read var with type number");
 		ASSERT(var->value.number == 256<<12, "[get_var] Check value is 256");
+		
+		free_mem_var(&v);
 	}
 	
 	// Check that names can be shared between differing types (as different vars)
@@ -149,6 +155,9 @@ int test_vars(){
 		var2 = get_var(&v, name2, 1, VAR_STRING);
 		
 		ASSERT(var1 != var2, "[get_var] Same name different types are different vars");
+		
+		free_mem_str(&s);
+		free_mem_var(&v);
 	}
 	
 	// Check that default initialization of array works as expected
@@ -175,6 +184,9 @@ int test_vars(){
 		ASSERT(arr_size(var1->value.ptr, ARR_DIM1) == 10, "[get_var] Default array size is correct");
 		ASSERT(arr_size(var1->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[get_var] Default array size is correct");
 		ASSERT(val1->number == 0, "[get_arr_entry] Initalized value is zero");
+		
+		free_mem_arr(&a);
+		free_mem_var(&v);
 	}
 	
 	// Create an array via get_new_arr_var; 2-dimensional array
@@ -197,6 +209,9 @@ int test_vars(){
 		
 		ASSERT(arr_size(var1->value.ptr, ARR_DIM1) == 6, "[get_new_arr_var] Default array size is correct");
 		ASSERT(arr_size(var1->value.ptr, ARR_DIM2) == 4, "[get_new_arr_var] Default array size is correct");
+		
+		free_mem_arr(&a);
+		free_mem_var(&v);
 	}
 	
 	SUCCESS("test_vars success");

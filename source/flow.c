@@ -156,7 +156,7 @@ void cmd_if(struct ptc* p){
 		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
 			// found index: check correctness
 			// TODO: fast search/cache label locations?
-			iprintf("%d\n", index);
+//			iprintf("%d\n", index);
 			if (str_comp(&p->exec.code->data[index], label)){
 				// this is the index, jump to here
 				break;

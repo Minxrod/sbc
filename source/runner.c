@@ -312,8 +312,10 @@ void run(struct program* code, struct ptc* p) {
 		con_puts(&p->console, "S\5Error");
 		con_newline(&p->console);
 	} else {
-		con_puts(&p->console, "S\2OK");
-		con_newline(&p->console);
+		if (!p->console.test_mode){
+			con_puts(&p->console, "S\2OK");
+			con_newline(&p->console);
+		}
 	}
 	
 }

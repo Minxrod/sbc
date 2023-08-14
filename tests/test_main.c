@@ -31,21 +31,22 @@ int tests(){
 }
 
 int main(){
-	#ifdef ARM9
+#ifdef ARM9
 	consoleDemoInit();
-	#endif
+#endif
 	
 	int res = tests();
 	
-	#ifdef ARM9
+#ifdef ARM9
 	while(1) {
 		swiWaitForVBlank();
 		scanKeys();
 		
+		iprintf("Continue?\n");
 		int keys = keysDown();
 		if (keys & KEY_START)
 			break;
 	}
-	#endif
+#endif
 	return res;
 }

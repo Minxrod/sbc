@@ -23,7 +23,7 @@
 #define VRAM_LOWER_OFS (0x00400000)
 #endif
 
-void resource_init(struct resources* r){
+void init_resource(struct resources* r){
 #ifdef ARM9
 	// Assign pointers into VRAM as needed
 	for (int lower = 0; lower < 1; ++lower){
@@ -46,18 +46,18 @@ void resource_init(struct resources* r){
 #ifdef PC
 	// allocate memory for resources (needs ~512K)
 	// this will serve as "emulated VRAM"
-	u8* all_banks = calloc(CHR_SIZE, CHR_BANKS * 2);
-	u16* col_banks = calloc(COL_SIZE, 6); //COL[0-2][U-L]
+	r->all_banks = calloc(CHR_SIZE, CHR_BANKS * 2);
+	r->col_banks = calloc(COL_SIZE, 6); //COL[0-2][U-L]
 	// guarantee contiguous regions (useful for generating textures)
 	for (int lower = 0; lower < 2; ++lower){
 		for (int i = 0; i < CHR_BANKS; ++i){
-			r->chr[i + CHR_BANKS * lower] = &all_banks[(i + CHR_BANKS * lower) * CHR_SIZE];
+			r->chr[i + CHR_BANKS * lower] = &r->all_banks[(i + CHR_BANKS * lower) * CHR_SIZE];
 		}
-		for (int i = 0; i < 1; ++i){
+		for (int i = 0; i < 2; ++i){
 			r->scr[i + 2 * lower] = calloc(1, SCR_SIZE);
 		}
 		for (int i = 0; i < 3; ++i){
-			r->col[i + 3 * lower] = &col_banks[(i + lower * 3) * COL_SIZE / 2];
+			r->col[i + 3 * lower] = &r->col_banks[(i + lower * 3) * COL_SIZE / 2];
 		}
 	}
 	for (int i = 0; i < 4; ++i){
@@ -104,6 +104,21 @@ void resource_init(struct resources* r){
 	}
 #endif
 }
+
+void free_resource(struct resources* r){
+#ifdef PC
+	free(r->all_banks);
+	free(r->col_banks);
+	for (int i = 0; i < 4; ++i){
+		free(r->grp[i]);
+	}
+	for (int i = 0; i < 4; ++i){
+		free(r->scr[i]);
+	}
+
+#endif
+}
+
 
 // Returns a data pointer for the resource
 // Returns NULL, if the resource name was invalid

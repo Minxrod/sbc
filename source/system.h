@@ -48,7 +48,8 @@ struct ptc {
 	struct arrays arrs;
 };
 
-struct ptc* system_init();
+struct ptc* init_system(int var, int str, int arr);
+void free_system(struct ptc*);
 
 void cmd_acls(struct ptc*);
 void cmd_visible(struct ptc*);

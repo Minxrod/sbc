@@ -34,7 +34,7 @@ extern int check_fail;
 #include <string.h>
 #include <stdlib.h>
 
-void run_code(char* code, struct ptc* ptc);
+struct ptc* run_code(char* code);
 void free_code(struct ptc* ptc);
 
 int token_code(char* code, char* expected, int size);

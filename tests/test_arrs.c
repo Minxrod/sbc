@@ -14,6 +14,8 @@ int test_arrs(){
 		ASSERT(arrs.arr_data != NULL, "[init_mem_arr] Some allocated memory");
 		ASSERT(arrs.arr_data_size == 20, "[init_mem_arr] Correct size of allocated memory");
 		ASSERT(arrs.arr_data_next == 0, "[init_mem_arr] Correct next element");
+		
+		free_mem_arr(&arrs);
 	}
 	
 	// can create a new array
@@ -26,6 +28,8 @@ int test_arrs(){
 		ASSERT(arrs.arr_data_next == 12, "[get_new_arr] Next points to after array + sizes");
 		ASSERT(arr_size(d, ARR_DIM1) == 10, "[arr_size] Number of array elements");
 		ASSERT(arr_size(d, ARR_DIM2) == ARR_DIM2_UNUSED, "[arr_size] No second dimension");
+		
+		free_mem_arr(&arrs);
 	}
 	
 	// can create a new 2d array
@@ -38,6 +42,8 @@ int test_arrs(){
 		ASSERT(arrs.arr_data_next == 14, "[get_new_arr] Next points to correct size");
 		ASSERT(arr_size(d, ARR_DIM1) == 6, "[arr_size] Size of dimension 1");
 		ASSERT(arr_size(d, ARR_DIM2) == 2, "[arr_size] Size of dimension 2");
+		
+		free_mem_arr(&arrs);
 	}
 	
 	// array indexing
@@ -63,6 +69,8 @@ int test_arrs(){
 		ASSERT(arr_entry(d, 0, 0)->number == 2<<12, "[arr_entry] Entry 0 set to 2");
 		ASSERT(arr_entry(d, 1, 0)->number == 5<<12, "[arr_entry] Entry 1 set to 5");
 		ASSERT(arr_entry(d, 2, 0)->number == 11<<12, "[arr_entry] Entry 2 set to 12");
+		
+		free_mem_arr(&arrs);
 	}
 	
 	SUCCESS("test_arrs success");

@@ -5,7 +5,7 @@
 #include "system.h"
 #include "vars.h"
 
-struct ptc* system_init(int var, int str, int arr){
+struct ptc* init_system(int var, int str, int arr){
 	struct ptc* ptc = malloc(sizeof(struct ptc));
 	if (ptc == NULL){
 		iprintf("Error allocating memory!");
@@ -22,12 +22,21 @@ struct ptc* system_init(int var, int str, int arr){
 	// init various ptc items
 	// TODO: subsytem initialization functions?
 	ptc->console.tabstep = 4;
+	ptc->console.test_mode = false;
 	ptc->g.visible = VISIBLE_ALL;
 	
-	resource_init(&ptc->res);
+	init_resource(&ptc->res);
 	
 	//allocate ptc struct here?
 	return ptc;
+}
+
+void free_system(struct ptc* p){
+	free_mem_arr(&p->arrs);
+	free_mem_str(&p->strs);
+	free_mem_var(&p->vars);
+	free_resource(&p->res);
+	free(p);
 }
 
 void cmd_acls(struct ptc* p){
@@ -52,7 +61,7 @@ void cmd_wait(struct ptc* p){
 
 #ifdef PC
 #include <SFML/Graphics.h>
-#include "tilemap.h"
+#include "pc/tilemap.h"
 
 void system_draw(sfRenderWindow* rw, struct ptc* p){
 	// TODO: visible

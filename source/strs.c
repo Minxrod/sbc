@@ -24,6 +24,13 @@ void init_mem_str(struct strings* s, int str_count, enum string_type str_type){
 	}
 }
 
+/// Free memory for strs
+void free_mem_str(struct strings* s){
+	free(s->strs);
+	free(s->str_data);
+}
+
+
 /// Finds a usable string slot.
 /// Must exist at least once string slot to function correctly.
 struct string* get_new_str(struct strings* s){

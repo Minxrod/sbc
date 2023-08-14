@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common.h"
+
 #include <threads.h>
 #include <stdbool.h>
 
@@ -43,6 +45,15 @@ struct input {
 		int frame;
 	} times[12];
 	
+	int tchx, tchy, tchtime;
+	// Derived from tchx,tchy
+	int keyboard;
+	
+	// TODO: lock this
+	// TODO: Check limit here
+	u8 inkey_buf[256];
+	u8 current_write;
+	u8 current_read;
 };
 
 
@@ -50,6 +61,10 @@ void init_input(struct input* i);
 
 void set_input(struct input* i, int b);
 void set_repeat(struct input* i, int button, int start, int repeat);
+
+void set_inkey(struct input* i, u8 k);
+// Should also set keyboard, inkey!
+void set_touch(struct input* i, bool t, u8 x, u8 y);
 
 bool check_pressed(struct input* i, int id);
 

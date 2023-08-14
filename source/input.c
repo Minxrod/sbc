@@ -25,6 +25,32 @@ void set_input(struct input* i, int b) {
 	}
 }
 
+void set_inkey(struct input* i, u8 c){
+	// TODO: Does this take wide chars or only small chars?
+	i->inkey_buf[i->current_write++] = c;
+}
+
+u8 get_inkey(struct input* i){
+	// TODO mutex/flag with set_inkey(?)
+	if (i->current_read >= i->current_write){
+		return 0;
+	}
+	return i->inkey_buf[i->current_read++];
+}
+
+// Should also set keyboard, inkey!
+void set_touch(struct input* i, bool t, u8 x, u8 y){
+	// TODO: Does this one need a flag?
+	if (t){
+		i->tchtime++;
+		i->tchx = x;
+		i->tchy = y;
+	} else {
+		i->tchtime = 0;
+	}
+}
+
+
 void set_repeat(struct input* i, int button, int start, int repeat){
 	i->times[button].start = start;
 	i->times[button].repeat = repeat;
@@ -53,6 +79,6 @@ void func_btrig(struct ptc* p){
 	for (int j = 0; j < BUTTON_COUNT; ++j){
 		b |= check_pressed(i, j) << j;
 	}
-	iprintf("button: %d\n", b);
+//	iprintf("button: %d\n", (int)b);
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {b << 12}});
 }

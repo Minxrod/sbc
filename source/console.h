@@ -34,6 +34,7 @@ struct console {
 	// low 4 bits: fg color; high 4: bg color
 	u8 col;
 	u8 color[CONSOLE_WIDTH][CONSOLE_HEIGHT];
+	bool test_mode;
 };
 
 void con_init(struct console* c);

@@ -21,6 +21,7 @@ struct arrays {
 };
 
 void init_mem_arr(struct arrays* a, int array_count, int element_count);
+void free_mem_arr(struct arrays* a);
 
 void* get_new_arr(struct arrays* a, u32 size1, u32 size2);
 

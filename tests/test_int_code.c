@@ -57,85 +57,81 @@ int test_int_code(){
 	
 	// Actual FOR loop
 	{
-		struct ptc ptc = {0};
 		char* code = "FOR I=0 TO 9\r\rNEXT\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 10<<12, "[for] I=10");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 10<<12, "[for] I=10");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// FOR loop with content
 	{
-		struct ptc ptc = {0};
 		char* code = "DIM A[20]\rFOR I=0 TO 19\rA[I]=I\rNEXT\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 20<<12, "[for] I=20");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 20<<12, "[for] I=20");
 		for (int i = 0; i < 20; ++i){
-			ASSERT(get_arr_entry(&ptc.vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number == (i << 12), "[for] A[i]=i");
+			ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number == (i << 12), "[for] A[i]=i");
 		}
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// IF construct
 	{
-		struct ptc ptc = {0};
 		char* code = "IF TRUE THEN A=0:B=1 ELSE B=0:A=1\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == 0<<12, "[if] A=0");
-		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 1<<12, "[if] B=1");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 0<<12, "[if] A=0");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 1<<12, "[if] B=1");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// IF construct
 	{
-		struct ptc ptc = {0};
 		char* code = "IF FALSE THEN A=0:B=1 ELSE B=0:A=-1\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "A", VAR_NUMBER)->value.number == -(1<<12), "[if] A=1");
-		ASSERT(test_var(&ptc.vars, "B", VAR_NUMBER)->value.number == 0<<12, "[if] B=0");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -(1<<12), "[if] A=1");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 0<<12, "[if] B=0");
 		
-		free_code(&ptc);
+		free_code(p);
 	}
 	
 	// GOTO test
 	{
-		struct ptc ptc = {0};
 		char* code = "@TEST\rI=I+1\rIF I<5 GOTO @TEST\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 5<<12, "[goto] I=5");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 5<<12, "[goto] I=5");
+		free_code(p);
 	}
 	
 	// ON GOTO test
 	{
-		struct ptc ptc = {0};
 		char* code = "ON 2 GOTO @1,@2,@3,@4,@5\r@1\rI=I+1\r@2\rI=I+1\r@3\rI=I+1\r@4\rI=I+1\r@5\rI=I+1\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "I", VAR_NUMBER)->value.number == 3<<12, "[goto] I=3");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 3<<12, "[goto] I=3");
+		free_code(p);
 	}
 	
 	// END, GOSUB test
 	{
-		struct ptc ptc = {0};
 		char* code = "FOR I=0 TO 3\rGOSUB @TEST\rNEXT\rEND\r@TEST\rJ=J+I+1\rRETURN\r";
 		// run program
-		run_code(code, &ptc);
+		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&ptc.vars, "J", VAR_NUMBER)->value.number == 10<<12, "[goto] J=10");
+		ASSERT(test_var(&p->vars, "J", VAR_NUMBER)->value.number == 10<<12, "[goto] J=10");
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_code success");

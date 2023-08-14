@@ -20,6 +20,8 @@ int test_strs(){
 		ASSERT(strs.type == STRING_CHAR, "[init_mem_str] Correct string type");
 		ASSERT(strs.strs_max == max, "[init_mem_str] Correct string count");
 		ASSERT(strs.str_data != NULL, "[init_mem_str] Successful memory allocation");
+		
+		free_mem_str(&strs);
 	}
 	
 	// Get unused string slots
@@ -36,6 +38,8 @@ int test_strs(){
 		new_str = get_new_str(&strs);
 		
 		ASSERT(&strs.strs[1] == new_str, "[get_new_str] Get fresh string memory");
+		
+		free_mem_str(&strs);
 	}
 	
 	// String comparison appears to work
