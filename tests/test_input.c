@@ -67,5 +67,36 @@ int test_input(void){
 		ASSERT(check_pressed(&in, BUTTON_ID_X), "[input] X is pressed via repeat rules on frame 4");
 	}
 	
+	// Check set_inkey, get_inkey
+	{
+		struct input in = {0};
+		
+		ASSERT(get_inkey(&in) == 0, "[input] Buffer is empty");
+		
+		set_inkey(&in, 'A');
+		set_inkey(&in, 'B');
+		set_inkey(&in, 'C');
+		
+		ASSERT(get_inkey(&in) == 'A', "[input] Get A from inkey buffer");
+		ASSERT(get_inkey(&in) == 'B', "[input] Get B from inkey buffer");
+		ASSERT(get_inkey(&in) == 'C', "[input] Get C from inkey buffer");
+		
+		ASSERT(get_inkey(&in) == 0, "[input] Buffer is empty");
+	}
+	
+	// Check inkey buffer overflow behavior (discard new chars)
+	{
+		struct input in = {0};
+		
+		for (int i = 0; i < INKEY_BUF_SIZE; ++i)
+			set_inkey(&in, 'D');
+		set_inkey(&in, 'E');
+		
+		for (int i = 0; i < INKEY_BUF_SIZE; ++i){
+			ASSERT(get_inkey(&in) == 'D', "[input] Get D from full buffer");
+		}
+		ASSERT(get_inkey(&in) == 0, "[input] Buffer is now empty");
+	}
+	
 	SUCCESS("test_input successful");
 }

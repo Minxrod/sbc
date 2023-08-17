@@ -33,6 +33,8 @@
 #define BUTTON_START (1 << BUTTON_ID_START)
 #define BUTTON_SELECT (1 << BUTTON_ID_SELECT)
 
+#define INKEY_BUF_SIZE 256
+
 struct input {
 	/// Current button state
 	int button;
@@ -49,24 +51,26 @@ struct input {
 	// Derived from tchx,tchy
 	int keyboard;
 	
-	// TODO: lock this
 	// TODO: Check limit here
-	u8 inkey_buf[256];
-	u8 current_write;
-	u8 current_read;
+	mtx_t inkey_mtx;
+	u16 inkey_buf[INKEY_BUF_SIZE];
+	u16 current_write;
+	u16 current_base;
 };
-
 
 void init_input(struct input* i);
 
 void set_input(struct input* i, int b);
 void set_repeat(struct input* i, int button, int start, int repeat);
 
-void set_inkey(struct input* i, u8 k);
+void set_inkey(struct input* i, u16 k);
+u16 get_inkey(struct input* i);
+
 // Should also set keyboard, inkey!
 void set_touch(struct input* i, bool t, u8 x, u8 y);
 
 bool check_pressed(struct input* i, int id);
+bool check_pressed_manual(struct input* i, int id, int start, int repeat);
 
 struct ptc;
 

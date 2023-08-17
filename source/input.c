@@ -10,6 +10,12 @@ void init_input(struct input* i){
 	for (int j = 0; j < BUTTON_COUNT; ++j){
 		i->times[j] = (struct button_time){0, 0, 0};
 	}
+	int status = mtx_init(&i->inkey_mtx, mtx_plain); // should not need recursion?
+	if(status != thrd_success){
+		ABORT("Error creating inkey_mtx mutex");
+	}
+	i->current_write = 0;
+	i->current_base = 0;
 }
 
 void set_input(struct input* i, int b) {
@@ -25,17 +31,41 @@ void set_input(struct input* i, int b) {
 	}
 }
 
-void set_inkey(struct input* i, u8 c){
-	// TODO: Does this take wide chars or only small chars?
-	i->inkey_buf[i->current_write++] = c;
+void set_inkey(struct input* i, u16 c){
+	if (mtx_lock(&i->inkey_mtx) == thrd_error){
+		ABORT("set_inkey mutex lock failure!");
+	}
+	
+	if (i->current_write == INKEY_BUF_SIZE){
+		//wait for more slots
+	} else {
+		u16 cur = (i->current_base + i->current_write) % INKEY_BUF_SIZE;
+		i->current_write++;
+		i->inkey_buf[cur] = c;
+	}
+	
+	if (mtx_unlock(&i->inkey_mtx) == thrd_error){
+		ABORT("set_inkey mutex unlock failure!");
+	}
 }
 
-u8 get_inkey(struct input* i){
-	// TODO mutex/flag with set_inkey(?)
-	if (i->current_read >= i->current_write){
-		return 0;
+u16 get_inkey(struct input* i){
+	if (mtx_lock(&i->inkey_mtx) == thrd_error){
+		ABORT("get_inkey mutex lock failure!");
 	}
-	return i->inkey_buf[i->current_read++];
+	// TODO mutex/flag with set_inkey(?)
+	u16 c;
+	if (i->current_write == 0){
+		c = 0;
+	} else {
+		c = i->inkey_buf[i->current_base];
+		i->current_write--;
+		i->current_base = (i->current_base + 1) % INKEY_BUF_SIZE;
+	}
+	if (mtx_unlock(&i->inkey_mtx) == thrd_error){
+		ABORT("get_inkey mutex unlock failure!");
+	}
+	return c;
 }
 
 // Should also set keyboard, inkey!
@@ -56,10 +86,8 @@ void set_repeat(struct input* i, int button, int start, int repeat){
 	i->times[button].repeat = repeat;
 }
 
-bool check_pressed(struct input* i, int id){
+bool check_pressed_manual(struct input* i, int id, int start, int repeat){
 	int time = i->times[id].frame;
-	int start = i->times[id].start;
-	int repeat = i->times[id].repeat;
 	if (time == 1) return true;
 	if (repeat > 0){ //repeat=0 -> disabled
 		if (time > start){ //repeat only applies past start time
@@ -67,6 +95,10 @@ bool check_pressed(struct input* i, int id){
 		}
 	}
 	return false;
+}
+
+bool check_pressed(struct input* i, int id){
+	return check_pressed_manual(i, id, i->times[id].start, i->times[id].repeat);
 }
 
 void func_btrig(struct ptc* p){

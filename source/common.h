@@ -2,6 +2,10 @@
 
 #include <stdint.h>
 #include <stdio.h> // debugging
+#include <stdlib.h>
+
+// for bad failures that aren't handled better yet...
+#define ABORT(msg) { iprintf(msg"\n"); abort(); }
 
 #ifdef ARM9
 #include <nds/ndstypes.h>
