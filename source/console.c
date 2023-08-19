@@ -191,7 +191,7 @@ void cmd_input(struct ptc* p){
 		ERROR(ERR_NO_ARGUMENTS);
 	}
 	void* prompt_str = NULL;
-	u8 index;
+	u8 index = 0;
 	if (p->stack.stack_i >= 2){
 		// check for prompt
 		if (ARG(1)->type == STACK_OP && ARG(1)->value.number == OP_SEMICOLON){
@@ -256,9 +256,9 @@ void cmd_input(struct ptc* p){
 		for (int i = 0; i < len; ){
 			struct stack_entry* e = ARG(index+i);
 			u8 c = to_char(output[out_i]);
+			conversion_copy[out_i++] = c;
 			if (e->type == (VAR_NUMBER | VAR_VARIABLE)){
 				// validate first entry is numeric
-				conversion_copy[out_i++] = c;
 				if (is_number(c) || c == '.' || c == '-'){
 				} else if (c == ',' || c == '\0' || c == ' ' || out_i >= 32){
 					// convert from previous to out_i
@@ -273,8 +273,7 @@ void cmd_input(struct ptc* p){
 					break; //TODO:IMPL ?Redo from start
 				}
 			} else if (e->type == (VAR_STRING | VAR_VARIABLE)){
-				conversion_copy[out_i++] = c;
-				if (c == ',' || c == '\0' || c == ' ' || out_i >= 32){
+				if (c == ',' || c == '\0' || out_i >= 32){
 					struct string* s = get_new_str(&p->strs);
 					
 					if (*(void**)e->value.ptr != NULL && **(char**)e->value.ptr == STRING_CHAR){
@@ -286,7 +285,7 @@ void cmd_input(struct ptc* p){
 					s->uses = 1;
 					s->len = out_i - prev_i - 1;
 					for (int j = prev_i; j < out_i; ++j){
-						s->ptr.s[j - prev_i] = conversion_copy[prev_i + j];
+						s->ptr.s[j - prev_i] = conversion_copy[j];
 					}
 					prev_i = out_i;
 					++i;

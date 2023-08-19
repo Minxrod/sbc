@@ -121,5 +121,31 @@ int test_console(void){
 		free_code(p);
 	}
 	
+	// Testing multiple variable entry
+	{
+		char* code = "INPUT A,B,C\r";
+		// run program
+		
+		struct ptc* p = run_code_keys(code, "1,2,3\r", 6);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 1<<12, "[input] A=1");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 2<<12, "[input] B=2");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 3<<12, "[input] C=3");
+		free_code(p);
+	}
+	
+	// Testing multiple variable entry
+	{
+		char* code = "INPUT \"Prompt\";A,B$,C\r";
+		// run program
+		
+		struct ptc* p = run_code_keys(code, "12,ABC ,34\r", 11);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 12<<12, "[input] A=12");
+		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\4ABC "), "[input] B$=\"ABC \"");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 34<<12, "[input] C=34");
+		free_code(p);
+	}
+	
 	SUCCESS("test_console success");
 }
