@@ -4,8 +4,18 @@
 #include <stdio.h> // debugging
 #include <stdlib.h>
 
-// for bad failures that aren't handled better yet...
+// for bad failures 
+// and those that aren't properly handled yet...
 #define ABORT(msg) { iprintf(msg"\n"); abort(); }
+
+/// The following defines expect to be used within a function that has 
+/// access to `struct ptc* p`, for error setting and other checks.
+
+// For errors that can be handled by the interpreter
+#define ERROR(code) { p->exec.error = code; return; }
+// To read an argument on the stack
+#define ARG(index) (stack_get(&p->stack, index))
+
 
 #ifdef ARM9
 #include <nds/ndstypes.h>

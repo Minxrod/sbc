@@ -53,7 +53,6 @@ u16 get_inkey(struct input* i){
 	if (mtx_lock(&i->inkey_mtx) == thrd_error){
 		ABORT("get_inkey mutex lock failure!");
 	}
-	// TODO mutex/flag with set_inkey(?)
 	u16 c;
 	if (i->current_write == 0){
 		c = 0;
@@ -70,7 +69,7 @@ u16 get_inkey(struct input* i){
 
 // Should also set keyboard, inkey!
 void set_touch(struct input* i, bool t, u8 x, u8 y){
-	// TODO: Does this one need a flag?
+	// TODO:CODE Does this one need thread synchronization?
 	if (t){
 		i->tchtime++;
 		i->tchx = x;

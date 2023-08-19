@@ -30,12 +30,17 @@ struct ptc;
 #define VISIBLE_GRAPHICS 32
 #define VISIBLE_ALL 0x3f
 
+#ifdef PC
+struct sfTexture;
+/// PC-only function to generate SFML textures.
+struct sfTexture* gen_chr_texture(u8* src, size_t size);
+struct sfTexture* gen_col_texture(u16* src);
+#endif
+
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
-	// TODO: PRG type?
-//	struct program* prg;
-	// TODO: MEM type?
+	// TODO:IMPL MEM type?
 	//BGU,D,F,[SPU,S or SPD,K,S]
 	
 	u8* chr[CHR_BANKS*2]; 
@@ -51,6 +56,13 @@ struct resources {
 	u8* all_banks;
 	// Col banks: COL_SIZE*COL_BANKS*2 -> 3K
 	u16* col_banks;
+	
+#ifdef PC
+	struct sfTexture* chr_tex[12];
+	struct sfTexture* col_tex;
+	
+	struct sfShader* shader;
+#endif
 	
 };
 
@@ -70,7 +82,7 @@ struct graphics {
 	
 	u8* chr_sp_lower;
 	u8* grp_sp_lower;
-	// TODO: Do colors need to be here...?
+	// TODO:CODE Do colors need to be here...?
 	
 	/// State of rendered visible objects
 	int visible;
@@ -82,11 +94,4 @@ void free_resource(struct resources* r);
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid
 void* get_resource(struct ptc* p, char* name, int len);
-
-#ifdef PC
-struct sfTexture;
-/// PC-only function to generate SFML textures.
-struct sfTexture* gen_chr_texture(u8* src, size_t size);
-struct sfTexture* gen_col_texture(u16* src);
-#endif
 

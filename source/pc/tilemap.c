@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.h>
 
-struct tilemap tilemap_init(int w, int h){
+struct tilemap init_tilemap(int w, int h){
 	struct tilemap map = {w, h, sfVertexArray_create()};
 	
 	sfVertexArray_setPrimitiveType(map.va, sfQuads);
@@ -23,6 +23,10 @@ struct tilemap tilemap_init(int w, int h){
 	}
 	
 	return map;
+}
+
+void free_tilemap(struct tilemap* map){
+	sfVertexArray_destroy(map->va);
 }
 
 sfVector2f chr_texCoords(int chr, int xofs, int yofs){

@@ -2,6 +2,7 @@
 
 #include "ptc.h"
 #include "program.h"
+#include "strs.h" // for character id functions
 
 #include <stdio.h>
 #include <stdint.h>
@@ -13,19 +14,17 @@ const char* commands =
 "IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      RETURN  "
 "END     STOP    "
 "CLS     VISIBLE ACLS    VSYNC   WAIT    "
-;
-/*
-"ACLS    APPEND  "
+"INPUT   LINPUT  "
+"APPEND  "
 "BEEP    BGCLIP  BGCLR   BGCOPY  BGFILL  BGMCLEARBGMPLAY BGMPRG  BGMSET  BGMSETD BGMSETV "
 "BGMSTOP BGMVOL  BGOFS   BGPAGE  BGPUT   BGREAD  BREPEAT CHRINIT CHRREAD CHRSET  CLEAR   "
-"CLS     COLINIT COLOR   COLREAD COLSET  CONT    DATA    DELETE  DIM     DTREAD  ELSE    "
-"END     EXEC    FOR     GBOX    GCIRCLE GCLS    GCOLOR  GCOPY   GDRAWMD GFILL   GLINE   "
-"GOSUB   GOTO    GPAGE   GPAINT  GPSET   GPRIO   GPUTCHR ICONCLR ICONSET IF      INPUT   "
-"KEY     LINPUT  LIST    LOAD    LOCATE  NEW     NEXT    ON      PNLSTR  PNLTYPE "
-"READ    REBOOT  RECVFILERENAME  RESTORE RETURN  RSORT   RUN     SAVE    SENDFILESORT    "
+"COLINIT COLREAD COLSET  CONT    DATA    DELETE  DTREAD  "
+"EXEC    GBOX    GCIRCLE GCLS    GCOLOR  GCOPY   GDRAWMD GFILL   GLINE   "
+"GPAGE   GPAINT  GPSET   GPRIO   GPUTCHR ICONCLR ICONSET "
+"KEY     LIST    LOAD    NEW     PNLSTR  PNLTYPE "
+"READ    REBOOT  RECVFILERENAME  RESTORE RSORT   RUN     SAVE    SENDFILESORT    "
 "SPANGLE SPANIM  SPCHR   SPCLR   SPCOL   SPCOLVECSPHOME  SPOFS   SPPAGE  SPREAD  SPSCALE "
-"SPSET   SPSETV  STEP    STOP    SWAP    THEN    TMREAD  TO      VISIBLE VSYNC   WAIT    ";
-*/
+"SPSET   SPSETV  SWAP    TMREAD  ";
 
 const char* functions =
 "ABS     ASC     ATAN    BGCHK   BGMCHK  BGMGETV BTRIG   BUTTON  CHKCHR  CHR$    COS     "
@@ -57,45 +56,17 @@ const char* labels = "LABEL   ";
 
 const char* comments = "REM     ";
 
-bool is_lower(const char c){
-	return 'a' <= c && c <= 'z';
-}
-
-bool is_upper(const char c){
-	return 'A' <= c && c <= 'Z';
-}
-
-bool is_number(const char c){
-	return '0' <= c && c <= '9';
-}
-
-bool is_alpha(const char c){
-	return is_upper(c) || is_lower(c);
-}
-
-bool is_alphanum(const char c){
-	return is_alpha(c) || is_number(c);
-}
-
-bool is_name_start(const char c){
-	return is_alpha(c) || c == '_';
-}
-
-bool is_name(const char c){
-	return is_alphanum(c) || c == '_';
-}
-
-bool is_varname(const char c){
-	return is_name(c) || c == '$';
-}
-
 // Scans for a specific instruction. Special purpose function to handle the
 // various instruction lengths.
 u32 bc_scan(struct program* code, u32 index, u8 find){
 	// search for find in code->data
 	while (index < code->size){ 
 		u8 cur = code->data[index];
-//		iprintf("%d: %c,%d\n", index, cur >= 32 ? cur : '?', code->data[index+1]);
+		{
+		//debug! 
+		u8 len = code->data[index+1];
+		iprintf("%d: %c,%d %.*s\n", index, cur >= 32 ? cur : '?', len, len, &code->data[index+2]);
+		}
 		if (cur == find){
 			return index;
 		}
@@ -116,7 +87,7 @@ u32 bc_scan(struct program* code, u32 index, u8 find){
 				index += cur + (cur & 1);
 			}
 		} else if (cur == BC_NUMBER){
-			index += 6; // TODO: may need to change if number syntax gets modified
+			index += 6; // change if number syntax gets modified?
 		} else {
 			index += 2;
 		}
@@ -242,27 +213,7 @@ struct eval {
 };
 
 s32 tok_to_num(struct tokenizer* state, struct token* t){
-	s32 number = 0;
-	s32 fraction = 0;
-	s32 maximum = 1;
-	for (size_t j = 0; j < t->len; ++j){
-		char c = state->source->data[t->ofs + j];
-		if (is_number(c)){
-			number *= 10;
-			number += c - '0';
-		} else if (c == '.'){
-			++j;
-			for (size_t k = j; k < t->len; ++k){
-				c = state->source->data[t->ofs + k];
-				fraction *= 10;
-				maximum *= 10;
-				fraction += c - '0';
-			}
-			break;
-		}
-	}
-	number = number * 4096 + 4096 * fraction / maximum;
-	
+	s32 number = str_to_num((u8*)&state->source->data[t->ofs], t->len);
 	iprintf("Number := %f", (double)number);
 	return number;
 }
@@ -276,7 +227,6 @@ void tok_code(struct tokenizer* state){
 		switch (state->tokens[i].type){
 			case command:
 				// convert token to command
-				//TODO: ???
 //				iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
 				data[(*size)++] = BC_COMMAND;
 				data[(*size)++] = state->tokens[i].ofs;
@@ -335,7 +285,7 @@ void tok_code(struct tokenizer* state){
 				
 			case name:
 			case dim_arr:
-				//TODO: actual ID calculation
+				//TODO:PERF actual ID calculation
 				//Find variable if it exists in table
 				//Create variable if it does not exist
 				//Get ID based on this index
@@ -385,7 +335,7 @@ void tok_code(struct tokenizer* state){
 			default:
 				iprintf("Unknown token: ");
 				print_token(state, state->tokens[i]);
-				//TODO: Code generation errors?
+				//TODO:ERR Code generation errors?
 		}
 	}
 	state->token_i = 0;
@@ -435,7 +385,7 @@ void tok_eval(struct tokenizer* state){
 				if (state->tokens[i-1].type == operation && state->tokens[i-1].ofs == OP_OPEN_PAREN){
 					e.argc_stack[e.argc_i] = 0;
 				}
-				// TODO: Don't create argcount for DIM command
+				// TODO:PERF Don't create argcount for DIM command
 				// (unnecessary, implied by stack size?)
 				// also might just keep this way for simplicity
 				state->tokens[i].type = arg_count;
@@ -477,7 +427,7 @@ void tok_eval(struct tokenizer* state){
 					// Command is FOR: add instruction at end of FOR setup to
 					// properly execute the loop
 					is_for = true;
-					// TODO: TO and STEP are unneeded instructions after a FOR
+					// TODO:PERF TO and STEP are unneeded instructions after a FOR
 					// Do not compile those
 				} else if (state->tokens[i].ofs == CMD_IF){
 					// Command is IF: add normally, but needs to indicate that
@@ -718,7 +668,6 @@ void tok_none(struct tokenizer* state){
 	} else if (c == '\''){
 		// read to newline
 		state->cursor++;
-		//TODO: copy comment text, instead of ignore?
 		state->is_comment = true;
 	} else {
 		iprintf("Unknown transition from NONE on %c:%d\n", c, c);

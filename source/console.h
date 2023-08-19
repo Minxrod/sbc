@@ -30,10 +30,10 @@ struct console {
 	u16 x;
 	u16 y;
 	u32 tabstep;
-	u16 text[CONSOLE_WIDTH][CONSOLE_HEIGHT];
+	u16 text[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	// low 4 bits: fg color; high 4: bg color
 	u8 col;
-	u8 color[CONSOLE_WIDTH][CONSOLE_HEIGHT];
+	u8 color[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	bool test_mode;
 };
 
@@ -62,3 +62,5 @@ void cmd_tabstep(struct ptc* p);
 
 u16 con_text_getc(struct console* c, u32 x, u32 y);
 void con_text_setc(struct console* c, u32 x, u32 y, u16 w);
+u8 con_col_get(struct console* c, u32 x, u32 y);
+void con_col_set(struct console* c, u32 x, u32 y, u8 col);

@@ -66,13 +66,6 @@ struct tokenizer {
 	
 	bool is_comment;
 	// Values obtained while parsing
-	// TODO: dynamic size?
-	// Label addresses
-//	u32 label;
-//	struct pair labels[1024];
-	// Variable indices
-/*	u32 var;
-	struct pair vars[4096];*/
 	
 	struct program* output;
 };

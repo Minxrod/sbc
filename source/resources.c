@@ -33,14 +33,14 @@ void init_resource(struct resources* r){
 		for (int i = 0; i < 10; ++i){
 			r->chr[12 + i + CHR_BANKS * lower] = (u8*)(VRAM_SP_CHR + CHR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
-		// TODO: May need RAM copies
+		// TODO:IMPL May need RAM copies
 		for (int i = 0; i < 1; ++i){
 			r->scr[i + 2 * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
 		//TODO: COL
 	}
 	for (int i = 0; i < 4; ++i){
-		r->grp[i] = calloc(256, 192); // TODO: replace with constants
+		r->grp[i] = calloc(256, 192); // TODO:CODE replace with constants
 	}
 #endif
 #ifdef PC
@@ -61,18 +61,20 @@ void init_resource(struct resources* r){
 		}
 	}
 	for (int i = 0; i < 4; ++i){
-		r->grp[i] = calloc(256, 192); // TODO: replace with constants
+		r->grp[i] = calloc(256, 192); // TODO:CODE replace with constants
 	}
 	
-	char* chr_files = 
+	// Load default resource files
+	const char* chr_files = 
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
 	"SPU0SPU1SPU2SPU3SPU4SPU5SPU6SPU7SPS0SPS1"
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
 	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
-	char* col_files = "COL0COL1COL2COL0COL1COL2";
+	const char* col_files = "COL0COL1COL2COL0COL1COL2";
 	
 	char name[] = "resources/XXXX.PTC";
 	
+	// TODO:CODE This is shared with NDS?
 	for (int i = 0; i < CHR_BANKS*2; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = chr_files[4*i+j];
@@ -80,7 +82,7 @@ void init_resource(struct resources* r){
 		FILE* f = fopen(name, "rb");
 		if (!f){
 			iprintf("Failed to load file: %s\n", name);
-			abort(); //TODO: Handle gracefully? Fallback generated tiles?
+			abort(); //TODO:ERR Handle gracefully? Fallback generated tiles?
 		}
 		fread(r->chr[i], sizeof(u8), HEADER_SIZE, f);
 		fread(r->chr[i], sizeof(u8), CHR_SIZE, f);
@@ -95,18 +97,34 @@ void init_resource(struct resources* r){
 		FILE* f = fopen(name, "rb");
 		if (!f){
 			iprintf("Failed to load file: %s\n", name);
-			abort(); //TODO: Handle gracefully? Fallback generated tiles?
+			abort(); //TODO:ERR Handle gracefully? Fallback generated tiles?
 		}
 		fread(r->col[i], sizeof(u8), HEADER_SIZE, f);
 		fread(r->col[i], sizeof(u8), COL_SIZE, f);
 		
 		fclose(f);
 	}
+	
+	// Generate PC textures here
+	r->chr_tex[0] = gen_chr_texture(r->chr[0], 512);
+	r->col_tex = gen_col_texture(r->col[0]);
+	
+	if (!sfShader_isAvailable()){
+		iprintf("Error: Shaders are unavailable!\n");
+		abort();
+	} else {
+		if (!(r->shader = sfShader_createFromFile(NULL, NULL, "resources/bgsp.frag"))){
+			iprintf("Error: Shader failed to load!\n");
+			abort();
+		}
+	}
+
 #endif
 }
 
 void free_resource(struct resources* r){
 #ifdef PC
+	// Free memory here
 	free(r->all_banks);
 	free(r->col_banks);
 	for (int i = 0; i < 4; ++i){
@@ -115,7 +133,11 @@ void free_resource(struct resources* r){
 	for (int i = 0; i < 4; ++i){
 		free(r->scr[i]);
 	}
-
+	
+	// Destroy textures here
+	sfTexture_destroy(r->chr_tex[0]);
+	sfTexture_destroy(r->col_tex);
+	sfShader_destroy(r->shader);
 #endif
 }
 
@@ -126,7 +148,6 @@ void* get_resource(struct ptc* p, char* name, int len){
 	char c = name[0]; //category
 	char id = name[1]; //id help for SCU/SPU
 	char t = name[2]; //type (within category)
-	// TODO: Mem, maybe? or not?
 	
 	char bank, upper;
 	if (len == 5){
@@ -135,7 +156,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 	} else if (len == 4){
 		if (name[3] >= '0' && name[3] < '7'){
 			bank = name[3] - '0';
-			upper = 0; //TODO: depends on BG,SP,GRP page
+			upper = 0; //TODO:IMPL depends on BG,SP,GRP page
 		} else if (name[3] == 'U'){
 			bank = 0;
 			upper = 1;
@@ -148,7 +169,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 		}
 	} else if (len == 3){
 		bank = 0;
-		upper = 0; //TODO: depends on BG,SP,GRP page
+		upper = 0; //TODO:IMPL depends on BG,SP,GRP page
 	} else {
 		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 		return NULL;
@@ -179,7 +200,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 	} else if (c == 'C'){ //COL
 		return p->res.col[3*upper+bank];
 	} else if (c == 'G'){ //GRP
-		// TODO: Does page matter here?
+		// TODO:IMPL Does page matter here?
 		return p->res.grp[(int)bank];
 	}
 	p->exec.error = ERR_INVALID_RESOURCE_TYPE;
@@ -194,7 +215,7 @@ sfTexture* gen_col_texture(u16* src){
 		u16 s = src[i];
 //		s = ((s & 0xff00) >> 8) | ((s & 0x00ff) << 8);
 		
-		array[4*i+0] = (s & 0x001f) << 3; //TODO: Adjust values...?
+		array[4*i+0] = (s & 0x001f) << 3; //TODO:IMPL Adjust values to match PTC
 		array[4*i+1] = ((s & 0x03e0) >> 2) | ((src[2*i] & 0x8000) >> 13);
 		array[4*i+2] = ((s & 0x7c00) >> 7);
 		array[4*i+3] = 255;
@@ -211,7 +232,7 @@ sfTexture* gen_col_texture(u16* src){
 }
 
 sfTexture* gen_chr_texture(u8* src, size_t size){
-	u8 array[4*256*64] = {0};
+	u8 array[4*size*64];
 	for (size_t i = 0; i < size; ++i){
 		size_t x = i % 32;
 		size_t y = i / 32;
@@ -219,18 +240,15 @@ sfTexture* gen_chr_texture(u8* src, size_t size){
 			for (int cy = 0; cy < 8; ++cy){
 				u8 c = src[32*i+cx/2+4*cy];
 				array[4*(8*x+cx+256*(8*y+cy))] = ((cx & 1) ? (c >> 4) & 0x0f : c & 0x0f);
-				// NOTE: needed to set opacity to max I guess?
-				// TODO: remove when shaders or software renderer implemented
-				array[4*(8*x+cx+256*(8*y+cy))+3] = 255; //((cx & 1) ? (c >> 4) & 0x0f : c & 0x0f);
 			}
 		}
 	}
 	
-	sfTexture* tex = sfTexture_create(256, 64);
+	sfTexture* tex = sfTexture_create(256, size/4);
 	if (!tex){
 		return NULL;
 	}
-	sfTexture_updateFromPixels(tex, array, 256, 64, 0, 0);
+	sfTexture_updateFromPixels(tex, array, 256, size/4, 0, 0);
 	return tex;
 }
 

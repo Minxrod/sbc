@@ -88,5 +88,38 @@ int test_console(void){
 		free_code(p);
 	}
 	
+	// Number input
+	{
+		char* code = "INPUT A\r";
+		// run program
+		
+		struct ptc* p = run_code_keys(code, "5\r", 2);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 5<<12, "[input] A=5");
+		free_code(p);
+	}
+	
+	// String input
+	{
+		char* code = "INPUT A$\r";
+		// run program
+		
+		struct ptc* p = run_code_keys(code, "+\r", 2);
+		// check output for correctness
+		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1+"), "[input] A$=+");
+		free_code(p);
+	}
+	
+	// Testing overwriting variable with input
+	{
+		char* code = "INPUT \"Test\";A$\rINPUT \"Test\";A$\r";
+		// run program
+		
+		struct ptc* p = run_code_keys(code, "+\r-\r", 4);
+		// check output for correctness
+		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1-"), "[input] A$=-");
+		free_code(p);
+	}
+	
 	SUCCESS("test_console success");
 }

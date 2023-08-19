@@ -58,8 +58,8 @@ struct named_var* search_name_type(struct variables* v, char* name, u32 len, enu
 	
 	do {
 		// quad walk
-		// TODO: Try to prove this?
-		// Values that matter here work, but does it work for all vars_max=2^n?
+		// TODO:CODE Try to prove this?
+		// Values that matter here (<65k) work, but does it work for all vars_max=2^n?
 		hash = (hash + step++) % v->vars_max;
 		var = &v->vars[hash];
 		if (step >= v->vars_max){

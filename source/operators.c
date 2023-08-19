@@ -55,7 +55,6 @@ void op_semi(struct ptc* p){
 	stack_push(s, (struct stack_entry){STACK_OP, {.number = OP_SEMICOLON}});
 }
 
-
 void op_mult(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
@@ -69,7 +68,6 @@ void op_mult(struct ptc* p){
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
 	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
-		// TODO: String * Number
 		s32 count = VALUE_NUM(b) >> 12;
 		struct string* x, * y;
 		
@@ -88,7 +86,7 @@ void op_mult(struct ptc* p){
 		}
 		
 		for (int i = 0; i < count; ++i){
-			str_concat(y, x, y); //TODO: check that this works??
+			str_concat(y, x, y); //TODO:TEST check that this works??
 		}
 		
 		stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = y}});
@@ -108,7 +106,7 @@ void op_div(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x / y << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(((int64_t)x << 12) / y)}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -162,8 +160,6 @@ void op_assign(struct ptc* p){
 		}
 	} else if (a->type & b->type & VAR_STRING){
 		if (a->type & VAR_VARIABLE){
-			//TODO: if B is variable: shallow copy
-			//TODO: if B is RO literal: copy read only
 			// A = variable containing pointer to struct string*
 			struct string** dest = (struct string**)a->value.ptr;
 			struct string* src = VALUE_STR(b);
@@ -230,9 +226,24 @@ void op_equal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x == y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x == y) << 12}});
+	} else if (a->type & b->type & VAR_STRING){
+		struct string* x, * y;
+		
+		x = VALUE_STR(a);
+		// if string is alloc'd and only exists on stack:
+		// decrease usage as it was popped
+		if (x && x->type == STRING_CHAR && !(a->type & VAR_VARIABLE)){
+			x->uses--;
+		}
+		y = VALUE_STR(b);
+		if (y && y->type == STRING_CHAR && !(b->type & VAR_VARIABLE)){
+			y->uses--;
+		}
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {str_comp(x, y) << 12}});
 	} else {
-		p->exec.error = ERR_UNIMPLEMENTED;
+		p->exec.error = ERR_OP_DIFFERENT_TYPES;
 	}
 }
 
@@ -247,7 +258,7 @@ void op_inequal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x != y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x != y) << 12}});
 	} else {
 		p->exec.error = ERR_UNIMPLEMENTED;
 	}
@@ -264,7 +275,7 @@ void op_less(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x < y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x < y) << 12}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -281,7 +292,7 @@ void op_greater(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x > y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x > y) << 12}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -298,7 +309,7 @@ void op_less_equal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x <= y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x <= y) << 12}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -315,7 +326,25 @@ void op_greater_equal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x >= y}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x >= y) << 12}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_modulo(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		//TODO:ERR Check for y=0
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {((x >> 12) % (y >> 12)) << 12}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}

@@ -113,7 +113,7 @@ void cmd_next(struct ptc* p){
 	if ((step < 0 && end > val) || (step >= 0 && end < val)){
 		// loop ends
 		// REMOVE ENTRY stack_i from the stack
-		// TODO: copy down all further entries
+		// TODO:IMPL copy down all further entries
 		p->calls.stack_i--; // decrease stack count
 	} else {
 		// loop continues, jump back to this point
@@ -128,7 +128,7 @@ void cmd_next(struct ptc* p){
 void cmd_if(struct ptc* p){
 	// current stack consists of one item (should be numeric)
 	struct stack_entry* e = stack_pop(&p->stack);
-	// TODO type check
+	// TODO:ERR type check
 	u32 index = p->exec.index;
 	if (e->value.number != 0){
 		// true: proceed to next instruction as normal
@@ -155,7 +155,7 @@ void cmd_if(struct ptc* p){
 		index = 0;
 		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
 			// found index: check correctness
-			// TODO: fast search/cache label locations?
+			// TODO:PERF fast search/cache label locations?
 //			iprintf("%d\n", index);
 			if (str_comp(&p->exec.code->data[index], label)){
 				// this is the index, jump to here
@@ -163,7 +163,6 @@ void cmd_if(struct ptc* p){
 			}
 			index += 2;
 		}
-		// TODO: Check when label does not exist
 		if (index == BC_SCAN_NOT_FOUND){
 			p->exec.error = ERR_LABEL_NOT_FOUND;
 			return;
@@ -180,7 +179,7 @@ void cmd_then(struct ptc* p){
 
 // When hitting an ELSE instruction (only hit from THEN block)
 // jump to the next ENDIF.
-// TODO: Comment style ELSE should not break...
+// TODO:IMPL Comment style ELSE should not break...
 void cmd_else(struct ptc* p){
 	u32 index = p->exec.index;
 	do {
@@ -201,98 +200,72 @@ void cmd_endif(struct ptc* p){
 	p++;
 }
 
-void cmd_goto(struct ptc* p){
+void cmd_goto_gosub(struct ptc* p, bool push_return){
 	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
-	// TODO: Check that stack has entries
+	// TODO:ERR Check that stack has entries
 	struct stack_entry* e = &p->stack.entry[0];
 ///	struct stack_entry* e = stack_pop(&p->stack);
 	char* label;
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
-		s32 label_index = e->value.number >> 12;
-		// TODO: Range check
+		s32 label_index = VALUE_NUM(e) >> 12;
+		iprintf("%d,%d\n", label_index, p->stack.stack_i);
+		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
+			p->stack.stack_i = 0;
+			return; // No jump: number is out of range
+		}
 		label = (char*)p->stack.entry[label_index+1].value.ptr;
 	} else if (e->type & VAR_STRING){
 		label = (char*)e->value.ptr;
 	} else {
 		// Typeless variable? something went wrong
-		p->exec.error = ERR_UNKNOWN_TYPE;
 		p->stack.stack_i = 0;
-		return;
+		ERROR(ERR_UNKNOWN_TYPE);
 	}
 	if (label[0] == BC_LABEL_STRING){
 		// Search code for label
 		u32 index = 0;
 		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
 			// found index: check correctness
-//				iprintf("%c,%c", p->exec.code->data[index], *label);
-			// TODO: fast search/cache label locations?
+//			iprintf("%c,%s", p->exec.code->data[index], label);
+			// TODO:PERF fast search/cache label locations?
 			if (str_comp(&p->exec.code->data[index], label)){
 				// this is the index, jump to here
 				break;
 			}
-			
-			index += 2;
+			u8 len = p->exec.code->data[index+1]; //TODO:CODE Advance by length as a function
+			index += len + (len & 1);
 		}
-		// TODO: Check when label does not exist
+		// TODO:IMPL check when label does not exist
+		if (index == BC_SCAN_NOT_FOUND){
+			ERROR(ERR_LABEL_NOT_FOUND);
+		}
+		
+		if (push_return){
+			p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;
+			p->calls.entry[p->calls.stack_i].address = p->exec.index;
+			p->calls.stack_i++;
+		}
+		
 		p->exec.index = index;
 	} else {
-		// TODO: Implement actual strings as arguments (should be similar)
+		// TODO:IMPL Implement actual strings as arguments (should be similar)
 		p->exec.error = ERR_UNIMPLEMENTED;
 	}
 	// GOTO needs to clear stack of labels
 	p->stack.stack_i = 0;
 }
 
+void cmd_goto(struct ptc* p){
+	cmd_goto_gosub(p, false);
+}
+
 void cmd_gosub(struct ptc* p){
-	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
-	// TODO: Check that stack has entries
-	struct stack_entry* e = &p->stack.entry[0];
-///	struct stack_entry* e = stack_pop(&p->stack);
-	char* label;
-	if (e->type & VAR_NUMBER){
-		// Rest of stack contains labels in order
-		s32 label_index = e->value.number >> 12;
-		// TODO: Range check
-		label = (char*)p->stack.entry[label_index+1].value.ptr;
-	} else if (e->type & VAR_STRING){
-		label = (char*)e->value.ptr;
-	} else {
-		// Typeless variable? something went wrong
-		p->exec.error = ERR_UNKNOWN_TYPE;
-		p->stack.stack_i = 0;
-		return;
-	}
-	if (label[0] == BC_LABEL_STRING){
-		// Search code for label
-		u32 index = 0;
-		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
-			// found index: check correctness
-//				iprintf("%c,%c", p->exec.code->data[index], *label);
-			// TODO: fast search/cache label locations?
-			if (str_comp(&p->exec.code->data[index], label)){
-				// this is the index, jump to here
-				break;
-			}
-			
-			index += 2;
-		}
-		// TODO: check when label does not exist
-		p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;
-		p->calls.entry[p->calls.stack_i].address = p->exec.index;
-		p->calls.stack_i++;
-		
-		p->exec.index = index;
-	} else {
-		// TODO: Implement actual strings as arguments (should be similar)
-		p->exec.error = ERR_UNIMPLEMENTED;
-	}
-	// GOSUB needs to clear stack of labels
-	p->stack.stack_i = 0;
+	cmd_goto_gosub(p, true);
 }
 
 void cmd_on(struct ptc* p){
-	p++;
+	(void)p;
 }
 
 void cmd_return(struct ptc* p){

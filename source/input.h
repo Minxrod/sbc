@@ -51,7 +51,6 @@ struct input {
 	// Derived from tchx,tchy
 	int keyboard;
 	
-	// TODO: Check limit here
 	mtx_t inkey_mtx;
 	u16 inkey_buf[INKEY_BUF_SIZE];
 	u16 current_write;

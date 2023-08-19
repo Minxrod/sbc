@@ -1,7 +1,7 @@
 #include "runner.h"
 #include "system.h"
 
-// TODO: Move these files to a subdirectory?
+// TODO:CODE Move these files to a subdirectory?
 #include "console.h"
 #include "operators.h"
 #include "sysvars.h"
@@ -22,6 +22,11 @@ typedef void(*ptc_call)(struct ptc*);
 // Arguments are passed via p->stack struct; return values also go here.
 // Errors are indicated via p->exec.error, constants are defined in error.h
 
+void ptc_stub(struct ptc* p){
+	// Stub function consumes all arguments and does nothing
+	p->stack.stack_i = 0;
+}
+
 const ptc_call ptc_commands[] = {
 	cmd_print, cmd_locate, cmd_color, NULL, // dim
 	cmd_for, cmd_to, cmd_step, cmd_next,
@@ -29,11 +34,14 @@ const ptc_call ptc_commands[] = {
 	cmd_goto, cmd_gosub, cmd_on, cmd_return,
 	cmd_end, cmd_stop,
 	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
+	cmd_input, cmd_linput,
+	NULL, ptc_stub, //BEEP
 };
 
 const ptc_call ptc_operators[] = {
 	op_add, op_comma, op_sub, op_mult, op_div, op_semi, op_assign, op_negate,
 	op_equal, op_inequal, op_less, op_greater, op_less_equal, op_greater_equal,
+	op_modulo,
 };
 
 const ptc_call ptc_functions[] = {
@@ -78,7 +86,7 @@ void run(struct program* code, struct ptc* p) {
 		switch (instr){
 			case BC_SMALL_NUMBER:
 				iprintf("val=%d", data);
-				// TODO: small decimals should also be of this form?
+				// TODO:IMPL small decimals should also be of this form?
 				if ((u8)data <= 99){
 					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << 12}};
 				} else {
@@ -182,7 +190,7 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					s32 a;
 					s32 b = ARR_DIM2_UNUSED;
-					// TODO: check for strings here before reading
+					// TODO:ERR check for strings here before reading
 					if (r->argcount == 2){
 						struct stack_entry* y = stack_pop(&p->stack);
 						b = VALUE_NUM(y) >> 12;
@@ -206,7 +214,7 @@ void run(struct program* code, struct ptc* p) {
 				break;
 			
 			case BC_DIM:
-				//TODO: error checking for strings here
+				//TODO:ERR error checking for strings here
 				{
 				u32 a;
 				u32 b = ARR_DIM2_UNUSED;
@@ -246,7 +254,7 @@ void run(struct program* code, struct ptc* p) {
 				// this will always occur when the stack is prepared already
 				// call_entry: Var ptr 
 				// stack: end, [step]
-				// TODO: check if stack has entry!
+				// TODO:ERR check if stack has entry!
 				s32* current = (s32*)p->calls.entry[p->calls.stack_i-1].var;
 				s32 end;
 				s32 step;
@@ -267,7 +275,7 @@ void run(struct program* code, struct ptc* p) {
 						data = code->data[r->index++];
 						if (instr == BC_COMMAND){
 							if (data == CMD_NEXT){
-								// TODO: Variable check...
+								// TODO:IMPL Variable check...
 								// find NEXT, go back one instruction, execute statement if it is VAR?
 								// Found a NEXT
 								nest--;
@@ -286,7 +294,6 @@ void run(struct program* code, struct ptc* p) {
 				
 			case BC_LABEL:
 				// ignore these!
-				// TODO: useful for debugging? indicate error label?
 				r->index += data + (data & 1); // to next instruction
 				break;
 				

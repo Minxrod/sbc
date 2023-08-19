@@ -26,7 +26,6 @@ void cmd_then(struct ptc* p);
 
 // When hitting an ELSE instruction (only hit from THEN block)
 // jump to the next ENDIF.
-// TODO: Comment style ELSE should not break...
 void cmd_else(struct ptc* p);
 void cmd_endif(struct ptc* p);
 

@@ -27,4 +27,6 @@ const char * error_messages[] = {
 	"String too long!",
 	"Wrong number of arguments!",
 	"Label not found!",
+	"No arguments provided!",
+	"Missing semicolon!",
 };

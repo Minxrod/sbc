@@ -23,6 +23,28 @@ struct ptc* run_code(char* code){
 	return ptc;
 }
 
+struct ptc* run_code_keys(char* code, char* keys, int len){
+	struct program p = {
+		strlen(code), code,
+	};
+	struct program o = {
+		0, outcode,
+	};
+	
+	// compile program
+	tokenize(&p, &o);
+	// init vars memory
+	struct ptc* ptc = init_system(16, 32, 64);
+	ptc->console.test_mode = true;
+	// buffer inkeys
+	for (int i = 0; i < len; ++i)
+		set_inkey(&ptc->input, to_wide(keys[i]));
+	// run code
+	run(&o, ptc);
+	
+	return ptc;
+}
+
 void free_code(struct ptc* ptc){
 	free_system(ptc);
 }

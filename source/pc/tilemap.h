@@ -21,7 +21,8 @@ struct tilemap {
 /// Initializes the tilemap.
 ///
 /// @note Returns tilemap struct itself by value, for it is small.
-struct tilemap tilemap_init(int w, int h);
+struct tilemap init_tilemap(int w, int h);
+void free_tilemap(struct tilemap* t);
 
 /// Sets a tile with the given information.
 /// 

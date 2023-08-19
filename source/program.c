@@ -32,7 +32,7 @@ void prg_load(struct program* p, const char* filename){
 	struct header h;
 	size_t r;
 	
-	/// TODO: I think this only works on little-endian devices...
+	/// TODO:CODE I think this only works on little-endian devices...
 	/// (reading into header memory directly)
 	r = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
 	if (r < PRG_HEADER_SIZE || ferror(f)){

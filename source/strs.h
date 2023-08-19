@@ -34,7 +34,7 @@ struct strings {
 	/// Max strings allocated
 	u32 strs_max;
 	/// Next string data offset
-	/// TODO: Use as start point to search
+	/// TODO:IMPL Use as start point to search
 	u32 str_next;
 	/// String info array
 	struct string* strs;
@@ -52,6 +52,15 @@ void free_mem_str(struct strings* s);
 
 struct string* get_new_str(struct strings* s);
 
+bool is_lower(const char c);
+bool is_upper(const char c);
+bool is_number(const char c);
+bool is_alpha(const char c);
+bool is_alphanum(const char c);
+bool is_name_start(const char c);
+bool is_name(const char c);
+bool is_varname(const char c);
+
 //Convert char to wide char
 u16 to_wide(u8 c);
 
@@ -60,6 +69,9 @@ u8 to_char(u16 c);
 
 // Convert number to string PTC style
 void str_num(s32 num, u8* str);
+
+// Convert string to number PTC style
+s32 str_to_num(u8* data, u32 len);
 
 // Copy to u8 str
 void str_char_copy(void* src, u8* dest);
