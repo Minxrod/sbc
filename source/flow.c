@@ -209,7 +209,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
 		s32 label_index = VALUE_NUM(e) >> 12;
-		iprintf("%d,%d\n", label_index, p->stack.stack_i);
+//		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
 		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
 			p->stack.stack_i = 0;
 			return; // No jump: number is out of range

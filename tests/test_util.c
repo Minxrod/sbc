@@ -15,7 +15,7 @@ struct ptc* run_code(char* code){
 	// compile program
 	tokenize(&p, &o);
 	// init vars memory
-	struct ptc* ptc = init_system(16, 32, 64);
+	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	ptc->console.test_mode = true;
 	// run code
 	run(&o, ptc);
@@ -34,7 +34,7 @@ struct ptc* run_code_keys(char* code, char* keys, int len){
 	// compile program
 	tokenize(&p, &o);
 	// init vars memory
-	struct ptc* ptc = init_system(16, 32, 64);
+	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	ptc->console.test_mode = true;
 	// buffer inkeys
 	for (int i = 0; i < len; ++i)

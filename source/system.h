@@ -56,6 +56,9 @@ void cmd_visible(struct ptc*);
 void cmd_vsync(struct ptc*);
 void cmd_wait(struct ptc*);
 
+#ifdef ARM9
+void system_draw(struct ptc* p);
+#endif
 #ifdef PC
 struct sfRenderWindow;
 

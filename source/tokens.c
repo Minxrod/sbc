@@ -62,34 +62,29 @@ u32 bc_scan(struct program* code, u32 index, u8 find){
 	// search for find in code->data
 	while (index < code->size){ 
 		u8 cur = code->data[index];
-		{
-		//debug! 
-		u8 len = code->data[index+1];
-		iprintf("%d: %c,%d %.*s\n", index, cur >= 32 ? cur : '?', len, len, &code->data[index+2]);
-		}
 		if (cur == find){
 			return index;
 		}
+		//debug! 
+		u8 len = code->data[++index];
+		iprintf("%d: %c,%d %.*s\n", (int)index, cur >= 32 ? cur : '?', len, len, &code->data[index+1]);
 		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING){
-			cur = code->data[++index];
-			index ++;
-			index += cur + (cur & 1);
+			index++;
+			index += len + (len & 1);
 		} else if (cur == BC_WIDE_STRING){
-			cur = code->data[++index];
-			index ++;
-			index += sizeof(u16) * cur;
+			index++;
+			index += sizeof(u16) * len;
 		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME){
-			cur = code->data[++index];
+			cur = len;
+			++index;
 			if (cur >= 'A'){
-				++index;
 			} else {
-				++index;
-				index += cur + (cur & 1);
+				index += len + (len & 1);
 			}
 		} else if (cur == BC_NUMBER){
-			index += 6; // change if number syntax gets modified?
+			index += 6-1; // change if number syntax gets modified?
 		} else {
-			index += 2;
+			index += 2-1;
 		}
 	}
 	return BC_SCAN_NOT_FOUND;

@@ -10,10 +10,12 @@ void init_input(struct input* i){
 	for (int j = 0; j < BUTTON_COUNT; ++j){
 		i->times[j] = (struct button_time){0, 0, 0};
 	}
+#ifdef PC
 	int status = mtx_init(&i->inkey_mtx, mtx_plain); // should not need recursion?
 	if(status != thrd_success){
 		ABORT("Error creating inkey_mtx mutex");
 	}
+#endif
 	i->current_write = 0;
 	i->current_base = 0;
 }
@@ -32,9 +34,11 @@ void set_input(struct input* i, int b) {
 }
 
 void set_inkey(struct input* i, u16 c){
+#ifdef PC
 	if (mtx_lock(&i->inkey_mtx) == thrd_error){
 		ABORT("set_inkey mutex lock failure!");
 	}
+#endif
 	
 	if (i->current_write == INKEY_BUF_SIZE){
 		//wait for more slots
@@ -44,15 +48,19 @@ void set_inkey(struct input* i, u16 c){
 		i->inkey_buf[cur] = c;
 	}
 	
+#ifdef PC
 	if (mtx_unlock(&i->inkey_mtx) == thrd_error){
 		ABORT("set_inkey mutex unlock failure!");
 	}
+#endif
 }
 
 u16 get_inkey(struct input* i){
+#ifdef PC
 	if (mtx_lock(&i->inkey_mtx) == thrd_error){
 		ABORT("get_inkey mutex lock failure!");
 	}
+#endif
 	u16 c;
 	if (i->current_write == 0){
 		c = 0;
@@ -61,9 +69,11 @@ u16 get_inkey(struct input* i){
 		i->current_write--;
 		i->current_base = (i->current_base + 1) % INKEY_BUF_SIZE;
 	}
+#ifdef PC
 	if (mtx_unlock(&i->inkey_mtx) == thrd_error){
 		ABORT("get_inkey mutex unlock failure!");
 	}
+#endif
 	return c;
 }
 

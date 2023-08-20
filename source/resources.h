@@ -10,11 +10,14 @@
 //SCR: working on it (copy)
 //COL: working on it (copy)
 
+#define GRP_WIDTH 256
+#define GRP_HEIGHT 192
+
 // Format: width*height*unit_size
 /// Size of one CHR bank
 /// Sizes all in bytes
 #define CHR_SIZE (256* 64/2)
-#define GRP_SIZE (256*192*1)
+#define GRP_SIZE (GRP_WIDTH*GRP_HEIGHT*1)
 #define SCR_SIZE ( 64* 64*2)
 #define COL_SIZE ( 16* 16*2)
 
@@ -56,6 +59,8 @@ struct resources {
 	u8* all_banks;
 	// Col banks: COL_SIZE*COL_BANKS*2 -> 3K
 	u16* col_banks;
+	
+	u16* bg_upper;
 	
 #ifdef PC
 	struct sfTexture* chr_tex[12];

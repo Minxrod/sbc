@@ -4,6 +4,7 @@
 #include "common.h"
 #include "system.h"
 #include "vars.h"
+#include "resources.h"
 
 struct ptc* init_system(int var, int str, int arr){
 	struct ptc* ptc = malloc(sizeof(struct ptc));
@@ -59,6 +60,22 @@ void cmd_wait(struct ptc* p){
 	// TODO:IMPL
 	p->stack.stack_i = 0;
 }
+
+#ifdef ARM9
+void system_draw(struct ptc* p){
+	u16* map = p->res.bg_upper;
+	//TODO:CODE Constants for console
+	for (int y = 0; y < 24; ++y){
+		for (int x = 0; x < 32; ++x){
+			u16 t = to_char(con_text_getc(&p->console, x, y));
+			t |= (con_col_get(&p->console, x, y) & COL_FG_MASK) << 12;
+			*map = t;
+			map++;
+		}
+	}
+	// TODO:IMPL background tile/color
+}
+#endif
 
 #ifdef PC
 #include <SFML/Graphics.h>

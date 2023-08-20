@@ -20,6 +20,12 @@
 #ifdef ARM9
 #include <nds/ndstypes.h>
 #include <nds.h>
+
+// Use this to build the "Main program" version of the software
+// Instead of the test cases
+// TODO:CODE Fix the libnds Makefile to render this unnecessary...
+// (want separate tests / main builds)
+#define ARM9_BUILD
 #endif
 
 // silly hacks for testing without a DS emu

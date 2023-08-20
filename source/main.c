@@ -1,5 +1,77 @@
+#include "common.h"
+
+#ifdef ARM9_BUILD
+#include <nds.h>
+#include <fat.h>
+
+#include "system.h"
+#include "program.h"
+#include "tokens.h"
+
+#include <stdio.h>
+
+void init(void){
+	//regular bank setup
+	videoSetMode(MODE_0_2D);
+	videoSetModeSub(MODE_0_2D);
+	
+	vramSetPrimaryBanks(VRAM_A_MAIN_BG, VRAM_B_MAIN_SPRITE, VRAM_C_SUB_BG, VRAM_D_SUB_SPRITE);
+	
+	// https://mtheall.com/vram.html#T0=2&NT0=1024&MB0=0&TB0=2&S0=3&T1=2&NT1=1024&MB1=4&TB1=4&S1=3&T2=2&NT2=1024&MB2=8&TB2=6&S2=3&T3=2&NT3=1024&MB3=12&TB3=6&S3=3
+	bgInit(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
+	bgInit(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
+	bgInit(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
+	bgInit(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	
+	bgInitSub(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
+	bgInitSub(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
+	bgInitSub(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
+	bgInitSub(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	
+	// extended palette mode
+//	vramSetBankF(VRAM_F_BG_EXT_PALETTE);
+//	vramSetBankG(VRAM_G_SPRITE_EXT_PALETTE);
+//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
+//	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
+}
+
+// Global so that it can be used during interrupt
+struct ptc* ptc;
+
+void frame_update(){
+	scanKeys();
+	// set buttons here
+	keysCurrent();
+	
+	set_input(&ptc->input, keysCurrent());
+	// draw
+	system_draw(ptc);
+}
+
+int main(void){
+	init();
+	fatInitDefault();
+	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
+//	consoleDebugInit(DebugDevice_NULL);
+	
+	struct program program;
+	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
+	// set this after creating system to ensure resources are loaded
+	
+	prg_load(&program, "SAMPLE1.PTC");
+	struct program bc = {0, malloc(2*program.size)};
+	tokenize(&program, &bc);
+//	free(program.data);
+	irqSet(IRQ_VBLANK, frame_update);
+	// only needs BC, not source
+	run(&bc, ptc);
+	
+	return 0;
+}
+
+#endif
 #ifdef ARM9
-void v(void); //prevent empty translation unit
+void v__(void); //prevent empty translation unit
 #endif
 
 #ifndef ARM9
@@ -135,55 +207,4 @@ int main(int argc, char** argv){
 	
 	return 0;
 }
-
 #endif
-
-/*#include <nds.h>
-
-#include "tokens.h"
-
-#include <stdio.h>
-
-void init(void){
-	//regular bank setup
-	videoSetMode(MODE_0_2D);
-	videoSetModeSub(MODE_0_2D);
-	
-	vramSetPrimaryBanks(VRAM_A_MAIN_BG, VRAM_B_MAIN_SPRITE, VRAM_C_SUB_BG, VRAM_D_SUB_SPRITE);
-	
-	// extended palette mode
-	vramSetBankF(VRAM_F_BG_EXT_PALETTE);
-	vramSetBankG(VRAM_G_SPRITE_EXT_PALETTE);
-	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
-}
-
-char* code = "?\"Hello world!\"\r?12345";
-
-char out[4096] = {0};
-
-int main(void){
-	struct program program;
-	program.data = code;
-	program.size = 16;
-	struct program code;
-	code.data = out;
-	code.size = 0;
-	
-	//init();
-	consoleDemoInit();
-	
-	tokenize(&program, &code);
-	
-	while(1) {
-	
-		swiWaitForVBlank();
-		scanKeys();
-		
-		int keys = keysDown();
-		if (keys & KEY_START)
-			break;
-	}
-	
-	return 0;
-}*/

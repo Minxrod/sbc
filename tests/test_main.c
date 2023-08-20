@@ -1,3 +1,6 @@
+#include "common.h"
+
+#ifndef ARM9_BUILD
 #ifdef ARM9
 #include <nds.h>
 #endif
@@ -42,7 +45,7 @@ int main(){
 		swiWaitForVBlank();
 		scanKeys();
 		
-		iprintf("Continue?\n");
+//		iprintf("Continue?\n");
 		int keys = keysDown();
 		if (keys & KEY_START)
 			break;
@@ -50,3 +53,4 @@ int main(){
 #endif
 	return res;
 }
+#endif

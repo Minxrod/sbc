@@ -21,6 +21,11 @@
 #define VRAM_GRP_CHR (VRAM_SP_BASE + CHR_SIZE*10)
 
 #define VRAM_LOWER_OFS (0x00400000)
+
+#define VRAM_UPPER_PAL_BG 0x05000000
+#define VRAM_UPPER_PAL_SP 0x05000200
+#define VRAM_LOWER_PAL_BG 0x05000400
+#define VRAM_LOWER_PAL_SP 0x05000600
 #endif
 
 void init_resource(struct resources* r){
@@ -37,11 +42,37 @@ void init_resource(struct resources* r){
 		for (int i = 0; i < 1; ++i){
 			r->scr[i + 2 * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
-		//TODO: COL
+		r->col[0] = (u16*) VRAM_UPPER_PAL_BG;
+		r->col[1] = (u16*) VRAM_UPPER_PAL_SP;
+		r->col[2] = (u16*) 0; //TODO:IMPL GRP
+		r->col[3] = (u16*) VRAM_LOWER_PAL_BG;
+		r->col[4] = (u16*) VRAM_LOWER_PAL_SP;
+		r->col[5] = (u16*) 0; //TODO:IMPL GRP
 	}
 	for (int i = 0; i < 4; ++i){
-		r->grp[i] = calloc(256, 192); // TODO:CODE replace with constants
+		r->grp[i] = calloc(GRP_SIZE, 1); // TODO:CODE replace with constants
 	}
+	char* name;
+	name = "resources/BGF0.PTC";
+	FILE* f = fopen(name, "rb");
+	if (!f){
+		iprintf("Failed to load file: %s\n", name);
+		abort();
+	}
+	fread(r->chr[0], sizeof(u8), HEADER_SIZE, f);
+	fread(r->chr[0], sizeof(u8), CHR_SIZE, f);
+	fclose(f);
+	
+	f = fopen("resources/COL0.PTC", "rb");
+	if (!f){
+		iprintf("Failed to load file: %s\n", name);
+		abort();
+	}
+	fread(r->col[0], sizeof(u8), HEADER_SIZE, f);
+	fread(r->col[0], sizeof(u8), COL_SIZE, f);
+	fclose(f);
+	
+	r->bg_upper = (u16*)(VRAM_BG_BASE);
 #endif
 #ifdef PC
 	// allocate memory for resources (needs ~512K)
@@ -138,6 +169,11 @@ void free_resource(struct resources* r){
 	sfTexture_destroy(r->chr_tex[0]);
 	sfTexture_destroy(r->col_tex);
 	sfShader_destroy(r->shader);
+#endif
+#ifdef ARM9
+	for (int i = 0; i < 4; ++i){
+		free(r->grp[i]);
+	}
 #endif
 }
 
