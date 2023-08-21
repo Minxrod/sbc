@@ -44,7 +44,7 @@ void con_puts(struct console* c, void* s);
 
 void con_advance(struct console* c);
 void con_tab(struct console* c);
-void con_newline(struct console* c);
+void con_newline(struct console* c, bool scroll);
 
 // PTC commands, etc.
 void cmd_cls(struct ptc* p);

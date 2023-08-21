@@ -147,5 +147,54 @@ int test_console(void){
 		free_code(p);
 	}
 	
+	// Locate silent failure on out of range
+	{
+		struct ptc* p = run_code("LOCATE 3,6\rLOCATE 32,9\r");
+		
+		ASSERT(p->console.x == 3, "[locate] CSRX == 3");
+		ASSERT(p->console.y == 6, "[locate] CSRY == 6");
+		
+		free_code(p);
+	}
+	
+	// Scrolling
+	{
+		struct ptc* p = run_code("LOCATE 0,23\r?0\r");
+		
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 0, 22), "[print] Console scrolled up one");
+		
+		free_code(p);
+	}
+	
+	// Not scrolling
+	{
+		struct ptc* p = run_code("LOCATE 0,23\r?\"ABC\";\r");
+		
+		ASSERT(to_wide('A') == con_text_getc(&p->console, 0, 23), "[print] Console does not scroll up (A)");
+		ASSERT(to_wide('B') == con_text_getc(&p->console, 1, 23), "[print] Console does not scroll up (B)");
+		ASSERT(to_wide('C') == con_text_getc(&p->console, 2, 23), "[print] Console does not scroll up (C)");
+		
+		free_code(p);
+	}
+	
+	// Not scrolling (the stupid corner)
+	{
+		struct ptc* p = run_code("LOCATE 31,23\r?0;\r");
+		
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 23), "[print] Console does not scroll up (0)");
+		
+		free_code(p);
+	}
+	
+	// Not scrolling (the stupid corner II)
+	{
+		struct ptc* p = run_code("LOCATE 28,23\r?0,\r");
+		
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 28, 23), "[print] Console does not scroll up (0)");
+		
+		free_code(p);
+	}
+
+	
 	SUCCESS("test_console success");
 }

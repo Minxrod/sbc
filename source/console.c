@@ -17,9 +17,7 @@ void con_advance(struct console* c){
 	}
 }
 
-void con_newline(struct console* c){
-	c->x = 0;
-	c->y++;
+void con_scroll(struct console* c){
 	// TODO:PERF optimize (scroll all at once?)
 	while (c->y >= CONSOLE_HEIGHT){
 		c->y--;
@@ -35,7 +33,13 @@ void con_newline(struct console* c){
 			c->text[CONSOLE_HEIGHT-1][j] = 0;
 			c->color[CONSOLE_HEIGHT-1][j] = c->col;
 		}
-	}
+	}	
+}
+
+void con_newline(struct console* c, bool scroll){
+	c->x = 0;
+	c->y++;
+	if (scroll) con_scroll(c);
 }
 
 void con_init(struct console* c){
@@ -43,12 +47,13 @@ void con_init(struct console* c){
 }
 
 void con_put(struct console* c, u16 w){
+	if (c->y == 24) { con_scroll(c); }
 	c->text[c->y][c->x] = w;
 	c->color[c->y][c->x] = c->col;
 	
 	c->x++;
 	if (c->x >= CONSOLE_WIDTH){
-		con_newline(c);
+		con_newline(c, false);
 	}
 }
 
@@ -92,7 +97,7 @@ void cmd_print(struct ptc* p){
 					con_advance(c);
 				} while (c->x % c->tabstep != 0);
 				if (c->y == CONSOLE_HEIGHT){
-					con_newline(c);
+					con_newline(c, false);
 				}
 			} else if (e->value.number == OP_SEMICOLON){
 				// do nothing lol
@@ -112,7 +117,7 @@ void cmd_print(struct ptc* p){
 		// no newline!
 	} else {
 		// newline!
-		con_newline(c);
+		con_newline(c, true);
 	}
 	
 	p->stack.stack_i = 0; //PRINT consumes all stack items
@@ -138,10 +143,16 @@ void cmd_locate(struct ptc* p){
 	struct console* c = &p->console;
 	// TODO:ERR check arguments types, quantity
 	if (p->stack.stack_i == 2){
-		c->x = VALUE_NUM(stack_get(&p->stack, 0)) >> 12; // BG
-		c->y = VALUE_NUM(stack_get(&p->stack, 1)) >> 12; // FG
+		//LOCATE is a silent failure
+		s32 x = VALUE_NUM(stack_get(&p->stack, 0)) >> 12;
+		s32 y = VALUE_NUM(stack_get(&p->stack, 1)) >> 12;
+		if (x >= 0 && y >= 0 && x < CONSOLE_WIDTH && y < CONSOLE_HEIGHT){
+			c->x = x;
+			c->y = y;
+		}
 	} else {
 		p->exec.error = ERR_WRONG_ARG_COUNT;
+
 	}
 	p->stack.stack_i = 0;
 }
@@ -215,7 +226,7 @@ void cmd_input(struct ptc* p){
 	if (prompt_str) // only display string if it exists
 		con_puts(con, prompt_str);
 	con_put(con, to_wide('?'));
-	if (con->x) con_newline(con); // only newline if necessary for full line of input
+	if (con->x) con_newline(con, true); // only newline if necessary for full line of input
 	
 	// Prompt user for input
 	u16 inkey;
@@ -297,15 +308,15 @@ void cmd_input(struct ptc* p){
 				return;
 			}
 		}
-		con_newline(con); // from user entering the line.
+		con_newline(con, true); // from user entering the line.
 		// Note that this has to be after reading the characters, or the positions get messed up
 		if (!valid){
 			con_puts(con, "S\20?Redo from start");
-			con_newline(con);
+			con_newline(con, true);
 			if (prompt_str) // only display string if it exists
 				con_puts(con, prompt_str);
 			con_put(con, to_wide('?'));
-			if (con->x) con_newline(con); // only newline if necessary for full line of input
+			if (con->x) con_newline(con, true); // only newline if necessary for full line of input
 		}
 	}
 	p->stack.stack_i = 0;
