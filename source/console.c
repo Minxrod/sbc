@@ -94,7 +94,7 @@ void cmd_print(struct ptc* p){
 			if (e->value.number == OP_COMMA){
 				// tab
 				do {
-					con_advance(c);
+					con_put(c, to_wide(' '));
 				} while (c->x % c->tabstep != 0);
 				if (c->y == CONSOLE_HEIGHT){
 					con_newline(c, false);

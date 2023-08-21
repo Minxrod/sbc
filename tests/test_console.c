@@ -194,7 +194,73 @@ int test_console(void){
 		
 		free_code(p);
 	}
-
+	
+	// COLORing test I (fg only)
+	{
+		struct ptc* p = run_code("COLOR 3\r?\"TEST\"\r");
+		
+		ASSERT(0x03 == con_col_get(&p->console, 0, 0), "[color] Console contains correct color");
+		ASSERT(0x03 == con_col_get(&p->console, 1, 0), "[color] Console contains correct color");
+		ASSERT(0x03 == con_col_get(&p->console, 2, 0), "[color] Console contains correct color");
+		ASSERT(0x03 == con_col_get(&p->console, 3, 0), "[color] Console contains correct color");
+		ASSERT(0x00 == con_col_get(&p->console, 4, 0), "[color] Color does not extend past text");
+		
+		free_code(p);
+	}
+	
+	// COLORing test II (fg+bg)
+	{
+		struct ptc* p = run_code("COLOR 3,8\r?\"TEST\"\r");
+		
+		ASSERT(0x83 == con_col_get(&p->console, 0, 0), "[color] Console contains correct colors");
+		ASSERT(0x83 == con_col_get(&p->console, 1, 0), "[color] Console contains correct colors");
+		ASSERT(0x83 == con_col_get(&p->console, 2, 0), "[color] Console contains correct colors");
+		ASSERT(0x83 == con_col_get(&p->console, 3, 0), "[color] Console contains correct colors");
+		ASSERT(0x00 == con_col_get(&p->console, 4, 0), "[color] Colors do not extend past text");
+		
+		free_code(p);
+	}
+	
+	// COLOR + scrolling test
+	{
+		struct ptc* p = run_code("LOCATE 0,23\rCOLOR 7,2\r?\"TEST\"?\"TEST\"\r");
+		
+		const int col = 0x27;
+		ASSERT(col == con_col_get(&p->console, 0, 21), "[color] Scrolled console contains correct colors 0");
+		ASSERT(col == con_col_get(&p->console, 1, 21), "[color] Scrolled console contains correct colors 1");
+		ASSERT(col == con_col_get(&p->console, 2, 21), "[color] Scrolled console contains correct colors 2");
+		ASSERT(col == con_col_get(&p->console, 3, 21), "[color] Scrolled console contains correct colors 3");
+		ASSERT(0x00 == con_col_get(&p->console, 4, 21), "[color] Scrolled colors do not extend past text 4");
+		
+		ASSERT(col == con_col_get(&p->console, 0, 22), "[color] Lowest console contains correct colors");
+		ASSERT(col == con_col_get(&p->console, 1, 22), "[color] Lowest console contains correct colors");
+		ASSERT(col == con_col_get(&p->console, 2, 22), "[color] Lowest console contains correct colors");
+		ASSERT(col == con_col_get(&p->console, 3, 22), "[color] Lowest console contains correct colors");
+		ASSERT(col == con_col_get(&p->console, 4, 22), "[color] New rows keep set color");
+		ASSERT(col == con_col_get(&p->console, 30, 22), "[color] New rows keep set color");
+		ASSERT(col == con_col_get(&p->console, 31, 22), "[color] New rows keep set color");
+		
+		ASSERT(con_text_getc(&p->console, 0, 23) == 0, "[print] Last row is empty");
+		
+		free_code(p);
+	}
+	
+	// COLOR + tab test
+	{
+		struct ptc* p = run_code("COLOR 4,9\r?\"TEST\",\r");
+		
+		const int col = 0x94;
+		ASSERT(col == con_col_get(&p->console, 0, 0), "[color] Correct colors 0");
+		ASSERT(col == con_col_get(&p->console, 1, 0), "[color] Correct colors 1");
+		ASSERT(col == con_col_get(&p->console, 2, 0), "[color] Correct colors 2");
+		ASSERT(col == con_col_get(&p->console, 3, 0), "[color] Correct colors 3");
+		ASSERT(col == con_col_get(&p->console, 4, 0), "[color] Colors extend through tab 4");
+		ASSERT(col == con_col_get(&p->console, 5, 0), "[color] Colors extend through tab 5");
+		ASSERT(col == con_col_get(&p->console, 6, 0), "[color] Colors extend through tab 6");
+		ASSERT(col == con_col_get(&p->console, 7, 0), "[color] Colors extend through tab 7");
+		
+		free_code(p);
+	}
 	
 	SUCCESS("test_console success");
 }
