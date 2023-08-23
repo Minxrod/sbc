@@ -64,9 +64,8 @@ void cmd_wait(struct ptc* p){
 #ifdef ARM9
 void system_draw(struct ptc* p){
 	u16* map = p->res.bg_upper;
-	//TODO:CODE Constants for console
-	for (int y = 0; y < 24; ++y){
-		for (int x = 0; x < 32; ++x){
+	for (int y = 0; y < CONSOLE_HEIGHT; ++y){
+		for (int x = 0; x < CONSOLE_WIDTH; ++x){
 			u16 t = to_char(con_text_getc(&p->console, x, y));
 			t |= (con_col_get(&p->console, x, y) & COL_FG_MASK) << 12; //TODO:CODE 12 should be a constant?
 			*map = t;
@@ -95,20 +94,20 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	rs.shader = shader;
 	
 	// TODO:CODE No dynamic allocations here
-	struct tilemap map;
-	map = init_tilemap(32, 24);
+	struct tilemap console_map;
+	console_map = init_tilemap(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 	
-	for (int x = 0; x < 32; ++x){
-		for (int y = 0; y < 24; ++y){
-			tile(&map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
+	for (int x = 0; x < CONSOLE_WIDTH; ++x){
+		for (int y = 0; y < CONSOLE_HEIGHT; ++y){
+			tile(&console_map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
 			// TODO:IMPL background tile/color[
 //			iprintf("Color?:%d,%d,%d\n", x,y,p->console.color[x][y] & COL_FG_MASK);
-			palette(&map, x, y, con_col_get(&p->console, x, y) & COL_FG_MASK);
+			palette(&console_map, x, y, con_col_get(&p->console, x, y) & COL_FG_MASK);
 		}
 	}
 	
-	sfRenderWindow_drawVertexArray(rw, map.va, &rs);
-	free_tilemap(&map);
+	sfRenderWindow_drawVertexArray(rw, console_map.va, &rs);
+	free_tilemap(&console_map);
 //	sfTexture_destroy(col_tex);
 }
 #endif

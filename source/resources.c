@@ -50,7 +50,7 @@ void init_resource(struct resources* r){
 		r->col[5] = (u16*) 0; //TODO:IMPL GRP
 	}
 	for (int i = 0; i < 4; ++i){
-		r->grp[i] = calloc(GRP_SIZE, 1); // TODO:CODE replace with constants
+		r->grp[i] = calloc(GRP_SIZE, 1);
 	}
 	char* name;
 	name = "resources/BGF0.PTC";
@@ -92,7 +92,7 @@ void init_resource(struct resources* r){
 		}
 	}
 	for (int i = 0; i < 4; ++i){
-		r->grp[i] = calloc(256, 192); // TODO:CODE replace with constants
+		r->grp[i] = calloc(GRP_SIZE, 1);
 	}
 	
 	// Load default resource files

@@ -232,7 +232,6 @@ void cmd_input(struct ptc* p){
 	
 	// Prompt user for input
 	u16 inkey;
-	// length: 32 TODO:CODE constant?
 	u16* output;
 	u8 out_index;
 	bool valid = false;
@@ -244,7 +243,7 @@ void cmd_input(struct ptc* p){
 			if ((inkey == '\b' || check_pressed_manual(&p->input, BUTTON_ID_Y, 15, 4))
 				&& out_index > 0){
 				output[--out_index] = 0;
-			} else if (inkey && out_index <= 31){
+			} else if (inkey && out_index < CONSOLE_WIDTH){
 				output[out_index++] = inkey;
 			} else {
 #if defined(PC) || defined(ARM9)
@@ -256,7 +255,7 @@ void cmd_input(struct ptc* p){
 		}
 		// scan commas
 		int commas = 0;
-		for (int x = 0; x < 32; ++x){
+		for (int x = 0; x < CONSOLE_WIDTH; ++x){
 			commas += con_text_getc(con, x, con->y) == to_wide(',');
 		}
 		if (len != commas + 1){
@@ -264,7 +263,7 @@ void cmd_input(struct ptc* p){
 			continue; //TODO:IMPL ?Redo from start
 		}
 		// TODO:ERR Validate types
-		u8 conversion_copy[32];
+		u8 conversion_copy[CONSOLE_WIDTH];
 		int prev_i = 0;
 		int out_i = 0;
 		//TODO:CODE This loop is stupid? Fix it?
@@ -275,7 +274,7 @@ void cmd_input(struct ptc* p){
 			if (e->type == (VAR_NUMBER | VAR_VARIABLE)){
 				// validate first entry is numeric
 				if (is_number(c) || c == '.' || c == '-'){
-				} else if (c == ',' || c == '\0' || c == ' ' || out_i >= 32){
+				} else if (c == ',' || c == '\0' || c == ' ' || out_i >= CONSOLE_WIDTH){
 					// convert from previous to out_i
 					s32 n = str_to_num(&conversion_copy[prev_i], out_i - prev_i - 1);
 					prev_i = out_i;
@@ -288,7 +287,7 @@ void cmd_input(struct ptc* p){
 					break; //TODO:IMPL ?Redo from start
 				}
 			} else if (e->type == (VAR_STRING | VAR_VARIABLE)){
-				if (c == ',' || c == '\0' || out_i >= 32){
+				if (c == ',' || c == '\0' || out_i >= CONSOLE_WIDTH){
 					struct string* s = get_new_str(&p->strs);
 					
 					if (*(void**)e->value.ptr != NULL && **(char**)e->value.ptr == STRING_CHAR){

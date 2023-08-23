@@ -120,7 +120,7 @@ int main(int argc, char** argv){
 		prg_load(&program, argv[1]);
 	} else {
 		// Load default program: TODO:IMPL load an actual launcher program
-		prg_load(&program, "SAMPLE1.PTC");
+		prg_load(&program, "programs/SAMPLE2.PTC");
 	}
 	
 	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
