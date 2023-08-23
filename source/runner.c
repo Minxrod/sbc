@@ -317,11 +317,11 @@ void run(struct program* code, struct ptc* p) {
 	if (r->error){
 		iprintf("Error: %s\n", error_messages[r->error]);
 		con_puts(&p->console, "S\5Error");
-		con_newline(&p->console);
+		con_newline(&p->console, true);
 	} else {
 		if (!p->console.test_mode){
 			con_puts(&p->console, "S\2OK");
-			con_newline(&p->console);
+			con_newline(&p->console, true);
 		}
 	}
 	

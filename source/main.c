@@ -74,7 +74,7 @@ int main(void){
 void v__(void); //prevent empty translation unit
 #endif
 
-#ifndef ARM9
+#ifdef PC
 //this is the computer-only file
 
 #include <SFML/System.h>
@@ -207,4 +207,8 @@ int main(int argc, char** argv){
 	
 	return 0;
 }
+#endif
+
+#ifdef EZ80
+void ignore();
 #endif

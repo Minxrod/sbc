@@ -7,12 +7,12 @@
 #include "resources.h"
 
 struct ptc* init_system(int var, int str, int arr){
-	struct ptc* ptc = malloc(sizeof(struct ptc));
+	struct ptc* ptc = calloc(sizeof(struct ptc), 1);
 	if (ptc == NULL){
 		iprintf("Error allocating memory!");
 		abort();
 	}
-	*ptc = (const struct ptc){0};
+//	*ptc = (const struct ptc){0}; // see if this reduces stack
 	
 	// init vars memory
 	init_mem_var(&ptc->vars, var);

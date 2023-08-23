@@ -42,8 +42,10 @@ void con_newline(struct console* c, bool scroll){
 	if (scroll) con_scroll(c);
 }
 
-void con_init(struct console* c){
+struct console* init_console(){
+	struct console* c = calloc(sizeof(struct console), 1);
 	c->tabstep = 4;
+	return c;
 }
 
 void con_put(struct console* c, u16 w){
@@ -245,9 +247,11 @@ void cmd_input(struct ptc* p){
 			} else if (inkey && out_index <= 31){
 				output[out_index++] = inkey;
 			} else {
+#if defined(PC) || defined(ARM9)
 				// sleep for user input?
 				struct timespec tspec = {.tv_nsec=1000000000/60};
 				thrd_sleep(&tspec, NULL);
+#endif
 			}
 		}
 		// scan commas
@@ -323,7 +327,7 @@ void cmd_input(struct ptc* p){
 }
 
 void cmd_linput(struct ptc* p){
-	++p;
+	(void)p;
 }
 
 inline u16 con_text_getc(struct console* c, u32 x, u32 y){

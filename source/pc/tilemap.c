@@ -1,3 +1,4 @@
+#ifdef PC
 #include "tilemap.h"
 
 #include <SFML/Graphics.h>
@@ -51,4 +52,6 @@ void palette(struct tilemap* map, int x, int y, int pal){
 	sfVertexArray_getVertex(map->va, 4 * (x + map->width * y) + 2)->color = col;
 	sfVertexArray_getVertex(map->va, 4 * (x + map->width * y) + 3)->color = col;
 }
-
+#else
+void ignore();
+#endif

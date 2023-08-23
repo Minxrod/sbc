@@ -5,7 +5,7 @@
 #define HEADER_SIZE 48
 #define PRG_HEADER_SIZE 60
 
-struct header {
+struct ptc_header {
 	/// Valid files will contain magic string "PX01"
 	char magic[4];
 	/// Size of file after MD5 (includes type string and data)

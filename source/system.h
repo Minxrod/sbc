@@ -16,6 +16,15 @@
 #define STR_LIMIT 4096
 #define ARR_LIMIT 262144
 
+#ifdef EZ80
+#undef VAR_LIMIT
+#undef STR_LIMIT
+#undef ARR_LIMIT
+#define VAR_LIMIT 64
+#define STR_LIMIT 32
+#define ARR_LIMIT 2048
+#endif
+
 // note: members here are stored directly (why?)
 struct ptc {
 	// generic stuff

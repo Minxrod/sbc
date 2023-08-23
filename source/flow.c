@@ -36,11 +36,11 @@ void cmd_for(struct ptc* p){
 }
 
 void cmd_to(struct ptc* p){
-	++p;
+	(void)p;
 }
 
 void cmd_step(struct ptc* p){
-	p++;
+	(void)p;
 }
 
 /// PTC command marking the end of a `FOR` loop.
@@ -197,7 +197,7 @@ void cmd_else(struct ptc* p){
 }
 
 void cmd_endif(struct ptc* p){
-	p++;
+	(void)p;
 }
 
 void cmd_goto_gosub(struct ptc* p, bool push_return){
@@ -295,5 +295,5 @@ void cmd_end(struct ptc* p){
 }
 
 void cmd_stop(struct ptc* p){
-	p++;
+	(void)p;
 }

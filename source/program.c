@@ -29,7 +29,7 @@ void prg_load(struct program* p, const char* filename){
 		fclose(f);
 		abort();
 	}
-	struct header h;
+	struct ptc_header h;
 	size_t r;
 	
 	/// TODO:CODE I think this only works on little-endian devices...

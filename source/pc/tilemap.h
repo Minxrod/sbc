@@ -1,5 +1,4 @@
 #pragma once
-
 #include <stdbool.h>
 
 #include <SFML/Graphics.h>
@@ -40,4 +39,3 @@ void tile(struct tilemap*, int x, int y, int chr, bool h, bool v);
 /// @param y Tile y location
 /// @param pal Palette number
 void palette(struct tilemap*, int x, int y, int pal);
-

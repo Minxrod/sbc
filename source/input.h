@@ -2,7 +2,11 @@
 
 #include "common.h"
 
+#if defined(PC) || defined(ARM9)
+// This only matters on PC
 #include <threads.h>
+#endif
+
 #include <stdbool.h>
 
 #define BUTTON_COUNT 12
@@ -51,7 +55,9 @@ struct input {
 	// Derived from tchx,tchy
 	int keyboard;
 	
+#if defined(PC) || defined(ARM9)
 	mtx_t inkey_mtx;
+#endif
 	u16 inkey_buf[INKEY_BUF_SIZE];
 	u16 current_write;
 	u16 current_base;
