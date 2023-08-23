@@ -130,11 +130,11 @@ void cmd_color(struct ptc* p){
 	// TODO:ERR check arguments types, quantity
 	if (p->stack.stack_i == 2){
 		c->col = 0;
-		c->col |= VALUE_NUM(stack_get(&p->stack, 0)) >> 12; // FG
-		c->col |= (VALUE_NUM(stack_get(&p->stack, 1)) >> 12) << 4; // BG
+		c->col |= FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0))); // FG
+		c->col |= FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 1))) << 4; // BG
 	} else if (p->stack.stack_i == 1){
 		c->col &= ~COL_FG_MASK; // clear FG value
-		c->col |= (VALUE_NUM(stack_get(&p->stack, 0)) >> 12); // FG
+		c->col |= FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0))); // FG
 	} else {
 		p->exec.error = ERR_WRONG_ARG_COUNT;
 	}
@@ -146,8 +146,8 @@ void cmd_locate(struct ptc* p){
 	// TODO:ERR check arguments types, quantity
 	if (p->stack.stack_i == 2){
 		//LOCATE is a silent failure
-		s32 x = VALUE_NUM(stack_get(&p->stack, 0)) >> 12;
-		s32 y = VALUE_NUM(stack_get(&p->stack, 1)) >> 12;
+		s32 x = FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0)));
+		s32 y = FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 1)));
 		if (x >= 0 && y >= 0 && x < CONSOLE_WIDTH && y < CONSOLE_HEIGHT){
 			c->x = x;
 			c->y = y;

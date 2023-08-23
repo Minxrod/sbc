@@ -9,19 +9,19 @@
 void sys_true(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = 1<<12});
+	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(1)});
 }
 
 void sys_false(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = 0<<12});
+	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(0)});
 }
 
 void sys_cancel(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = -(1<<12)});
+	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = -INT_TO_FP(1)});
 }
 
 // All compatibility testing performed on a USA v2.2 copy of Petit Computer.
@@ -31,5 +31,5 @@ void sys_cancel(struct ptc* p){
 void sys_version(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = 0x2020<<12});
+	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(0x2020)});
 }

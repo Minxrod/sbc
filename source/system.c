@@ -68,7 +68,7 @@ void system_draw(struct ptc* p){
 	for (int y = 0; y < 24; ++y){
 		for (int x = 0; x < 32; ++x){
 			u16 t = to_char(con_text_getc(&p->console, x, y));
-			t |= (con_col_get(&p->console, x, y) & COL_FG_MASK) << 12;
+			t |= (con_col_get(&p->console, x, y) & COL_FG_MASK) << 12; //TODO:CODE 12 should be a constant?
 			*map = t;
 			map++;
 		}

@@ -23,9 +23,9 @@ int test_int_vars(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 5<<12, "[assign] A=5");
-		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 8<<12, "[assign] B=8");
-		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 13<<12, "[arithmetic] C=13");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(5), "[assign] A=5");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(8), "[assign] B=8");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(13), "[arithmetic] C=13");
 		
 		free_code(p);
 	}
@@ -164,7 +164,7 @@ int test_int_vars(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -(14<<12), "[decimal] A=-14");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -INT_TO_FP(14), "[decimal] A=-14");
 		
 		free_code(p);
 	}
@@ -204,10 +204,10 @@ int test_int_vars(){
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 3, "[dim] A has correct size");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == ARR_DIM2_UNUSED, "[dim] A has correct size II");
 		// check values correct
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 4<<12, "[arrays] Var A=4, separate from arr A");
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->number == 7<<12, "[arrays] A[0]=7");
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->number == 8<<12, "[arrays] A[1]=8");
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->number == 9<<12, "[arrays] A[2]=9");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(4), "[arrays] Var A=4, separate from arr A");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->number == INT_TO_FP(7), "[arrays] A[0]=7");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->number == INT_TO_FP(8), "[arrays] A[1]=8");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->number == INT_TO_FP(9), "[arrays] A[2]=9");
 		
 		free_code(p);
 	}
@@ -224,10 +224,10 @@ int test_int_vars(){
 		ASSERT(arr_size(a->value.ptr, ARR_DIM1) == 2, "[dim] A has correct size");
 		ASSERT(arr_size(a->value.ptr, ARR_DIM2) == 2, "[dim] A has correct size II");
 		// check values correct
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 0)->number == 7<<12, "[arrays] A[0,0]=7");
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 0)->number == 8<<12, "[arrays] A[1,0]=8");
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 1)->number == 9<<12, "[arrays] A[0,1]=9");
-		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 1)->number == 10<<12, "[arrays] A[1,1]=10");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 0)->number == INT_TO_FP(7), "[arrays] A[0,0]=7");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 0)->number == INT_TO_FP(8), "[arrays] A[1,0]=8");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 0, 1)->number == INT_TO_FP(9), "[arrays] A[0,1]=9");
+		ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, 1, 1)->number == INT_TO_FP(10), "[arrays] A[1,1]=10");
 		
 		free_code(p);
 	}

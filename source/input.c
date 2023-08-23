@@ -121,5 +121,5 @@ void func_btrig(struct ptc* p){
 		b |= check_pressed(i, j) << j;
 	}
 //	iprintf("button: %d\n", (int)b);
-	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {b << 12}});
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(b)}});
 }

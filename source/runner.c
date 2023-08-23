@@ -88,7 +88,7 @@ void run(struct program* code, struct ptc* p) {
 				iprintf("val=%d", data);
 				// TODO:IMPL small decimals should also be of this form?
 				if ((u8)data <= 99){
-					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << 12}};
+					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << FIXPOINT}};
 				} else {
 					r->error = ERR_NUM_INVALID;
 				}
@@ -193,10 +193,10 @@ void run(struct program* code, struct ptc* p) {
 					// TODO:ERR check for strings here before reading
 					if (r->argcount == 2){
 						struct stack_entry* y = stack_pop(&p->stack);
-						b = VALUE_NUM(y) >> 12;
+						b = FP_TO_INT(VALUE_NUM(y));
 					}
 					struct stack_entry* z = stack_pop(&p->stack);
-					a = VALUE_NUM(z) >> 12;
+					a = FP_TO_INT(VALUE_NUM(z));
 					
 					union value* val = get_arr_entry(&p->vars, name, len, t | VAR_ARRAY, a, b);
 					x = t & VAR_NUMBER ? (void*)&val->number : &val->ptr;
@@ -219,9 +219,11 @@ void run(struct program* code, struct ptc* p) {
 				u32 a;
 				u32 b = ARR_DIM2_UNUSED;
 				if (r->argcount == 2){
-					b = stack_pop(&p->stack)->value.number >> 12;
+					struct stack_entry* y = stack_pop(&p->stack);
+					b = FP_TO_INT(VALUE_NUM(y));
 				}
-				a = stack_pop(&p->stack)->value.number >> 12;
+				struct stack_entry* z = stack_pop(&p->stack);
+				a = FP_TO_INT(VALUE_NUM(z));
 				
 				iprintf("name=");
 				if (data >= 'A'){

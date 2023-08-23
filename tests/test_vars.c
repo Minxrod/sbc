@@ -101,12 +101,12 @@ int test_vars(){
 		char* name1 = "A";
 		
 		struct named_var* var = get_var(&v, name1, 1, VAR_NUMBER);
-		var->value.number = 123<<12;
+		var->value.number = INT_TO_FP(123);
 		
 		var = get_var(&v, name1, 1, VAR_NUMBER);
 		
 		ASSERT(var->type == VAR_NUMBER, "[get_var] Get var with type number");
-		ASSERT(var->value.number == 123<<12, "[get_var] Check value is 123");
+		ASSERT(var->value.number == INT_TO_FP(123), "[get_var] Check value is 123");
 		
 		free_mem_var(&v);
 	}
@@ -121,18 +121,18 @@ int test_vars(){
 		
 		struct named_var* var;
 		var = get_var(&v, name1, 1, VAR_NUMBER);
-		var->value.number = 123<<12;
+		var->value.number = INT_TO_FP(123);
 		
 		var = get_var(&v, name2, 2, VAR_NUMBER);
-		var->value.number = 256<<12;
+		var->value.number = INT_TO_FP(256);
 		
 		var = get_var(&v, name1, 1, VAR_NUMBER);
 		ASSERT(var->type == VAR_NUMBER, "[get_var] Read var with type number");
-		ASSERT(var->value.number == 123<<12, "[get_var] Check value is 123");
+		ASSERT(var->value.number == INT_TO_FP(123), "[get_var] Check value is 123");
 		
 		var = get_var(&v, name2, 2, VAR_NUMBER);
 		ASSERT(var->type == VAR_NUMBER, "[get_var] Read var with type number");
-		ASSERT(var->value.number == 256<<12, "[get_var] Check value is 256");
+		ASSERT(var->value.number == INT_TO_FP(256), "[get_var] Check value is 256");
 		
 		free_mem_var(&v);
 	}

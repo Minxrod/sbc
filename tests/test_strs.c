@@ -104,7 +104,7 @@ int test_strs(){
 		u8* str = &buf[2];
 		
 		// tests
-		str_num(1235<<12, str);
+		str_num(INT_TO_FP(1235), str);
 		buf[1] = strlen((char*)str); // sign never matters here
 		iprintf("%s\n", (char*)buf);
 		ASSERT(str_comp("S\0041235", (void*)buf), "[str_num] Convert 1235 to string");
@@ -129,17 +129,17 @@ int test_strs(){
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\0050.001", (void*)buf), "[str_num] Convert 0.001 to string");
 		
-		str_num(524287<<12, str);
+		str_num(INT_TO_FP(524287), str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\006524287", (void*)buf), "[str_num] Convert largest number to string");
 		
-		str_num(-(524287<<12), str);
+		str_num(-(INT_TO_FP(524287)), str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\007-524287", (void*)buf), "[str_num] Convert smallest number to string");
 		
-		str_num(-(23456<<12), str);
+		str_num(-(INT_TO_FP(23456)), str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\006-23456", (void*)buf), "[str_num] Convert negative number to string");
@@ -164,7 +164,7 @@ int test_strs(){
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\0050.001", (void*)buf), "[str_num] Convert 3/4096 to string");
 		
-		str_num(10<<12, str);
+		str_num(INT_TO_FP(10), str);
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\00210", (void*)buf), "[str_num] Convert 10 to string");

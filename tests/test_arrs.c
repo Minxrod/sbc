@@ -62,13 +62,13 @@ int test_arrs(){
 		ASSERT(arr_entry(d, 1, 0)->number == 0, "[arr_entry] Entry 1 matches expected zero default");
 		ASSERT(arr_entry(d, 2, 0)->number == 0, "[arr_entry] Entry 2 matches expected zero default");
 		
-		arr_entry(d, 0, 0)->number = 2<<12;
-		arr_entry(d, 1, 0)->number = 5<<12;
-		arr_entry(d, 2, 0)->number = 11<<12;
+		arr_entry(d, 0, 0)->number = INT_TO_FP(2);
+		arr_entry(d, 1, 0)->number = INT_TO_FP(5);
+		arr_entry(d, 2, 0)->number = INT_TO_FP(11);
 		
-		ASSERT(arr_entry(d, 0, 0)->number == 2<<12, "[arr_entry] Entry 0 set to 2");
-		ASSERT(arr_entry(d, 1, 0)->number == 5<<12, "[arr_entry] Entry 1 set to 5");
-		ASSERT(arr_entry(d, 2, 0)->number == 11<<12, "[arr_entry] Entry 2 set to 12");
+		ASSERT(arr_entry(d, 0, 0)->number == INT_TO_FP(2), "[arr_entry] Entry 0 set to 2");
+		ASSERT(arr_entry(d, 1, 0)->number == INT_TO_FP(5), "[arr_entry] Entry 1 set to 5");
+		ASSERT(arr_entry(d, 2, 0)->number == INT_TO_FP(11), "[arr_entry] Entry 2 set to 12");
 		
 		free_mem_arr(&arrs);
 	}

@@ -94,7 +94,7 @@ int test_console(void){
 		
 		struct ptc* p = run_code_keys(code, "5\r", 2);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 5<<12, "[input] A=5");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(5), "[input] A=5");
 		free_code(p);
 	}
 	
@@ -127,9 +127,9 @@ int test_console(void){
 		
 		struct ptc* p = run_code_keys(code, "1,2,3\r", 6);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 1<<12, "[input] A=1");
-		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 2<<12, "[input] B=2");
-		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 3<<12, "[input] C=3");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(1), "[input] A=1");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(2), "[input] B=2");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(3), "[input] C=3");
 		free_code(p);
 	}
 	
@@ -140,9 +140,9 @@ int test_console(void){
 		
 		struct ptc* p = run_code_keys(code, "12,ABC ,34\r", 11);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 12<<12, "[input] A=12");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(12), "[input] A=12");
 		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\4ABC "), "[input] B$=\"ABC \"");
-		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == 34<<12, "[input] C=34");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(34), "[input] C=34");
 		free_code(p);
 	}
 	

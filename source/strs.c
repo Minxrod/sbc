@@ -131,8 +131,9 @@ void str_num(s32 num, u8* str){
 		(*str++) = '-';
 		num = -num;
 	}
-	u32 integer = num >> 12;
-	u32 decimal = ((((num & 0x00000fff) + 2) * 1000) >> 12);
+	u32 integer = num >> FIXPOINT;
+	const u32 decimal_mask = (INT_TO_FP(1) - 1); //default: 0x00000fff
+	u32 decimal = ((((num & decimal_mask) + 2) * 1000) >> FIXPOINT);
 	u32 divisor = 100000;
 	bool trailing = false;
 	// Loop until divisor is zero (to get all digits)

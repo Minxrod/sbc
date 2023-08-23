@@ -66,9 +66,9 @@ void op_mult(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x * y >> 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(int64_t)x * y >> FIXPOINT}});
 	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
-		s32 count = VALUE_NUM(b) >> 12;
+		s32 count = FP_TO_INT(VALUE_NUM(b)); //TODO:TEST Does this round down?
 		struct string* x, * y;
 		
 		x = VALUE_STR(a);
@@ -106,7 +106,7 @@ void op_div(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(((int64_t)x << 12) / y)}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(((int64_t)x << FIXPOINT) / y)}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -226,7 +226,7 @@ void op_equal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x == y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == y)}});
 	} else if (a->type & b->type & VAR_STRING){
 		struct string* x, * y;
 		
@@ -241,7 +241,7 @@ void op_equal(struct ptc* p){
 			y->uses--;
 		}
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {str_comp(x, y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_comp(x, y))}});
 	} else {
 		p->exec.error = ERR_OP_DIFFERENT_TYPES;
 	}
@@ -258,7 +258,7 @@ void op_inequal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x != y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x != y)}});
 	} else {
 		p->exec.error = ERR_UNIMPLEMENTED;
 	}
@@ -275,7 +275,7 @@ void op_less(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x < y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x < y)}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -292,7 +292,7 @@ void op_greater(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x > y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x > y)}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -309,7 +309,7 @@ void op_less_equal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x <= y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x <= y)}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -326,7 +326,7 @@ void op_greater_equal(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(x >= y) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x >= y)}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
@@ -344,7 +344,7 @@ void op_modulo(struct ptc* p){
 		y = VALUE_NUM(b);
 		
 		//TODO:ERR Check for y=0
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {((x >> 12) % (y >> 12)) << 12}});
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {(INT_TO_FP(FP_TO_INT(x) % FP_TO_INT(y)))}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}

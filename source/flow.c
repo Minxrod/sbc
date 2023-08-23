@@ -101,7 +101,7 @@ void cmd_next(struct ptc* p){
 	s32 end;
 	s32 step;
 	if (p->stack.stack_i == 1){
-		step = 1<<12;
+		step = INT_TO_FP(1);
 		end = stack_pop(&p->stack)->value.number;
 	} else {
 		step = stack_pop(&p->stack)->value.number; 
@@ -208,7 +208,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	char* label;
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
-		s32 label_index = VALUE_NUM(e) >> 12;
+		s32 label_index = FP_TO_INT(VALUE_NUM(e)); //TODO:TEST Do fractional values round down for this one?
 //		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
 		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
 			p->stack.stack_i = 0;

@@ -61,7 +61,7 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 10<<12, "[for] I=10");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(10), "[for] I=10");
 		
 		free_code(p);
 	}
@@ -72,9 +72,9 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 20<<12, "[for] I=20");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(20), "[for] I=20");
 		for (int i = 0; i < 20; ++i){
-			ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number == (i << 12), "[for] A[i]=i");
+			ASSERT(get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number == (INT_TO_FP(i)), "[for] A[i]=i");
 		}
 		
 		free_code(p);
@@ -86,8 +86,8 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 0<<12, "[if] A=0");
-		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 1<<12, "[if] B=1");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[if] A=0");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(1), "[if] B=1");
 		
 		free_code(p);
 	}
@@ -98,8 +98,8 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -(1<<12), "[if] A=1");
-		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 0<<12, "[if] B=0");
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -(INT_TO_FP(1)), "[if] A=1");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(0), "[if] B=0");
 		
 		free_code(p);
 	}
@@ -110,7 +110,7 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 5<<12, "[goto] I=5");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(5), "[goto] I=5");
 		free_code(p);
 	}
 	
@@ -120,7 +120,7 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == 3<<12, "[goto] I=3");
+		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(3), "[goto] I=3");
 		free_code(p);
 	}
 	
@@ -130,7 +130,7 @@ int test_int_code(){
 		// run program
 		struct ptc* p = run_code(code);
 		// check output for correctness
-		ASSERT(test_var(&p->vars, "J", VAR_NUMBER)->value.number == 10<<12, "[goto] J=10");
+		ASSERT(test_var(&p->vars, "J", VAR_NUMBER)->value.number == INT_TO_FP(10), "[goto] J=10");
 		free_code(p);
 	}
 	

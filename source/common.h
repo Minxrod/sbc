@@ -6,9 +6,9 @@
 
 #define FIXPOINT 12
 // Takes a fixed point number and gets the integer portion
-#define FP_TO_INT(num) (num >> FIXPOINT)
+#define FP_TO_INT(num) ((num) >> FIXPOINT)
 // Takes an integer and converts it to fixed point
-#define INT_TO_FP(num) (num << FIXPOINT)
+#define INT_TO_FP(num) ((num) << FIXPOINT)
 // Creates a fixed point number from integer and fractional components
 
 // TODO:CODE Create floating point type alias to allow easier change later
