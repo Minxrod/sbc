@@ -20,7 +20,7 @@ struct string {
 	/// Length of string (characters)
 	u8 len;
 	/// Number of references to this string
-	u32 uses;
+	uint_fast16_t uses;
 	/// Pointer to string data
 	union {
 		/// 8-bit char string pointer
@@ -32,10 +32,7 @@ struct string {
 
 struct strings {
 	/// Max strings allocated
-	u32 strs_max;
-	/// Next string data offset
-	/// TODO:IMPL Use as start point to search
-	u32 str_next;
+	uint_fast16_t strs_max;
 	/// String info array
 	struct string* strs;
 	/// Empty string (init_mem_str fills this with correct values)

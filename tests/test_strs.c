@@ -3,6 +3,7 @@
 #include "test_util.h"
 
 #include "strs.h"
+#include "data.h"
 
 #include <string.h>
 
@@ -168,6 +169,22 @@ int test_strs(){
 		iprintf("%s\n", (char*)buf);
 		buf[1] = strlen((char*)str); // sign never matters here
 		ASSERT(str_comp("S\00210", (void*)buf), "[str_num] Convert 10 to string");
+	}
+	
+	// Test read_one numbers
+	{
+		s32 num = 0;
+		struct stack_entry s = {VAR_NUMBER | VAR_VARIABLE, {.ptr = &num}};
+		u8 input[] = "46,5";
+		int count = read_one_u8(NULL, input, 4, &s);
+		
+		ASSERT(count == 2, "[read_one] Read two characters");
+		ASSERT(num == INT_TO_FP(46), "[read_one] Value read is 46");
+		
+		count = read_one_u8(NULL, &input[3], 1, &s);
+		
+		ASSERT(count == 1, "[read_one] Read one character");
+		ASSERT(num == INT_TO_FP(5), "[read_one] Value read is 5");
 	}
 	
 	SUCCESS("test_strs success");

@@ -11,6 +11,7 @@
 #include "ptc.h"
 #include "program.h"
 #include "flow.h"
+#include "data.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +37,19 @@ const ptc_call ptc_commands[] = {
 	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
 	cmd_input, cmd_linput,
 	NULL, ptc_stub, //BEEP
+	NULL, NULL, NULL, NULL, NULL, //BGMCLEAR 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //BGMVOL
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
+	NULL, NULL, NULL, NULL, NULL, NULL, //CONT
+	ptc_stub, NULL, NULL, NULL, NULL, //GBOX
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, // GLINE, 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //ICONSET, 
+	NULL, NULL, NULL, NULL, //NEW, 
+	NULL, NULL, cmd_read, NULL, NULL, NULL, //RENAME, 
+	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, //SPPAGE,
+	NULL, NULL, NULL, NULL, NULL, //SWAP, 
+	NULL //TMREAD,
 };
 
 const ptc_call ptc_operators[] = {
@@ -73,6 +87,8 @@ void print_name(const char* names, int data){
 void run(struct program* code, struct ptc* p) {
 	struct runner* r = &p->exec;
 	r->index = 0;
+	r->data_index = 0;
+	r->data_offset = 0;
 	r->code = code;
 	p->stack.stack_i = 0;
 	
@@ -294,6 +310,7 @@ void run(struct program* code, struct ptc* p) {
 				}
 				break;
 				
+			case BC_DATA:
 			case BC_LABEL:
 				// ignore these!
 				r->index += data + (data & 1); // to next instruction
@@ -326,5 +343,4 @@ void run(struct program* code, struct ptc* p) {
 			con_newline(&p->console, true);
 		}
 	}
-	
 }

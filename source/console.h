@@ -27,9 +27,9 @@ struct ptc;
  * Rendering is handled using character resources in a different location.
  */
 struct console {
-	u16 x;
-	u16 y;
-	u32 tabstep;
+	u8 x; // if you need a bigger size fix it yourself, are you using an ultrawide monitor with no zoom??
+	u8 y; // same as above
+	u8 tabstep; //valid range is 1-16
 	u16 text[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	// low 4 bits: fg color; high 4: bg color
 	u8 col;

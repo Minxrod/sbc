@@ -5,7 +5,7 @@
 // Program source loaded from ex. PTC file?
 struct program {
 	// Size of program (characters/bytes)
-	u32 size;
+	idx size;
 	// Program data
 	char* data;
 };

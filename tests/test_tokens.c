@@ -319,5 +319,16 @@ int test_tokens(void){
 		);
 	}
 	
+	// DATA tokenization
+	{
+		char bc[] = "d\0120,AA,BCdefd\5 G H \0";
+		ASSERT(
+			token_code(
+				"DATA 0,AA , BCdef   \rDATA \" G H \"\r",
+				bc, 20
+			), "[tokens] DATA tokenization"
+		);
+	}
+	
 	SUCCESS("test_tokens success");
 }

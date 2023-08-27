@@ -41,9 +41,9 @@
 
 struct input {
 	/// Current button state
-	int button;
+	uint_fast16_t button;
 	/// Previous button state
-	int old_button;
+	uint_fast16_t old_button;
 	///
 	struct button_time {
 		int start;
@@ -51,9 +51,9 @@ struct input {
 		int frame;
 	} times[12];
 	
-	int tchx, tchy, tchtime;
+	uint_fast16_t tchx, tchy, tchtime;
 	// Derived from tchx,tchy
-	int keyboard;
+	u8 keyboard;
 	
 #if defined(PC) || defined(ARM9)
 	mtx_t inkey_mtx;

@@ -134,5 +134,47 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// DATA, READ test
+	// READ one number
+	{
+		char* code = "DATA 523\rREAD D\r";
+		// run program
+		struct ptc* p = run_code(code);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(523), "[data] D=523");
+		free_code(p);
+	}
+	
+	// READ one number
+	{
+		char* code = "DATA 532,7\rREAD D,B\r";
+		// run program
+		struct ptc* p = run_code(code);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(532), "[data] D=532");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(7), "[data] B=7");
+		free_code(p);
+	}
+	
+	// READ one number
+	{
+		char* code = "DATA 532,7\rREAD D$\r";
+		// run program
+		struct ptc* p = run_code(code);
+		// check output for correctness
+		ASSERT(str_comp(test_var(&p->vars, "D", VAR_STRING)->value.ptr, "S\003532"), "[data] D$=\"532\"");
+		free_code(p);
+	}
+	
+	// READ one number
+	{
+		char* code = "READ D\rDATA 532,7\r";
+		// run program
+		struct ptc* p = run_code(code);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(532), "[data] D=532 (DATA past start)");
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_code success");
 }

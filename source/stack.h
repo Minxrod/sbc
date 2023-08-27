@@ -2,7 +2,7 @@
 
 #include "vars.h"
 
-#define VALUE_STACK_MAX 256
+#define VALUE_STACK_MAX 100
 #define CALL_STACK_MAX 256
 
 /**
@@ -11,9 +11,9 @@
  * 
  */
 struct value_stack {
-	u32 stack_i;
+	u8 stack_i; // would determine by VALUE_STACK_MAX?
 	struct stack_entry {
-		u32 type;
+		u8 type; // Increase if more needed?
 		union value value;
 	} entry[VALUE_STACK_MAX];
 };
@@ -31,11 +31,11 @@ enum call_type {
 };
 
 struct call_stack {
-	u32 stack_i;
+	u16 stack_i;
 	struct call_entry {
 		enum call_type type; // FOR or GOSUB
-		u32 address; // instruction index
-		u32 var_type;
-		void* var; // s32* or struct string**
-	} entry[256];
+		idx address; // instruction index
+		u8 var_type;
+		void* var; // fixp* or struct string**
+	} entry[CALL_STACK_MAX];
 };

@@ -9,9 +9,11 @@ struct ptc;
  * Execution info: current instruction, stack, etc.
  */
 struct runner {
-	u32 index;
-	u32 argcount;
-	u32 error;
+	idx index;
+	idx data_index;
+	idx data_offset; // Should never exceed ~95 anyways
+	u8 argcount; // Never possible to exceed ~50 in PTC2
+	u16 error; // I don't even think this will reach 100 right now
 	struct program* code;
 };
 

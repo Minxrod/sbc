@@ -22,11 +22,6 @@ enum tokenizer_state {
 
 #define LABEL_UNKNOWN ((u32)-1)
 
-struct pair {
-	char name[16];
-	u32 value;
-};
-
 struct token {
 	enum type {
 		number,
@@ -44,7 +39,7 @@ struct token {
 		sysvar,
 		label_string,
 	} type;
-	u32 ofs;
+	idx ofs;
 	u8 len;
 	u16 prio;
 };
@@ -60,9 +55,9 @@ struct tokenizer {
 	u32 cursor;
 	
 	// Tokens for a line
-	struct token tokens[100]; //max possible per line
+	struct token tokens[TOKENS_LINE_MAX]; //max possible per line
 	// Current token index
-	u32 token_i;
+	u8 token_i;
 	
 	bool is_comment;
 	// Values obtained while parsing
@@ -90,7 +85,7 @@ void tok_code(struct tokenizer* state);
 
 // Scans for location of some instruction starting from index
 // Returns the index of found string
-u32 bc_scan(struct program* code, u32 index, u8 find);
+idx bc_scan(struct program* code, idx index, u8 find);
 
 #include <limits.h>
 #define BC_SCAN_NOT_FOUND UINT_MAX

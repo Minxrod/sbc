@@ -27,13 +27,12 @@ enum types {
 	/// Denotes that the value contained is an array type.
 	/// Can be combined with VAR_NUMBER or VAR_STRING.
 	VAR_ARRAY=8,
-	/// This one is stupid, and should be refactored away eventually.
-	STACK_OP=32,
+	/// This one is silly. It marks an operator such as , or ;.
+	STACK_OP=16,
 };
 
 #define VALUE_NUM(v) (v->type & VAR_VARIABLE ? *(s32*)v->value.ptr : v->value.number)
 #define VALUE_STR(v) (v->type & VAR_VARIABLE ? *(struct string**)v->value.ptr : (struct string*)v->value.ptr)
-
 
 // This file defines the data structures used to store variable information.
 
@@ -46,12 +45,12 @@ enum types {
 // Contains either a pointer to string/array data or a number
 // Or pointer to variable (this takes the form of a pointer to number or pointer to string/array)
 union value {
-	s32 number;
+	fixp number;
 	void* ptr;
 };
 
 struct named_var {
-	u32 type;
+	u8 type;
 	char name[16];
 	union value value;
 };
@@ -61,7 +60,7 @@ struct arrays;
 
 struct variables {
 	/// Max variables in use
-	u32 vars_max;
+	uint_fast16_t vars_max;
 	/// Strings table
 	struct strings* strs;
 	/// Arrays table

@@ -68,7 +68,7 @@ u32 bc_scan(struct program* code, u32 index, u8 find){
 		//debug! 
 		u8 len = code->data[++index];
 		iprintf("%d: %c,%d %.*s\n", (int)index, cur >= 32 ? cur : '?', len, len, &code->data[index+1]);
-		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING){
+		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING || cur == BC_DATA){
 			index++;
 			index += len + (len & 1);
 		} else if (cur == BC_WIDE_STRING){
@@ -221,10 +221,61 @@ void tok_code(struct tokenizer* state){
 	for (size_t i = 0; i < state->token_i; ++i){
 		switch (state->tokens[i].type){
 			case command:
-				// convert token to command
-//				iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
-				data[(*size)++] = BC_COMMAND;
-				data[(*size)++] = state->tokens[i].ofs;
+				if (state->tokens[i].ofs == CMD_DATA){
+					// Special rules for DATA: write token contents as string
+					// TODO:ERR Don't allow whitespace within unquoted DATA strings.
+					iprintf("DATA tok_code %d\n", state->token_i);
+					data[(*size)++] = BC_DATA;
+					char* data_size = &data[(*size)++]; // write as copying characters
+					*data_size = 0;
+					i++;
+					while (i < state->token_i){
+						struct token t = state->tokens[i];
+						switch (t.type){
+							case command:
+							case function:
+							case operation:
+							case sysvar:
+								// need to "de-convert" these
+								{
+								const char* names = t.type == command ? commands : t.type == function ? functions : t.type == sysvar ? sysvars : bc_conv_operations;
+								for (size_t j = 0; j < 8; ++j){
+									char c = names[8*t.ofs+j];
+									if (c != ' '){
+										data[(*size)++] = c;
+										(*data_size)++;
+									} else {
+										break;
+									}
+								}
+								}
+								break;
+							
+							case newline:
+								// Don't write these into the string
+								// Break the outer while to prevent moving past newline
+								// (this is handled by the outer FOR loop)
+								break;
+							
+							default:
+								*data_size += t.len;
+								for (size_t j = 0; j < t.len; ++j){
+									data[(*size)++] = state->source->data[t.ofs + j];
+								}
+						}
+						++i;
+					}
+					if (*size % 2){
+						data[(*size)++] = 0; // pad one null to keep instructions aligned
+					}
+					
+					// End of DATA special rules
+				} else {
+					// convert token to command
+	//				iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
+					data[(*size)++] = BC_COMMAND;
+					data[(*size)++] = state->tokens[i].ofs;
+				}
 				break;
 			
 			case number:
@@ -358,6 +409,16 @@ void tok_eval(struct tokenizer* state){
 	bool is_dim = false;
 	bool is_if = false;
 	bool implicit_commas = true;
+	
+	iprintf("[tok_eval] Entry with %d unit(s)\n", state->token_i);
+	if (state->token_i && state->tokens[0].type == command && state->tokens[0].ofs == CMD_DATA){
+		iprintf("DATA special case\n");
+		for (size_t j = 0; j < state->token_i; ++j){
+			print_token(state, state->tokens[j]);
+		}
+		state->state = TKR_NONE; // Important: Tells tokenizer to read a new line
+		return;
+	}
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		u16 prio = state->tokens[i].prio;
@@ -500,6 +561,7 @@ void tok_eval(struct tokenizer* state){
 		e.result[e.result_i++] = (struct token){.type=command, .ofs=CMD_ENDIF, .len=1, .prio=0};
 	}
 	
+//	if (state->tokens[0].ofs == CMD_DATA) iprintf("DATA special case WHAT?=%d\n", state->token_i);
 	iprintf("Result size: %d\n",(int)e.result_i);
 	for (size_t i = 0; i < e.result_i; ++i){
 		if (e.result[i].len == 0)

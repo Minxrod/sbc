@@ -29,6 +29,8 @@ enum err_code {
 	ERR_LABEL_NOT_FOUND,
 	ERR_NO_ARGUMENTS,
 	ERR_MISSING_SEMICOLON,
+	ERR_READ_FAILURE,
+	ERR_OUT_OF_DATA,
 };
 
 extern const char * error_messages[];

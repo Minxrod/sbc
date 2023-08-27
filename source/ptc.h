@@ -7,6 +7,7 @@ enum bytecode_ops {
 	BC_BEGIN_LOOP = 'B',
 	BC_COMMAND = 'C',
 	BC_DIM = 'D',
+	BC_DATA = 'd',
 	BC_FUNCTION = 'F',
 	BC_GOTO = 'G',
 	BC_INDEX = 'I',

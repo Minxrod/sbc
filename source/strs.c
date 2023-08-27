@@ -92,6 +92,7 @@ struct string* get_new_str(struct strings* s){
 	return &strs[i];
 }
 
+//NOTE: Doesn't handle negatives
 s32 str_to_num(u8* data, u32 len){
 	s32 number = 0;
 	s32 fraction = 0;
