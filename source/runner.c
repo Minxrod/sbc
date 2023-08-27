@@ -40,7 +40,7 @@ const ptc_call ptc_commands[] = {
 	NULL, NULL, NULL, NULL, NULL, //BGMCLEAR 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //BGMVOL
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
-	NULL, NULL, NULL, NULL, NULL, NULL, //CONT
+	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
 	ptc_stub, NULL, NULL, NULL, NULL, //GBOX
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, // GLINE, 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //ICONSET, 
@@ -126,7 +126,11 @@ void run(struct program* code, struct ptc* p) {
 					r->error = ERR_PTC_COMMAND_INVALID;
 					break;
 				}
-				ptc_commands[(u32)data](p);
+				if (ptc_commands[(u32)data]){
+					ptc_commands[(u32)data](p);
+				} else {
+					r->error = ERR_UNIMPLEMENTED;
+				}
 				break;
 				
 			case BC_OPERATOR:
@@ -136,7 +140,11 @@ void run(struct program* code, struct ptc* p) {
 					r->error = ERR_PTC_OPERATOR_INVALID;
 					break;
 				}
-				ptc_operators[(u32)data](p);
+				if (ptc_operators[(u32)data]){
+					ptc_operators[(u32)data](p);
+				} else {
+					r->error = ERR_UNIMPLEMENTED;
+				}
 				break;
 				
 			case BC_FUNCTION:
@@ -146,7 +154,11 @@ void run(struct program* code, struct ptc* p) {
 					r->error = ERR_PTC_FUNCTION_INVALID;
 					break;
 				}
-				ptc_functions[(u32)data](p);
+				if (ptc_functions[(u32)data]){
+					ptc_functions[(u32)data](p);
+				} else {
+					r->error = ERR_UNIMPLEMENTED;
+				}
 				break;
 				
 			case BC_SYSVAR:
@@ -155,7 +167,11 @@ void run(struct program* code, struct ptc* p) {
 					r->error = ERR_PTC_FUNCTION_INVALID;
 					break;
 				}
-				ptc_sysvars[(u32)data](p);
+				if (ptc_sysvars[(u32)data]){
+					ptc_sysvars[(u32)data](p);
+				} else {
+					r->error = ERR_UNIMPLEMENTED;
+				}
 				break;
 				
 			case BC_NUMBER:

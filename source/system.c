@@ -61,6 +61,12 @@ void cmd_wait(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+void cmd_clear(struct ptc* p){
+	reset_var(&p->vars);
+	reset_str(&p->strs);
+	reset_arr(&p->arrs);
+}
+
 #ifdef ARM9
 void system_draw(struct ptc* p){
 	u16* map = p->res.bg_upper;

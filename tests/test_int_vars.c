@@ -299,5 +299,14 @@ int test_int_vars(){
 		free_code(p);
 	}
 	
+	{
+		char* code = "A=5\rDIM B[7]\rB[3]=6\rC$=\"ABCDEF\"\rCLEAR\r";
+		struct ptc* p = run_code(code);
+		
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[clear] Clears variable A correctly");
+		ASSERT(get_arr_entry(&p->vars, "B", 1, VAR_NUMBER | VAR_ARRAY, 3, ARR_DIM2_UNUSED)->number == INT_TO_FP(0), "[clear] Clears variable B[] correctly");
+		ASSERT(test_var(&p->vars, "C", VAR_STRING)->value.ptr == NULL, "[clear] Clears string C$ correctly");
+	}
+	
 	SUCCESS("test_int_vars success");
 }

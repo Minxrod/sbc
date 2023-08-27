@@ -2,12 +2,19 @@
 #include "vars.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 void init_mem_arr(struct arrays* a, int array_count, int element_count){
 	a->arr_data_size = element_count + 2 * array_count;
 	a->arr_data_next = 0;
 	iprintf("calloc=%d\n", (int)a->arr_data_size * (int)sizeof(union value));
 	a->arr_data = calloc(a->arr_data_size, sizeof(union value));
+}
+
+void reset_arr(struct arrays* a){
+	a->arr_data_next = 0; // starts allocating from beginning
+	// Fill memory with zeroes so initial reads have the correct value
+	memset(a->arr_data, 0, sizeof(union value) * a->arr_data_size);
 }
 
 void free_mem_arr(struct arrays* a){

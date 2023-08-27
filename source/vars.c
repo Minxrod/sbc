@@ -30,11 +30,17 @@ bool namecmp(char* a, u32 len, char b[16]){
 }
 
 /// Allocate memory for vars.
-void init_mem_var(struct variables* v, int var_count){
+void init_mem_var(struct variables* v, uint_fast16_t var_count){
 	v->vars_max = var_count;
 	iprintf("calloc=%d\n", (int)var_count * (int)sizeof(struct named_var));
 	v->vars = calloc(var_count, sizeof(struct named_var));
-	for (u32 i = 0; i < v->vars_max; ++i){
+	for (uint_fast16_t i = 0; i < v->vars_max; ++i){
+		v->vars[i].type = VAR_EMPTY;
+	}
+}
+
+void reset_var(struct variables* v){
+	for (uint_fast16_t i = 0; i < v->vars_max; ++i){
 		v->vars[i].type = VAR_EMPTY;
 	}
 }
@@ -114,9 +120,11 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 		}
 		
 		//Set default values
-		if (type & VAR_NUMBER){
+		// Note: Checks must use exact VAR_NUMBER and VAR_STRING
+		// to prevent arrays being initialized wrong
+		if (type == VAR_NUMBER){
 			var->value.number = 0;
-		} else if (type & VAR_STRING) {
+		} else if (type == VAR_STRING) {
 			var->value.ptr = NULL;
 		} else if (type & VAR_ARRAY) {
 			// Can't directly initialize here

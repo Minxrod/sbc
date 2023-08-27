@@ -73,7 +73,8 @@ int var_name_hash(char*, u32, u32);
 bool namecmp(char* a, u32 len, char b[16]);
 
 // allocate var table for `var_count` variables
-void init_mem_var(struct variables* v, int var_count);
+void init_mem_var(struct variables* v, uint_fast16_t var_count);
+void reset_var(struct variables* v);
 void free_mem_var(struct variables* v);
 
 // Expects null-terminated name
