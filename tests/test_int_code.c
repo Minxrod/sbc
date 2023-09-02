@@ -176,5 +176,19 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	{
+		//TODO:TEST Create READ string containing comma
+	}
+	
+	// INKEY$ test
+	{
+		char* code = "A$=INKEY$()\r";
+		struct ptc* p = run_code_keys(code, "B", 1);
+		// Check inkey string generation method works
+		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1B"), "[input] A$=\"B\"");
+		free_code(p);
+
+	}
+	
 	SUCCESS("test_int_code success");
 }

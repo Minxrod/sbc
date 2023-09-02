@@ -67,7 +67,7 @@ u32 bc_scan(struct program* code, u32 index, u8 find){
 		}
 		//debug! 
 		u8 len = code->data[++index];
-		iprintf("%d: %c,%d %.*s\n", (int)index, cur >= 32 ? cur : '?', len, len, &code->data[index+1]);
+//		iprintf("%d: %c,%d %.*s\n", (int)index-1, cur >= 32 ? cur : '?', len, len, &code->data[index+1]);
 		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING || cur == BC_DATA){
 			index++;
 			index += len + (len & 1);
@@ -742,7 +742,7 @@ void tok_name(struct tokenizer* state){
 	} else if (0 <= (index = tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = function;
 		state->tokens[state->token_i].ofs = index;
-	} else if (0 <= (index = tok_in_str_index(operations, state->source->data, &state->tokens[state->token_i]))){
+	} else if (0 <= (index = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i]))){
 		// note that this is only the bitwise ops
 		state->tokens[state->token_i].type = operation;
 		state->tokens[state->token_i].ofs = index;

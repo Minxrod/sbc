@@ -3,6 +3,7 @@
 #include "common.h"
 #include "system.h"
 #include "error.h"
+#include "strs.h"
 
 void init_input(struct input* i){
 	i->button = 0;
@@ -122,4 +123,15 @@ void func_btrig(struct ptc* p){
 	}
 //	iprintf("button: %d\n", (int)b);
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(b)}});
+}
+
+void func_inkey(struct ptc* p){
+	struct input* i = &p->input;
+	if (p->exec.argcount){
+		p->exec.error = ERR_WRONG_ARG_COUNT;
+		return;
+	}
+	u16 inkey = get_inkey(i);
+	//TODO: Doesn't handle wide characters
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = &single_char_strs[3 * to_char(inkey)]}});
 }

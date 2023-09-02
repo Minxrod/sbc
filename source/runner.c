@@ -12,6 +12,7 @@
 #include "program.h"
 #include "flow.h"
 #include "data.h"
+#include "input.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,10 +57,15 @@ const ptc_call ptc_operators[] = {
 	op_add, op_comma, op_sub, op_mult, op_div, op_semi, op_assign, op_negate,
 	op_equal, op_inequal, op_less, op_greater, op_less_equal, op_greater_equal,
 	op_modulo,
+	op_and, op_or, op_xor, op_not,
 };
 
 const ptc_call ptc_functions[] = {
-	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig
+	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	func_inkey, /*FUN_INSTR, FUN_LEFT$, FUN_LEN, FUN_LOG, FUN_MID$, FUN_PI, FUN_POW, FUN_RAD,
+	FUN_RIGHT$, FUN_RND, FUN_SGN, FUN_SIN, FUN_SPCHK, FUN_SPGETV, FUN_SPHIT, FUN_SPHITRC,
+	FUN_SPHITSP, FUN_SQR, FUN_STR$, FUN_SUBST$, FUN_TAN, FUN_VAL,*/
 };
 
 const ptc_call ptc_sysvars[] = {
@@ -349,7 +355,8 @@ void run(struct program* code, struct ptc* p) {
 		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);
 	}
 	*/
-	if (r->error){
+	//TODO:IMPL Move this to outside the main run call to prevent "OK" in FOR executions?
+	/*if (r->error){
 		iprintf("Error: %s\n", error_messages[r->error]);
 		con_puts(&p->console, "S\5Error");
 		con_newline(&p->console, true);
@@ -358,5 +365,5 @@ void run(struct program* code, struct ptc* p) {
 			con_puts(&p->console, "S\2OK");
 			con_newline(&p->console, true);
 		}
-	}
+	}*/
 }

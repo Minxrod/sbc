@@ -4,6 +4,8 @@
 
 #define MAX_STRLEN 256
 
+extern char* single_char_strs;
+
 // string meta
 // type can be 'S' or 'W'
 enum string_type {

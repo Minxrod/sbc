@@ -201,6 +201,7 @@ int main(int argc, char** argv){
 		sfRenderWindow_display(window);
 	}
 	
+	//TODO: Signal thread to die on exit
 	sfRenderWindow_destroy(window);
 	
 	free_system(ptc);

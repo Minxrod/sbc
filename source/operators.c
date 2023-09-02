@@ -350,3 +350,69 @@ void op_modulo(struct ptc* p){
 	}
 }
 
+void op_and(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) & FP_TO_INT(y))}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_or(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) | FP_TO_INT(y))}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_xor(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* b = stack_pop(s);
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & b->type & VAR_NUMBER){
+		s32 x, y;
+		
+		x = VALUE_NUM(a);
+		y = VALUE_NUM(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) ^ FP_TO_INT(y))}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+
+void op_not(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & VAR_NUMBER){
+		s32 x;
+		
+		x = VALUE_NUM(a);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(~FP_TO_INT(x))}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+

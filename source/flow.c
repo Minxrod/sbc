@@ -59,7 +59,7 @@ void cmd_next(struct ptc* p){
 	struct stack_entry* e = NULL;
 	if (p->stack.stack_i){
 		// variable ptr
-		e = stack_pop(&p->stack)->value.ptr;
+		e = stack_pop(&p->stack);
 	}
 	
 	// get call stack top / number of elements

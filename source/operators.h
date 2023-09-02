@@ -21,3 +21,9 @@ void op_less(struct ptc* p);
 void op_greater(struct ptc* p);
 void op_less_equal(struct ptc* p);
 void op_greater_equal(struct ptc* p);
+
+void op_and(struct ptc* p);
+void op_or(struct ptc* p);
+void op_xor(struct ptc* p);
+void op_not(struct ptc* p);
+
