@@ -90,6 +90,7 @@ void v__(void); //prevent empty translation unit
 #include "program.h"
 #include "resources.h"
 #include "system.h"
+#include "error.h"
 
 #include "pc/tilemap.h"
 
@@ -108,10 +109,20 @@ int system_launch(void* launch_info){
 	// only needs BC, not source
 	run(&bc, info->p);
 	
+	if (info->p->exec.error){
+		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
+		con_puts(&info->p->console, "S\5Error");
+		con_newline(&info->p->console, true);
+	} else {
+		con_puts(&info->p->console, "S\2OK");
+		con_newline(&info->p->console, true);
+	}
+	
 	return info->p->exec.error;
 }
 
 int main(int argc, char** argv){
+//	srand(time(NULL));
 	struct program program;
 	char* window_name = "SBC";
 	if (argc == 2){

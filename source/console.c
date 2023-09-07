@@ -306,7 +306,7 @@ void cmd_input(struct ptc* p){
 				}
 			} else {
 				// invalid argument type
-				p->exec.error = ERR_TYPE_MISMATCH; //TODO:CODE better error message?
+				p->exec.error = ERR_UNKNOWN_TYPE;
 				p->stack.stack_i = 0;
 				return;
 			}

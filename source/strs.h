@@ -74,16 +74,16 @@ void str_num(s32 num, u8* str);
 s32 str_to_num(u8* data, u32 len);
 
 // Copy to u8 str
-void str_char_copy(void* src, u8* dest);
+void str_char_copy(const void* src, u8* dest);
 
 // Copy to u16 str
-void str_wide_copy(void* src, u16* dest);
+void str_wide_copy(const void* src, u16* dest);
 
 // Get string length
-u32 str_len(void* src);
+u32 str_len(const void* src);
 
 // Compare two strings for equality
-bool str_comp(void* str1, void* str2);
+bool str_comp(const void* str1, const void* str2);
 
 // Copy str1 to str2
 void str_copy(void* str1, void* str2);

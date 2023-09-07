@@ -31,6 +31,7 @@ enum err_code {
 	ERR_MISSING_SEMICOLON,
 	ERR_READ_FAILURE,
 	ERR_OUT_OF_DATA,
+	ERR_FUNC_INVALID_TYPE,
 };
 
 extern const char * error_messages[];

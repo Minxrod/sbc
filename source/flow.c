@@ -123,6 +123,26 @@ void cmd_next(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+idx search_label(struct ptc* p, const char* label){
+	idx index = 0;
+	while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
+		// found index: check correctness
+		// TODO:PERF fast search/cache label locations?
+		iprintf("%c,%s", p->exec.code->data[index], label);
+		if (str_comp(&p->exec.code->data[index], label)){
+			// this is the index, jump to here
+			break;
+		}
+		u8 len = p->exec.code->data[index+1]; //TODO:CODE Advance by length as a function
+		index += 2 + len + (len & 1);
+	}
+	if (index == BC_SCAN_NOT_FOUND){
+		p->exec.error = ERR_LABEL_NOT_FOUND;
+		return p->exec.code->size;
+	}
+	return index;
+}
+
 // IF uses the value on the stack to determine where to jump to next, either the
 // THEN/GOTO block or the ELSE block.
 void cmd_if(struct ptc* p){
@@ -152,21 +172,7 @@ void cmd_if(struct ptc* p){
 	char* label = &p->exec.code->data[index];
 	if (label[0] == BC_LABEL_STRING){
 		// GOTO label
-		index = 0;
-		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
-			// found index: check correctness
-			// TODO:PERF fast search/cache label locations?
-//			iprintf("%d\n", index);
-			if (str_comp(&p->exec.code->data[index], label)){
-				// this is the index, jump to here
-				break;
-			}
-			index += 2;
-		}
-		if (index == BC_SCAN_NOT_FOUND){
-			p->exec.error = ERR_LABEL_NOT_FOUND;
-			return;
-		}
+		index = search_label(p, label);
 	}
 	p->exec.index = index;
 	// IF should clear stack [only contains condition]
@@ -224,22 +230,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	}
 	if (label[0] == BC_LABEL_STRING){
 		// Search code for label
-		u32 index = 0;
-		while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
-			// found index: check correctness
-//			iprintf("%c,%s", p->exec.code->data[index], label);
-			// TODO:PERF fast search/cache label locations?
-			if (str_comp(&p->exec.code->data[index], label)){
-				// this is the index, jump to here
-				break;
-			}
-			u8 len = p->exec.code->data[index+1]; //TODO:CODE Advance by length as a function
-			index += len + (len & 1);
-		}
-		// TODO:IMPL check when label does not exist
-		if (index == BC_SCAN_NOT_FOUND){
-			ERROR(ERR_LABEL_NOT_FOUND);
-		}
+		u32 index = search_label(p, label);
 		
 		if (push_return){
 			p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;

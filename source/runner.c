@@ -13,6 +13,7 @@
 #include "flow.h"
 #include "data.h"
 #include "input.h"
+#include "math.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +40,7 @@ const ptc_call ptc_commands[] = {
 	cmd_input, cmd_linput,
 	NULL, ptc_stub, //BEEP
 	NULL, NULL, NULL, NULL, NULL, //BGMCLEAR 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //BGMVOL
+	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
 	ptc_stub, NULL, NULL, NULL, NULL, //GBOX
@@ -63,9 +64,9 @@ const ptc_call ptc_operators[] = {
 const ptc_call ptc_functions[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	func_inkey, /*FUN_INSTR, FUN_LEFT$, FUN_LEN, FUN_LOG, FUN_MID$, FUN_PI, FUN_POW, FUN_RAD,
-	FUN_RIGHT$, FUN_RND, FUN_SGN, FUN_SIN, FUN_SPCHK, FUN_SPGETV, FUN_SPHIT, FUN_SPHITRC,
-	FUN_SPHITSP, FUN_SQR, FUN_STR$, FUN_SUBST$, FUN_TAN, FUN_VAL,*/
+	func_inkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, //FUN_RAD
+	NULL, func_rnd, /* FUN_SGN, FUN_SIN, FUN_SPCHK, FUN_SPGETV, FUN_SPHIT, FUN_SPHITRC, //FUN_SPHITRC
+	FUN_SPHITSP, FUN_SQR, FUN_STR$, FUN_SUBST$, FUN_TAN, FUN_VAL, */ //FUN_VAL
 };
 
 const ptc_call ptc_sysvars[] = {
@@ -355,15 +356,4 @@ void run(struct program* code, struct ptc* p) {
 		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);
 	}
 	*/
-	//TODO:IMPL Move this to outside the main run call to prevent "OK" in FOR executions?
-	/*if (r->error){
-		iprintf("Error: %s\n", error_messages[r->error]);
-		con_puts(&p->console, "S\5Error");
-		con_newline(&p->console, true);
-	} else {
-		if (!p->console.test_mode){
-			con_puts(&p->console, "S\2OK");
-			con_newline(&p->console, true);
-		}
-	}*/
 }

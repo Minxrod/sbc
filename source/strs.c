@@ -269,7 +269,7 @@ u8 to_char(u16 w){
 
 /// Copies a string from src (any valid string data, determined by first byte) to dest
 /// @note strings are NOT null-terminated. Length should be stored if needed.
-void str_wide_copy(void* src, u16* dest){
+void str_wide_copy(const void* src, u16* dest){
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
@@ -296,7 +296,7 @@ void str_wide_copy(void* src, u16* dest){
 
 /// Copies a string from src (any valid string data, determined by first byte) to dest
 /// @note strings are NOT null-terminated. Length should be stored if needed.
-void str_char_copy(void* src, u8* dest){
+void str_char_copy(const void* src, u8* dest){
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
@@ -321,7 +321,7 @@ void str_char_copy(void* src, u8* dest){
 	}
 }
 
-u32 str_len(void* src){
+u32 str_len(const void* src){
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
@@ -340,7 +340,7 @@ u32 str_len(void* src){
 	}
 }
 
-bool str_comp(void* str1, void* str2){
+bool str_comp(const void* str1, const void* str2){
 	u16 cmp1[256];
 	u16 cmp2[256];
 	

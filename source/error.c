@@ -31,4 +31,5 @@ const char * error_messages[] = {
 	"Missing semicolon",
 	"READ command failed",
 	"Out of DATA",
+	"Type mismatch (function)",
 };

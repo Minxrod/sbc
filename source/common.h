@@ -12,8 +12,6 @@
 #define INT_TO_FP(num) ((num) << FIXPOINT)
 // Creates a fixed point number from integer and fractional components
 
-// TODO:CODE Create floating point type alias to allow easier change later
-
 // for bad failures 
 // and those that aren't properly handled yet...
 #define ABORT(msg) { iprintf(msg"\n"); abort(); }
@@ -33,8 +31,6 @@
 
 // Use this to build the "Main program" version of the software
 // Instead of the test cases
-// TODO:CODE Fix the libnds Makefile to render this unnecessary...
-// (want separate tests / main builds)
 #endif
 
 #ifndef ARM9
@@ -50,7 +46,7 @@ typedef int32_t s32;
 // Type to handle instruction indexes
 // Should correspond to realistic sizes for each platform
 typedef unsigned int idx;
-typedef signed int fixp; //TODO:IMPL adjust range for EZ80
+typedef signed int fixp;
 
 #ifdef EZ80
 #include <debug.h>
