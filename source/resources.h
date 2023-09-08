@@ -69,28 +69,7 @@ struct resources {
 	struct sfShader* shader;
 #endif
 	
-};
-
-/// Struct containing graphics to be rendered
-/// On an NDS system, these will all be pointers to VRAM
-/// On PC, these are just pointers to regular memory that will be read by
-/// SFML compatibility/conversion code ported from PTC-EmkII
-struct graphics {
-	u16* bg_upper;
-	u8* chr_bg_upper;
-	
-	u16* bg_lower;
-	u8* chr_bg_lower;
-	
-	u8* chr_sp_upper;
-	u8* grp_sp_upper;
-	
-	u8* chr_sp_lower;
-	u8* grp_sp_lower;
-	// TODO:CODE Do colors need to be here...?
-	
-	/// State of rendered visible objects
-	int visible;
+	u8 visible;
 };
 
 void init_resource(struct resources* r);

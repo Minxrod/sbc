@@ -23,8 +23,7 @@ struct ptc* init_system(int var, int str, int arr){
 	// init various ptc items
 	// TODO:CODE use subsytem initialization functions?
 	ptc->console.tabstep = 4;
-	ptc->console.test_mode = false;
-	ptc->g.visible = VISIBLE_ALL;
+	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
 	
 	init_resource(&ptc->res);

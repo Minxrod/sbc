@@ -192,19 +192,19 @@ void tok_convert(struct tokenizer* state){
 	tok_code(state);
 }
 
+// none of these values will exceed 100[?]
 struct eval {
 	//value and op could be combined maybe
 	struct token* value_stack[100];
-	size_t value_i;
+	u8 value_i;
 	struct token* op_stack[100];
-	size_t op_i;
+	u8 op_i;
 	/// Arguments stack
-	size_t argc_stack[64];
-	size_t argc_i;
+	u8 argc_stack[64];
+	u8 argc_i;
 	// reordered tokens for conversion
 	struct token result[100];
-	size_t result_values; // base of current expression
-	size_t result_i; // first unused entry
+	u8 result_i; // first unused entry
 };
 
 s32 tok_to_num(struct tokenizer* state, struct token* t){
@@ -434,8 +434,14 @@ void tok_eval(struct tokenizer* state){
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			} else if (op == OP_OPEN_BRACKET || op == OP_OPEN_PAREN){
 				e.argc_i++;
-				// down a level; default # args is 1 (no commas, not ()
+				// down a level; default # args is 1 (no commas, not "()")
 				e.argc_stack[e.argc_i] = 1;
+				if (i){
+					u8 prev_type = state->tokens[i-1].type;
+					if (i && prev_type != name && prev_type != function && prev_type != dim_arr){
+						e.argc_stack[e.argc_i] |= 0x80; // special indicator for "doesn't NEED argcount"
+					}
+				}
 			} else { // assumed ) or ]
 				// handle 0-args PI(), BUTTON() case
 				if (state->tokens[i-1].type == operation && state->tokens[i-1].ofs == OP_OPEN_PAREN){
@@ -444,10 +450,12 @@ void tok_eval(struct tokenizer* state){
 				// TODO:PERF Don't create argcount for DIM command
 				// (unnecessary, implied by stack size?)
 				// also might just keep this way for simplicity
-				state->tokens[i].type = arg_count;
-				state->tokens[i].len = e.argc_stack[e.argc_i--];
-				tok_eval_clean_stack(&e, prio);
-				e.op_stack[e.op_i++] = &state->tokens[i];
+				if (!(e.argc_stack[e.argc_i] & 0x80)){
+					state->tokens[i].type = arg_count;
+					state->tokens[i].len = e.argc_stack[e.argc_i--];
+					tok_eval_clean_stack(&e, prio);
+					e.op_stack[e.op_i++] = &state->tokens[i];
+				}
 			}
 		} else if (state->tokens[i].type == operation && prio == 1) {
 			// comma or semicolon at lowest nest level

@@ -14,6 +14,7 @@
 #include "data.h"
 #include "input.h"
 #include "math.h"
+#include "graphics.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,8 +45,8 @@ const ptc_call ptc_commands[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
 	ptc_stub, NULL, NULL, NULL, NULL, //GBOX
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, // GLINE, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //ICONSET, 
+	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, NULL, NULL, // GLINE, 
+	cmd_gpage, NULL, NULL, NULL, NULL, NULL, NULL, //ICONSET, 
 	NULL, NULL, NULL, NULL, //NEW, 
 	NULL, NULL, cmd_read, NULL, NULL, NULL, //RENAME, 
 	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 

@@ -308,5 +308,18 @@ int test_int_vars(){
 		ASSERT(test_var(&p->vars, "C", VAR_STRING)->value.ptr == NULL, "[clear] Clears string C$ correctly");
 	}
 	
+	// Chunk of SAMPLE5 that broke
+	{
+		char* code = "SPC = 8\rDAYW = 8:DRAWD = 30\r"
+		"BGL = (256 - (DRAWD - 1) * DAYW - SPC * 2) / 2\r";
+		
+		struct ptc* p = run_code(code);
+		
+		ASSERT(test_var(&p->vars, "SPC", VAR_NUMBER)->value.number == INT_TO_FP(8), "[vars] SPC=8");
+		ASSERT(test_var(&p->vars, "DAYW", VAR_NUMBER)->value.number == INT_TO_FP(8), "[vars] DAYW=8");
+		ASSERT(test_var(&p->vars, "DRAWD", VAR_NUMBER)->value.number == INT_TO_FP(30), "[vars] DRAWD=30");
+		ASSERT(test_var(&p->vars, "BGL", VAR_NUMBER)->value.number == INT_TO_FP(4), "[vars] BGL=4");
+	}
+	
 	SUCCESS("test_int_vars success");
 }
