@@ -17,7 +17,9 @@ CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
 CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir))
-CFLAGS += -DPC -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
+# https://stackoverflow.com/a/10168396
+# The -MMD is important. It generates the actual dependencies...
+CFLAGS += -DPC -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB) -MMD
 
 # Some magic makefile nonsense
 # get source files list 
@@ -52,4 +54,4 @@ test: $(test_objs)
 # https://stackoverflow.com/questions/313778/generate-dependencies-for-a-makefile-for-a-project-in-c-c	
 # https://stackoverflow.com/a/10168396
 # this seems to be the simplest solution
--include $(objects:%.o=%.d)
+-include $(build:%.o=%.d)

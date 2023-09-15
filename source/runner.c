@@ -13,8 +13,10 @@
 #include "flow.h"
 #include "data.h"
 #include "input.h"
-#include "math.h"
 #include "graphics.h"
+
+#include "math.h"
+#include "strfuncs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,7 +67,7 @@ const ptc_call ptc_operators[] = {
 const ptc_call ptc_functions[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	func_inkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, //FUN_RAD
+	func_inkey, NULL, NULL, func_len, NULL, NULL, NULL, NULL, NULL, //FUN_RAD
 	NULL, func_rnd, /* FUN_SGN, FUN_SIN, FUN_SPCHK, FUN_SPGETV, FUN_SPHIT, FUN_SPHITRC, //FUN_SPHITRC
 	FUN_SPHITSP, FUN_SQR, FUN_STR$, FUN_SUBST$, FUN_TAN, FUN_VAL, */ //FUN_VAL
 };

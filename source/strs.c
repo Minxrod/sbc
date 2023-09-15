@@ -304,7 +304,6 @@ void str_char_copy(const void* src, u8* dest){
 			return;
 		case STRING_CHAR:
 			for (size_t i = 0; i < s->len; ++i){
-				// convert up to wide char
 				dest[i] = (s->ptr.s)[i];
 			}
 			return;

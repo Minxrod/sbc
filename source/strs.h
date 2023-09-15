@@ -20,7 +20,7 @@ struct string {
 	/// Type of string
 	char type;
 	/// Length of string (characters)
-	u8 len;
+	u16 len;
 	/// Number of references to this string
 	uint_fast16_t uses;
 	/// Pointer to string data
