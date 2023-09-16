@@ -267,26 +267,45 @@ u8 to_char(u16 w){
 	}
 }
 
+/// Copy n characters from source buffer to destination buffer.
+/// Copy behavior is determined by the type information in types.
+/// 
+/// @note src and dest should be either u8* or u16*
+void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count){
+	///TODO:PERF profile this and see if swapping loop/condition order is better?
+	for (size_t i = 0; i < count; ++i){
+		if (types == 0){
+			// u8 -> u8
+			((u8*)dest)[i] = ((u8*)src)[i];
+		} else if (types == STR_COPY_SRC_16){
+			// u16 -> u8
+			((u8*)dest)[i] = to_char(((u16*)src)[i]);
+		} else if (types == STR_COPY_DEST_16){
+			// u8 -> u16
+			((u16*)dest)[i] = to_wide(((u8*)src)[i]);
+		} else if (types == (STR_COPY_DEST_16 | STR_COPY_SRC_16)){
+			// u16 -> u16
+			((u16*)dest)[i] = to_wide(((u16*)src)[i]);
+		}
+	}
+}
+
 /// Copies a string from src (any valid string data, determined by first byte) to dest
 /// @note strings are NOT null-terminated. Length should be stored if needed.
 void str_wide_copy(const void* src, u16* dest){
 	struct string* s = (struct string*)src;
+	if (!src) return; // nothing to copy
 	
 	switch (*(char*)src){
 		case STRING_EMPTY:
 			return;
 		case STRING_CHAR:
-			for (size_t i = 0; i < s->len; ++i){
-				// convert up to wide char
-				dest[i] = to_wide((s->ptr.s)[i]);
-			}
+			str_copy_buf(s->ptr.s, dest, STR_COPY_DEST_16, s->len);
 			return;
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
-			for (size_t i = 0; i < ((u8*)src)[1]; ++i){
-				dest[i] = to_wide(((u8*)src)[2+i]);
-			}
+			str_copy_buf(&((u8*)src)[2], dest, STR_COPY_DEST_16, ((u8*)src)[1]);
 			return;
 		default:
 			iprintf("Unimplemented/Not a valid string type! (Copy u16)\n");
@@ -298,21 +317,18 @@ void str_wide_copy(const void* src, u16* dest){
 /// @note strings are NOT null-terminated. Length should be stored if needed.
 void str_char_copy(const void* src, u8* dest){
 	struct string* s = (struct string*)src;
+	if (!src) return; // nothing to copy
 	
 	switch (*(char*)src){
 		case STRING_EMPTY:
 			return;
 		case STRING_CHAR:
-			for (size_t i = 0; i < s->len; ++i){
-				dest[i] = (s->ptr.s)[i];
-			}
+			str_copy_buf(s->ptr.s, dest, STR_COPY_DEST_8, s->len);
 			return;
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
-			for (size_t i = 0; i < ((u8*)src)[1]; ++i){
-				dest[i] = ((u8*)src)[2+i];
-			}
+			str_copy_buf(&((u8*)src)[2], dest, STR_COPY_DEST_8, ((u8*)src)[1]);
 			return;
 		default:
 			iprintf("Unimplemented/Not a valid string type! (Copy u8)\n");
@@ -320,8 +336,28 @@ void str_char_copy(const void* src, u8* dest){
 	}
 }
 
+// Gets a pointer to a character in the string at the given index.
+void* str_at(const void* src, const u16 index){
+	struct string* s = (struct string*)src;
+	
+	switch (*(char*)src){
+		case STRING_EMPTY:
+			return NULL;
+		case STRING_CHAR:
+			return &s->ptr.s[index];
+		case BC_LABEL_STRING:
+		case BC_LABEL:
+		case BC_STRING:
+			return &((u8*)src)[2+index];
+		default:
+			iprintf("Unimplemented/Not a valid string type! (str_at)\n");
+			abort();
+	}
+}
+
 u32 str_len(const void* src){
 	struct string* s = (struct string*)src;
+	if (!src) return 0;
 	
 	switch (*(char*)src){
 		case STRING_EMPTY:
@@ -344,8 +380,6 @@ bool str_comp(const void* str1, const void* str2){
 	u16 cmp2[256];
 	
 	if (str1 == str2) return true;
-	if (str1 == NULL) return false;
-	if (str2 == NULL) return false;
 	
 	u32 len = str_len(str1);
 	if (len != str_len(str2)){

@@ -168,7 +168,7 @@ void op_assign(struct ptc* p){
 				// OK: has persistence
 			} else {
 				// will lose usage on assignment
-				if (src->type == STRING_CHAR)
+				if (src && src->type == STRING_CHAR)
 					src->uses--;
 			}
 			

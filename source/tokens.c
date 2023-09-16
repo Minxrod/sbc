@@ -58,7 +58,7 @@ const char* comments = "REM     ";
 
 // Scans for a specific instruction. Special purpose function to handle the
 // various instruction lengths.
-u32 bc_scan(struct program* code, u32 index, u8 find){
+idx bc_scan(struct program* code, idx index, u8 find){
 	// search for find in code->data
 	while (index < code->size){ 
 		u8 cur = code->data[index];
@@ -216,7 +216,7 @@ s32 tok_to_num(struct tokenizer* state, struct token* t){
 void tok_code(struct tokenizer* state){
 	// assume the order is fixed
 	char* data = state->output->data;
-	u32* size = &state->output->size;
+	idx* size = &state->output->size;
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		switch (state->tokens[i].type){

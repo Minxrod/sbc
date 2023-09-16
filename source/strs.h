@@ -73,6 +73,19 @@ void str_num(s32 num, u8* str);
 // Convert string to number PTC style
 s32 str_to_num(u8* data, u32 len);
 
+// Constants for types mask
+// If set true, use u16, else u8 characters
+#define STR_COPY_SRC_8 0
+#define STR_COPY_DEST_8 0
+#define STR_COPY_SRC_16 1
+#define STR_COPY_DEST_16 2
+
+// Copy from src buffer to destination buffer
+void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count);
+
+// Get pointer to character at location
+void* str_at(const void* src, const u16 index);
+
 // Copy to u8 str
 void str_char_copy(const void* src, u8* dest);
 

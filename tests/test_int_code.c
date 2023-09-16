@@ -201,5 +201,26 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// MID$ tests
+	{
+		char* code = "A$=\"Test String! :)\"\rB$=MID$(A$,0,4)\rC$=MID$(A$,0,32)\rD$=MID$(A$,20,3)\rE$=MID$(A$,5,0)\r";
+		char* a_str= "S\17Test String! :)";
+		char* b_str= "S\4Test";
+		char* c_str= "S\17Test String! :)";
+		char* d_str= "S\0";
+		char* e_str= "S\0";
+		
+		struct ptc* p = run_code(code);
+		// Check various substrings
+		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, a_str), "[mid$] Base string A$");
+		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, b_str), "[mid$] B$");
+		ASSERT(str_comp(test_var(&p->vars, "C", VAR_STRING)->value.ptr, c_str), "[mid$] C$");
+		ASSERT(str_comp(test_var(&p->vars, "D", VAR_STRING)->value.ptr, d_str), "[mid$] D$");
+		ASSERT(str_comp(test_var(&p->vars, "E", VAR_STRING)->value.ptr, e_str), "[mid$] E$");
+		
+		free_code(p);
+	}
+	
+	
 	SUCCESS("test_int_code success");
 }
