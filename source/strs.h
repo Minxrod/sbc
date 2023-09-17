@@ -67,11 +67,15 @@ u16 to_wide(u8 c);
 //Reverse char to wide char
 u8 to_char(u16 c);
 
+// Convert a string to a number, for any base in 2-16.
+// (Only 2,10,16 support is required)
+fixp str_to_number(u8* data, idx len, int base, bool allow_decimal);
+
 // Convert number to string PTC style
 void str_num(s32 num, u8* str);
 
 // Convert string to number PTC style
-s32 str_to_num(u8* data, u32 len);
+fixp str_to_num(u8* data, idx len);
 
 // Constants for types mask
 // If set true, use u16, else u8 characters

@@ -21,6 +21,11 @@
 #define FASTEND 1
 #define FAST(f) if (f && FASTEND) { return 1; }
 
+// Quick checks
+// TODO:CODE Should this be a function?
+#define CHECK_VAR_INT(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == INT_TO_FP(num), var" == "#num);}
+#define CHECK_VAR_NUM(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == num, var" == "#num" (fixp)");}
+
 extern int check_fail;
 
 #include "program.h"

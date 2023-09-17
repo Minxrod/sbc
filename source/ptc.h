@@ -47,6 +47,7 @@ enum command_ids {
 	CMD_TMREAD,
 };
 
+// TODO:CODE Either rename the constants or the functions to match FUN vs func
 enum functions {
 	FUN_ABS, FUN_ASC, FUN_ATAN, FUN_BGCHK, FUN_BGMCHK, FUN_BGMGETV, FUN_BTRIG, FUN_BUTTON,
 	FUN_CHKCHR, FUN_CHR$, FUN_COS, FUN_DEG, FUN_EXP, FUN_FLOOR, FUN_GSPOIT, FUN_HEX$, FUN_ICONCHK,

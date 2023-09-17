@@ -221,6 +221,36 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// VAL tests...
+	{
+		char* code = "A=VAL(\"\")\rB=VAL(\"1 0\")\rC=VAL(\"00000000000123456\")\r"
+		"D=VAL(\"0.0005\")\rE=VAL(\"AF58 B\")\rF=VAL(\"DBHUG77\")\r"
+		"G=VAL(\"4565FGHG\")\rH=VAL(\" \")\rI=VAL(\"..\")\rJ=VAL(\"01.99 88.\")\r"
+		"K=VAL(\"&H4FE4HR6 77 6\")\rL=VAL(\"111111 1\")\rM=VAL(\"524287.999994\")\r"
+		"N=VAL(\"-0.0005\")\rO=VAL(\"0.6666\")\rP=VAL(\"MN230\")\r";
+		
+		struct ptc* p = run_code(code);
+		// Check various substrings
+		CHECK_VAR_INT("A",0);
+		CHECK_VAR_INT("B",1);
+		CHECK_VAR_INT("C",123456);
+		CHECK_VAR_NUM("D",2);
+		CHECK_VAR_INT("E",0);
+		CHECK_VAR_INT("F",0);
+		CHECK_VAR_INT("G",4565);
+		CHECK_VAR_INT("H",0);
+		CHECK_VAR_INT("I",0);
+		CHECK_VAR_NUM("J",8151);
+		CHECK_VAR_INT("K",20452);
+		CHECK_VAR_INT("L",111111);
+		CHECK_VAR_NUM("M",0x7fffffff);
+		CHECK_VAR_NUM("N",-2);
+		CHECK_VAR_NUM("O",2730);
+		CHECK_VAR_INT("P",0);
+		
+		free_code(p);
+	}
+	
 	
 	SUCCESS("test_int_code success");
 }

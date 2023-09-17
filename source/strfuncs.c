@@ -49,3 +49,45 @@ void func_mid(struct ptc* p){
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
 }
+
+void func_val(struct ptc* p){
+	FUNC_ARGCHECK(1);
+	struct value_stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & VAR_STRING){
+		void* str = VALUE_STR(a);
+		void* str_begin = str_at(str, 0);
+		int len = str_len(str);
+		bool negate = false;
+		fixp v;
+		
+		u8 first_char = *(u8*)str_begin;
+		if (first_char == '-'){
+			negate = true;
+			str_begin = str_at(str, 1);
+			len--;
+			v = str_to_num(str_begin, str_len(str));
+		} else if (first_char == '&'){
+			u8 second_char = *(u8*)str_at(str, 1);
+			str_begin = str_at(str, 2);
+			if (second_char == 'H'){
+				// parse as hex
+				v = str_to_number(str_begin, len-2, 16, false);
+			} else if (second_char == 'B'){
+				// parse as binary
+				v = str_to_number(str_begin, len-2, 2, false);
+			} else {
+				ERROR(ERR_SYNTAX);
+			}
+		} else {
+			v = str_to_num(str_begin, str_len(str));
+		}
+		// TODO:IMPL This doesn't work for u16 strings
+		if (negate) v = -v;
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {v}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}

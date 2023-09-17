@@ -117,36 +117,60 @@ struct string* get_new_str(struct strings* s){
 	return &strs[i];
 }
 
-//NOTE: Doesn't handle negatives
-s32 str_to_num(u8* data, u32 len){
-	s32 number = 0;
-	s32 fraction = 0;
-	s32 maximum = 1;
+int digit_value(char c){
+	if (c >= '0' && c <= '9'){
+		return c - '0';
+	} else if (c >= 'A' && c <= 'F'){
+		return c - 'A' + 10;
+	}
+	return -1;
+}
+
+// More general number parsing
+fixp str_to_number(u8* data, idx len, int base, bool allow_decimal){
+	unsigned int number = 0;
+	unsigned int fraction = 0;
+	unsigned int maximum = 1;
 	
 	for (size_t i = 0; i < len; ++i){
 		char c = data[i];
-		if (is_number(c)){
-			number *= 10;
-			number += c - '0';
-		} else if (c == '.'){
+		int digit = digit_value(c);
+		if (digit >= 0 && digit < base){
+			number *= base;
+			number += digit_value(c);
+		} else if (c == '.' && allow_decimal){
 			++i;
 			for (size_t k = i; k < len; ++k){
-				c = data[k];
-				fraction *= 10;
-				maximum *= 10;
-				fraction += c - '0';
+				digit = digit_value(data[k]);
+				if (digit >= 0 && digit < base){
+					fraction *= base;
+					maximum *= base;
+					fraction += digit;
+				} else {
+					// Stop reading on invalid character (useful for VAL)
+					// Note: second period is not allowed
+					break;
+				}
 			}
+			break;
+		} else {
+			// Stop reading on invalid character (useful for VAL)
 			break;
 		}
 	}
 	//TODO:ERR Check overflow
 	
-	number = number * 4096 + 4096 * fraction / maximum;
+	fixp combined = number * 4096 + 4096 * fraction / maximum;
 	
 //	iprintf("Number := %f", (double)number);
-	return number;
+	return combined;
+
 }
 
+//NOTE: Doesn't handle negatives
+fixp str_to_num(u8* data, idx len){
+	return str_to_number(data, len, 10, true);
+}
 
 // Convert 20.12 fixed point number to string
 // Using PTC rounding rules

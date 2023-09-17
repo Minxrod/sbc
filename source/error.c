@@ -32,4 +32,6 @@ const char * error_messages[] = {
 	"READ command failed",
 	"Out of DATA",
 	"Type mismatch (function)",
+	"Syntax error",
+	"Invalid sysvar ID",
 };

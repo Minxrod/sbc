@@ -68,8 +68,8 @@ const ptc_call ptc_functions[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	func_inkey, NULL, NULL, func_len, NULL, func_mid, NULL, NULL, NULL, //FUN_RAD
-	NULL, func_rnd, /* FUN_SGN, FUN_SIN, FUN_SPCHK, FUN_SPGETV, FUN_SPHIT, FUN_SPHITRC, //FUN_SPHITRC
-	FUN_SPHITSP, FUN_SQR, FUN_STR$, FUN_SUBST$, FUN_TAN, FUN_VAL, */ //FUN_VAL
+	NULL, func_rnd, NULL, NULL, NULL, NULL, NULL, NULL, //FUN_SPHITRC
+	NULL, NULL, NULL, NULL, NULL, func_val, //FUN_VAL
 };
 
 const ptc_call ptc_sysvars[] = {
@@ -174,7 +174,7 @@ void run(struct program* code, struct ptc* p) {
 			case BC_SYSVAR:
 				print_name(sysvars, data);
 				if ((u8)data >= sizeof(ptc_sysvars)/sizeof(ptc_sysvars[0])){
-					r->error = ERR_PTC_FUNCTION_INVALID;
+					r->error = ERR_PTC_SYSVAR_INVALID;
 					break;
 				}
 				if (ptc_sysvars[(u32)data]){

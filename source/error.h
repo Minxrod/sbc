@@ -32,6 +32,8 @@ enum err_code {
 	ERR_READ_FAILURE,
 	ERR_OUT_OF_DATA,
 	ERR_FUNC_INVALID_TYPE,
+	ERR_SYNTAX,
+	ERR_PTC_SYSVAR_INVALID,
 };
 
 extern const char * error_messages[];
