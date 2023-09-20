@@ -46,7 +46,7 @@ const ptc_call ptc_commands[] = {
 	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
-	ptc_stub, NULL, NULL, NULL, NULL, //GBOX
+	ptc_stub, NULL, cmd_dtread, NULL, NULL, //GBOX
 	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, NULL, NULL, // GLINE, 
 	cmd_gpage, NULL, NULL, NULL, NULL, NULL, NULL, //ICONSET, 
 	NULL, NULL, NULL, NULL, //NEW, 
@@ -74,6 +74,7 @@ const ptc_call ptc_functions[] = {
 
 const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
+	NULL, sys_date,
 };
 
 /// Debug function for checking command/function names from IDs

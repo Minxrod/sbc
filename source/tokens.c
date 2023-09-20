@@ -189,6 +189,10 @@ void tok_convert(struct tokenizer* state){
 	
 	tok_eval(state);
 	
+	// TODO:IMPL Error checking for argument count should be done here (or eval, which already tracks this)
+	// TODO:IMPL Error checking for command/function/operator argument
+	// type validation could be done here (instead of at runtime)
+	
 	tok_code(state);
 }
 

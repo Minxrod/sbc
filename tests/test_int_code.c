@@ -251,6 +251,18 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// DTREAD tests
+	{
+		char* code = "DTREAD(\"2023/09/19\"),Y,M,D\r";
+		
+		struct ptc* p = run_code(code);
+		// Check various substrings
+		CHECK_VAR_INT("Y",2023);
+		CHECK_VAR_INT("M",9);
+		CHECK_VAR_INT("D",19);
+		
+		free_code(p);
+	}
 	
 	SUCCESS("test_int_code success");
 }

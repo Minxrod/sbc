@@ -91,3 +91,29 @@ void func_val(struct ptc* p){
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}
 }
+
+void cmd_dtread(struct ptc* p){
+	//TODO:ERR Type validation/argcount should be done ahead of time
+	// so all arguments should be valid here
+	// Until then, this is somewhat dangerous.
+	//TODO:ERR Syntax error on invalid characters, wrong length
+	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.
+	void* date_str = VALUE_STR(ARG(0));
+	fixp* year = ARG(1)->value.ptr;
+	fixp* month = ARG(2)->value.ptr;
+	fixp* day = ARG(3)->value.ptr;
+	
+	*year = (*((u8*)str_at(date_str,0)) - '0') * 1000;
+	*year += (*((u8*)str_at(date_str,1)) - '0') * 100;
+	*year += (*((u8*)str_at(date_str,2)) - '0') * 10;
+	*year += (*((u8*)str_at(date_str,3)) - '0');
+	*year <<= FIXPOINT;
+	
+	*month = (*((u8*)str_at(date_str,5)) - '0') * 10;
+	*month += (*((u8*)str_at(date_str,6)) - '0') * 1;
+	*month <<= FIXPOINT;
+	
+	*day = (*((u8*)str_at(date_str,8)) - '0') * 10;
+	*day += (*((u8*)str_at(date_str,9)) - '0') * 1;
+	*day <<= FIXPOINT;
+}
