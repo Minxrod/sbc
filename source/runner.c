@@ -15,7 +15,7 @@
 #include "input.h"
 #include "graphics.h"
 
-#include "math.h"
+#include "mathptc.h"
 #include "strfuncs.h"
 
 #include <stdio.h>
@@ -46,9 +46,9 @@ const ptc_call ptc_commands[] = {
 	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
-	ptc_stub, NULL, cmd_dtread, NULL, NULL, //GBOX
-	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, NULL, NULL, // GLINE, 
-	cmd_gpage, NULL, NULL, NULL, NULL, NULL, NULL, //ICONSET, 
+	ptc_stub, NULL, cmd_dtread, NULL, cmd_gbox, //GBOX
+	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, cmd_gfill, cmd_gline, // GLINE, 
+	cmd_gpage, NULL, cmd_gpset, NULL, NULL, NULL, NULL, //ICONSET, 
 	NULL, NULL, NULL, NULL, //NEW, 
 	NULL, NULL, cmd_read, NULL, NULL, NULL, //RENAME, 
 	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
@@ -65,10 +65,10 @@ const ptc_call ptc_operators[] = {
 };
 
 const ptc_call ptc_functions[] = {
-	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, func_button,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	func_inkey, NULL, NULL, func_len, NULL, func_mid, NULL, NULL, NULL, //FUN_RAD
-	NULL, func_rnd, NULL, NULL, NULL, NULL, NULL, NULL, //FUN_SPHITRC
+	func_inkey, NULL, NULL, func_len, NULL, func_mid, func_pi, NULL, NULL, //FUN_RAD
+	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUN_SPHITRC
 	NULL, NULL, NULL, NULL, NULL, func_val, //FUN_VAL
 };
 

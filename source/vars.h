@@ -35,6 +35,11 @@ enum types {
 #define VALUE_INT(v) FP_TO_INT(VALUE_NUM(v))
 #define VALUE_STR(v) (v->type & VAR_VARIABLE ? *(void**)v->value.ptr : (void*)v->value.ptr)
 
+// Convenience definitions
+#define STACK_INT(i) VALUE_INT(ARG(i))
+#define STACK_NUM(i) VALUE_NUM(ARG(i))
+#define STACK_STR(i) VALUE_STR(ARG(i))
+
 // This file defines the data structures used to store variable information.
 
 // Notes on vars:

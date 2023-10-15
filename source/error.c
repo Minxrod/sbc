@@ -34,4 +34,5 @@ const char * error_messages[] = {
 	"Type mismatch (function)",
 	"Syntax error",
 	"Invalid sysvar ID",
+	"Incorrect argument value",
 };

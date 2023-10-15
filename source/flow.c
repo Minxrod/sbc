@@ -98,14 +98,12 @@ void cmd_next(struct ptc* p){
 	
 	// now stack should contain (END, [STEP])
 	s32* current = (s32*)c->var;
-	s32 end;
+	s32 end = STACK_NUM(0);
 	s32 step;
 	if (p->stack.stack_i == 1){
 		step = INT_TO_FP(1);
-		end = stack_pop(&p->stack)->value.number;
 	} else {
-		step = stack_pop(&p->stack)->value.number; 
-		end = stack_pop(&p->stack)->value.number;
+		step = STACK_NUM(1);
 	}
 	(*current) += step;
 	s32 val = *current;
@@ -113,7 +111,7 @@ void cmd_next(struct ptc* p){
 	if ((step < 0 && end > val) || (step >= 0 && end < val)){
 		// loop ends
 		// REMOVE ENTRY stack_i from the stack
-		// TODO:IMPL copy down all further entries
+		// TODO:IMPL:HIGH copy down all further entries
 		p->calls.stack_i--; // decrease stack count
 	} else {
 		// loop continues, jump back to this point
@@ -127,13 +125,13 @@ idx search_label(struct ptc* p, const char* label){
 	idx index = 0;
 	while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
 		// found index: check correctness
-		// TODO:PERF fast search/cache label locations?
-		iprintf("%c,%s", p->exec.code->data[index], label);
+		// TODO:PERF:LOW fast search/cache label locations?
+		// iprintf("%c,%s", p->exec.code->data[index], label);
 		if (str_comp(&p->exec.code->data[index], label)){
 			// this is the index, jump to here
 			break;
 		}
-		u8 len = p->exec.code->data[index+1]; //TODO:CODE Advance by length as a function
+		u8 len = p->exec.code->data[index+1]; //TODO:CODE:LOW Advance by length as a function
 		index += 2 + len + (len & 1);
 	}
 	if (index == BC_SCAN_NOT_FOUND){
@@ -185,7 +183,7 @@ void cmd_then(struct ptc* p){
 
 // When hitting an ELSE instruction (only hit from THEN block)
 // jump to the next ENDIF.
-// TODO:IMPL Comment style ELSE should not break...
+// TODO:IMPL:LOW Comment style ELSE should not break...
 void cmd_else(struct ptc* p){
 	u32 index = p->exec.index;
 	do {
@@ -214,7 +212,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	char* label;
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
-		s32 label_index = FP_TO_INT(VALUE_NUM(e)); //TODO:TEST Do fractional values round down for this one?
+		s32 label_index = FP_TO_INT(VALUE_NUM(e)); //TODO:TEST:LOW Do fractional values round down for this one?
 //		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
 		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
 			p->stack.stack_i = 0;

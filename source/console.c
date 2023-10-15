@@ -18,11 +18,11 @@ void con_advance(struct console* c){
 }
 
 void con_scroll(struct console* c){
-	// TODO:PERF optimize (scroll all at once?)
+	// TODO:PERF:LOW optimize (scroll all at once?)
 	while (c->y >= CONSOLE_HEIGHT){
 		c->y--;
 		// newline: scroll console up
-		// TODO:PERF optimize this (memcpy?)
+		// TODO:PERF:LOW optimize this (memcpy?)
 		for (u32 i = 1; i < CONSOLE_HEIGHT; ++i){
 			for (u32 j = 0; j < CONSOLE_WIDTH; ++j){
 				c->text[i-1][j] = c->text[i][j];
@@ -59,9 +59,9 @@ void con_put(struct console* c, u16 w){
 	}
 }
 
-//TODO:PERF optimize via copying multiple lines at once for large strings?
-//TODO:PERF memcpy instead of manual copy? probably nicer on cache...?
-//TODO:PERF con_puts write directly to console via str_wide_copy?
+//TODO:PERF:LOW optimize via copying multiple lines at once for large strings?
+//TODO:PERF:LOW memcpy instead of manual copy? probably nicer on cache...?
+//TODO:PERF:LOW con_puts write directly to console via str_wide_copy?
 //(color still separate here)
 
 void con_puts(struct console* c, void* s){
@@ -87,7 +87,7 @@ void cmd_print(struct ptc* p){
 		if (e->type & VAR_NUMBER){
 			s32 x = VALUE_NUM(e);
 			str_num(x, &buf[2]);
-			buf[1] = strlen((char*)&buf[2]); //TODO:CODE remove this bit
+			buf[1] = strlen((char*)&buf[2]); //TODO:CODE:NONE remove this bit
 			
 			con_puts(c, buf);
 		} else if (e->type & VAR_STRING) {
@@ -127,14 +127,14 @@ void cmd_print(struct ptc* p){
 
 void cmd_color(struct ptc* p){
 	struct console* c = &p->console;
-	// TODO:ERR check arguments types, quantity
+	// TODO:ERR:HIGH check arguments types
 	if (p->stack.stack_i == 2){
 		c->col = 0;
-		c->col |= FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0))); // FG
-		c->col |= FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 1))) << 4; // BG
+		c->col |= STACK_INT(0); // FG
+		c->col |= STACK_INT(1) << 4; // BG
 	} else if (p->stack.stack_i == 1){
 		c->col &= ~COL_FG_MASK; // clear FG value
-		c->col |= FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0))); // FG
+		c->col |= STACK_INT(0); // FG
 	} else {
 		p->exec.error = ERR_WRONG_ARG_COUNT;
 	}
@@ -143,9 +143,9 @@ void cmd_color(struct ptc* p){
 
 void cmd_locate(struct ptc* p){
 	struct console* c = &p->console;
-	// TODO:ERR check arguments types, quantity
+	// TODO:ERR:HIGH check arguments types
 	if (p->stack.stack_i == 2){
-		//LOCATE is a silent failure
+		//LOCATE is a silent failure on out of range
 		s32 x = FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0)));
 		s32 y = FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 1)));
 		if (x >= 0 && y >= 0 && x < CONSOLE_WIDTH && y < CONSOLE_HEIGHT){
@@ -161,13 +161,15 @@ void cmd_locate(struct ptc* p){
 
 void cmd_cls(struct ptc* p){
 	struct console* c = &p->console;
-	// TODO:ERR check arguments types, quantity
+	// TODO:ERR:MED check arguments types, quantity
 	for (int i = 0; i < CONSOLE_HEIGHT; ++i){
 		for (int j = 0; j < CONSOLE_WIDTH; ++j){
 			c->text[i][j] = 0;
 			c->color[i][j] = 0;
 		}
 	}
+	c->x = 0;
+	c->y = 0;
 }
 
 #define INPUT_RETURN '\r'
@@ -222,7 +224,7 @@ void cmd_input(struct ptc* p){
 	}
 	u8 len = p->stack.stack_i - index;
 	// len: number of vars
-	// TODO:ERR validate all are variables?
+	// TODO:ERR:MED validate all are variables?
 	
 	// Display prompt
 	if (prompt_str) // only display string if it exists
@@ -260,13 +262,13 @@ void cmd_input(struct ptc* p){
 		}
 		if (len != commas + 1){
 			valid = false;
-			continue; //TODO:IMPL ?Redo from start
+			continue; //TODO:IMPL:MED ?Redo from start
 		}
-		// TODO:ERR Validate types
+		// TODO:ERR:HIGH Validate types
 		u8 conversion_copy[CONSOLE_WIDTH];
 		int prev_i = 0;
 		int out_i = 0;
-		//TODO:CODE This loop is stupid? Fix it?
+		//TODO:CODE:LOW This loop is stupid? Fix it?
 		for (int i = 0; i < len; ){
 			struct stack_entry* e = ARG(index+i);
 			u8 c = to_char(output[out_i]);

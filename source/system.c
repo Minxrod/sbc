@@ -5,6 +5,7 @@
 #include "system.h"
 #include "vars.h"
 #include "resources.h"
+#include "graphic.h"
 
 struct ptc* init_system(int var, int str, int arr){
 	struct ptc* ptc = calloc(sizeof(struct ptc), 1);
@@ -111,8 +112,18 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 		}
 	}
 	
+	struct graphic graphic = init_graphic(GRP_WIDTH, GRP_HEIGHT);
+	
+	draw_graphic(&graphic, p);
+	
+	sfShader_setFloatUniform(shader, "colbank", 2);
+	sfRenderWindow_drawSprite(rw, graphic.sprite, &rs);
+	
+	sfShader_setFloatUniform(shader, "colbank", 0);
 	sfRenderWindow_drawVertexArray(rw, console_map.va, &rs);
+	
+	free_graphic(&graphic);
+	
 	free_tilemap(&console_map);
-//	sfTexture_destroy(col_tex);
 }
 #endif

@@ -125,6 +125,43 @@ void func_btrig(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(b)}});
 }
 
+void func_button(struct ptc* p){
+	struct input* i = &p->input;
+	int mode = 0;
+	if (p->exec.argcount == 1){
+		struct stack_entry* e = stack_pop(&p->stack);
+		mode = VALUE_INT(e);
+	}
+	//TODO:ERR:LOW Check arguments valid
+	int button;
+	
+	switch (mode){
+		case 0:
+			button = i->button;
+			break;
+		
+		case 1:
+			button = 0;
+			for (int j = 0; j < BUTTON_COUNT; ++j){
+				button |= check_pressed(i, j) << j;
+			}
+			break;
+		
+		case 2:
+			button = i->button & ~i->old_button;
+			break;
+		
+		case 3:
+			button = ~i->button & i->old_button;
+			break;
+		
+		default:
+			ERROR(ERR_INVALID_ARGUMENT_VALUE);
+	}
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(button)}});
+}
+
 void func_inkey(struct ptc* p){
 	struct input* i = &p->input;
 	if (p->exec.argcount){

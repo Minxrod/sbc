@@ -189,8 +189,8 @@ void tok_convert(struct tokenizer* state){
 	
 	tok_eval(state);
 	
-	// TODO:IMPL Error checking for argument count should be done here (or eval, which already tracks this)
-	// TODO:IMPL Error checking for command/function/operator argument
+	// TODO:IMPL:HIGH Error checking for argument count should be done here (or eval, which already tracks this)
+	// TODO:IMPL:HIGH Error checking for command/function/operator argument
 	// type validation could be done here (instead of at runtime)
 	
 	tok_code(state);
@@ -227,7 +227,7 @@ void tok_code(struct tokenizer* state){
 			case command:
 				if (state->tokens[i].ofs == CMD_DATA){
 					// Special rules for DATA: write token contents as string
-					// TODO:ERR Don't allow whitespace within unquoted DATA strings.
+					// TODO:ERR:MED Don't allow whitespace within unquoted DATA strings.
 					iprintf("DATA tok_code %d\n", state->token_i);
 					data[(*size)++] = BC_DATA;
 					char* data_size = &data[(*size)++]; // write as copying characters
@@ -335,7 +335,7 @@ void tok_code(struct tokenizer* state){
 				
 			case name:
 			case dim_arr:
-				//TODO:PERF actual ID calculation
+				//TODO:PERF:NONE actual ID calculation
 				//Find variable if it exists in table
 				//Create variable if it does not exist
 				//Get ID based on this index
@@ -385,7 +385,7 @@ void tok_code(struct tokenizer* state){
 			default:
 				iprintf("Unknown token: ");
 				print_token(state, state->tokens[i]);
-				//TODO:ERR Code generation errors?
+				//TODO:ERR:MED Code generation errors?
 		}
 	}
 	state->token_i = 0;
@@ -451,7 +451,7 @@ void tok_eval(struct tokenizer* state){
 				if (state->tokens[i-1].type == operation && state->tokens[i-1].ofs == OP_OPEN_PAREN){
 					e.argc_stack[e.argc_i] = 0;
 				}
-				// TODO:PERF Don't create argcount for DIM command
+				// TODO:PERF:NONE Don't create argcount for DIM command
 				// (unnecessary, implied by stack size?)
 				// also might just keep this way for simplicity
 				if (!(e.argc_stack[e.argc_i] & 0x80)){
@@ -495,7 +495,7 @@ void tok_eval(struct tokenizer* state){
 					// Command is FOR: add instruction at end of FOR setup to
 					// properly execute the loop
 					is_for = true;
-					// TODO:PERF TO and STEP are unneeded instructions after a FOR
+					// TODO:PERF:NONE TO and STEP are unneeded instructions after a FOR
 					// Do not compile those
 				} else if (state->tokens[i].ofs == CMD_IF){
 					// Command is IF: add normally, but needs to indicate that

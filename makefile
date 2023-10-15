@@ -20,6 +20,8 @@ CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $
 # https://stackoverflow.com/a/10168396
 # The -MMD is important. It generates the actual dependencies...
 CFLAGS += -DPC -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB) -MMD
+# All the libraries that need to be linked
+LIBFLAGS = -lm -lcsfml-graphics -lcsfml-window -lcsfml-system
 
 # Some magic makefile nonsense
 # get source files list 
@@ -40,16 +42,17 @@ main: $(main_objs)
 #	echo $(objects)
 #	echo $(build)
 	# TODO: Better CSFML library location? (How do you install it?)
-	$(CC) $(CFLAGS) $(main_objs) -o test -lcsfml-graphics -lcsfml-window -lcsfml-system
+	$(CC) $(CFLAGS) $(main_objs) -o test $(LIBFLAGS)
 #	gcc $(CFLAGS) -Isource/ $(objs) source/main.c -o test
 
 test: $(test_objs)
-	$(CC) $(CFLAGS) $(test_objs) -o test -lcsfml-graphics -lcsfml-window -lcsfml-system
+	$(CC) $(CFLAGS) $(test_objs) -o test $(LIBFLAGS)
 #	gcc $(CFLAGS) -I$(SOURCE) $(BUILD) tests/test_main.c -o test
 
 .phony clean:
 	rm -f $(main_objs) $(test_objs)
 	rm -f test
+	rm -f $(build:%.o=%.d)
 	
 # https://stackoverflow.com/questions/313778/generate-dependencies-for-a-makefile-for-a-project-in-c-c	
 # https://stackoverflow.com/a/10168396

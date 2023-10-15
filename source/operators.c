@@ -356,7 +356,7 @@ void op_and(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
+		fixp x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
@@ -373,7 +373,7 @@ void op_or(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
+		fixp x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
@@ -390,7 +390,7 @@ void op_xor(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
+		fixp x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
@@ -406,7 +406,7 @@ void op_not(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & VAR_NUMBER){
-		s32 x;
+		fixp x;
 		
 		x = VALUE_NUM(a);
 		

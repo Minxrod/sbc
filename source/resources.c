@@ -254,7 +254,7 @@ sfTexture* gen_col_texture(u16* src){
 		array[4*i+0] = (s & 0x001f) << 3; //TODO:IMPL Adjust values to match PTC
 		array[4*i+1] = ((s & 0x03e0) >> 2) | ((src[2*i] & 0x8000) >> 13);
 		array[4*i+2] = ((s & 0x7c00) >> 7);
-		array[4*i+3] = 255;
+		array[4*i+3] = ((i % 16) || (((i % 3) == 2) && (i != 0))) ? 255 : 0;
 //		iprintf("%ld:(%d,%d,%d,%d)",i,array[4*i+0],array[4*i+1],array[4*i+2],array[4*i+3]);
 	}
 //	iprintf("\n");

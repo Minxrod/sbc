@@ -13,6 +13,8 @@
 #include "test_arrs.h"
 #include "test_tokens.h"
 
+#include "test_math.h"
+
 #include "test_int_vars.h"
 #include "test_int_code.h"
 #endif
@@ -26,6 +28,8 @@ int run_tests(){
 	FAST(test_strs());
 	FAST(test_arrs());
 	FAST(test_tokens());
+	
+	FAST(test_math());
 	
 	FAST(test_int_vars());
 	FAST(test_int_code());
