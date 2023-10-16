@@ -22,7 +22,7 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->vars.strs = &ptc->strs;
 	ptc->vars.arrs = &ptc->arrs;
 	// init various ptc items
-	// TODO:CODE use subsytem initialization functions?
+	// TODO:CODE:LOW use subsytem initialization functions?
 	ptc->console.tabstep = 4;
 	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
@@ -42,22 +42,22 @@ void free_system(struct ptc* p){
 }
 
 void cmd_acls(struct ptc* p){
-	// TODO:IMPL
+	// TODO:IMPL:HIGH
 	p->stack.stack_i = 0;
 }
 
 void cmd_visible(struct ptc* p){
-	// TODO:IMPL
+	// TODO:IMPL:MED
 	p->stack.stack_i = 0;
 }
 
 void cmd_vsync(struct ptc* p){
-	// TODO:IMPL
+	// TODO:IMPL:HIGH
 	p->stack.stack_i = 0;
 }
 
 void cmd_wait(struct ptc* p){
-	// TODO:IMPL
+	// TODO:IMPL:HIGH
 	p->stack.stack_i = 0;
 }
 
@@ -73,12 +73,12 @@ void system_draw(struct ptc* p){
 	for (int y = 0; y < CONSOLE_HEIGHT; ++y){
 		for (int x = 0; x < CONSOLE_WIDTH; ++x){
 			u16 t = to_char(con_text_getc(&p->console, x, y));
-			t |= (con_col_get(&p->console, x, y) & COL_FG_MASK) << 12; //TODO:CODE 12 should be a constant?
+			t |= (con_col_get(&p->console, x, y) & COL_FG_MASK) << 12; //TODO:CODE:NONE 12 should be a constant?
 			*map = t;
 			map++;
 		}
 	}
-	// TODO:IMPL background tile/color
+	// TODO:IMPL:MED background tile/color
 }
 #endif
 
@@ -87,8 +87,8 @@ void system_draw(struct ptc* p){
 #include "pc/tilemap.h"
 
 void system_draw(sfRenderWindow* rw, struct ptc* p){
-	// TODO:IMPL Implement VISIBLE
-	// TODO:IMPL Every system except text
+	// TODO:IMPL:HIGH Implement VISIBLE
+	// TODO:IMPL:HIGH Every system except text
 	
 	sfRenderStates rs = sfRenderStates_default();
 	sfShader* shader = p->res.shader;
@@ -96,17 +96,16 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	
 	sfShader_setTextureUniform(shader, "colors", p->res.col_tex);
 	sfShader_setCurrentTextureUniform(shader, "texture");
-	sfShader_setFloatUniform(shader, "colbank", 0); //TODO change
 	rs.shader = shader;
 	
-	// TODO:CODE No dynamic allocations here
+	// TODO:CODE:LOW No dynamic allocations here
 	struct tilemap console_map;
 	console_map = init_tilemap(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 	
 	for (int x = 0; x < CONSOLE_WIDTH; ++x){
 		for (int y = 0; y < CONSOLE_HEIGHT; ++y){
 			tile(&console_map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
-			// TODO:IMPL background tile/color[
+			// TODO:IMPL:MED background tile/color[
 //			iprintf("Color?:%d,%d,%d\n", x,y,p->console.color[x][y] & COL_FG_MASK);
 			palette(&console_map, x, y, con_col_get(&p->console, x, y) & COL_FG_MASK);
 		}

@@ -8,7 +8,7 @@
 
 void func_rnd(struct ptc* p){
 	struct value_stack* s = &p->stack;
-	// TODO:ERR Check number of arguments!
+	// TODO:ERR:LOW Check number of arguments!
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & VAR_NUMBER){

@@ -28,7 +28,7 @@ void func_mid(struct ptc* p){
 		void* s = VALUE_STR(str_e);
 		u16 start = VALUE_INT(start_e);
 		u16 len = VALUE_INT(len_e);
-		//TODO:ERR: start, len must be postiive
+		//TODO:ERR:MED start, len must be postiive
 		
 		s16 max_len = (s16)str_len(s) - (s16)start;
 		if (max_len <= 0){
@@ -41,7 +41,7 @@ void func_mid(struct ptc* p){
 		struct string* dest = get_new_str(&p->strs);
 		dest->uses = 1;
 		dest->len = len;
-		// TODO:IMPL Determine type(s) of strings to get types for copying
+		// TODO:IMPL:LOW Determine type(s) of strings to get types for copying
 		str_copy_buf(str_at(s, start), str_at(dest, 0), 0, len);
 		
 		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
@@ -83,7 +83,7 @@ void func_val(struct ptc* p){
 		} else {
 			v = str_to_num(str_begin, str_len(str));
 		}
-		// TODO:IMPL This doesn't work for u16 strings
+		// TODO:IMPL:LOW This doesn't work for u16 strings
 		if (negate) v = -v;
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {v}});
@@ -93,10 +93,7 @@ void func_val(struct ptc* p){
 }
 
 void cmd_dtread(struct ptc* p){
-	//TODO:ERR Type validation/argcount should be done ahead of time
-	// so all arguments should be valid here
-	// Until then, this is somewhat dangerous.
-	//TODO:ERR Syntax error on invalid characters, wrong length
+	//TODO:ERR:MED Syntax error on invalid characters, wrong length
 	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.
 	void* date_str = VALUE_STR(ARG(0));
 	fixp* year = ARG(1)->value.ptr;

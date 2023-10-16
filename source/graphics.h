@@ -5,14 +5,11 @@
 struct ptc;
 
 struct graphics {
-	// TODO:CODE Could these be better stored in one u8?
 	u8 screen;
 	u8 drawpage;
 	u8 displaypage;
 	
 	u8 color;
-	// TODO:PERF Save draw pointer based on GPAGE
-//	u8* drawgrp;
 };
 
 void init_graphics(struct graphics* g);

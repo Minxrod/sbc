@@ -73,8 +73,7 @@ void init_mem_str(struct strings* s, uint_fast16_t str_count, enum string_type s
 	} else if (str_type == STRING_WIDE) {
 		s->str_data = calloc(str_count, sizeof(u16) * MAX_STRLEN);
 	} else {
-		// TODO:CODE Better error handling?
-		iprintf("Invalid string type\n");
+		iprintf("Invalid string type!\n");
 		abort();
 	}
 }
@@ -158,7 +157,7 @@ fixp str_to_number(u8* data, idx len, int base, bool allow_decimal){
 			break;
 		}
 	}
-	//TODO:ERR Check overflow
+	//TODO:ERR:MED Check overflow
 	
 	fixp combined = number * 4096 + 4096 * fraction / maximum;
 	
@@ -174,7 +173,7 @@ fixp str_to_num(u8* data, idx len){
 
 // Convert 20.12 fixed point number to string
 // Using PTC rounding rules
-// TODO:CODE rename
+// TODO:CODE:LOW rename
 void str_num(s32 num, u8* str){
 //	u16* begin = str;
 	if (num < 0){
@@ -234,7 +233,7 @@ void str_num(s32 num, u8* str){
 	}
 	// Null-terminate
 	*str = '\0';
-	// TODO:IMPL String length?
+	// TODO:CODE:LOW String length?
 	// (str - begin)/ sizeof u8?;
 }
 
@@ -285,7 +284,7 @@ u8 to_char(u16 w){
 		"\x0e!?\"?#?$%&\'()??*??+??,?" /*split trigraph, again*/ "?-??./012\x0b""3\x0c""4\r56789:?;??\x05<???????\x04????";
 		return katakana[wl] + 0xa1;
 	} else {
-		//TODO:IMPL Handle invalid characters better?
+		//TODO:CODE:LOW Handle invalid characters better?
 		iprintf("Error converting u16 to u8 char (unimplemented): %x\n", w);
 		abort();
 	}
@@ -296,7 +295,7 @@ u8 to_char(u16 w){
 /// 
 /// @note src and dest should be either u8* or u16*
 void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count){
-	///TODO:PERF profile this and see if swapping loop/condition order is better?
+	///TODO:PERF:LOW profile this and see if swapping loop/condition order is better?
 	for (size_t i = 0; i < count; ++i){
 		if (types == 0){
 			// u8 -> u8
@@ -447,7 +446,7 @@ void str_copy(void* src, void* src_dest){
 void str_concat(void* src1, void* src2, void* dest){
 	if (str_len(src1) + str_len(src2) > MAX_STRLEN){
 		// Copy fails
-		//TODO:ERR error status
+		//TODO:ERR:MED error status
 		return;
 	}
 	

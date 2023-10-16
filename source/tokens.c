@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 const int MAX_SPECIAL_NAME_SIZE = 8;
 
@@ -50,7 +51,8 @@ const char* sysvars =
 "CSRX    CSRY    TABSTEP "
 "SPHITNO SPHITX  SPHITY  SPHITT  "
 "KEYBOARDFUNCNO  ICONPUSEICONPAGEICONPMAX"
-"ERL     ERR     ";
+"ERL     ERR     "
+"MEM     ";
 
 const char* labels = "LABEL   ";
 
@@ -146,6 +148,11 @@ void print_token(struct tokenizer* state, struct token t){
 			name[i] = names[8*t.ofs + i];
 		}
 		iprintf("id:%d type:%d cmd:%s", (int)t.ofs, t.type, name);
+		if (t.prio) {
+			iprintf("prio:%02d ", t.prio);
+		} else {
+			iprintf("        ");
+		}
 	}
 	iprintf("\n");
 }
@@ -189,11 +196,246 @@ void tok_convert(struct tokenizer* state){
 	
 	tok_eval(state);
 	
+	iprintf("Current tokens (prior validation):\n");
+	for (size_t i = 0; i < 100; ++i){
+		if (state->tokens[i].len == 0)
+			break;
+		print_token(state, state->tokens[i]);
+	}
+	
+	tok_test(state);
+	
 	// TODO:IMPL:HIGH Error checking for argument count should be done here (or eval, which already tracks this)
 	// TODO:IMPL:HIGH Error checking for command/function/operator argument
 	// type validation could be done here (instead of at runtime)
 	
 	tok_code(state);
+}
+
+// * = any (don't check/special case)
+// N = number
+// n = number var
+// S = string
+// s = string var
+// a = array [only SORT,RSORT should use this?]
+// E = both
+// L = label (includes string)
+// 0 = Nothing (no argument) (must be first in list)
+// , = comma
+// ; = semicolon
+const char* cmd_format[] = {
+	"*","NN","N,NN","*", //DIM
+	"*","*","*","0,n", //NEXT
+	"N","","*","0", //ENDIF
+	"L,l","L,l","N","0", //RETURN
+	"0","0", //STOP
+	"0","NNNNNN","0","N","N", //WAIT
+	"*","*", //LINPUT
+	"","N,NN,NNN,NNNN", //BEEP
+	"","","","","", //BGMCLEAR
+	"","","","","","","", //BGMVOL
+	"","","","","","","", //CHRREAD
+	"","0","","","","0", //CONT
+	"","","Snnn","","NNNN,NNNNN", //GBOX
+	"","0,N","N","","","NNNN,NNNNN","NNNN,NNNNN",//GLINE
+	"N,NNN","","NN,NNN","","","","",//ICONSET
+	"","","","",//NEW
+	"","","*","","","",//RENAME
+	"L","","0","","","","",//SPANGLE
+	"","","","","","","","",//SPPAGE
+	"","","","","",//SWAP
+	"",//TMREAD
+};
+
+const char* op_format[] = {
+	"NN,SS","*","NN","NN,SN","NN","*", //;
+	"NN,SS","N", //(-)
+	"NN,SS","NN,SS","NN","NN","NN","NN", //<=
+	"NN",//%
+	"NN","NN","N","NN","N",//!
+	"*","*","*","*"
+};
+
+/// char* stack is a string of length stack_len
+/// valid is a null-terminated string
+/// true indicates the command is valid
+bool check_cmd(const char* stack, int stack_len, const char* valid){
+	if ((valid[0] == '0' || valid[0] == '*') && stack_len == 0) return true;
+	
+	int valid_len = strlen(valid);
+	int stack_i = 0;
+	bool is_valid = true;
+	for (int valid_i = 0; valid_i < valid_len;){
+		char s = stack[stack_i++];
+		char v = valid[valid_i++];
+//		iprintf("%c?=%c\n", s, v);
+		if (v == ',') {
+			if (is_valid) return true;
+			stack_i = 0;
+			is_valid = true;
+			continue;
+		}
+		if (stack_i > stack_len) return false;
+		
+		switch (v){
+			case 'N':
+				if (s == 'N' || s == 'n') break;
+				is_valid = false;
+				break;
+				
+			case 'n':
+				if (s == 'n') break;
+				is_valid = false;
+				break;
+				
+			case 'S':
+				if (s == 'S' || s == 's') break;
+				is_valid = false;
+				break;
+				
+			case 's':
+				if (s == 's') break;
+				is_valid = false;
+				break;
+				
+			case 'L':
+				if (s == 'S' || s == 's' || s == 'L') break;
+				is_valid = false;
+				break;
+				
+			case 'l':
+				if (s == 'S' || s == 's' || s == 'L') {
+					valid_i--; // read as many labels as needed
+					break;
+				}
+				is_valid = false;
+				break;
+				
+			case '*':
+				return true;
+				
+			default:
+				iprintf("Invalid format string is always valid.\n");
+				return true;
+		}
+	}
+	if (stack_i != stack_len) return false;
+	return true;
+}
+
+void tok_test(struct tokenizer* state){
+	// This is argument count and argument type validation.
+	char stack[40];
+	u8 stack_i = 0;
+	int argc = 0;
+	
+	iprintf("Validation:\n");
+	for (u8 i = 0; i < state->token_i; ++i){
+		iprintf("Stack: %.*s\n", stack_i, stack);
+		iprintf("%d: ", i);
+		print_token(state, state->tokens[i]);
+		switch (state->tokens[i].type){
+			case number:
+				stack[stack_i++] = 'N';
+				break;
+			
+			case string:
+				stack[stack_i++] = 'S';
+				break;
+				
+			case command:
+				{
+				u8 cmd = state->tokens[i].ofs;
+				const char* valid = cmd_format[cmd];
+				if (!check_cmd(stack, stack_i, valid)){
+					// Set error state on invalid command
+					print_token(state, state->tokens[i]);
+					iprintf("Stack: %d %s\n", stack_i, stack);
+					abort();
+				}
+				// relies on variable carrying through for assignment
+				if (cmd != CMD_FOR){
+					stack_i = 0;
+				}
+				}
+				break;
+				
+			case operation:
+				{
+				u8 prio = state->tokens[i].prio;
+				const char* valid;
+				bool is_valid = true;
+				if (state->tokens[i].ofs == OP_COMMA){
+					stack[stack_i++] = ',';
+				} else if (state->tokens[i].ofs == OP_SEMICOLON){
+					stack[stack_i++] = ';';
+				} else if (prio % 8 != 6){
+					// binary
+					valid = op_format[state->tokens[i].ofs];
+					is_valid = check_cmd(&stack[stack_i-2], 2, valid);
+					stack_i -= 2; // +2 -1
+					// note: any binary op will have the type of the first argument
+					stack[stack_i++] &= 0x5f;  //any unary op returns value type of first argument
+				} else {
+					// unary: all of these take numbers, so
+					valid = "N";
+					is_valid = check_cmd(&stack[stack_i-1], 1, valid);
+					// +1 -1
+					stack_i--;
+					stack[stack_i++] = 'N';  //any unary op returns number
+				}
+				if (!is_valid){
+					// Set error state on invalid command
+					print_token(state, state->tokens[i]);
+					iprintf("Stack: %d %s\n", stack_i, stack);
+					abort();
+				}
+				}
+				break;
+				
+			case function:
+				//TODO:IMPL:CRIT
+				break;
+				
+			case name:
+				if (argc){
+					// process argc counts first
+					// TODO:IMPL:HIGH Validate arguments passed here as numbers (array access)
+					stack_i -= argc;
+					argc = 0;
+				}	
+				u8 last = state->tokens[i].len;
+				if (state->source->data[state->tokens[i].ofs + last - 1] == '$'){
+					stack[stack_i++] = 's';
+				} else {
+					stack[stack_i++] = 'n';
+				}
+				break;
+				
+			case sysvar:
+				{
+				u8 id = state->tokens[i].ofs;
+				if (id == SYS_TIME$ || id == SYS_DATE$ || id == SYS_PRGNAME$
+					|| id == SYS_PACKAGE$ || id == SYS_MEM$){
+						stack[stack_i++] = 's';
+					} else {
+						stack[stack_i++] = 'n';
+					}
+				}
+				break;
+				
+			case label_string:
+				stack[stack_i++] = 'L';
+				break;
+				
+			case arg_count:
+				argc = state->tokens[i].len;
+				break;
+				
+			default:
+				break;
+		}
+	}
 }
 
 // none of these values will exceed 100[?]

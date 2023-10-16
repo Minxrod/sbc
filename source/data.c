@@ -7,7 +7,7 @@
 #include "tokens.h"
 #include "ptc.h"
 
-//TODO: Use a macro or something to reduce duplication?
+//TODO:CODE:NONE Use a macro or something to reduce duplication?
 // Returns number of characters read OR READ_ONE_ERR if an error occurs
 
 // Returns number of characters read OR READ_ONE_ERR if an error occurs
@@ -80,7 +80,7 @@ void find_data(struct ptc* p){
 void cmd_read(struct ptc* p){
 	// Get variables from stack and call read() into each of them (using DATA string as source)
 	// Get pointer, offset for data
-	// TODO:CODE Constant for 2
+	// TODO:CODE:LOW Constant for 2
 	u8* data_block = (u8*)&p->exec.code->data[p->exec.data_index]; //points to BC_DATA
 	u8 block_size = data_block[1];
 	u8* data_src;
@@ -98,7 +98,7 @@ void cmd_read(struct ptc* p){
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));
 		if (read == READ_ONE_ERR){
-			ERROR(ERR_READ_FAILURE); //TODO:ERR Return better error if the type was not assignable
+			ERROR(ERR_READ_FAILURE); //TODO:ERR:LOW Return better error if the type was not assignable
 		}
 		p->exec.data_offset += read;
 		if (data_block[2 + p->exec.data_offset] == ','){

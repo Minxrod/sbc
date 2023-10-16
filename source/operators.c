@@ -68,7 +68,7 @@ void op_mult(struct ptc* p){
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {(int64_t)x * y >> FIXPOINT}});
 	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
-		s32 count = FP_TO_INT(VALUE_NUM(b)); //TODO:TEST Does this round down?
+		s32 count = FP_TO_INT(VALUE_NUM(b)); //TODO:TEST:LOW Does this round down?
 		struct string* x, * y;
 		
 		x = VALUE_STR(a);
@@ -86,7 +86,7 @@ void op_mult(struct ptc* p){
 		}
 		
 		for (int i = 0; i < count; ++i){
-			str_concat(y, x, y); //TODO:TEST check that this works??
+			str_concat(y, x, y);
 		}
 		
 		stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = y}});
@@ -343,7 +343,7 @@ void op_modulo(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		//TODO:ERR Check for y=0
+		//TODO:ERR:MED Check for y=0
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {(INT_TO_FP(FP_TO_INT(x) % FP_TO_INT(y)))}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;

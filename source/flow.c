@@ -145,10 +145,10 @@ idx search_label(struct ptc* p, const char* label){
 // THEN/GOTO block or the ELSE block.
 void cmd_if(struct ptc* p){
 	// current stack consists of one item (should be numeric)
+	fixp value = STACK_NUM(0);
 	struct stack_entry* e = stack_pop(&p->stack);
-	// TODO:ERR type check
 	u32 index = p->exec.index;
-	if (e->value.number != 0){
+	if (value){
 		// true: proceed to next instruction as normal
 	} else {
 		// false: proceed to ELSE or ENDIF
@@ -206,9 +206,8 @@ void cmd_endif(struct ptc* p){
 
 void cmd_goto_gosub(struct ptc* p, bool push_return){
 	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
-	// TODO:ERR Check that stack has entries
-	struct stack_entry* e = &p->stack.entry[0];
-///	struct stack_entry* e = stack_pop(&p->stack);
+	// TODO:ERR:LOW Check that stack has entries
+	struct stack_entry* e = ARG(0);
 	char* label;
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
@@ -238,7 +237,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 		
 		p->exec.index = index;
 	} else {
-		// TODO:IMPL Implement actual strings as arguments (should be similar)
+		// TODO:IMPL:HIGH Implement actual strings as arguments (should be similar)
 		p->exec.error = ERR_UNIMPLEMENTED;
 	}
 	// GOTO needs to clear stack of labels

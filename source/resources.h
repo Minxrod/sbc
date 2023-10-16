@@ -43,7 +43,7 @@ struct sfTexture* gen_col_texture(u16* src);
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
-	// TODO:IMPL MEM type?
+	// TODO:IMPL:MED MEM type?
 	//BGU,D,F,[SPU,S or SPD,K,S]
 	
 	u8* chr[CHR_BANKS*2]; 

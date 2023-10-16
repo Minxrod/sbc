@@ -83,6 +83,8 @@ void tok_eval(struct tokenizer* state);
 
 void tok_code(struct tokenizer* state);
 
+void tok_test(struct tokenizer* state);
+
 // Scans for location of some instruction starting from index
 // Returns the index of found string
 idx bc_scan(struct program* code, idx index, u8 find);

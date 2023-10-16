@@ -21,9 +21,8 @@ u8* grp_drawpage(struct ptc* p, u8 page){
 }
 
 void cmd_gpage(struct ptc* p){
-	//TODO:ERR argument count
-	//TODO:ERR argument range
-	//TODO:IMPL 3-argument form
+	//TODO:ERR:MED argument range
+	//TODO:IMPL:HIGH 3-argument form
 	struct stack_entry* e = stack_pop(&p->stack);
 	p->graphics.screen = FP_TO_INT(VALUE_NUM(e));
 	p->stack.stack_i = 0;
@@ -32,13 +31,13 @@ void cmd_gpage(struct ptc* p){
 void cmd_gcolor(struct ptc* p){
 	ARGCHECK(1);
 	
-	//TODO:ERR argument range
+	//TODO:ERR:MED argument range
 	struct stack_entry* e = stack_pop(&p->stack);
 	p->graphics.color = FP_TO_INT(VALUE_NUM(e));
 }
 
 void cmd_gcls(struct ptc* p){
-	//TODO:ERR argument range
+	//TODO:ERR:MED argument range
 	u8 color;
 	if (p->stack.stack_i == 1){
 		struct stack_entry* e = stack_pop(&p->stack);
@@ -58,8 +57,8 @@ void cmd_gcls(struct ptc* p){
 
 void cmd_gfill(struct ptc* p){
 	//GFILL x1 y1 x2 y2 [c]
-	//TODO:CODE Determine what type is appropriate here?
-	//TODO:ERR Check argument clamping accuracy
+	//TODO:CODE:NONE Determine what type is appropriate here?
+	//TODO:ERR:LOW Check argument clamping accuracy
 	int x1 = STACK_INT(0);
 	int y1 = STACK_INT(1);
 	int x2 = STACK_INT(2);
@@ -72,7 +71,7 @@ void cmd_gfill(struct ptc* p){
 	y2 = y2 < 0 ? 0 : y2 > GRP_HEIGHT ? GRP_HEIGHT : y2;
 	
 	if (p->stack.stack_i == 5){
-		color = STACK_INT(4); //TODO:ERR Argument ranges
+		color = STACK_INT(4); //TODO:ERR:MED Argument ranges
 	} else if (p->stack.stack_i == 4){
 		color = p->graphics.color;
 	} else {
@@ -102,7 +101,7 @@ void cmd_gbox(struct ptc* p){
 	y2 = y2 < 0 ? 0 : y2 > GRP_HEIGHT ? GRP_HEIGHT : y2;
 	
 	if (p->stack.stack_i == 5){
-		color = STACK_INT(4); //TODO:ERR Argument ranges
+		color = STACK_INT(4); //TODO:ERR:MED Argument ranges
 	} else if (p->stack.stack_i == 4){
 		color = p->graphics.color;
 	} else {
@@ -142,7 +141,7 @@ void cmd_gline(struct ptc* p){
 	u8 color;
 	
 	if (p->stack.stack_i == 5){
-		color = STACK_INT(4); //TODO:ERR Argument ranges
+		color = STACK_INT(4); //TODO:ERR:MED Argument ranges
 	} else if (p->stack.stack_i == 4){
 		color = p->graphics.color;
 	} else {
@@ -157,7 +156,6 @@ void cmd_gline(struct ptc* p){
 		// x1 -> x2
 		fixp y_slope = ((((int64_t)(y2 - y1) << 32) / (x2 - x1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
 		// 8.12 FP I guess
-		//TODO:IMPL:HIGH Make this work for lines in any direction
 		if (x1 > x2){
 			int temp = y1;
 			y1 = y2;
@@ -175,7 +173,6 @@ void cmd_gline(struct ptc* p){
 		// X-range <= Y-range
 		fixp x_slope = ((((int64_t)(x2 - x1) << 32) / (y2 - y1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
 		// 8.12 FP I guess
-		//TODO:IMPL:HIGH Make this work for lines in any direction
 		if (y1 > y2){
 			int temp = y1;
 			y1 = y2;

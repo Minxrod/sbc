@@ -8,12 +8,12 @@ struct stack_entry* stack_get(struct value_stack* s, int index){
 }
 
 void stack_push(struct value_stack* s, struct stack_entry value){
-	//TODO:ERR Handle full stack
+	//TODO:ERR:LOW Handle full stack?
 	s->entry[s->stack_i++] = value;
 }
 
 struct stack_entry* stack_pop(struct value_stack* s){
-	//TODO:ERR Handle empty stack
+	//TODO:ERR:MED Handle empty stack?
 	return &s->entry[--s->stack_i];
 }
 

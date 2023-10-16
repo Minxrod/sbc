@@ -1,7 +1,7 @@
 #include "runner.h"
 #include "system.h"
 
-// TODO:CODE Move these files to a subdirectory?
+// TODO:CODE:NONE Move these files to a subdirectory?
 #include "console.h"
 #include "operators.h"
 #include "sysvars.h"
@@ -113,7 +113,7 @@ void run(struct program* code, struct ptc* p) {
 		switch (instr){
 			case BC_SMALL_NUMBER:
 				iprintf("val=%d", data);
-				// TODO:IMPL small decimals should also be of this form?
+				// TODO:IMPL:LOW small decimals should also be of this form?
 				if ((u8)data <= 99){
 					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << FIXPOINT}};
 				} else {
@@ -233,7 +233,6 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					s32 a;
 					s32 b = ARR_DIM2_UNUSED;
-					// TODO:ERR check for strings here before reading
 					if (r->argcount == 2){
 						struct stack_entry* y = stack_pop(&p->stack);
 						b = FP_TO_INT(VALUE_NUM(y));
@@ -257,7 +256,7 @@ void run(struct program* code, struct ptc* p) {
 				break;
 			
 			case BC_DIM:
-				//TODO:ERR error checking for strings here
+				//TODO:ERR:MED error checking for strings here
 				{
 				u32 a;
 				u32 b = ARR_DIM2_UNUSED;
@@ -299,7 +298,7 @@ void run(struct program* code, struct ptc* p) {
 				// this will always occur when the stack is prepared already
 				// call_entry: Var ptr 
 				// stack: end, [step]
-				// TODO:ERR check if stack has entry!
+				// TODO:ERR:MED check if stack has entry!
 				s32* current = (s32*)p->calls.entry[p->calls.stack_i-1].var;
 				s32 end;
 				s32 step;
@@ -320,7 +319,7 @@ void run(struct program* code, struct ptc* p) {
 						data = code->data[r->index++];
 						if (instr == BC_COMMAND){
 							if (data == CMD_NEXT){
-								// TODO:IMPL Variable check...
+								// TODO:IMPL:HIGH Check variable for a given NEXT to see if it counts or not
 								// find NEXT, go back one instruction, execute statement if it is VAR?
 								// Found a NEXT
 								nest--;

@@ -1,7 +1,5 @@
 #pragma once
 
-// TODO:TEST Rewrite test cases to use these constants instead of hardcoded strings
-// for ease of modification
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
 	BC_BEGIN_LOOP = 'B',
@@ -47,7 +45,7 @@ enum command_ids {
 	CMD_TMREAD,
 };
 
-// TODO:CODE Either rename the constants or the functions to match FUN vs func
+// TODO:CODE:NONE Either rename the constants or the functions to match FUN vs func
 enum functions {
 	FUN_ABS, FUN_ASC, FUN_ATAN, FUN_BGCHK, FUN_BGMCHK, FUN_BGMGETV, FUN_BTRIG, FUN_BUTTON,
 	FUN_CHKCHR, FUN_CHR$, FUN_COS, FUN_DEG, FUN_EXP, FUN_FLOOR, FUN_GSPOIT, FUN_HEX$, FUN_ICONCHK,
@@ -65,7 +63,8 @@ enum sysvars {
 	SYS_SPHITNO, SYS_SPHITX, SYS_SPHITY, SYS_SPHITT,
 	SYS_KEYBOARD, SYS_FUNCNO,
 	SYS_ICONPUSE, SYS_ICONPAGE, SYS_ICONPMAX,
-	SYS_ERL, SYS_ERR
+	SYS_ERL, SYS_ERR,
+	SYS_MEM$,
 };
 
 enum operations {

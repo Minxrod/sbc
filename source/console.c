@@ -286,7 +286,7 @@ void cmd_input(struct ptc* p){
 				} else {
 					// invalid character
 					valid = false;
-					break; //TODO:IMPL ?Redo from start
+					break;
 				}
 			} else if (e->type == (VAR_STRING | VAR_VARIABLE)){
 				if (c == ',' || c == '\0' || out_i >= CONSOLE_WIDTH){
@@ -297,7 +297,7 @@ void cmd_input(struct ptc* p){
 					}
 					(*(struct string**)e->value.ptr) = s;
 					
-					// TODO:IMPL Wide string support?
+					// TODO:IMPL:LOW Wide string support?
 					s->uses = 1;
 					s->len = out_i - prev_i - 1;
 					for (int j = prev_i; j < out_i; ++j){

@@ -38,16 +38,16 @@ void init_resource(struct resources* r){
 		for (int i = 0; i < 10; ++i){
 			r->chr[12 + i + CHR_BANKS * lower] = (u8*)(VRAM_SP_CHR + CHR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
-		// TODO:IMPL May need RAM copies
+		// TODO:IMPL:LOW May need RAM copies
 		for (int i = 0; i < 1; ++i){
 			r->scr[i + 2 * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
 		r->col[0] = (u16*) VRAM_UPPER_PAL_BG;
 		r->col[1] = (u16*) VRAM_UPPER_PAL_SP;
-		r->col[2] = (u16*) 0; //TODO:IMPL GRP
+		r->col[2] = (u16*) 0; //TODO:IMPL:HIGH GRP
 		r->col[3] = (u16*) VRAM_LOWER_PAL_BG;
 		r->col[4] = (u16*) VRAM_LOWER_PAL_SP;
-		r->col[5] = (u16*) 0; //TODO:IMPL GRP
+		r->col[5] = (u16*) 0; //TODO:IMPL:HIGH GRP
 	}
 	for (int i = 0; i < 4; ++i){
 		r->grp[i] = calloc(GRP_SIZE, 1);
@@ -105,7 +105,7 @@ void init_resource(struct resources* r){
 	
 	char name[] = "resources/XXXX.PTC";
 	
-	// TODO:CODE This is shared with NDS?
+	// TODO:CODE:MED This is shared with NDS?
 	for (int i = 0; i < CHR_BANKS*2; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = chr_files[4*i+j];
@@ -113,7 +113,7 @@ void init_resource(struct resources* r){
 		FILE* f = fopen(name, "rb");
 		if (!f){
 			iprintf("Failed to load file: %s\n", name);
-			abort(); //TODO:ERR Handle gracefully? Fallback generated tiles?
+			abort(); //TODO:ERR:LOW Handle gracefully? Fallback generated tiles?
 		}
 		fread(r->chr[i], sizeof(u8), HEADER_SIZE, f);
 		fread(r->chr[i], sizeof(u8), CHR_SIZE, f);
@@ -128,7 +128,7 @@ void init_resource(struct resources* r){
 		FILE* f = fopen(name, "rb");
 		if (!f){
 			iprintf("Failed to load file: %s\n", name);
-			abort(); //TODO:ERR Handle gracefully? Fallback generated tiles?
+			abort(); //TODO:ERR:LOW Handle gracefully? Fallback generated tiles?
 		}
 		fread(r->col[i], sizeof(u8), HEADER_SIZE, f);
 		fread(r->col[i], sizeof(u8), COL_SIZE, f);
@@ -192,7 +192,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 	} else if (len == 4){
 		if (name[3] >= '0' && name[3] < '7'){
 			bank = name[3] - '0';
-			upper = 0; //TODO:IMPL depends on BG,SP,GRP page
+			upper = 0; //TODO:IMPL:MED depends on BG,SP,GRP page
 		} else if (name[3] == 'U'){
 			bank = 0;
 			upper = 1;
@@ -205,7 +205,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 		}
 	} else if (len == 3){
 		bank = 0;
-		upper = 0; //TODO:IMPL depends on BG,SP,GRP page
+		upper = 0; //TODO:IMPL:MED depends on BG,SP,GRP page
 	} else {
 		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 		return NULL;
@@ -236,7 +236,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 	} else if (c == 'C'){ //COL
 		return p->res.col[3*upper+bank];
 	} else if (c == 'G'){ //GRP
-		// TODO:IMPL Does page matter here?
+		// TODO:IMPL:LOW Does page matter here?
 		return p->res.grp[(int)bank];
 	}
 	p->exec.error = ERR_INVALID_RESOURCE_TYPE;
@@ -251,7 +251,7 @@ sfTexture* gen_col_texture(u16* src){
 		u16 s = src[i];
 //		s = ((s & 0xff00) >> 8) | ((s & 0x00ff) << 8);
 		
-		array[4*i+0] = (s & 0x001f) << 3; //TODO:IMPL Adjust values to match PTC
+		array[4*i+0] = (s & 0x001f) << 3; //TODO:IMPL:LOW Adjust values to match PTC
 		array[4*i+1] = ((s & 0x03e0) >> 2) | ((src[2*i] & 0x8000) >> 13);
 		array[4*i+2] = ((s & 0x7c00) >> 7);
 		array[4*i+3] = ((i % 16) || (((i % 3) == 2) && (i != 0))) ? 255 : 0;

@@ -80,7 +80,7 @@ u16 get_inkey(struct input* i){
 
 // Should also set keyboard, inkey!
 void set_touch(struct input* i, bool t, u8 x, u8 y){
-	// TODO:CODE Does this one need thread synchronization?
+	// TODO:CODE:MED Does this one need thread synchronization?
 	if (t){
 		i->tchtime++;
 		i->tchx = x;
@@ -169,6 +169,6 @@ void func_inkey(struct ptc* p){
 		return;
 	}
 	u16 inkey = get_inkey(i);
-	//TODO: Doesn't handle wide characters
+	//TODO:CODE:LOW Doesn't handle wide characters
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = &single_char_strs[3 * to_char(inkey)]}});
 }

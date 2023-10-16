@@ -102,10 +102,10 @@ struct launch_info {
 int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
 	
-	// TODO:IMPL Check for escapes, pauses, etc.
+	// TODO:IMPL:MED Check for escapes, pauses, etc.
 	struct program bc = {0, malloc(2*info->prg->size)};
 	tokenize(info->prg, &bc);
-	free(info->prg->data); // TODO:IMPL Remove for debug viewing of source? 
+	free(info->prg->data);
 	// only needs BC, not source
 	run(&bc, info->p);
 	
@@ -130,7 +130,7 @@ int main(int argc, char** argv){
 		window_name = argv[1];
 		prg_load(&program, argv[1]);
 	} else {
-		// Load default program: TODO:IMPL load an actual launcher program
+		// Load default program: TODO:IMPL:LOW load an actual launcher program
 		prg_load(&program, "programs/SAMPLE2.PTC");
 	}
 	
@@ -197,8 +197,8 @@ int main(int argc, char** argv){
 			}
 		}
 		
-		// TODO:CODE SFML 2.6, use scan codes?
-		// Set buttons, TODO:IMPL touch, keys
+		// TODO:CODE:NONE SFML 2.6, use scan codes?
+		// Set buttons, TODO:IMPL:LOW touch
 		int b = 0;
 		for (int i = 0; i < 12; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
@@ -212,7 +212,7 @@ int main(int argc, char** argv){
 		sfRenderWindow_display(window);
 	}
 	
-	//TODO: Signal thread to die on exit
+	//TODO:CODE:MED Signal thread to die on exit
 	sfRenderWindow_destroy(window);
 	
 	free_system(ptc);
