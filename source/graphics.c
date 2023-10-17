@@ -29,8 +29,6 @@ void cmd_gpage(struct ptc* p){
 }
 
 void cmd_gcolor(struct ptc* p){
-	ARGCHECK(1);
-	
 	//TODO:ERR:MED argument range
 	struct stack_entry* e = stack_pop(&p->stack);
 	p->graphics.color = FP_TO_INT(VALUE_NUM(e));

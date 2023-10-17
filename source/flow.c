@@ -146,7 +146,7 @@ idx search_label(struct ptc* p, const char* label){
 void cmd_if(struct ptc* p){
 	// current stack consists of one item (should be numeric)
 	fixp value = STACK_NUM(0);
-	struct stack_entry* e = stack_pop(&p->stack);
+//	struct stack_entry* e = stack_pop(&p->stack);
 	u32 index = p->exec.index;
 	if (value){
 		// true: proceed to next instruction as normal

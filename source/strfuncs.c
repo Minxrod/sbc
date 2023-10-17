@@ -4,7 +4,6 @@
 #include "error.h"
 
 void func_len(struct ptc* p){
-	FUNC_ARGCHECK(1);
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -18,7 +17,6 @@ void func_len(struct ptc* p){
 }
 
 void func_mid(struct ptc* p){
-	FUNC_ARGCHECK(3);
 	struct value_stack* s = &p->stack;
 	struct stack_entry* len_e = stack_pop(s);
 	struct stack_entry* start_e = stack_pop(s);
@@ -51,7 +49,6 @@ void func_mid(struct ptc* p){
 }
 
 void func_val(struct ptc* p){
-	FUNC_ARGCHECK(1);
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	

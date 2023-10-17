@@ -40,6 +40,10 @@ enum types {
 #define STACK_NUM(i) VALUE_NUM(ARG(i))
 #define STACK_STR(i) VALUE_STR(ARG(i))
 
+#define STACK_REL_INT(i) STACK_INT(p->stack.stack_i + i)
+#define STACK_REL_NUM(i) STACK_NUM(p->stack.stack_i + i)
+#define STACK_REL_STR(i) STACK_STR(p->stack.stack_i + i)
+
 // This file defines the data structures used to store variable information.
 
 // Notes on vars:

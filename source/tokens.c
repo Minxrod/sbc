@@ -196,17 +196,17 @@ void tok_convert(struct tokenizer* state){
 	
 	tok_eval(state);
 	
-	iprintf("Current tokens (prior validation):\n");
+	/*iprintf("Current tokens (prior validation):\n");
 	for (size_t i = 0; i < 100; ++i){
 		if (state->tokens[i].len == 0)
 			break;
 		print_token(state, state->tokens[i]);
-	}
-	
-	tok_test(state);
+	}*/
 	
 	// TODO:IMPL:HIGH Error checking for argument count should be done here (or eval, which already tracks this)
 	// TODO:IMPL:HIGH Error checking for command/function/operator argument
+	tok_test(state);
+	
 	// type validation could be done here (instead of at runtime)
 	
 	tok_code(state);
@@ -249,7 +249,7 @@ const char* cmd_format[] = {
 
 const char* op_format[] = {
 	"NN,SS","*","NN","NN,SN","NN","*", //;
-	"NN,SS","N", //(-)
+	"nN,sS","N", //(-)
 	"NN,SS","NN,SS","NN","NN","NN","NN", //<=
 	"NN",//%
 	"NN","NN","N","NN","N",//!
@@ -924,6 +924,7 @@ void tok_with_condition(struct tokenizer* state, bool(*condition)(char)){
 	} while (condition(c));
 }
 
+//TODO:CODE:LOW Rename this/merge with tokenizer loop
 void tok_none(struct tokenizer* state){
 	// This state represents: Whitespace and default state
 	// This state can transition to:

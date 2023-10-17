@@ -23,11 +23,6 @@
 #define ERROR(code) { p->exec.error = code; return; }
 // To read an argument on the stack
 #define ARG(index) (stack_get(&p->stack, index))
-// Validate number of arguments is expected for command
-#define ARGCHECK(expected) { if (p->stack.stack_i != expected) { p->exec.error = ERR_WRONG_ARG_COUNT; return; }}
-// Validate number of arguments is expected for function
-#define FUNC_ARGCHECK(expected) { if (p->exec.argcount != expected) { p->exec.error = ERR_WRONG_ARG_COUNT; return; }}
-
 
 #ifdef ARM9
 #include <nds/ndstypes.h>

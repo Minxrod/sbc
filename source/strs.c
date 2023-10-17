@@ -127,6 +127,8 @@ int digit_value(char c){
 
 // More general number parsing
 fixp str_to_number(u8* data, idx len, int base, bool allow_decimal){
+	//TODO:CODE:MED Find way to generalize this for strings AND pure data
+	// maybe create a temporary struct string?
 	unsigned int number = 0;
 	unsigned int fraction = 0;
 	unsigned int maximum = 1;
@@ -374,6 +376,24 @@ void* str_at(const void* src, const u16 index){
 			return &((u8*)src)[2+index];
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at)\n");
+			abort();
+	}
+}
+
+// Gets the wide character value in the string at the given index.
+u16 str_at_wide(const void* src, const u16 index){
+	struct string* s = (struct string*)src;
+	
+	switch (*(char*)src){
+		case STRING_CHAR:
+			return to_wide(s->ptr.s[index]);
+		case BC_LABEL_STRING:
+		case BC_LABEL:
+		case BC_STRING:
+			return to_wide(((u8*)src)[2+index]);
+		case STRING_EMPTY:
+		default:
+			iprintf("Unimplemented/Not a valid string type! (str_at_wide)\n");
 			abort();
 	}
 }

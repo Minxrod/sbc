@@ -96,37 +96,25 @@ void op_mult(struct ptc* p){
 }
 
 void op_div(struct ptc* p){
-	struct value_stack* s = &p->stack;
-	struct stack_entry* b = stack_pop(s);
-	struct stack_entry* a = stack_pop(s);
+	//TODO:ERR:MID Check for overflow, division by zero
+	s32 x, y;
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(((int64_t)x << FIXPOINT) / y)}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	x = STACK_REL_NUM(-2);
+	y = STACK_REL_NUM(-1);
+	
+	p->stack.stack_i -= 2;
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(((int64_t)x << FIXPOINT) / y)}});
 }
 
 void op_sub(struct ptc* p){
-	struct value_stack* s = &p->stack;
-	struct stack_entry* b = stack_pop(s);
-	struct stack_entry* a = stack_pop(s);
+	//TODO:ERR:MID Check for overflow
+	s32 x, y;
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x - y}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	x = STACK_REL_NUM(-2);
+	y = STACK_REL_NUM(-1);
+	
+	p->stack.stack_i -= 2;
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {x - y}});
 }
 
 void op_negate(struct ptc* p){
