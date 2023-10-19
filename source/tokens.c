@@ -221,8 +221,9 @@ void tok_convert(struct tokenizer* state){
 // E = both
 // L = label (includes string)
 // 0 = Nothing (no argument) (must be first in list)
-// , = comma
 // ; = semicolon
+// < = comma
+// , = separates valid formations
 const char* cmd_format[] = {
 	"*","NN","N,NN","*", //DIM
 	"*","*","*","0,n", //NEXT
@@ -230,7 +231,7 @@ const char* cmd_format[] = {
 	"L,l","L,l","N","0", //RETURN
 	"0","0", //STOP
 	"0","NNNNNN","0","N","N", //WAIT
-	"*","*", //LINPUT
+	"*","S;s,s", //LINPUT
 	"","N,NN,NNN,NNNN", //BEEP
 	"","","","","", //BGMCLEAR
 	"","","","","","","", //BGMVOL
@@ -366,7 +367,7 @@ void tok_test(struct tokenizer* state){
 				const char* valid;
 				bool is_valid = true;
 				if (state->tokens[i].ofs == OP_COMMA){
-					stack[stack_i++] = ',';
+					stack[stack_i++] = '<';
 				} else if (state->tokens[i].ofs == OP_SEMICOLON){
 					stack[stack_i++] = ';';
 				} else if (prio % 8 != 6){

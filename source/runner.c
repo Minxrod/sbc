@@ -314,6 +314,9 @@ void run(struct program* code, struct ptc* p) {
 					// if val + step will never reach end, then skip to NEXT
 					// treat valid NEXT as first in a line
 					int nest = 1;
+					// TODO:IMPL:HIGH
+					// This loop doesn't work, I don't think?
+					// It should scan for NEXT at line start
 					while (nest > 0){
 						instr = code->data[r->index++];
 						data = code->data[r->index++];
@@ -354,6 +357,7 @@ void run(struct program* code, struct ptc* p) {
 		
 		iprintf("\n");
 	}
+	
 	/*
 	for (u32 i = 0; i < p->stack.stack_i; ++i){
 		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);

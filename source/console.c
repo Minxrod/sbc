@@ -127,7 +127,6 @@ void cmd_print(struct ptc* p){
 
 void cmd_color(struct ptc* p){
 	struct console* c = &p->console;
-	// TODO:ERR:HIGH check arguments types
 	if (p->stack.stack_i == 2){
 		c->col = 0;
 		c->col |= STACK_INT(0); // FG
@@ -135,15 +134,12 @@ void cmd_color(struct ptc* p){
 	} else if (p->stack.stack_i == 1){
 		c->col &= ~COL_FG_MASK; // clear FG value
 		c->col |= STACK_INT(0); // FG
-	} else {
-		p->exec.error = ERR_WRONG_ARG_COUNT;
 	}
 	p->stack.stack_i = 0;
 }
 
 void cmd_locate(struct ptc* p){
 	struct console* c = &p->console;
-	// TODO:ERR:HIGH check arguments types
 	if (p->stack.stack_i == 2){
 		//LOCATE is a silent failure on out of range
 		s32 x = FP_TO_INT(VALUE_NUM(stack_get(&p->stack, 0)));
@@ -152,16 +148,12 @@ void cmd_locate(struct ptc* p){
 			c->x = x;
 			c->y = y;
 		}
-	} else {
-		p->exec.error = ERR_WRONG_ARG_COUNT;
-
 	}
 	p->stack.stack_i = 0;
 }
 
 void cmd_cls(struct ptc* p){
 	struct console* c = &p->console;
-	// TODO:ERR:MED check arguments types, quantity
 	for (int i = 0; i < CONSOLE_HEIGHT; ++i){
 		for (int j = 0; j < CONSOLE_WIDTH; ++j){
 			c->text[i][j] = 0;
@@ -242,9 +234,9 @@ void cmd_input(struct ptc* p){
 		output = con->text[con->y];
 		out_index = 0;
 		while ((inkey = get_inkey(&p->input)) != '\r'){
-			if ((inkey == '\b' || check_pressed_manual(&p->input, BUTTON_ID_Y, 15, 4))
-				&& out_index > 0){
-				output[--out_index] = 0;
+			if ((inkey == '\b' || check_pressed_manual(&p->input, BUTTON_ID_Y, 15, 4))){
+				if (out_index > 0)
+					output[--out_index] = 0;
 			} else if (inkey && out_index < CONSOLE_WIDTH){
 				output[out_index++] = inkey;
 			} else {

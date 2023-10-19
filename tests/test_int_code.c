@@ -9,6 +9,7 @@
 #include "arrays.h"
 #include "strs.h"
 #include "ptc.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -262,6 +263,17 @@ int test_int_code(){
 		CHECK_VAR_INT("D",19);
 		
 		free_code(p);
+	}
+	
+	// FOR stack stuff test
+	{
+		char* code = "FOR I=0 TO 1\rFOR J=0 TO 1\r?I,J\rIF J==0 THEN NEXT J\rNEXT I\rNEXT J\r";
+		
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_INT("I",2); // after FOR ends, this is the result
+		CHECK_VAR_INT("J",2);
+		ASSERT(p->exec.error == ERR_NONE, "[for] Check NEXT VAR behavior");
 	}
 	
 	SUCCESS("test_int_code success");

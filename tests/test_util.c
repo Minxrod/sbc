@@ -1,5 +1,7 @@
 #include "test_util.h"
 
+#include "error.h"
+
 int check_fail;
 
 char outcode[2048];
@@ -19,6 +21,10 @@ struct ptc* run_code(char* code){
 	ptc->console.test_mode = true;
 	// run code
 	run(&o, ptc);
+	
+	if (ptc->exec.error){
+		iprintf("Error: %s\n", error_messages[ptc->exec.error]);
+	}
 	
 	return ptc;
 }
@@ -41,6 +47,10 @@ struct ptc* run_code_keys(char* code, char* keys, int len){
 		set_inkey(&ptc->input, to_wide(keys[i]));
 	// run code
 	run(&o, ptc);
+	
+	if (ptc->exec.error){
+		iprintf("Error: %s\n", error_messages[ptc->exec.error]);
+	}
 	
 	return ptc;
 }

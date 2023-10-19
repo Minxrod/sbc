@@ -110,9 +110,11 @@ void cmd_next(struct ptc* p){
 	// check if need to loop
 	if ((step < 0 && end > val) || (step >= 0 && end < val)){
 		// loop ends
-		// REMOVE ENTRY stack_i from the stack
-		// TODO:IMPL:HIGH copy down all further entries
-		p->calls.stack_i--; // decrease stack count
+		// Remove entry stack_i from the stack
+		p->calls.stack_i--; // decrease stack count: we will copy one past this down
+		for (u32 i = stack_i; i < p->calls.stack_i; ++i){
+			p->calls.entry[i] = p->calls.entry[i+1];
+		}
 	} else {
 		// loop continues, jump back to this point
 		p->exec.index = c->address;
