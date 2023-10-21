@@ -232,7 +232,7 @@ const char* cmd_format[] = {
 	"0","0", //STOP
 	"0","NNNNNN","0","N","N", //WAIT
 	"*","S;s,s", //LINPUT
-	"","N,NN,NNN,NNNN", //BEEP
+	"","0,N,NN,NNN,NNNN", //BEEP
 	"","","","","", //BGMCLEAR
 	"","","","","","","", //BGMVOL
 	"","","","","","","", //CHRREAD
@@ -247,6 +247,20 @@ const char* cmd_format[] = {
 	"","","","","",//SWAP
 	"",//TMREAD
 };
+
+const char* func_format[] = {
+	"N","S","N,NN","","","","0","0,N",//BUTTON
+	"NN","N","N","N","","N","NN,NNN","N,NN","",//ICONCHK
+	"0","","","S","","SNN","0","NN","N",//RAD
+	"","N","N","N","","","","",//SPHITRC
+	"","N","N","","","S",//VAL
+};
+
+const char func_return[] = "NNNNNNNN"
+"NSNNNNNSN"
+"SNSNNSNNN"
+"SNNNNNNN"
+"NNSSNN";
 
 const char* op_format[] = {
 	"NN,SS","*","NN","NN,SN","NN","*", //;
@@ -395,7 +409,20 @@ void tok_test(struct tokenizer* state){
 				break;
 				
 			case function:
-				//TODO:IMPL:CRIT
+				if (argc){
+					stack_i -= argc;
+				}
+				u8 func = state->tokens[i].ofs;
+				const char* valid = func_format[func];
+				bool is_valid = check_cmd(&stack[stack_i], argc, valid);
+				if (!is_valid){
+					// Set error state on invalid command
+					print_token(state, state->tokens[i]);
+					iprintf("Stack: %d %s\n", stack_i, stack);
+					abort();
+				}
+				stack[stack_i++] = func_return[func];
+				argc = 0;
 				break;
 				
 			case name:
@@ -404,7 +431,7 @@ void tok_test(struct tokenizer* state){
 					// TODO:IMPL:HIGH Validate arguments passed here as numbers (array access)
 					stack_i -= argc;
 					argc = 0;
-				}	
+				}
 				u8 last = state->tokens[i].len;
 				if (state->source->data[state->tokens[i].ofs + last - 1] == '$'){
 					stack[stack_i++] = 's';

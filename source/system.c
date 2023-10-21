@@ -116,9 +116,11 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	draw_graphic(&graphic, p);
 	
 	sfShader_setFloatUniform(shader, "colbank", 2);
+	sfShader_setBoolUniform(shader, "grp_mode", true);
 	sfRenderWindow_drawSprite(rw, graphic.sprite, &rs);
 	
 	sfShader_setFloatUniform(shader, "colbank", 0);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
 	sfRenderWindow_drawVertexArray(rw, console_map.va, &rs);
 	
 	free_graphic(&graphic);

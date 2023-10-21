@@ -110,4 +110,5 @@ void cmd_dtread(struct ptc* p){
 	*day = (*((u8*)str_at(date_str,8)) - '0') * 10;
 	*day += (*((u8*)str_at(date_str,9)) - '0') * 1;
 	*day <<= FIXPOINT;
+	p->stack.stack_i = 0;
 }
