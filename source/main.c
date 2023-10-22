@@ -6,7 +6,7 @@
 
 #include "system.h"
 #include "program.h"
-#include "tokens.h"
+#include "interpreter/tokens.h"
 
 #include <stdio.h>
 
@@ -59,6 +59,7 @@ int main(void){
 	// set this after creating system to ensure resources are loaded
 	
 	prg_load(&program, "SAMPLE1.PTC");
+	iprintf("program malloc: %d\n", 2*program.size);
 	struct program bc = {0, malloc(2*program.size)};
 	tokenize(&program, &bc);
 //	free(program.data);

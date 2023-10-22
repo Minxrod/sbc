@@ -17,6 +17,7 @@
  * 
  */
 void init_mem_prg(struct program* p, int prg_size){
+	iprintf("init_mem_prg calloc: %d\n", prg_size*2);
 	p->data = calloc(2, prg_size);
 }
 
@@ -43,6 +44,7 @@ void prg_load(struct program* p, const char* filename){
 	// load success: read file to buffer
 	
 	p->size = h.prg_size;
+	iprintf("prg_load malloc: %d\n", (int)h.prg_size);
 	p->data = malloc(h.prg_size);
 	r = fread(p->data, sizeof(char), h.prg_size, f);
 	if (r < h.prg_size || ferror(f)){

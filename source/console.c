@@ -43,6 +43,7 @@ void con_newline(struct console* c, bool scroll){
 }
 
 struct console* init_console(){
+	iprintf("console calloc: %d\n", (int)sizeof(struct console));
 	struct console* c = calloc(sizeof(struct console), 1);
 	c->tabstep = 4;
 	return c;

@@ -16,7 +16,7 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	nds
-SOURCES		:=	gfx source data tests
+SOURCES		:=	gfx source data tests source/interpreter
 INCLUDES	:=	include build source # source is needed for tests
 
 #---------------------------------------------------------------------------------
@@ -24,9 +24,9 @@ INCLUDES	:=	include build source # source is needed for tests
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -Werror -Wpedantic -Wextra -O2\
+CFLAGS	:=	-Wall -Werror -Wpedantic -Wextra -O2\
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
-			-ffast-math \
+			-ffast-math\
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
@@ -38,7 +38,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lfat -lnds9
+LIBS	:= -lfat -lnds9 -lm
  
  
 #---------------------------------------------------------------------------------

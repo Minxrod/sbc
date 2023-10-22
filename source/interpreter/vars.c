@@ -32,7 +32,7 @@ bool namecmp(char* a, u32 len, char b[16]){
 /// Allocate memory for vars.
 void init_mem_var(struct variables* v, uint_fast16_t var_count){
 	v->vars_max = var_count;
-	iprintf("calloc=%d\n", (int)var_count * (int)sizeof(struct named_var));
+	iprintf("init_mem_var calloc=%d\n", (int)var_count * (int)sizeof(struct named_var));
 	v->vars = calloc(var_count, sizeof(struct named_var));
 	for (uint_fast16_t i = 0; i < v->vars_max; ++i){
 		v->vars[i].type = VAR_EMPTY;

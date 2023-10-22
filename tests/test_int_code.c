@@ -269,6 +269,8 @@ int test_int_code(){
 		CHECK_VAR_INT("I",2); // after FOR ends, this is the result
 		CHECK_VAR_INT("J",2);
 		ASSERT(p->exec.error == ERR_NONE, "[for] Check NEXT VAR behavior");
+		
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_code success");

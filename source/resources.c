@@ -50,13 +50,14 @@ void init_resource(struct resources* r){
 		r->col[5] = (u16*) 0; //TODO:IMPL:HIGH GRP
 	}
 	for (int i = 0; i < 4; ++i){
+		iprintf("GRP%d calloc: %d\n", i, GRP_SIZE);
 		r->grp[i] = calloc(GRP_SIZE, 1);
 	}
 	char* name;
 	name = "resources/BGF0.PTC";
 	FILE* f = fopen(name, "rb");
 	if (!f){
-		iprintf("Failed to load file: %s\n", name);
+		perror("Failed to load file: %s\n");
 		abort();
 	}
 	fread(r->chr[0], sizeof(u8), HEADER_SIZE, f);
@@ -149,7 +150,6 @@ void init_resource(struct resources* r){
 			abort();
 		}
 	}
-
 #endif
 }
 

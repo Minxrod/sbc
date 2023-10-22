@@ -3,6 +3,7 @@
 #ifndef ARM9_BUILD
 #ifdef ARM9
 #include <nds.h>
+#include <fat.h>
 #endif
 
 #include "test_util.h"
@@ -23,6 +24,11 @@
 #include "test_console.h"
 
 int run_tests(){
+#ifdef ARM9
+	// Needed for file loading...
+	fatInitDefault();
+#endif
+	
 #ifndef EZ80
 	FAST(test_vars());
 	FAST(test_strs());

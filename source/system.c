@@ -10,9 +10,10 @@
 #include "program.h"
 
 struct ptc* init_system(int var, int str, int arr){
+	iprintf("init_system calloc: %d\n", (int)sizeof(struct ptc));
 	struct ptc* ptc = calloc(sizeof(struct ptc), 1);
 	if (ptc == NULL){
-		iprintf("Error allocating memory!");
+		iprintf("Error allocating memory!\n");
 		abort();
 	}
 //	*ptc = (const struct ptc){0}; // see if this reduces stack
@@ -20,6 +21,8 @@ struct ptc* init_system(int var, int str, int arr){
 	// init vars memory
 	init_mem_var(&ptc->vars, var);
 	init_mem_str(&ptc->strs, str, STRING_CHAR);
+	iprintf("%p %p %p %p\n", (void*)ptc->vars.vars, (void*)ptc->strs.strs, ptc->strs.str_data, NULL);
+//	return ptc;
 	init_mem_arr(&ptc->arrs, var, arr);
 	ptc->vars.strs = &ptc->strs;
 	ptc->vars.arrs = &ptc->arrs;
@@ -31,7 +34,6 @@ struct ptc* init_system(int var, int str, int arr){
 	
 	init_resource(&ptc->res);
 	
-	//allocate ptc struct here?
 	return ptc;
 }
 

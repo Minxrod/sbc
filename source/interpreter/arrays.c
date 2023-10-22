@@ -4,10 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef ARM9
+#include <nds/system.h>
+#endif
+
 void init_mem_arr(struct arrays* a, int array_count, int element_count){
 	a->arr_data_size = element_count + 2 * array_count;
 	a->arr_data_next = 0;
-	iprintf("calloc=%d\n", (int)a->arr_data_size * (int)sizeof(union value));
+	iprintf("init_mem_arr calloc=%d\n", (int)a->arr_data_size * (int)sizeof(union value));
 	a->arr_data = calloc(a->arr_data_size, sizeof(union value));
 }
 

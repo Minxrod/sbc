@@ -303,6 +303,8 @@ int test_int_vars(){
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[clear] Clears variable A correctly");
 		ASSERT(get_arr_entry(&p->vars, "B", 1, VAR_NUMBER | VAR_ARRAY, 3, ARR_DIM2_UNUSED)->number == INT_TO_FP(0), "[clear] Clears variable B[] correctly");
 		ASSERT(test_var(&p->vars, "C", VAR_STRING)->value.ptr == NULL, "[clear] Clears string C$ correctly");
+		
+		free_code(p);
 	}
 	
 	// Chunk of SAMPLE5 that broke
@@ -316,6 +318,8 @@ int test_int_vars(){
 		ASSERT(test_var(&p->vars, "DAYW", VAR_NUMBER)->value.number == INT_TO_FP(8), "[vars] DAYW=8");
 		ASSERT(test_var(&p->vars, "DRAWD", VAR_NUMBER)->value.number == INT_TO_FP(30), "[vars] DRAWD=30");
 		ASSERT(test_var(&p->vars, "BGL", VAR_NUMBER)->value.number == INT_TO_FP(4), "[vars] BGL=4");
+		
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_vars success");

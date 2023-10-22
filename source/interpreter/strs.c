@@ -60,16 +60,14 @@ bool is_varname(const char c){
 /// Allocate memory for strs
 void init_mem_str(struct strings* s, uint_fast16_t str_count, enum string_type str_type){
 	s->strs_max = str_count;
-	iprintf("calloc=%d\n", (int)str_count * (int)sizeof(struct string));
+	iprintf("init_mem_str strs calloc=%d\n", (int)str_count * (int)sizeof(struct string));
 	s->strs = calloc(str_count, sizeof(struct string));
-	iprintf("CRASH?");
 	s->type = str_type;
 	
 	s->empty = (struct string){STRING_EMPTY, 0, 0, {NULL}};
 	if (str_type == STRING_CHAR){
-		iprintf("calloc=%d\n", (int)sizeof(u8) * MAX_STRLEN * (int) str_count);
+		iprintf("init_mem_str str_data calloc=%d\n", (int)sizeof(u8) * MAX_STRLEN * (int) str_count);
 		s->str_data = malloc(str_count * sizeof(u8) * MAX_STRLEN);
-		iprintf("CRASH?");
 	} else if (str_type == STRING_WIDE) {
 		s->str_data = calloc(str_count, sizeof(u16) * MAX_STRLEN);
 	} else {
