@@ -1,6 +1,6 @@
 #include "test_arrs.h"
 
-#include "arrays.h"
+#include "interpreter/arrays.h"
 
 #include "test_util.h"
 #include "common.h"

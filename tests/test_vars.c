@@ -2,8 +2,7 @@
 
 #include "test_util.h"
 
-#include "vars.h"
-#include "system.h"
+#include "interpreter/vars.h"
 
 #include <stdio.h>
 

@@ -3,7 +3,7 @@
 #include "common.h"
 #include "system.h"
 #include "error.h"
-#include "strs.h"
+#include "interpreter/strs.h"
 
 void init_input(struct input* i){
 	i->button = 0;

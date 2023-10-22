@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "interpreter/vars.h"
 #include "common.h"
 #include "system.h"
-#include "vars.h"
 #include "resources.h"
 #include "graphic.h"
 

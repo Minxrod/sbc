@@ -3,7 +3,7 @@
 #include "test_util.h"
 
 #include "common.h"
-#include "tokens.h"
+#include "interpreter/tokens.h"
 #include "program.h"
 #include "ptc.h"
 
@@ -329,6 +329,18 @@ int test_tokens(void){
 			), "[tokens] DATA tokenization"
 		);
 	}
+	
+	// SAMPLE6 segment that broke (bug with argcount stack)
+	{
+		char bc[] = "VIVYV\2SYO\2n\2O\4A\1F\15O\6";
+		ASSERT(
+			token_code(
+				"I=FLOOR((Y-SY)/2)\r",
+				bc, sizeof bc - 1
+			), "[tokens] FLOOR argcount sample6"
+		)
+	}
+	
 	
 	SUCCESS("test_tokens success");
 }

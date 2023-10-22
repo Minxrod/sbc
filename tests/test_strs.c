@@ -2,7 +2,7 @@
 
 #include "test_util.h"
 
-#include "strs.h"
+#include "interpreter/strs.h"
 #include "data.h"
 
 #include <string.h>

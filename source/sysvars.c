@@ -1,7 +1,7 @@
 #include "sysvars.h"
 
 #include "system.h"
-#include "stack.h"
+#include "interpreter/stack.h"
 
 #include <time.h>
 

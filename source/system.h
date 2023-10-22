@@ -1,10 +1,7 @@
 #pragma once
 
-#include "common.h"
-#include "stack.h"
-#include "strs.h"
-#include "arrays.h"
-#include "runner.h"
+#include "interpreter.h"
+
 #include "resources.h"
 #include "input.h"
 

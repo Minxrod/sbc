@@ -1,10 +1,10 @@
 #include "data.h"
 
+#include "interpreter/strs.h"
+#include "interpreter/tokens.h"
 #include "system.h"
-#include "strs.h"
 #include "program.h"
 #include "error.h"
-#include "tokens.h"
 #include "ptc.h"
 
 //TODO:CODE:NONE Use a macro or something to reduce duplication?

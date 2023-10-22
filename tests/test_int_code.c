@@ -1,13 +1,8 @@
 #include "test_int_code.h"
 #include "test_util.h"
 
-#include "vars.h"
-#include "system.h"
-#include "program.h"
-#include "tokens.h"
-#include "runner.h"
-#include "arrays.h"
-#include "strs.h"
+#include "interpreter.h"
+
 #include "ptc.h"
 #include "error.h"
 

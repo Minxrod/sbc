@@ -142,6 +142,9 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					r->error = ERR_UNIMPLEMENTED;
 				}
+				// FOR,TO,STEP use stack for BC_BEGIN_LOOP so don't clear
+				if (data != CMD_FOR && data != CMD_TO && data != CMD_STEP)
+					p->stack.stack_i=0; //clear stack after most commands
 				break;
 				
 			case BC_OPERATOR:

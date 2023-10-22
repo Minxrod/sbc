@@ -233,15 +233,15 @@ const char* cmd_format[] = {
 	"0","NNNNNN","0","N","N", //WAIT
 	"*","S;s,s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
-	"","","","","", //BGMCLEAR
+	"NNNN","","","","", //BGMCLEAR
 	"","","","","","","", //BGMVOL
-	"","","","","","","", //CHRREAD
+	"NNN,NNNN","N","NNNN,NNNNNNN","","NNN","S","", //CHRREAD
 	"","0","","","","0", //CONT
 	"","","Snnn","","NNNN,NNNNN", //GBOX
 	"","0,N","N","","","NNNN,NNNNN","NNNN,NNNNN",//GLINE
-	"N,NNN","","NN,NNN","","","","",//ICONSET
+	"N,NNN","","NN,NNN","","","","NN",//ICONSET
 	"","","","",//NEW
-	"","","*","","","",//RENAME
+	"NNS","S","*","","","",//RENAME
 	"L","","0","","","","",//SPANGLE
 	"","","","","","","","",//SPPAGE
 	"","","","","",//SWAP
@@ -390,7 +390,8 @@ void tok_test(struct tokenizer* state){
 					is_valid = check_cmd(&stack[stack_i-2], 2, valid);
 					stack_i -= 2; // +2 -1
 					// note: any binary op will have the type of the first argument
-					stack[stack_i++] &= 0x5f;  //any unary op returns value type of first argument
+					if (state->tokens[i].ofs != OP_ASSIGN)
+						stack[stack_i++] &= 0x5f;  //binary op returns value type of first argument. unless it's =, that doesn't return anything.
 				} else {
 					// unary: all of these take numbers, so
 					valid = "N";
@@ -729,6 +730,8 @@ void tok_eval(struct tokenizer* state){
 					state->tokens[i].len = e.argc_stack[e.argc_i--];
 					tok_eval_clean_stack(&e, prio);
 					e.op_stack[e.op_i++] = &state->tokens[i];
+				} else {
+					e.argc_i--;
 				}
 			}
 		} else if (state->tokens[i].type == operation && prio == 1) {
@@ -891,6 +894,7 @@ void tok_prio(struct tokenizer* state){
 				case OP_SUBTRACT:
 					if ((i>0 && state->tokens[i-1].type == number) ||
 							state->tokens[i-1].type == name ||
+							state->tokens[i-1].type == sysvar || 
 							(state->tokens[i-1].type == operation && (
 								state->tokens[i-1].ofs > OP_OPEN_PAREN
 							))){

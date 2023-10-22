@@ -2,13 +2,10 @@
 
 #include "test_util.h"
 
-#include "vars.h"
+#include "interpreter.h"
+
 #include "system.h"
 #include "program.h"
-#include "tokens.h"
-#include "runner.h"
-#include "arrays.h"
-#include "strs.h"
 #include "ptc.h"
 
 #include <stdio.h>

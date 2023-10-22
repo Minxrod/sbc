@@ -85,8 +85,8 @@ void v__(void); //prevent empty translation unit
 #include <stdlib.h>
 #include <threads.h>
 
-#include "tokens.h"
-#include "runner.h"
+#include "interpreter.h"
+
 #include "program.h"
 #include "resources.h"
 #include "system.h"

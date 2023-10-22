@@ -28,13 +28,9 @@
 
 extern int check_fail;
 
-#include "program.h"
-#include "vars.h"
-#include "tokens.h"
-#include "strs.h"
-#include "arrays.h"
+#include "interpreter.h"
 #include "system.h"
-#include "runner.h"
+#include "program.h"
 
 #include <string.h>
 #include <stdlib.h>
