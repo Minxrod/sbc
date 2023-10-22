@@ -5,7 +5,9 @@
 #include "common.h"
 #include "system.h"
 #include "resources.h"
-#include "graphic.h"
+
+#include "interpreter.h"
+#include "program.h"
 
 struct ptc* init_system(int var, int str, int arr){
 	struct ptc* ptc = calloc(sizeof(struct ptc), 1);
@@ -41,9 +43,39 @@ void free_system(struct ptc* p){
 	free(p);
 }
 
+//https://smilebasicsource.com/forum/thread/docs-ptc-acls
+char acls_code[] = 
+"VISIBLE 1,1,1,1,1,1:'ICONCLR\r"
+"COLOR 0,0:CLS:'GDRAWMD FALSE\r"
+"FOR P=1 TO 0 STEP -1\r"
+" GPAGE P,P,P:GCOLOR 0:GCLS:'GPRIO 3\r"
+" 'BGPAGE P:BGOFS 0,0,0:BGOFS 1,0,0\r"
+" 'BGCLR:BGCLIP 0,0,31,23\r"
+" 'SPPAGE P:SPCLR\r"
+"NEXT\r"
+"FOR I=0 TO 255\r"
+" 'COLINIT \"BG\", I:COLINIT \"SP\", I\r"
+" 'COLINIT \"GRP\",I\r"
+"NEXT\r";
+
+char acls_bytecode[sizeof acls_code];
+
 void cmd_acls(struct ptc* p){
+	// copy vars and use a temp variables for this snippet
+	struct variables temp_vars = {0};
+	init_mem_var(&temp_vars, 4); //P,I
+	struct variables vars = p->vars;
+	p->vars = temp_vars;
 	// TODO:IMPL:HIGH
-	p->stack.stack_i = 0;
+	struct program acls_program = { sizeof acls_code, acls_code };
+	struct program acls_bc = { 0, acls_bytecode };
+	
+	tokenize(&acls_program, &acls_bc);
+	
+	run(&acls_bc, p);
+	
+	// Restore proper program variable state
+	p->vars = vars;
 }
 
 void cmd_visible(struct ptc* p){
@@ -69,6 +101,8 @@ void cmd_clear(struct ptc* p){
 
 #ifdef ARM9
 void system_draw(struct ptc* p){
+	//TODO:CODE:MED Move to separate function/file for NDS rendering?
+	//TODO:IMPL:MED background tile/color
 	u16* map = p->res.bg_upper;
 	for (int y = 0; y < CONSOLE_HEIGHT; ++y){
 		for (int x = 0; x < CONSOLE_WIDTH; ++x){
@@ -78,13 +112,13 @@ void system_draw(struct ptc* p){
 			map++;
 		}
 	}
-	// TODO:IMPL:MED background tile/color
 }
 #endif
 
 #ifdef PC
 #include <SFML/Graphics.h>
-#include "pc/tilemap.h"
+#include "graphics/pc/tilemap.h"
+#include "graphics/pc/graphic.h"
 
 void system_draw(sfRenderWindow* rw, struct ptc* p){
 	// TODO:IMPL:HIGH Implement VISIBLE

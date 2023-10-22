@@ -17,6 +17,6 @@ struct runner {
 	struct program* code;
 };
 
-void run(struct program* code, struct ptc* runner);
+void run(struct program* code, struct ptc* p);
 
 

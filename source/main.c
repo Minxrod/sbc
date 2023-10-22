@@ -92,8 +92,6 @@ void v__(void); //prevent empty translation unit
 #include "system.h"
 #include "error.h"
 
-#include "pc/tilemap.h"
-
 struct launch_info {
 	struct ptc* p;
 	struct program* prg;

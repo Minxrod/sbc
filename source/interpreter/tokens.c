@@ -196,18 +196,7 @@ void tok_convert(struct tokenizer* state){
 	
 	tok_eval(state);
 	
-	/*iprintf("Current tokens (prior validation):\n");
-	for (size_t i = 0; i < 100; ++i){
-		if (state->tokens[i].len == 0)
-			break;
-		print_token(state, state->tokens[i]);
-	}*/
-	
-	// TODO:IMPL:HIGH Error checking for argument count should be done here (or eval, which already tracks this)
-	// TODO:IMPL:HIGH Error checking for command/function/operator argument
 	tok_test(state);
-	
-	// type validation could be done here (instead of at runtime)
 	
 	tok_code(state);
 }
@@ -292,6 +281,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 		}
 		if (stack_i > stack_len) return false;
 		
+		//TODO:PERF:NONE Check if refactoring this to use fallthrough is faster
 		switch (v){
 			case 'N':
 				if (s == 'N' || s == 'n') break;
@@ -429,7 +419,14 @@ void tok_test(struct tokenizer* state){
 			case name:
 				if (argc){
 					// process argc counts first
-					// TODO:IMPL:HIGH Validate arguments passed here as numbers (array access)
+					const char* valid = "N,NN";
+					bool is_valid = check_cmd(&stack[stack_i-argc], argc, valid);
+					if (!is_valid){
+						// arguments to array access are bad
+						iprintf("Bad array arguments!\n");
+						iprintf("Stack: %d %s\n", stack_i, stack);
+						abort();
+					}
 					stack_i -= argc;
 					argc = 0;
 				}

@@ -32,5 +32,3 @@ void draw_graphic(struct graphic* g, struct ptc* p){
 	
 	sfTexture_updateFromPixels(g->texture, grp, GRP_WIDTH, GRP_HEIGHT, 0, 0);
 }
-
-//TODO:IMPL:HIGH free_graphic
