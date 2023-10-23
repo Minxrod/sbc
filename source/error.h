@@ -35,6 +35,8 @@ enum err_code {
 	ERR_SYNTAX,
 	ERR_PTC_SYSVAR_INVALID,
 	ERR_INVALID_ARGUMENT_VALUE,
+	ERR_FOR_WITHOUT_NEXT,
+	ERR_BEGIN_LOOP_FAIL,
 };
 
 extern const char * error_messages[];

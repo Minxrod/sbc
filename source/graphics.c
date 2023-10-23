@@ -163,7 +163,7 @@ void cmd_gline(struct ptc* p){
 			x2 = temp;
 		}
 		for (int x = x1; x <= x2; ++x){
-			int y = FP_TO_INT(y_slope*(x-x1)) + y1;
+			int y = FP_TO_INT(y_slope*(x-x1) + (1<<(FIXPOINT-1))) + y1;
 			
 			page[grp_index(x,y)] = color;
 		}
@@ -180,7 +180,7 @@ void cmd_gline(struct ptc* p){
 			x2 = temp;
 		}
 		for (int y = y1; y <= y2; ++y){
-			int x = FP_TO_INT(x_slope*(y-y1)) + x1;
+			int x = FP_TO_INT(x_slope*(y-y1) + (1<<(FIXPOINT-1))) + x1;
 			
 			page[grp_index(x,y)] = color;
 		}

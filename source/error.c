@@ -35,4 +35,6 @@ const char * error_messages[] = {
 	"Syntax error",
 	"Invalid sysvar ID",
 	"Incorrect argument value",
+	"Can't find a matching NEXT for this FOR",
+	"Entered BC_BEGIN_LOOP with no FOR call!",
 };

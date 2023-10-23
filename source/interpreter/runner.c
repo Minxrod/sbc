@@ -302,18 +302,23 @@ void run(struct program* code, struct ptc* p) {
 				// this will always occur when the stack is prepared already
 				// call_entry: Var ptr 
 				// stack: end, [step]
-				// TODO:ERR:MED check if stack has entry!
+				iprintf("\n");
+				if (!p->calls.stack_i){
+					p->exec.error = ERR_BEGIN_LOOP_FAIL;
+					break;
+				}
 				s32* current = (s32*)p->calls.entry[p->calls.stack_i-1].var;
 				s32 end;
 				s32 step;
 				if (p->stack.stack_i == 1){
 					step = 1;
-					end = stack_pop(&p->stack)->value.number;
+					end = STACK_REL_NUM(-1); //stack_pop(&p->stack)->value.number;
 				} else {
-					step = stack_pop(&p->stack)->value.number; 
-					end = stack_pop(&p->stack)->value.number;
+					step = STACK_REL_NUM(-1); //stack_pop(&p->stack)->value.number; 
+					end = STACK_REL_NUM(-2); //stack_pop(&p->stack)->value.number;
 				}
 				s32 val = *current;
+				iprintf("val:%d end:%d step:%d\n", val, end, step);
 				if ((step < 0 && end > val) || (step >= 0 && end < val)){
 					// if val + step will never reach end, then skip to NEXT
 					// treat valid NEXT as first in a line
@@ -321,9 +326,17 @@ void run(struct program* code, struct ptc* p) {
 					// TODO:IMPL:HIGH
 					// This loop doesn't work, I don't think?
 					// It should scan for NEXT at line start
+					idx index = r->index;
 					while (nest > 0){
-						instr = code->data[r->index++];
-						data = code->data[r->index++];
+						do {
+							index = bc_scan(p->exec.code, index, BC_OPERATOR);
+						} while (index != BC_SCAN_NOT_FOUND && p->exec.code->data[index] != BC_COMMAND);
+						if (index == BC_SCAN_NOT_FOUND){
+							p->exec.error = ERR_FOR_WITHOUT_NEXT;
+							break;
+						}
+						instr = p->exec.code->data[index];
+						data = p->exec.code->data[index+1];
 						if (instr == BC_COMMAND){
 							if (data == CMD_NEXT){
 								// TODO:IMPL:HIGH Check variable for a given NEXT to see if it counts or not
@@ -335,11 +348,14 @@ void run(struct program* code, struct ptc* p) {
 								nest++;
 							}
 						}
+						index += 2; // advance past this command
 					}
 					// index now points to one past the NEXT, the correct location
 				} else {
 					// execution continues as normal into the loop
 				}
+				// clear the FOR arguments off the stack
+				p->stack.stack_i = 0;
 				}
 				break;
 				

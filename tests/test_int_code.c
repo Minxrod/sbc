@@ -273,5 +273,32 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// FOR SAMPLE5 test
+	// bugfixes for...
+	// - when TO has variable argument (was only read as number)
+	// - stack breaking on BC_BEGIN_LOOP (did not clear entries used)
+	// - incorrect searching for BC_COMMAND NEXT/FOR (did not use bc_scan)
+	{
+		char code[] = "SPC = 8\rBGT = 4\rLINEH = 60\r"
+		"LINEC = BGT + SPC + LINEH\rDAYW = 8:DRAWD = 30\r"
+		"BGL = (256 - (DRAWD - 1) * DAYW - SPC * 2) / 2\r"
+		"BGR = BGL + DAYW * (DRAWD - 1) + SPC * 2\r"
+		"BGB = BGT + (SPC + LINEH) * 2 + SPC\r"
+		"CLS\rGCLS 4\rGFILL BGL, BGT, BGR, BGB, 15\r"
+		"GCOLOR 14\rGBOX BGL, BGT, BGR, BGB\r"
+		"X = BGL + SPC\rGLINE X, LINEC, BGR - SPC, LINEC\r"
+		"Y = BGT + SPC\rX2 = X + DAYW * (DRAWD - 1)\r"
+		"GLINE X, Y, X2, Y\rY2 = Y + LINEH * 2\r"
+		"FOR I = 1 TO DRAWD\r GLINE X, Y, X, Y2\r X = X + DAYW\r"
+		"NEXT\r";
+		
+		struct ptc* p = run_code(code);
+		
+		// if loop doesn't run I will not be correct here
+		CHECK_VAR_INT("I",31);
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_code success");
 }
