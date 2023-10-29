@@ -12,6 +12,8 @@
 
 #define GRP_WIDTH 256
 #define GRP_HEIGHT 192
+#define BG_WIDTH 64
+#define BG_HEIGHT 64
 
 // Format: width*height*unit_size
 /// Size of one CHR bank

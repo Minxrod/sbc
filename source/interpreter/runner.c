@@ -18,6 +18,9 @@
 #include "mathptc.h"
 #include "strfuncs.h"
 
+#include "subsystem/background.h"
+#include "subsystem/panel.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -42,15 +45,15 @@ const ptc_call ptc_commands[] = {
 	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
 	cmd_input, cmd_linput,
 	NULL, ptc_stub, //BEEP
-	NULL, NULL, NULL, NULL, NULL, //BGMCLEAR 
+	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, NULL, //BGMCLEAR 
 	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, //CHRREAD
+	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, NULL, NULL, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
 	ptc_stub, NULL, cmd_dtread, NULL, cmd_gbox, //GBOX
 	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, NULL, cmd_gpset, NULL, NULL, NULL, NULL, //ICONSET, 
 	NULL, NULL, NULL, NULL, //NEW, 
-	NULL, NULL, cmd_read, NULL, NULL, NULL, //RENAME, 
+	cmd_pnlstr, cmd_pnltype, cmd_read, NULL, NULL, NULL, //RENAME, 
 	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, //SPPAGE,
 	NULL, NULL, NULL, NULL, NULL, //SWAP, 

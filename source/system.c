@@ -31,6 +31,7 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->console.tabstep = 4;
 	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
+	ptc->panel.type = PNL_KYA;
 	
 	init_resource(&ptc->res);
 	

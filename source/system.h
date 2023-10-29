@@ -2,11 +2,13 @@
 
 #include "interpreter.h"
 
+// TODO:CODE:LOW Mode console, graphics, etc to subsystem/?
 #include "resources.h"
 #include "input.h"
-
 #include "console.h"
 #include "graphics.h"
+#include "subsystem/panel.h"
+#include "subsystem/background.h"
 
 // note that VAR_LIMIT should be a multiple of 2 to ensure that
 // the current hash algorithm works
@@ -29,12 +31,13 @@ struct ptc {
 	struct input input;
 	// upper screen stuff
 	struct console console;
-//	struct background background;
+	// background stuff
+	struct background background;
 //	struct sprites sprites;
 	// graphics pages
 	struct graphics graphics;
 	// lower screen stuff
-//	struct panel panel;
+	struct panel panel;
 	
 	// graphics and resources
 	struct resources res;
