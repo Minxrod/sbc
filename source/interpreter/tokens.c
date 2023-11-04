@@ -222,7 +222,7 @@ const char* cmd_format[] = {
 	"0","NNNNNN","0","N","N", //WAIT
 	"*","S;s,s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
-	"NNNN","","","","", //BGMCLEAR
+	"NNNN","","","NNNNNN","", //BGMCLEAR
 	"","","","","","","", //BGMVOL
 	"NNN,NNNN","N","NNNN,NNNNNNN","","NNN","S","", //CHRREAD
 	"","0","","","","0", //CONT

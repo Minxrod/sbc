@@ -22,6 +22,7 @@
 
 #include "test_input.h"
 #include "test_console.h"
+#include "test_background.h"
 
 int run_tests(){
 #ifdef ARM9
@@ -43,6 +44,7 @@ int run_tests(){
 #endif
 	FAST(test_input());
 	FAST(test_console());
+	FAST(test_background());
 	
 	return 0;
 }

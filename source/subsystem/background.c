@@ -84,8 +84,59 @@ void cmd_bgput(struct ptc* p){
 	bg[bg_index(x,y)] = tiledata;
 }
 
+//BGFILL layer, x1, y1, x2, y2, chr, pal, h, v
+//BGFILL layer, x1, y1, x2, y2, tile
+//BGFILL layer, x1, y1, x2, y2, tile$
 void cmd_bgfill(struct ptc* p){
-	ERROR(ERR_UNIMPLEMENTED);
+	// TODO:ERR:MED bounds checking layer
+	// TODO:IMPL:HIGH other forms
+	uint_fast8_t layer;
+	int x1, x2, y1, y2, temp;
+	u16 tiledata;
+	layer = STACK_INT(0);
+	x1 = STACK_INT(1);
+	y1 = STACK_INT(2);
+	x2 = STACK_INT(3);
+	y2 = STACK_INT(4);
+	if (p->stack.stack_i == 6){
+		if (ARG(5)->type & VAR_NUMBER){
+			tiledata = STACK_INT(5);
+		} else {
+			ERROR(ERR_UNIMPLEMENTED);
+		}
+	} else {
+		ERROR(ERR_UNIMPLEMENTED);
+	}
+	// bounds checking!
+	if (x1 < 0) { x1 = 0; }
+	if (x2 < 0) { x2 = 0; }
+	if (x1 > BG_WIDTH-1) { x1 = BG_WIDTH-1; }
+	if (x2 > BG_WIDTH-1) { x2 = BG_WIDTH-1; }
+	
+	if (y1 < 0) { y1 = 0; }
+	if (y2 < 0) { y2 = 0; }
+	if (y1 > BG_HEIGHT-1) { y1 = BG_HEIGHT-1; }
+	if (y2 > BG_HEIGHT-1) { y2 = BG_HEIGHT-1; }
+	
+	if (x1 > x2){
+		temp = x1;
+		x1 = x2;
+		x2 = temp;
+	}
+	if (y1 > y2){
+		temp = y1;
+		y1 = y2;
+		y2 = temp;
+	}
+	
+	// valid args: put tile
+	u16* bg = bg_page(p, p->background.page, layer);
+	
+	for (int y = y1; y <= y2; ++y){
+		for (int x = x1; x <= x2; ++x){
+			bg[bg_index(x,y)] = tiledata;
+		}
+	}
 }
 
 void cmd_bgofs(struct ptc* p){
