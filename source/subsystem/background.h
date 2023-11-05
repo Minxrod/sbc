@@ -16,6 +16,15 @@ struct background {
 		
 		fixp time;
 	} ofs[2][2];
+	
+	struct bg_clip {
+		uint_fast8_t x1;
+		uint_fast8_t y1;
+		uint_fast8_t x2;
+		uint_fast8_t y2;
+	} clip[2]; // only one per page
+	
+	// index order: page layer
 };
 
 struct background* init_background();

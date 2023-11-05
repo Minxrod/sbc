@@ -321,7 +321,24 @@ void cmd_input(struct ptc* p){
 }
 
 void cmd_linput(struct ptc* p){
-	(void)p;
+	ERROR(ERR_UNIMPLEMENTED);
+}
+
+void sys_csrx(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(p->console.x)});
+}
+
+void sys_csry(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(p->console.y)});
+}
+
+void sys_tabstep(struct ptc* p){
+	// TODO:IMPL:HIGH figure out how to validate assignments here?
+	ERROR(ERR_UNIMPLEMENTED);
 }
 
 inline u16 con_text_getc(struct console* c, u32 x, u32 y){

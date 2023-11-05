@@ -66,8 +66,8 @@ void cmd_bgput(struct ptc* p){
 	uint_fast8_t layer, x, y;
 	u16 tiledata;
 	layer = STACK_INT(0);
-	x = STACK_INT(1);
-	y = STACK_INT(2);
+	x = STACK_INT(1) % BG_WIDTH; //TODO:TEST:MED check that this works for negatives
+	y = STACK_INT(2) % BG_HEIGHT;
 	if (p->stack.stack_i == 4){
 		if (ARG(3)->type & VAR_NUMBER){
 			tiledata = STACK_INT(3);
@@ -75,7 +75,14 @@ void cmd_bgput(struct ptc* p){
 			ERROR(ERR_UNIMPLEMENTED);
 		}
 	} else {
-		ERROR(ERR_UNIMPLEMENTED);
+		//TODO:IMPL:MED this should be a function probably? implement error checks only once
+		int chr = STACK_INT(3);
+		int pal = STACK_INT(4);
+		int h = STACK_INT(5);
+		int v = STACK_INT(6);
+		//TODO:ERR:MED bounds checking...
+		//TODO:TEST:LOW tests for this form?
+		tiledata = (chr & 0x3ff) | ((h & 0x1) << 10) | ((v & 0x1) << 11) | ((pal & 0xf) << 12);
 	}
 	
 	// valid args: put tile
@@ -140,11 +147,34 @@ void cmd_bgfill(struct ptc* p){
 }
 
 void cmd_bgofs(struct ptc* p){
-	ERROR(ERR_UNIMPLEMENTED);
+	// TODO:ERR:MED check bounds? (maybe only for layer?)
+	// TODO:ERR:HIGH interpolation form
+	uint_fast8_t layer;
+	fixp x, y;
+	layer = STACK_INT(0);
+	x = STACK_NUM(1);
+	y = STACK_NUM(2);
+	
+	if (p->stack.stack_i == 3){
+		p->background.ofs[p->background.page][layer].x = x;
+		p->background.ofs[p->background.page][layer].y = y;
+		p->background.ofs[p->background.page][layer].time = 0;
+	} else {
+		ERROR(ERR_UNIMPLEMENTED);
+	}
 }
 
 void cmd_bgclip(struct ptc* p){
-	ERROR(ERR_UNIMPLEMENTED);
+	// TODO:ERR:MED check bounds
+	uint_fast8_t x1 = STACK_INT(0);
+	uint_fast8_t y1 = STACK_INT(1);
+	uint_fast8_t x2 = STACK_INT(2);
+	uint_fast8_t y2 = STACK_INT(3);
+	
+	p->background.clip[p->background.page].x1 = x1;
+	p->background.clip[p->background.page].y1 = y1;
+	p->background.clip[p->background.page].x2 = x2;
+	p->background.clip[p->background.page].y2 = y2;
 }
 
 void cmd_bgread(struct ptc* p){

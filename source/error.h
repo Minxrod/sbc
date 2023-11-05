@@ -37,6 +37,7 @@ enum err_code {
 	ERR_INVALID_ARGUMENT_VALUE,
 	ERR_FOR_WITHOUT_NEXT,
 	ERR_BEGIN_LOOP_FAIL,
+	ERR_FILE_LOAD_FAILED,
 };
 
 extern const char * error_messages[];

@@ -20,6 +20,7 @@
 
 #include "subsystem/background.h"
 #include "subsystem/panel.h"
+#include "subsystem/resources.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +48,7 @@ const ptc_call ptc_commands[] = {
 	NULL, ptc_stub, //BEEP
 	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, NULL, //BGMCLEAR 
 	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
-	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, NULL, NULL, NULL, //CHRREAD
+	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, NULL, cmd_chrinit, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
 	ptc_stub, NULL, cmd_dtread, NULL, cmd_gbox, //GBOX
 	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, cmd_gfill, cmd_gline, // GLINE, 
@@ -77,7 +78,10 @@ const ptc_call ptc_functions[] = {
 
 const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
-	NULL, sys_date,
+	NULL, sys_date, NULL, NULL, //MAINCNTH
+	NULL, NULL, NULL, NULL, NULL, //RESULT
+	NULL, NULL, NULL, NULL, //TCHTIME
+	sys_csrx, sys_csry, sys_tabstep,
 };
 
 /// Debug function for checking command/function names from IDs
@@ -310,17 +314,17 @@ void run(struct program* code, struct ptc* p) {
 					p->exec.error = ERR_BEGIN_LOOP_FAIL;
 					break;
 				}
-				s32* current = (s32*)p->calls.entry[p->calls.stack_i-1].var;
-				s32 end;
-				s32 step;
+				fixp* current = (s32*)p->calls.entry[p->calls.stack_i-1].var;
+				fixp end;
+				fixp step;
 				if (p->stack.stack_i == 1){
-					step = 1;
-					end = STACK_REL_NUM(-1); //stack_pop(&p->stack)->value.number;
+					step = INT_TO_FP(1);
+					end = STACK_REL_NUM(-1);
 				} else {
-					step = STACK_REL_NUM(-1); //stack_pop(&p->stack)->value.number; 
-					end = STACK_REL_NUM(-2); //stack_pop(&p->stack)->value.number;
+					step = STACK_REL_NUM(-1);
+					end = STACK_REL_NUM(-2);
 				}
-				s32 val = *current;
+				fixp val = *current;
 				iprintf("val:%d end:%d step:%d\n", val, end, step);
 				if ((step < 0 && end > val) || (step >= 0 && end < val)){
 					// if val + step will never reach end, then skip to NEXT

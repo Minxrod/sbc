@@ -56,9 +56,9 @@ void cmd_linput(struct ptc* p);
 // PTC functions, etc.
 void cmd_chkchr(struct ptc* p);
 // PTC sysvars, etc.
-void cmd_csrx(struct ptc* p);
-void cmd_csry(struct ptc* p);
-void cmd_tabstep(struct ptc* p);
+void sys_csrx(struct ptc* p);
+void sys_csry(struct ptc* p);
+void sys_tabstep(struct ptc* p);
 
 u16 con_text_getc(struct console* c, u32 x, u32 y);
 void con_text_setc(struct console* c, u32 x, u32 y, u16 w);

@@ -81,3 +81,17 @@ void free_resource(struct resources* r);
 /// Returns NULL, if the resource name was invalid
 void* get_resource(struct ptc* p, char* name, int len);
 
+// Character
+void cmd_chrinit(struct ptc* p);
+void cmd_chrset(struct ptc* p);
+void cmd_chrread(struct ptc* p);
+
+// Color
+void cmd_colinit(struct ptc* p);
+void cmd_colset(struct ptc* p);
+void cmd_colread(struct ptc* p);
+
+// File
+void cmd_save(struct ptc* p);
+void cmd_load(struct ptc* p);
+
