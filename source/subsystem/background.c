@@ -26,6 +26,9 @@ u16 bg_index(uint_fast8_t x, uint_fast8_t y){
 	return tx + ty * 32 + cx * 1024 + cy * 2048;
 }
 
+u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y){
+	return bg_page(p,page,l)[bg_index(x,y)];
+}
 
 void cmd_bgpage(struct ptc* p){
 	// TODO:ERR:MED bounds checking

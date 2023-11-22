@@ -52,8 +52,8 @@ char acls_code[] =
 "COLOR 0,0:CLS:'GDRAWMD FALSE\r"
 "FOR P=1 TO 0 STEP -1\r"
 " GPAGE P,P,P:GCOLOR 0:GCLS:'GPRIO 3\r"
-" 'BGPAGE P:BGOFS 0,0,0:BGOFS 1,0,0\r"
-" 'BGCLR:BGCLIP 0,0,31,23\r"
+" BGPAGE P:BGOFS 0,0,0:BGOFS 1,0,0\r"
+" BGCLR:BGCLIP 0,0,31,23\r"
 " 'SPPAGE P:SPCLR\r"
 "NEXT\r"
 "FOR I=0 TO 255\r"
@@ -127,14 +127,7 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	// TODO:IMPL:HIGH Implement VISIBLE
 	// TODO:IMPL:HIGH Every system except text
 	
-	sfRenderStates rs = sfRenderStates_default();
-	sfShader* shader = p->res.shader;
-	rs.texture = p->res.chr_tex[0];
-	
-	sfShader_setTextureUniform(shader, "colors", p->res.col_tex);
-	sfShader_setCurrentTextureUniform(shader, "texture");
-	rs.shader = shader;
-	
+	// Prepare graphics here
 	// TODO:CODE:LOW No dynamic allocations here
 	struct tilemap console_map;
 	console_map = init_tilemap(CONSOLE_WIDTH, CONSOLE_HEIGHT);
@@ -149,19 +142,53 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	}
 	
 	struct graphic graphic = init_graphic(GRP_WIDTH, GRP_HEIGHT);
-	
 	draw_graphic(&graphic, p);
+	
+	struct tilemap background_map;
+	background_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
+	struct tilemap foreground_map;
+	foreground_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
+	
+	for (int x = 0; x < BG_WIDTH; ++x){
+		for (int y = 0; y < BG_HEIGHT; ++y){
+			u16 td = bg_tile(p,0,1,x,y);
+			tile(&background_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
+			palette(&background_map, x, y, (td & 0xf000) >> 12);
+			td = bg_tile(p,0,0,x,y);
+			tile(&foreground_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
+			palette(&foreground_map, x, y, (td & 0xf000) >> 12);
+		}
+	}
+	
+	// actual draw commands
+	sfRenderStates rs = sfRenderStates_default();
+	sfShader* shader = p->res.shader;
+
+	sfShader_setTextureUniform(shader, "colors", p->res.col_tex);
+	sfShader_setCurrentTextureUniform(shader, "texture");
+	rs.shader = shader;
 	
 	sfShader_setFloatUniform(shader, "colbank", 2);
 	sfShader_setBoolUniform(shader, "grp_mode", true);
 	sfRenderWindow_drawSprite(rw, graphic.sprite, &rs);
 	
+	rs.texture = p->res.chr_tex[2];
+	sfShader_setFloatUniform(shader, "colbank", 0);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
+	sfRenderWindow_drawVertexArray(rw, background_map.va, &rs);
+	
+	sfShader_setFloatUniform(shader, "colbank", 0);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
+	sfRenderWindow_drawVertexArray(rw, foreground_map.va, &rs);
+	
+	rs.texture = p->res.chr_tex[0];
 	sfShader_setFloatUniform(shader, "colbank", 0);
 	sfShader_setBoolUniform(shader, "grp_mode", false);
 	sfRenderWindow_drawVertexArray(rw, console_map.va, &rs);
 	
 	free_graphic(&graphic);
-	
 	free_tilemap(&console_map);
+	free_tilemap(&background_map);
+	free_tilemap(&foreground_map);
 }
 #endif

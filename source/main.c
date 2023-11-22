@@ -52,13 +52,12 @@ int main(void){
 	init();
 	fatInitDefault();
 	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
-//	consoleDebugInit(DebugDevice_NULL);
-	
+//	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_512x512, 0, 2, false, true); 
 	struct program program;
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	// set this after creating system to ensure resources are loaded
 	
-	prg_load(&program, "SAMPLE1.PTC");
+	prg_load(&program, "SAMPLE6.PTC");
 	iprintf("program malloc: %d\n", 2*program.size);
 	struct program bc = {0, malloc(2*program.size)};
 	tokenize(&program, &bc);

@@ -16,8 +16,8 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	nds
-SOURCES		:=	gfx source data tests source/interpreter
-INCLUDES	:=	include build source # source is needed for tests
+SOURCES		:=	gfx source data tests source/interpreter source/subsystem
+INCLUDES	:=	include build source source/interpreter source/subsystem
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -26,7 +26,7 @@ ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-Wall -Werror -Wpedantic -Wextra -O2\
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
-			-ffast-math\
+			-ffast-math $(BUILD_TYPE)\
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
@@ -86,9 +86,20 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					-I$(CURDIR)/$(BUILD)
  
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+export BUILD_TYPE
  
 .PHONY: $(BUILD) clean
- 
+
+# https://stackoverflow.com/questions/3963989/compiling-with-different-flags-in-makefile
+# some trickery to separate main and test builds more easily
+.PHONY: test main
+main: BUILD_TYPE=-DARM9_BUILD
+test: BUILD_TYPE=
+
+main test: $(BUILD)
+
+# modified:
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
@@ -98,7 +109,6 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).ds.gba 
- 
  
 #---------------------------------------------------------------------------------
 else

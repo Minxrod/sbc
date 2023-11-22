@@ -314,7 +314,7 @@ void run(struct program* code, struct ptc* p) {
 					p->exec.error = ERR_BEGIN_LOOP_FAIL;
 					break;
 				}
-				fixp* current = (s32*)p->calls.entry[p->calls.stack_i-1].var;
+				fixp* current = (fixp*)p->calls.entry[p->calls.stack_i-1].var;
 				fixp end;
 				fixp step;
 				if (p->stack.stack_i == 1){

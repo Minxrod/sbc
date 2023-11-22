@@ -28,18 +28,50 @@
 #define VRAM_LOWER_PAL_SP 0x05000600
 #endif
 
+// load from file `name` into dest
+// returns false on failure
+bool load_chr(u8* dest, const char* name){
+	FILE* f = fopen(name, "rb");
+	if (!f){
+		iprintf("Failed to load file: %s\n", name);
+		return false;
+	}
+	fread(dest, sizeof(u8), HEADER_SIZE, f);
+	fread(dest, sizeof(u8), CHR_SIZE, f);
+	
+	fclose(f);
+	iprintf("Sucessfully loaded file: %s\n", name);
+	return true;
+}
+
+// load from file `name` into dest
+// returns false on failure
+bool load_col(u8* dest, const char* name){
+	FILE* f = fopen(name, "rb");
+	if (!f){
+		iprintf("Failed to load file: %s\n", name);
+		return false;
+	}
+	fread(dest, sizeof(u8), HEADER_SIZE, f);
+	fread(dest, sizeof(u8), COL_SIZE, f);
+	
+	fclose(f);
+	iprintf("Sucessfully loaded file: %s\n", name);
+	return true;
+}
+
 void init_resource(struct resources* r){
 #ifdef ARM9
 	// Assign pointers into VRAM as needed
-	for (int lower = 0; lower < 1; ++lower){
+	for (int lower = 0; lower <= 1; ++lower){
 		for (int i = 0; i < 12; ++i){
 			r->chr[i + CHR_BANKS * lower] = (u8*)(VRAM_BG_CHR + CHR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
-		for (int i = 0; i < 10; ++i){
-			r->chr[12 + i + CHR_BANKS * lower] = (u8*)(VRAM_SP_CHR + CHR_SIZE * i + VRAM_LOWER_OFS * lower);
+		for (int i = 12; i < CHR_BANKS; ++i){
+			r->chr[i + CHR_BANKS * lower] = (u8*)(VRAM_SP_CHR + CHR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
 		// TODO:IMPL:LOW May need RAM copies
-		for (int i = 0; i < 1; ++i){
+		for (int i = 0; i < 2; ++i){
 			r->scr[i + 2 * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
 		r->col[0] = (u16*) VRAM_UPPER_PAL_BG;
@@ -53,35 +85,15 @@ void init_resource(struct resources* r){
 		iprintf("GRP%d calloc: %d\n", i, GRP_SIZE);
 		r->grp[i] = calloc(GRP_SIZE, 1);
 	}
-	char* name;
-	name = "resources/BGF0.PTC";
-	FILE* f = fopen(name, "rb");
-	if (!f){
-		perror("Failed to load file: %s\n");
-		abort();
-	}
-	fread(r->chr[0], sizeof(u8), HEADER_SIZE, f);
-	fread(r->chr[0], sizeof(u8), CHR_SIZE, f);
-	fclose(f);
-	
-	f = fopen("resources/COL0.PTC", "rb");
-	if (!f){
-		iprintf("Failed to load file: %s\n", name);
-		abort();
-	}
-	fread(r->col[0], sizeof(u8), HEADER_SIZE, f);
-	fread(r->col[0], sizeof(u8), COL_SIZE, f);
-	fclose(f);
-	
 	r->bg_upper = (u16*)(VRAM_BG_BASE);
-#endif
+#endif //ARM9
 #ifdef PC
 	// allocate memory for resources (needs ~512K)
 	// this will serve as "emulated VRAM"
 	r->all_banks = calloc(CHR_SIZE, CHR_BANKS * 2);
 	r->col_banks = calloc(COL_SIZE, 6); //COL[0-2][U-L]
 	// guarantee contiguous regions (useful for generating textures)
-	for (int lower = 0; lower < 2; ++lower){
+	for (int lower = 0; lower <= 1; ++lower){
 		for (int i = 0; i < CHR_BANKS; ++i){
 			r->chr[i + CHR_BANKS * lower] = &r->all_banks[(i + CHR_BANKS * lower) * CHR_SIZE];
 		}
@@ -95,7 +107,7 @@ void init_resource(struct resources* r){
 	for (int i = 0; i < 4; ++i){
 		r->grp[i] = calloc(GRP_SIZE, 1);
 	}
-	
+#endif //PC
 	// Load default resource files
 	const char* chr_files = 
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
@@ -106,39 +118,27 @@ void init_resource(struct resources* r){
 	
 	char name[] = "resources/XXXX.PTC";
 	
-	// TODO:CODE:MED This is shared with NDS?
-	for (int i = 0; i < CHR_BANKS*2; ++i){
+	for (int i = 0; i < 12; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = chr_files[4*i+j];
 		}
-		FILE* f = fopen(name, "rb");
-		if (!f){
-			iprintf("Failed to load file: %s\n", name);
-			abort(); //TODO:ERR:LOW Handle gracefully? Fallback generated tiles?
-		}
-		fread(r->chr[i], sizeof(u8), HEADER_SIZE, f);
-		fread(r->chr[i], sizeof(u8), CHR_SIZE, f);
-		
-		fclose(f);
+		load_chr(r->chr[i], name);
 	}
 	
 	for (int i = 0; i < 6; ++i){
+#ifdef ARM9
+		if (i >= 2) continue; // TODO:IMPL:HIGH skip GRP, lower screen
+#endif
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = col_files[4*i+j];
 		}
-		FILE* f = fopen(name, "rb");
-		if (!f){
-			iprintf("Failed to load file: %s\n", name);
-			abort(); //TODO:ERR:LOW Handle gracefully? Fallback generated tiles?
-		}
-		fread(r->col[i], sizeof(u8), HEADER_SIZE, f);
-		fread(r->col[i], sizeof(u8), COL_SIZE, f);
-		
-		fclose(f);
+		load_col((u8*)r->col[i], name);
 	}
-	
+#ifdef PC
 	// Generate PC textures here
 	r->chr_tex[0] = gen_chr_texture(r->chr[0], 512);
+	r->chr_tex[1] = gen_chr_texture(r->chr[4], 512);
+	r->chr_tex[2] = gen_chr_texture(r->chr[8], 512);
 	r->col_tex = gen_col_texture(r->col[0]);
 	
 	if (!sfShader_isAvailable()){
@@ -150,7 +150,7 @@ void init_resource(struct resources* r){
 			abort();
 		}
 	}
-#endif
+#endif //PC
 }
 
 void free_resource(struct resources* r){
@@ -241,21 +241,6 @@ void* get_resource(struct ptc* p, char* name, int len){
 	}
 	p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 	return NULL;
-}
-
-// load from file `name` into dest
-// returns false on failure
-bool load_chr(u8* dest, const char* name){
-	FILE* f = fopen(name, "rb");
-	if (!f){
-		iprintf("Failed to load file: %s\n", name);
-		return false;
-	}
-	fread(dest, sizeof(u8), HEADER_SIZE, f);
-	fread(dest, sizeof(u8), CHR_SIZE, f);
-	
-	fclose(f);
-	return true;
 }
 
 void cmd_chrinit(struct ptc* p){
