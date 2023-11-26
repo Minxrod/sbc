@@ -32,6 +32,7 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
 	ptc->panel.type = PNL_KYA;
+	init_sprites(&ptc->sprites);
 	
 	init_resource(&ptc->res);
 	
@@ -54,7 +55,7 @@ char acls_code[] =
 " GPAGE P,P,P:GCOLOR 0:GCLS:'GPRIO 3\r"
 " BGPAGE P:BGOFS 0,0,0:BGOFS 1,0,0\r"
 " BGCLR:BGCLIP 0,0,31,23\r"
-" 'SPPAGE P:SPCLR\r"
+" SPPAGE P:SPCLR\r"
 "NEXT\r"
 "FOR I=0 TO 255\r"
 " 'COLINIT \"BG\", I:COLINIT \"SP\", I\r"

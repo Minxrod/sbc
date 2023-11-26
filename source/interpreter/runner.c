@@ -56,7 +56,7 @@ const ptc_call ptc_commands[] = {
 	NULL, NULL, NULL, NULL, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, NULL, NULL, NULL, //RENAME, 
 	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, //SPPAGE,
+	NULL, NULL, cmd_spclr, NULL, NULL, NULL, NULL, cmd_sppage, //SPPAGE,
 	NULL, NULL, NULL, NULL, NULL, //SWAP, 
 	NULL //TMREAD,
 };
@@ -267,7 +267,6 @@ void run(struct program* code, struct ptc* p) {
 				break;
 			
 			case BC_DIM:
-				//TODO:ERR:MED error checking for strings here
 				{
 				u32 a;
 				u32 b = ARR_DIM2_UNUSED;

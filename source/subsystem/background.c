@@ -3,7 +3,7 @@
 #include "system.h"
 #include "error.h"
 
-struct background* init_background(){
+struct background* init_background(void){
 	struct background* b = calloc(sizeof(struct background), 1);
 	// everything defaults to zero for now
 	return b;

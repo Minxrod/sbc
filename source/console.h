@@ -37,7 +37,7 @@ struct console {
 	bool test_mode;
 };
 
-struct console* init_console();
+struct console* init_console(void);
 
 void con_put(struct console* c, u16 w);
 void con_puts(struct console* c, void* s);

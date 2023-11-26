@@ -9,6 +9,7 @@
 #include "graphics.h"
 #include "subsystem/panel.h"
 #include "subsystem/background.h"
+#include "subsystem/sprites.h"
 
 // note that VAR_LIMIT should be a multiple of 2 to ensure that
 // the current hash algorithm works
@@ -33,7 +34,8 @@ struct ptc {
 	struct console console;
 	// background stuff
 	struct background background;
-//	struct sprites sprites;
+	// sprites stuff
+	struct sprites sprites;
 	// graphics pages
 	struct graphics graphics;
 	// lower screen stuff

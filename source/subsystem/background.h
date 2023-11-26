@@ -27,7 +27,7 @@ struct background {
 	// index order: page layer
 };
 
-struct background* init_background();
+struct background* init_background(void);
 void free_background(struct background* b);
 
 u16* bg_page(struct ptc* p, u8 page, u8 layer);

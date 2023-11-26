@@ -16,10 +16,10 @@ CSFML_LIB = $(CSFML)lib/
 CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
-CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir))
+CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC
 # https://stackoverflow.com/a/10168396
 # The -MMD is important. It generates the actual dependencies...
-CFLAGS += -DPC -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB) -MMD
+LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB) -MMD
 # All the libraries that need to be linked
 LIBFLAGS = -lm -lcsfml-graphics -lcsfml-window -lcsfml-system
 
@@ -42,11 +42,11 @@ main: $(main_objs)
 #	echo $(objects)
 #	echo $(build)
 	# TODO: Better CSFML library location? (How do you install it?)
-	$(CC) $(CFLAGS) $(main_objs) -o test $(LIBFLAGS)
+	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o test $(LIBFLAGS)
 #	gcc $(CFLAGS) -Isource/ $(objs) source/main.c -o test
 
 test: $(test_objs)
-	$(CC) $(CFLAGS) $(test_objs) -o test $(LIBFLAGS)
+	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)
 #	gcc $(CFLAGS) -I$(SOURCE) $(BUILD) tests/test_main.c -o test
 
 .phony clean:

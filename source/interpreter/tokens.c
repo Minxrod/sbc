@@ -441,8 +441,8 @@ void tok_test(struct tokenizer* state){
 			case sysvar:
 				{
 				u8 id = state->tokens[i].ofs;
-				if (id == SYS_TIME$ || id == SYS_DATE$ || id == SYS_PRGNAME$
-					|| id == SYS_PACKAGE$ || id == SYS_MEM$){
+				if (id == SYS_TIME || id == SYS_DATE || id == SYS_PRGNAME
+					|| id == SYS_PACKAGE || id == SYS_MEM){
 						stack[stack_i++] = 's';
 					} else {
 						stack[stack_i++] = 'n';
