@@ -28,9 +28,9 @@ struct sprites {
 		bool flip_y;
 		
 		/// Sprite home x component (pixels)
-		fixp home_x;
+		s8 home_x;
 		/// Sprite home y component (pixels)
-		fixp home_y;
+		s8 home_y;
 		
 		/// Struct for sprite position.
 		struct {

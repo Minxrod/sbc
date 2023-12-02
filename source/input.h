@@ -55,8 +55,9 @@ struct input {
 	// Derived from tchx,tchy
 	u8 keyboard;
 	
-#if defined(PC) || defined(ARM9)
+#if defined(PC)
 	mtx_t inkey_mtx;
+	mtx_t touch_mtx;
 #endif
 	u16 inkey_buf[INKEY_BUF_SIZE];
 	u16 current_write;

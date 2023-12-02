@@ -12,7 +12,11 @@ void init_input(struct input* i){
 		i->times[j] = (struct button_time){0, 0, 0};
 	}
 #ifdef PC
-	int status = mtx_init(&i->inkey_mtx, mtx_plain); // should not need recursion?
+	int status = mtx_init(&i->inkey_mtx, mtx_plain);
+	if(status != thrd_success){
+		ABORT("Error creating inkey_mtx mutex");
+	}
+	status = mtx_init(&i->touch_mtx, mtx_plain);
 	if(status != thrd_success){
 		ABORT("Error creating inkey_mtx mutex");
 	}
@@ -80,7 +84,11 @@ u16 get_inkey(struct input* i){
 
 // Should also set keyboard, inkey!
 void set_touch(struct input* i, bool t, u8 x, u8 y){
-	// TODO:CODE:MED Does this one need thread synchronization?
+#ifdef PC
+	if (mtx_lock(&i->touch_mtx) == thrd_error){
+		ABORT("set_touch mutex lock failure!");
+	}
+#endif
 	if (t){
 		i->tchtime++;
 		i->tchx = x;
@@ -88,8 +96,12 @@ void set_touch(struct input* i, bool t, u8 x, u8 y){
 	} else {
 		i->tchtime = 0;
 	}
+#ifdef PC
+	if (mtx_unlock(&i->touch_mtx) == thrd_error){
+		ABORT("set_touch mutex unlock failure!");
+	}
+#endif
 }
-
 
 void set_repeat(struct input* i, int button, int start, int repeat){
 	i->times[button].start = start;

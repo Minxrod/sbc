@@ -90,6 +90,9 @@ void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count);
 // Get pointer to character at location
 void* str_at(const void* src, const u16 index);
 
+// Get character (wide) at current location
+u16 str_at_wide(const void* src, const u16 index);
+
 // Copy to u8 str
 void str_char_copy(const void* src, u8* dest);
 

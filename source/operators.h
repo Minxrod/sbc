@@ -26,4 +26,5 @@ void op_and(struct ptc* p);
 void op_or(struct ptc* p);
 void op_xor(struct ptc* p);
 void op_not(struct ptc* p);
+void op_logical_not(struct ptc* p);
 

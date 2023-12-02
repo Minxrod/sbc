@@ -39,7 +39,11 @@ typedef uint32_t u32;
 typedef int8_t s8;
 typedef int16_t s16;
 typedef int32_t s32;
+#ifdef NDEBUG
+#define iprintf if(0)printf
+#else
 #define iprintf printf
+#endif
 #endif
 
 // Type to handle instruction indexes

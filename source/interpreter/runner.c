@@ -56,8 +56,8 @@ const ptc_call ptc_commands[] = {
 	NULL, NULL, NULL, NULL, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, NULL, NULL, NULL, //RENAME, 
 	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
-	NULL, NULL, cmd_spclr, NULL, NULL, NULL, NULL, cmd_sppage, //SPPAGE,
-	NULL, NULL, NULL, NULL, NULL, //SWAP, 
+	NULL, NULL, cmd_spclr, NULL, NULL, NULL, cmd_spofs, cmd_sppage, //SPPAGE,
+	NULL, NULL, cmd_spset, NULL, NULL, //SWAP, 
 	NULL //TMREAD,
 };
 
@@ -65,13 +65,13 @@ const ptc_call ptc_operators[] = {
 	op_add, op_comma, op_sub, op_mult, op_div, op_semi, op_assign, op_negate,
 	op_equal, op_inequal, op_less, op_greater, op_less_equal, op_greater_equal,
 	op_modulo,
-	op_and, op_or, op_xor, op_not,
+	op_and, op_or, op_xor, op_not, op_logical_not
 };
 
 const ptc_call ptc_functions[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, func_button,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	func_inkey, NULL, NULL, func_len, NULL, func_mid, func_pi, NULL, NULL, //FUN_RAD
+	NULL, NULL, NULL, NULL, NULL, func_floor, NULL, NULL, NULL, //FUN_ICONCHK
+	func_inkey, func_instr, NULL, func_len, NULL, func_mid, func_pi, NULL, NULL, //FUN_RAD
 	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUN_SPHITRC
 	NULL, NULL, NULL, NULL, NULL, func_val, //FUN_VAL
 };
@@ -80,7 +80,7 @@ const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
 	NULL, sys_date, NULL, NULL, //MAINCNTH
 	NULL, NULL, NULL, NULL, NULL, //RESULT
-	NULL, NULL, NULL, NULL, //TCHTIME
+	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
 };
 

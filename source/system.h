@@ -10,6 +10,7 @@
 #include "subsystem/panel.h"
 #include "subsystem/background.h"
 #include "subsystem/sprites.h"
+#include "timers.h"
 
 // note that VAR_LIMIT should be a multiple of 2 to ensure that
 // the current hash algorithm works
@@ -28,8 +29,6 @@
 
 // note: members here are stored directly (why?)
 struct ptc {
-	// generic stuff
-	struct input input;
 	// upper screen stuff
 	struct console console;
 	// background stuff
@@ -43,6 +42,10 @@ struct ptc {
 	
 	// graphics and resources
 	struct resources res;
+	// generic stuff
+	struct input input;
+	// timing
+	struct timers time;
 	
 	// actual system stuff
 	/// The value/variable stack 

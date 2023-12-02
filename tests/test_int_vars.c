@@ -322,5 +322,35 @@ int test_int_vars(){
 		free_code(p);
 	}
 	
+	// FLOOR
+	{
+		char* code = "A=FLOOR(3.5)\rB=FLOOR(4.67)\rC=FLOOR(2)\rD=FLOOR(-1.3)\rE=FLOOR(-2)\r";
+		
+		struct ptc* p = run_code(code);
+		
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(3), "[math] A=FLOOR(3.5)");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(4), "[math] B=FLOOR(4.67)");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(2), "[math] C=FLOOR(2)");
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == -INT_TO_FP(2), "[math] D=FLOOR(-1.3)");
+		ASSERT(test_var(&p->vars, "E", VAR_NUMBER)->value.number == -INT_TO_FP(2), "[math] E=FLOOR(-2)");
+		
+		free_code(p);
+	}
+	
+	// INSTR
+	{
+		char* code = "A$=\"ABCDEFGHI\"\rA=INSTR(A$,A$)\rB=INSTR(A$,\"\")\rC=INSTR(A$,\"DEF\")\rD=INSTR(A$,\"AAA\")\rE=INSTR(\"\",A$)\r";
+		
+		struct ptc* p = run_code(code);
+		
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[instr] Find string in itself");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(0), "[instr] Find empty string in string");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(3), "[instr] Find string in middle of string");
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == -INT_TO_FP(1), "[instr] Can't find string in string");
+		ASSERT(test_var(&p->vars, "E", VAR_NUMBER)->value.number == -INT_TO_FP(1), "[instr] Can't find string in empty string");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_vars success");
 }

@@ -285,7 +285,7 @@ u8 to_char(u16 w){
 		return katakana[wl] + 0xa1;
 	} else {
 		//TODO:CODE:LOW Handle invalid characters better?
-		iprintf("Error converting u16 to u8 char (unimplemented): %x\n", w);
+		iprintf("Error converting u16 to u8 char (unimplemented): 0x%x\n", w);
 		abort();
 	}
 }

@@ -89,6 +89,51 @@ void func_val(struct ptc* p){
 	}
 }
 
+void func_instr(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	int start = 0;
+	if (p->exec.argcount == 3){
+		struct stack_entry* startv = stack_pop(s);
+		start = VALUE_INT(startv);
+	}
+	struct stack_entry* substring = stack_pop(s);
+	struct stack_entry* string = stack_pop(s);
+	void* str = VALUE_STR(string);
+	void* sub = VALUE_STR(substring);
+	
+	int len_string = str_len(str);
+	int len_substring = str_len(sub);
+	// empty string always matches
+	if (len_substring == 0) {
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(0)}});
+		return;
+	}
+	
+	int i;
+	int j = 0;
+	for (i = start; i < len_string; ++i){
+		if (len_substring - j > len_string - i){
+			// remaining string to search for is too long: can't find it
+			break;
+		}
+		if (j == len_substring) break;
+		
+		if (str_at_wide(str,i) == str_at_wide(sub,j)){
+			j++;
+		} else {
+			// match failed, try again at next char
+			j = 0;
+		}
+		iprintf("%d,%d\n",i,j);
+	}
+	// if string has been entirely matched, return match position
+	if (j == len_substring){
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(i - len_substring)}});
+	} else {
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {-INT_TO_FP(1)}});
+	}
+}
+
 void cmd_dtread(struct ptc* p){
 	//TODO:ERR:MED Syntax error on invalid characters, wrong length
 	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.

@@ -21,3 +21,5 @@ struct panel {
 
 void cmd_pnltype(struct ptc* p);
 void cmd_pnlstr(struct ptc* p);
+
+void set_keyboard(struct panel* p, enum pnltype type);

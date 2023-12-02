@@ -404,3 +404,18 @@ void op_not(struct ptc* p){
 	}
 }
 
+void op_logical_not(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	
+	if (a->type & VAR_NUMBER){
+		fixp x;
+		
+		x = VALUE_NUM(a);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == 0)}});
+	} else {
+		p->exec.error = ERR_OP_INVALID_TYPES;
+	}
+}
+

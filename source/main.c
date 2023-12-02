@@ -170,7 +170,6 @@ int main(int argc, char** argv){
 			printf("Failed to read key %d\n", 1+i);
 			abort();
 		}
-		printf("%d\n", keys[i]);
 	}
 	
 	sfEvent event;
@@ -196,18 +195,21 @@ int main(int argc, char** argv){
 		}
 		
 		// TODO:CODE:NONE SFML 2.6, use scan codes?
-		// Set buttons, TODO:IMPL:LOW touch
 		int b = 0;
 		for (int i = 0; i < 12; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
 		}
 		set_input(&ptc->input, b);
 		
+		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
+		set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y);
+		
 		sfRenderWindow_clear(window, sfBlack);
 		
 		system_draw(window, ptc);
 		
 		sfRenderWindow_display(window);
+		inc_time(&ptc->time);
 	}
 	
 	//TODO:CODE:MED Signal thread to die on exit

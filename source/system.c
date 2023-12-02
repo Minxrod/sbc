@@ -9,6 +9,7 @@
 #include "interpreter.h"
 #include "program.h"
 
+
 struct ptc* init_system(int var, int str, int arr){
 	iprintf("init_system calloc: %d\n", (int)sizeof(struct ptc));
 	struct ptc* ptc = calloc(sizeof(struct ptc), 1);
@@ -62,21 +63,23 @@ char acls_code[] =
 " 'COLINIT \"GRP\",I\r"
 "NEXT\r";
 
-char acls_bytecode[sizeof acls_code];
+char acls_bytecode[2*sizeof acls_code];
 
 void cmd_acls(struct ptc* p){
 	// copy vars and use a temp variables for this snippet
+	struct runner cur_exec = p->exec; // copy code state
 	struct variables temp_vars = {0};
 	init_mem_var(&temp_vars, 4); //P,I
 	struct variables vars = p->vars;
 	p->vars = temp_vars;
-	// TODO:IMPL:HIGH
+	
 	struct program acls_program = { sizeof acls_code, acls_code };
 	struct program acls_bc = { 0, acls_bytecode };
 	
 	tokenize(&acls_program, &acls_bc);
 	
 	run(&acls_bc, p);
+	p->exec = cur_exec;
 	
 	// Restore proper program variable state
 	p->vars = vars;
@@ -88,13 +91,20 @@ void cmd_visible(struct ptc* p){
 }
 
 void cmd_vsync(struct ptc* p){
-	// TODO:IMPL:HIGH
-	p->stack.stack_i = 0;
+	int delay = STACK_INT(0);
+	
+	int64_t start_time = get_time(&p->time);
+	while (get_time(&p->time) - start_time < delay){
+		// wait for 10ms before checking again
+		thrd_sleep(&(struct timespec){.tv_nsec=(1e7)}, NULL);
+	}
 }
 
 void cmd_wait(struct ptc* p){
-	// TODO:IMPL:HIGH
-	p->stack.stack_i = 0;
+	int delay = STACK_INT(0);
+	
+	// wait for duration of delay
+	thrd_sleep(&(struct timespec){.tv_nsec=(1e9 * (delay)/60)}, NULL);
 }
 
 void cmd_clear(struct ptc* p){
@@ -123,6 +133,7 @@ void system_draw(struct ptc* p){
 #include <SFML/Graphics.h>
 #include "graphics/pc/tilemap.h"
 #include "graphics/pc/graphic.h"
+#include "graphics/pc/sprite.h"
 
 void system_draw(sfRenderWindow* rw, struct ptc* p){
 	// TODO:IMPL:HIGH Implement VISIBLE
@@ -142,9 +153,11 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 		}
 	}
 	
+	// graphics
 	struct graphic graphic = init_graphic(GRP_WIDTH, GRP_HEIGHT);
 	draw_graphic(&graphic, p);
 	
+	// draw backgrounds
 	struct tilemap background_map;
 	background_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
 	struct tilemap foreground_map;
@@ -158,6 +171,14 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 			td = bg_tile(p,0,0,x,y);
 			tile(&foreground_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
 			palette(&foreground_map, x, y, (td & 0xf000) >> 12);
+		}
+	}
+	
+	// draw sprites
+	struct sprite_array sprites = init_sprite_array();
+	for (int i = 0; i < MAX_SPRITES; ++i){
+		if (p->sprites.info[0][i].active){
+			add_sprite(sprites, &p->sprites.info[0][i]);
 		}
 	}
 	
@@ -182,14 +203,20 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	sfShader_setBoolUniform(shader, "grp_mode", false);
 	sfRenderWindow_drawVertexArray(rw, foreground_map.va, &rs);
 	
+	rs.texture = p->res.chr_tex[3];
+	sfShader_setFloatUniform(shader, "colbank", 1);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
+	sfRenderWindow_drawVertexArray(rw, sprites.va, &rs);
+	
 	rs.texture = p->res.chr_tex[0];
 	sfShader_setFloatUniform(shader, "colbank", 0);
 	sfShader_setBoolUniform(shader, "grp_mode", false);
 	sfRenderWindow_drawVertexArray(rw, console_map.va, &rs);
 	
-	free_graphic(&graphic);
 	free_tilemap(&console_map);
+	free_graphic(&graphic);
 	free_tilemap(&background_map);
 	free_tilemap(&foreground_map);
+	free_sprite_array(sprites);
 }
 #endif

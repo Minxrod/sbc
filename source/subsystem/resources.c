@@ -118,7 +118,7 @@ void init_resource(struct resources* r){
 	
 	char name[] = "resources/XXXX.PTC";
 	
-	for (int i = 0; i < 12; ++i){
+	for (int i = 0; i < 22; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = chr_files[4*i+j];
 		}
@@ -137,8 +137,11 @@ void init_resource(struct resources* r){
 #ifdef PC
 	// Generate PC textures here
 	r->chr_tex[0] = gen_chr_texture(r->chr[0], 512);
-	r->chr_tex[1] = gen_chr_texture(r->chr[4], 512);
-	r->chr_tex[2] = gen_chr_texture(r->chr[8], 512);
+	r->chr_tex[1] = gen_chr_texture(r->chr[4], 1024);
+	r->chr_tex[2] = gen_chr_texture(r->chr[8], 1024);
+	r->chr_tex[3] = gen_chr_texture(r->chr[12], 2048);
+	r->chr_tex[4] = gen_chr_texture(r->chr[20], 512);
+	// 5 does not exist (no SPD on upper screen)
 	r->col_tex = gen_col_texture(r->col[0]);
 	
 	if (!sfShader_isAvailable()){

@@ -321,7 +321,58 @@ void cmd_input(struct ptc* p){
 }
 
 void cmd_linput(struct ptc* p){
-	ERROR(ERR_UNIMPLEMENTED);
+	struct console* con = &p->console;
+	// INPUT [prompt;]var$
+	void* prompt_str = NULL;
+	struct stack_entry* e;
+	if (p->stack.stack_i == 3){
+		// check prompt string
+		prompt_str = ARG(0)->value.ptr;
+		e = ARG(2);
+	} else {
+		e = ARG(0);
+	}
+	
+	if (prompt_str) // only display string if it exists
+		con_puts(con, prompt_str);
+	con_put(con, to_wide('?'));
+	if (con->x) con_newline(con, true); // only newline if necessary for full line of input
+	
+	u16 inkey;
+	u16* output;
+	u8 out_index;
+	output = con->text[con->y];
+	out_index = 0;
+	while ((inkey = get_inkey(&p->input)) != '\r'){
+		if ((inkey == '\b' || check_pressed_manual(&p->input, BUTTON_ID_Y, 15, 4))){
+			if (out_index > 0)
+				output[--out_index] = 0;
+		} else if (inkey && out_index < CONSOLE_WIDTH){
+			output[out_index++] = inkey;
+		} else {
+#if defined(PC) || defined(ARM9)
+			// sleep for user input?
+			struct timespec tspec = {.tv_nsec=1000000000/60};
+			thrd_sleep(&tspec, NULL);
+#endif
+		}
+	}
+	con_newline(con, true); // from user entering the line.
+	
+	// Now store the result to a new string
+	struct string* s = get_new_str(&p->strs);
+	
+	if (*(void**)e->value.ptr != NULL && **(char**)e->value.ptr == STRING_CHAR){
+		(*(struct string**)e->value.ptr)->uses--;
+	}
+	(*(struct string**)e->value.ptr) = s;
+	
+	// TODO:IMPL:LOW Wide string support?
+	s->uses = 1;
+	s->len = out_index;
+	for (int j = 0; j < s->len; ++j){
+		s->ptr.s[j] = to_char(output[j]);
+	}
 }
 
 void sys_csrx(struct ptc* p){

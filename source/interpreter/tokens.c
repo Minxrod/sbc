@@ -100,7 +100,10 @@ int tok_in_str_index(const char* str, const char* data, struct token* tok){
 	do {
 		index = start / MAX_SPECIAL_NAME_SIZE;
 		for (size_t i = 0; i < tok->len; ++i){
-			if (data[tok->ofs + i] != *(str + i)){
+			// Allows matching lowercase forms of commands, etc.
+			char c = data[tok->ofs + i];
+			if (c >= 'a' && c <= 'z') c = c - 'a' + 'A';
+			if (c != *(str + i)){
 				index = -1;
 				break;
 			}
@@ -209,10 +212,12 @@ void tok_convert(struct tokenizer* state){
 // a = array [only SORT,RSORT should use this?]
 // E = both
 // L = label (includes string)
+// l = label list
 // 0 = Nothing (no argument) (must be first in list)
 // ; = semicolon
 // < = comma
 // , = separates valid formations
+// Note that everything is ordered from short to long.
 const char* cmd_format[] = {
 	"*","NN","N,NN","*", //DIM
 	"*","*","*","0,n", //NEXT
@@ -220,7 +225,7 @@ const char* cmd_format[] = {
 	"L,l","L,l","N","0", //RETURN
 	"0","0", //STOP
 	"0","NNNNNN","0","N","N", //WAIT
-	"*","S;s,s", //LINPUT
+	"v,S;v","s,S;s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
 	"NNNN","","","NNNNNN","", //BGMCLEAR
 	"","","","","","","", //BGMVOL
@@ -232,15 +237,15 @@ const char* cmd_format[] = {
 	"","","","",//NEW
 	"NNS","S","*","","","",//RENAME
 	"L","","0","","","","",//SPANGLE
-	"","","","","","","","",//SPPAGE
-	"","","","","",//SWAP
+	"","","0,N","","","","NNN,NNNN","N",//SPPAGE
+	"","","NNNNNN,NNNNNNNN","","",//SWAP
 	"",//TMREAD
 };
 
 const char* func_format[] = {
 	"N","S","N,NN","","","","0","0,N",//BUTTON
 	"NN","N","N","N","","N","NN,NNN","N,NN","",//ICONCHK
-	"0","","","S","","SNN","0","NN","N",//RAD
+	"0","SS,SSN","","S","","SNN","0","NN","N",//RAD
 	"","N","N","N","","","","",//SPHITRC
 	"","N","N","","","S",//VAL
 };
@@ -279,7 +284,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 			is_valid = true;
 			continue;
 		}
-		if (stack_i > stack_len) return false;
+		if (stack_i > stack_len) return is_valid;
 		
 		//TODO:PERF:NONE Check if refactoring this to use fallthrough is faster
 		switch (v){
@@ -311,6 +316,14 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 			case 'l':
 				if (s == 'S' || s == 's' || s == 'L') {
 					valid_i--; // read as many labels as needed
+					break;
+				}
+				is_valid = false;
+				break;
+				
+			case 'v':
+				if (s == 'n' || s == 's') {
+					valid_i--; // read as many vars as needed
 					break;
 				}
 				is_valid = false;

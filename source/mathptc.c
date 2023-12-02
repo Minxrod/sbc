@@ -51,3 +51,11 @@ void func_sin(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_sin_internal(angle)}});
 }
 
+void func_floor(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(VALUE_NUM(a)))}});
+}
+
+
