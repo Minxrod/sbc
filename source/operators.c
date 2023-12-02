@@ -219,7 +219,12 @@ void op_inequal(struct ptc* p){
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x != y)}});
 	} else {
-		p->exec.error = ERR_UNIMPLEMENTED;
+		struct string* x, * y;
+		
+		x = value_str(a);
+		y = value_str(b);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(!str_comp(x, y))}});
 	}
 }
 
