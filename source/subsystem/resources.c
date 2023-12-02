@@ -248,7 +248,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 
 void cmd_chrinit(struct ptc* p){
 	// CHRINIT resource
-	void* res_str = STACK_STR(0);
+	void* res_str = value_str(ARG(0));
 	int res_str_len = str_len(res_str);
 	u8 res[5];
 	if (res_str_len > 5) { ERROR(ERR_INVALID_RESOURCE_TYPE); }

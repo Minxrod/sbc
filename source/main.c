@@ -122,14 +122,20 @@ int system_launch(void* launch_info){
 int main(int argc, char** argv){
 //	srand(time(NULL));
 	struct program program;
+	
 	char* window_name = "SBC";
-	if (argc == 2){
+	if (argc >= 2){
 		// Load .PTC file as program
 		window_name = argv[1];
 		prg_load(&program, argv[1]);
 	} else {
 		// Load default program: TODO:IMPL:LOW load an actual launcher program
 		prg_load(&program, "programs/SAMPLE2.PTC");
+	}
+	// Auto-inputs
+	FILE* inputs = NULL;
+	if (argc >= 3){
+		inputs = fopen(argv[2], "r");
 	}
 	
 	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
@@ -190,6 +196,25 @@ int main(int argc, char** argv){
 					if (to_char(event.text.unicode) >= 0xa1){
 						set_inkey(&ptc->input, event.text.unicode - 12289);
 					}
+				}
+			}
+		}
+		
+		char input;
+		if (inputs){
+			//read 128 units per frame
+			bool success = true;
+			while(success){
+				if ((input = getc(inputs)) != EOF){
+					success = set_inkey(&ptc->input, input);
+					if (!success){
+						ungetc(input, inputs);
+					}
+				} else {
+					fclose(inputs);
+					inputs = NULL;
+					success = false;
+					break;
 				}
 			}
 		}

@@ -268,7 +268,7 @@ int test_int_vars(){
 	// String reference counting
 	{
 		// note: to force string alloc, add an empty string to end
-		char* code = "A$=\"AB\"+\"C\"\rB$=A$\rC$=B$\rD$=C$+\"D\"\rC$=\"A\"+\"\"\r";
+		char* code = "A$=\"AB\"+\"C\"\rB$=A$\rC$=B$\rD$=C$+\"D\"\rC$=\"A\"+\"\"\rE$=MID$(A$,0,1)\r";
 		char* strABC = "S\003ABC";
 		char* strABCD = "S\004ABCD";
 		char* strA = "S\001A";
@@ -279,6 +279,7 @@ int test_int_vars(){
 		struct named_var* a = test_var(&p->vars, "A", VAR_STRING);
 		struct named_var* d = test_var(&p->vars, "D", VAR_STRING);
 		struct named_var* c = test_var(&p->vars, "C", VAR_STRING);
+		struct named_var* e = test_var(&p->vars, "E", VAR_STRING);
 		
 		ASSERT(a != NULL, "[str_uses] A exists");
 		ASSERT(str_comp(a->value.ptr, strABC), "[str_uses] Correct string A");
@@ -293,6 +294,10 @@ int test_int_vars(){
 		ASSERT(str_comp(c->value.ptr, strA), "[str_uses] Correct string C");
 		ASSERT(((struct string*)c->value.ptr)->uses == 1, "[str_uses] Correct usage count C");
 		
+		ASSERT(e != NULL, "[str_uses] E exists");
+		ASSERT(str_comp(e->value.ptr, strA), "[str_uses] Correct string E");
+		ASSERT(((struct string*)e->value.ptr)->uses == 1, "[str_uses] Correct usage count E");
+		
 		free_code(p);
 	}
 	
@@ -302,7 +307,7 @@ int test_int_vars(){
 		
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[clear] Clears variable A correctly");
 		ASSERT(get_arr_entry(&p->vars, "B", 1, VAR_NUMBER | VAR_ARRAY, 3, ARR_DIM2_UNUSED)->number == INT_TO_FP(0), "[clear] Clears variable B[] correctly");
-		ASSERT(test_var(&p->vars, "C", VAR_STRING)->value.ptr == NULL, "[clear] Clears string C$ correctly");
+		ASSERT(test_var(&p->vars, "C", VAR_STRING)->value.ptr == empty_str, "[clear] Clears string C$ correctly");
 		
 		free_code(p);
 	}
@@ -339,7 +344,9 @@ int test_int_vars(){
 	
 	// INSTR
 	{
-		char* code = "A$=\"ABCDEFGHI\"\rA=INSTR(A$,A$)\rB=INSTR(A$,\"\")\rC=INSTR(A$,\"DEF\")\rD=INSTR(A$,\"AAA\")\rE=INSTR(\"\",A$)\r";
+		char* code = "A$=\"ABCDEFGHI\"\rA=INSTR(A$,A$)\rB=INSTR(A$,\"\")\rC=INSTR(A$,\"DEF\")\rD=INSTR(A$,\"AAA\")\rE=INSTR(\"\",A$)\r"
+		"F=INSTR(A$,\"A\",1)\rG=INSTR(A$,\"HI\")\r"
+		"H=INSTR(\"AABC\",\"AB\")\r";
 		
 		struct ptc* p = run_code(code);
 		
@@ -348,6 +355,29 @@ int test_int_vars(){
 		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(3), "[instr] Find string in middle of string");
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == -INT_TO_FP(1), "[instr] Can't find string in string");
 		ASSERT(test_var(&p->vars, "E", VAR_NUMBER)->value.number == -INT_TO_FP(1), "[instr] Can't find string in empty string");
+		ASSERT(test_var(&p->vars, "F", VAR_NUMBER)->value.number == -INT_TO_FP(1), "[instr] Can't find string past correct location");
+		ASSERT(test_var(&p->vars, "G", VAR_NUMBER)->value.number == INT_TO_FP(7), "[instr] Match string that reaches end");
+		ASSERT(test_var(&p->vars, "H", VAR_NUMBER)->value.number == INT_TO_FP(1), "[instr] Match string with repeat characters");
+		
+		free_code(p);
+	}
+	
+	// SUBST
+	{
+		// add "" to force string alloc; check usages to ensure stack is not causing copies to live too long
+		char* code = "A$=\"ABCDEFGHI\"+\"\"\rB$=SUBST$(A$,3,2,\"XYZ\")\rC$=SUBST$(A$,0,5,\"XY\")\rD$=SUBST$(A$,9,4,\"XYZW\")\rE$=SUBST$(A$,6,0,\"XY\")\rF$=SUBST$(A$,0,0,\"XY\")\r";
+		
+		struct ptc* p = run_code(code);
+		
+		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\11ABCDEFGHI"), "[subst] Original string unmodified");
+		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\12ABCXYZFGHI"), "[subst] Substitute more characters than replaced");
+		ASSERT(str_comp(test_var(&p->vars, "C", VAR_STRING)->value.ptr, "S\6XYFGHI"), "[subst] Substitute less characters than replaced");
+		ASSERT(str_comp(test_var(&p->vars, "D", VAR_STRING)->value.ptr, "S\15ABCDEFGHIXYZW"), "[subst] Substitute past end of string");
+		ASSERT(str_comp(test_var(&p->vars, "E", VAR_STRING)->value.ptr, "S\13ABCDEFXYGHI"), "[subst] Replace zero characters in string");
+		ASSERT(str_comp(test_var(&p->vars, "F", VAR_STRING)->value.ptr, "S\13XYABCDEFGHI"), "[subst] Replace zero characters at beginning of string");
+		
+		ASSERT(((struct string*)test_var(&p->vars, "A", VAR_STRING)->value.ptr)->type == STRING_CHAR, "[str_uses] Correct original string type");
+		ASSERT(((struct string*)test_var(&p->vars, "A", VAR_STRING)->value.ptr)->uses == 1, "[str_uses] Correct original string uses");
 		
 		free_code(p);
 	}

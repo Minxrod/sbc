@@ -6,6 +6,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
+
+// This function replaces the VALUE_STR macro in places where use count must be
+// decreased for temporary values living on the stack.
+void* value_str(struct stack_entry* e){
+	void* value = VALUE_STR(e);
+	// Check for only VAR_STRING, and we only care about alloc'd values.
+	// If the value is alloc'd and being read here, reduce usages as it was
+	// removed from the stack.
+	assert(value);
+	if (e->type == VAR_STRING && ((struct string*)value)->type == STRING_CHAR){
+		assert(((struct string*)value)->uses > 0);
+		((struct string*)value)->uses--;
+	}
+	return value;
+}
 
 // Used as index into var table directly.
 int var_name_hash(char* name, u32 len, u32 hmax){
@@ -124,7 +140,7 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 		if (type == VAR_NUMBER){
 			var->value.number = 0;
 		} else if (type == VAR_STRING) {
-			var->value.ptr = NULL;
+			var->value.ptr = empty_str;
 		} else if (type & VAR_ARRAY) {
 			// Can't directly initialize here
 			var->value.ptr = NULL;

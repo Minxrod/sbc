@@ -38,4 +38,5 @@ const char * error_messages[] = {
 	"Can't find a matching NEXT for this FOR",
 	"Entered BC_BEGIN_LOOP with no FOR call!",
 	"Failed to load file",
+	"Arugment out of range!",
 };

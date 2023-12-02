@@ -104,7 +104,10 @@ void cmd_wait(struct ptc* p){
 	int delay = STACK_INT(0);
 	
 	// wait for duration of delay
-	thrd_sleep(&(struct timespec){.tv_nsec=(1e9 * (delay)/60)}, NULL);
+	int big = delay / 60;
+	int small = delay % 60;
+	
+	thrd_sleep(&(struct timespec){.tv_sec = big, .tv_nsec=(1e7*small/60*1e2)}, NULL);
 }
 
 void cmd_clear(struct ptc* p){

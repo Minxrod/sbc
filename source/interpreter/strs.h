@@ -5,6 +5,8 @@
 #define MAX_STRLEN 256
 
 extern char* single_char_strs;
+extern char* empty_str;
+
 
 // string meta
 // type can be 'S' or 'W'

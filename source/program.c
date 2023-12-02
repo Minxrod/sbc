@@ -27,7 +27,6 @@ void prg_load(struct program* p, const char* filename){
 	FILE* f = fopen(filename, "r");
 	if (!f){
 		iprintf("File %s load failed!\n", filename);
-		fclose(f);
 		abort();
 	}
 	struct ptc_header h;

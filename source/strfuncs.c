@@ -7,13 +7,9 @@ void func_len(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & VAR_STRING){
-		void* x = VALUE_STR(a);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_len(x))}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	void* x = value_str(a);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_len(x))}});
 }
 
 void func_mid(struct ptc* p){
@@ -22,71 +18,65 @@ void func_mid(struct ptc* p){
 	struct stack_entry* start_e = stack_pop(s);
 	struct stack_entry* str_e = stack_pop(s);
 	
-	if (str_e->type & VAR_STRING && start_e->type & VAR_NUMBER && len_e->type & VAR_NUMBER){
-		void* s = VALUE_STR(str_e);
-		u16 start = VALUE_INT(start_e);
-		u16 len = VALUE_INT(len_e);
-		//TODO:ERR:MED start, len must be postiive
-		
-		s16 max_len = (s16)str_len(s) - (s16)start;
-		if (max_len <= 0){
-			stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = NULL}});
-			return;
-		} else if (max_len <= (s16)len){
-			len = max_len;
-		}
-		
-		struct string* dest = get_new_str(&p->strs);
-		dest->uses = 1;
-		dest->len = len;
-		// TODO:IMPL:LOW Determine type(s) of strings to get types for copying
-		str_copy_buf(str_at(s, start), str_at(dest, 0), 0, len);
-		
-		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
+	// Must be done first to ensure uses are kept correctly
+	struct string* dest = get_new_str(&p->strs);
+	
+	void* str = value_str(str_e);
+	u16 start = VALUE_INT(start_e);
+	u16 len = VALUE_INT(len_e);
+	//TODO:ERR:MED start, len must be postiive
+	
+	s16 max_len = (s16)str_len(str) - (s16)start;
+	if (max_len <= 0){
+		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = empty_str}});
+		return;
+	} else if (max_len <= (s16)len){
+		len = max_len;
 	}
+	
+	dest->uses = 1;
+	dest->len = len;
+	// TODO:IMPL:LOW Determine type(s) of strings to get types for copying
+	str_copy_buf(str_at(str, start), str_at(dest, 0), 0, len);
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
 void func_val(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & VAR_STRING){
-		void* str = VALUE_STR(a);
-		void* str_begin = str_at(str, 0);
-		int len = str_len(str);
-		bool negate = false;
-		fixp v;
-		
-		u8 first_char = *(u8*)str_begin;
-		if (first_char == '-'){
-			negate = true;
-			str_begin = str_at(str, 1);
-			len--;
-			v = str_to_num(str_begin, str_len(str));
-		} else if (first_char == '&'){
-			u8 second_char = *(u8*)str_at(str, 1);
-			str_begin = str_at(str, 2);
-			if (second_char == 'H'){
-				// parse as hex
-				v = str_to_number(str_begin, len-2, 16, false);
-			} else if (second_char == 'B'){
-				// parse as binary
-				v = str_to_number(str_begin, len-2, 2, false);
-			} else {
-				ERROR(ERR_SYNTAX);
-			}
+	void* str = value_str(a);
+	void* str_begin = str_at(str, 0);
+	int len = str_len(str);
+	bool negate = false;
+	fixp v;
+	
+	u8 first_char = *(u8*)str_begin;
+	if (first_char == '-'){
+		negate = true;
+		str_begin = str_at(str, 1);
+		len--;
+		v = str_to_num(str_begin, str_len(str));
+	} else if (first_char == '&'){
+		u8 second_char = *(u8*)str_at(str, 1);
+		str_begin = str_at(str, 2);
+		if (second_char == 'H'){
+			// parse as hex
+			v = str_to_number(str_begin, len-2, 16, false);
+		} else if (second_char == 'B'){
+			// parse as binary
+			v = str_to_number(str_begin, len-2, 2, false);
 		} else {
-			v = str_to_num(str_begin, str_len(str));
+			ERROR(ERR_SYNTAX);
 		}
-		// TODO:IMPL:LOW This doesn't work for u16 strings
-		if (negate) v = -v;
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {v}});
 	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
+		v = str_to_num(str_begin, str_len(str));
 	}
+	// TODO:IMPL:LOW This doesn't work for u16 strings
+	if (negate) v = -v;
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {v}});
 }
 
 void func_instr(struct ptc* p){
@@ -98,12 +88,13 @@ void func_instr(struct ptc* p){
 	}
 	struct stack_entry* substring = stack_pop(s);
 	struct stack_entry* string = stack_pop(s);
-	void* str = VALUE_STR(string);
-	void* sub = VALUE_STR(substring);
+	void* str = value_str(string);
+	void* sub = value_str(substring);
 	
 	int len_string = str_len(str);
 	int len_substring = str_len(sub);
 	// empty string always matches
+	iprintf("%d,%s,%s\n", start, (char*)str_at(str,0), (char*)str_at(sub,0));
 	if (len_substring == 0) {
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(0)}});
 		return;
@@ -121,8 +112,9 @@ void func_instr(struct ptc* p){
 		if (str_at_wide(str,i) == str_at_wide(sub,j)){
 			j++;
 		} else {
-			// match failed, try again at next char
-			j = 0;
+			// match failed
+			i -= j; // go back by number of matched chars
+			j = 0; // reset check index
 		}
 		iprintf("%d,%d\n",i,j);
 	}
@@ -134,10 +126,58 @@ void func_instr(struct ptc* p){
 	}
 }
 
+void func_chr(struct ptc* p){
+	//TODO:TEST:LOW Create tests for CHR$
+	struct value_stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	
+	int c = VALUE_INT(a);
+	if (c < 0 || c > 255){
+		ERROR(ERR_OUT_OF_RANGE);
+	}
+	void* str = &single_char_strs[3*c];
+	
+	stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = str}});
+}
+
+void func_subst(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* replace_v = stack_pop(s);
+	struct stack_entry* count_v = stack_pop(s);
+	struct stack_entry* start_v = stack_pop(s);
+	struct stack_entry* string_v = stack_pop(s);
+	
+	// Note: must be allocated here to ensure use values of str, repl are noted
+	struct string* dest = get_new_str(&p->strs);
+	
+	int start = VALUE_INT(start_v);
+	int count = VALUE_INT(count_v);
+	void* str = value_str(string_v);
+	void* repl = value_str(replace_v);
+	
+	dest->uses = 1;
+//	dest->len = 0;
+	
+	//TODO:ERR:HIGH Proper bounds checks!
+	
+	str_copy_buf(str_at(str, 0), dest->ptr.s, STR_COPY_SRC_8 | STR_COPY_DEST_8, start);
+//	iprintf("%s\n",dest->ptr.s);
+	str_copy_buf(str_at(repl, 0), &dest->ptr.s[start], STR_COPY_SRC_8 | STR_COPY_DEST_8, str_len(repl));
+//	iprintf("%s\n",dest->ptr.s);
+	int remaining = str_len(str)-start-count;
+	if (remaining > 0)
+		str_copy_buf(str_at(str, start+count), &dest->ptr.s[start+str_len(repl)], STR_COPY_SRC_8 | STR_COPY_DEST_8, remaining);
+//	iprintf("%s\n",dest->ptr.s);
+	
+	dest->len = start + str_len(repl) + (remaining > 0 ? remaining : 0);
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
+}
+
+
 void cmd_dtread(struct ptc* p){
 	//TODO:ERR:MED Syntax error on invalid characters, wrong length
 	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.
-	void* date_str = VALUE_STR(ARG(0));
+	void* date_str = value_str(ARG(0));
 	fixp* year = ARG(1)->value.ptr;
 	fixp* month = ARG(2)->value.ptr;
 	fixp* day = ARG(3)->value.ptr;

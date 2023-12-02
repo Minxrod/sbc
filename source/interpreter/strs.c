@@ -25,6 +25,8 @@ char* single_char_strs =
 "S\1\xe0S\1\xe1S\1\xe2S\1\xe3S\1\xe4S\1\xe5S\1\xe6S\1\xe7S\1\xe8S\1\xe9S\1\xeaS\1\xebS\1\xecS\1\xedS\1\xeeS\1\xef"
 "S\1\xf0S\1\xf1S\1\xf2S\1\xf3S\1\xf4S\1\xf5S\1\xf6S\1\xf7S\1\xf8S\1\xf9S\1\xfaS\1\xfbS\1\xfcS\1\xfdS\1\xfeS\1\xff";
 
+char* empty_str = "S\0";
+
 bool is_lower(const char c){
 	return 'a' <= c && c <= 'z';
 }

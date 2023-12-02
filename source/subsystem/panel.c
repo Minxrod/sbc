@@ -6,7 +6,7 @@
 #include "system.h"
 
 void cmd_pnltype(struct ptc* p){
-	void* type = STACK_STR(0);
+	void* type = value_str(ARG(0));
 	
 	if (str_comp(type, "S\3OFF")){
 		p->panel.type = PNL_OFF;

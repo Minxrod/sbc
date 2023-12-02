@@ -70,10 +70,10 @@ const ptc_call ptc_operators[] = {
 
 const ptc_call ptc_functions[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, func_btrig, func_button,
-	NULL, NULL, NULL, NULL, NULL, func_floor, NULL, NULL, NULL, //FUN_ICONCHK
+	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, NULL, //FUN_ICONCHK
 	func_inkey, func_instr, NULL, func_len, NULL, func_mid, func_pi, NULL, NULL, //FUN_RAD
 	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUN_SPHITRC
-	NULL, NULL, NULL, NULL, NULL, func_val, //FUN_VAL
+	NULL, NULL, NULL, func_subst, NULL, func_val, //FUN_VAL
 };
 
 const ptc_call ptc_sysvars[] = {

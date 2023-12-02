@@ -38,26 +38,27 @@ void set_input(struct input* i, int b) {
 	}
 }
 
-void set_inkey(struct input* i, u16 c){
+bool set_inkey(struct input* i, u16 c){
+	bool status = false;
 #ifdef PC
 	if (mtx_lock(&i->inkey_mtx) == thrd_error){
 		ABORT("set_inkey mutex lock failure!");
 	}
 #endif
-	
 	if (i->current_write == INKEY_BUF_SIZE){
 		//wait for more slots
 	} else {
 		u16 cur = (i->current_base + i->current_write) % INKEY_BUF_SIZE;
 		i->current_write++;
 		i->inkey_buf[cur] = c;
+		status = true;
 	}
-	
 #ifdef PC
 	if (mtx_unlock(&i->inkey_mtx) == thrd_error){
 		ABORT("set_inkey mutex unlock failure!");
 	}
 #endif
+	return status;
 }
 
 u16 get_inkey(struct input* i){
@@ -181,6 +182,10 @@ void func_inkey(struct ptc* p){
 		return;
 	}
 	u16 inkey = get_inkey(i);
-	//TODO:CODE:LOW Doesn't handle wide characters
-	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = &single_char_strs[3 * to_char(inkey)]}});
+	if (inkey){
+		//TODO:CODE:LOW Doesn't handle wide characters
+		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = &single_char_strs[3 * to_char(inkey)]}});
+	} else {
+		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = empty_str}});
+	}
 }

@@ -69,7 +69,7 @@ void init_input(struct input* i);
 void set_input(struct input* i, int b);
 void set_repeat(struct input* i, int button, int start, int repeat);
 
-void set_inkey(struct input* i, u16 k);
+bool set_inkey(struct input* i, u16 k);
 u16 get_inkey(struct input* i);
 
 // Should also set keyboard, inkey!

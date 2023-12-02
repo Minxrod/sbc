@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 void op_add(struct ptc* p){
 	struct value_stack* s = &p->stack;
@@ -22,16 +23,9 @@ void op_add(struct ptc* p){
 	} else if (a->type & b->type & VAR_STRING){
 		struct string* x, * y, * z;
 		
-		x = VALUE_STR(a);
-		// if string is alloc'd and only exists on stack:
-		// decrease usage as it was popped
-		if (x->type == STRING_CHAR && !(a->type & VAR_VARIABLE)){
-			x->uses--;
-		}
-		y = VALUE_STR(b);
-		if (y->type == STRING_CHAR && !(b->type & VAR_VARIABLE)){
-			y->uses--;
-		}
+		// The value_str function checks if 
+		x = value_str(a);
+		y = value_str(b);
 		z = get_new_str(&p->strs);
 		z->uses = 1;
 		
@@ -71,12 +65,7 @@ void op_mult(struct ptc* p){
 		s32 count = FP_TO_INT(VALUE_NUM(b)); //TODO:TEST:LOW Does this round down?
 		struct string* x, * y;
 		
-		x = VALUE_STR(a);
-		// if string is alloc'd and only exists on stack:
-		// decrease usage as it was popped
-		if (x->type == STRING_CHAR && !(a->type & VAR_VARIABLE)){
-			x->uses--;
-		}
+		x = value_str(a);
 		
 		y = get_new_str(&p->strs);
 		y->uses = 1;
@@ -150,23 +139,13 @@ void op_assign(struct ptc* p){
 		if (a->type & VAR_VARIABLE){
 			// A = variable containing pointer to struct string*
 			struct string** dest = (struct string**)a->value.ptr;
-			struct string* src = VALUE_STR(b);
-			
-			if (b->type & VAR_VARIABLE){
-				// OK: has persistence
-			} else {
-				// will lose usage on assignment
-				if (src && src->type == STRING_CHAR)
-					src->uses--;
-			}
+			struct string* src = value_str(b);
 			
 			if (src == *dest)
 				return; // no change
 			if (*dest == NULL || **(char**)dest == BC_STRING){
 				// if dest is currently NOT writable string
-				if (src == NULL){
-					(*dest) = NULL; // assign empty string, done
-				} else if (src->type == STRING_CHAR){
+				if (src->type == STRING_CHAR){
 					// shallow copy alloc'd string, track use
 					(*dest) = src;
 					(*dest)->uses++;
@@ -180,7 +159,7 @@ void op_assign(struct ptc* p){
 			} else if (**(char**)dest == STRING_CHAR){
 				// dest is writable: replace it here
 				(*dest)->uses--;
-				if (src == NULL || src->type == STRING_CHAR){
+				if (src->type == STRING_CHAR){
 					*dest = src;
 					if (src)
 						(*dest)->uses++;
@@ -218,16 +197,8 @@ void op_equal(struct ptc* p){
 	} else if (a->type & b->type & VAR_STRING){
 		struct string* x, * y;
 		
-		x = VALUE_STR(a);
-		// if string is alloc'd and only exists on stack:
-		// decrease usage as it was popped
-		if (x && x->type == STRING_CHAR && !(a->type & VAR_VARIABLE)){
-			x->uses--;
-		}
-		y = VALUE_STR(b);
-		if (y && y->type == STRING_CHAR && !(b->type & VAR_VARIABLE)){
-			y->uses--;
-		}
+		x = value_str(a);
+		y = value_str(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_comp(x, y))}});
 	} else {

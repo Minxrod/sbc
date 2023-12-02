@@ -247,7 +247,7 @@ const char* func_format[] = {
 	"NN","N","N","N","","N","NN,NNN","N,NN","",//ICONCHK
 	"0","SS,SSN","","S","","SNN","0","NN","N",//RAD
 	"","N","N","N","","","","",//SPHITRC
-	"","N","N","","","S",//VAL
+	"","N","N","SNNS","","S",//VAL
 };
 
 const char func_return[] = "NNNNNNNN"

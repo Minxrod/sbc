@@ -31,9 +31,12 @@ enum types {
 	STACK_OP=16,
 };
 
+//TODO:CODE:LOW Should these be moved to stack.h?
 #define VALUE_NUM(v) (v->type & VAR_VARIABLE ? *(s32*)v->value.ptr : v->value.number)
 #define VALUE_INT(v) FP_TO_INT(VALUE_NUM(v))
 #define VALUE_STR(v) (v->type & VAR_VARIABLE ? *(void**)v->value.ptr : (void*)v->value.ptr)
+struct stack_entry;
+void* value_str(struct stack_entry* e);
 
 // Convenience definitions
 #define STACK_INT(i) VALUE_INT(ARG(i))
