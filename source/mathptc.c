@@ -39,8 +39,8 @@ void func_pi(struct ptc* p){
 
 // separate to make testing easier
 fixp func_sin_internal(fixp value){
-	fixp res = 4096*sin(value/4096.0);
-	return res >= 0 ? res : res - 1;
+	fixp res = floor(4096*(sin(value/4096.0)));
+	return res;
 }
 
 void func_sin(struct ptc* p){
@@ -56,6 +56,20 @@ void func_floor(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(VALUE_NUM(a)))}});
+}
+
+fixp func_log_internal(fixp value){
+	return 4096*log(value/4096.0);
+}
+
+void func_log(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* a = stack_pop(s);
+	//TODO:ERR:LOW Bounds.
+	fixp log_a = VALUE_NUM(a);
+	iprintf("%d\n", log_a);
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_log_internal(log_a)}});
 }
 
 

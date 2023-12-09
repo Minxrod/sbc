@@ -245,7 +245,7 @@ const char* cmd_format[] = {
 const char* func_format[] = {
 	"N","S","N,NN","","","","0","0,N",//BUTTON
 	"NN","N","N","N","","N","NN,NNN","N,NN","",//ICONCHK
-	"0","SS,SSN","","S","","SNN","0","NN","N",//RAD
+	"0","SS,SSN","","S","N","SNN","0","NN","N",//RAD
 	"","N","N","N","","","","",//SPHITRC
 	"","N","N","SNNS","","S",//VAL
 };

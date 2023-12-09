@@ -382,5 +382,19 @@ int test_int_vars(){
 		free_code(p);
 	}
 	
+	// ASC
+	{
+		char* code = "A=ASC(\"0\")\rB=ASC(\"A\")\rC=ASC(CHR$(0))\rD=ASC(\"abc\")\r";
+		
+		struct ptc* p = run_code(code);
+		
+		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(48), "[asc] Value of \"0\" string");
+		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(65), "[asc] Value of \"A\" string");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(0), "[asc] Value of CHR$(0) string");
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(97), "[asc] Value of first char of \"abc\" string");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_vars success");
 }

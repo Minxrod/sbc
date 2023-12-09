@@ -173,6 +173,15 @@ void func_subst(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
+void func_asc(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	struct stack_entry* str_v = stack_pop(s);
+	
+	//TODO:TEST:LOW Check behavior on various strings
+	fixp chr = INT_TO_FP(to_char(str_at_wide(VALUE_STR(str_v), 0)));
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {chr}});
+}
 
 void cmd_dtread(struct ptc* p){
 	//TODO:ERR:MED Syntax error on invalid characters, wrong length
