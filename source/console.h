@@ -38,6 +38,7 @@ struct console {
 };
 
 struct console* init_console(void);
+void free_console(struct console*);
 
 void con_put(struct console* c, u16 w);
 void con_puts(struct console* c, void* s);

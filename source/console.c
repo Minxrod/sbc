@@ -49,6 +49,10 @@ struct console* init_console(void){
 	return c;
 }
 
+void free_console(struct console* c){
+	free(c);
+}
+
 void con_put(struct console* c, u16 w){
 	if (c->y == 24) { con_scroll(c); }
 	c->text[c->y][c->x] = w;

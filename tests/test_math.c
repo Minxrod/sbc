@@ -59,21 +59,51 @@ int test_math(){
 	
 	// Test log function for selected values
 	{
-		fixp values[] = {
-			1<<12,3<<12,9<<12,27<<12,81<<12,243<<12,2<<12,4<<12,8<<12,16<<12,32<<12
-		};
+		// Logs from 1 to 64
+		// First zero exists to pad indexes
 		fixp logs[] = {
-			0,4500,8999,13500,17999,22500,2839,5678,8517,11357,14196
+			0,0,2839,4500,5678,
+			6592,7339,7970,8517,8999,9431,9821,10179,10507,10810,11093,11357,11605,
+			11839,12061,12271,12471,12661,12843,13018,13185,13346,13500,13649,13793,
+			13932,14066,14196,14322,14444,14563,14678,14791,14900,15006,15110,15211,
+			15310,15406,15500,15592,15682,15770,15857,15941,16024,16104,16185,16262,
+			16339,16414,16488,16560,16632,16701,16771,16838,16905,16970,17035
 		};
 		
-		for (u32 i = 0; i < sizeof values / sizeof values[0]; ++i){
-			fixp log_result = func_log_internal(values[i]);
-			iprintf("input=%d expected=%d log=%d",values[i], logs[i], log_result);
+		for (u32 i = 1; i < sizeof logs / sizeof logs[0]; ++i){
+			fixp log_result = func_log_internal(INT_TO_FP(i));
+			iprintf("input=%d expected=%d log=%d",i, logs[i], log_result);
 			CHECK(logs[i] == log_result, "[math] Log function");
 			iprintf("\n");
 		}
 	}
 	
+	// Test cos function for selected values
+	{
+		// Cosine from -63 to 0
+		// These values are all symmetric
+		fixp cosine[] = {
+			4038,2758,-1058,-3902,-3159,488,3685,3494,90,-3397,-3762,-668,
+			3039,3952,1231,-2623,-4065,-1771,2151,4095,2273,-1639,-4045,
+			-2732,1092,3911,3135,-525,-3702,-3476,-55,3416,3746,631,-3065,
+			-3943,-1197,2649,4059,1737,-2183,-4096,-2244,1671,4049,2704,
+			-1128,-3923,-3112,560,3716,3456,18,-3437,-3732,-596,3087,3932,1161,
+			-2678,-4056,-1705,2213,
+			4096,
+		};
+		
+		for (u32 i = 0; i < sizeof cosine / sizeof cosine[0]; ++i){
+			fixp cos_result = func_cos_internal(INT_TO_FP(i-63));
+			iprintf("input=%d expected=%d cos=%d",i, cosine[i], cos_result);
+			CHECK(cosine[i] == cos_result, "[math] Cosine function");
+			iprintf("\n");
+			// via symmetry
+			cos_result = func_cos_internal(INT_TO_FP(i));
+			iprintf("input=%d expected=%d cos=%d",i, cosine[63-i], cos_result);
+			CHECK(cosine[63-i] == cos_result, "[math] Cosine function");
+			iprintf("\n");
+		}
+	}
 	
 	SUCCESS("test_math success");
 }

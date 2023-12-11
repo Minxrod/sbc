@@ -17,6 +17,7 @@ fixp func_sin_internal(fixp);
 fixp func_cos_internal(fixp);
 fixp func_tan_internal(fixp);
 fixp func_atan_internal(fixp);
+fixp func_atan2_internal(fixp, fixp);
 
 fixp func_log_internal(fixp);
 fixp func_exp_internal(fixp);

@@ -32,15 +32,18 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->console.tabstep = 4;
 	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
-	ptc->panel.type = PNL_KYA;
 	init_sprites(&ptc->sprites);
 	
 	init_resource(&ptc->res);
+	
+	// must occur after resources as it depend on SCR
+	init_panel(ptc);
 	
 	return ptc;
 }
 
 void free_system(struct ptc* p){
+	free_panel(p);
 	free_resource(&p->res);
 	free_mem_arr(&p->arrs);
 	free_mem_str(&p->strs);
@@ -140,19 +143,23 @@ void system_draw(struct ptc* p){
 
 void system_draw(sfRenderWindow* rw, struct ptc* p){
 	// TODO:IMPL:HIGH Implement VISIBLE
-	// TODO:IMPL:HIGH Every system except text
+	// TODO:IMPL:HIGH Every system
 	
 	// Prepare graphics here
 	// TODO:CODE:LOW No dynamic allocations here
 	struct tilemap console_map;
 	console_map = init_tilemap(CONSOLE_WIDTH, CONSOLE_HEIGHT);
+	struct tilemap panel_text_map;
+	panel_text_map = init_tilemap(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 	
 	for (int x = 0; x < CONSOLE_WIDTH; ++x){
 		for (int y = 0; y < CONSOLE_HEIGHT; ++y){
-			tile(&console_map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
 			// TODO:IMPL:MED background tile/color[
-//			iprintf("Color?:%d,%d,%d\n", x,y,p->console.color[x][y] & COL_FG_MASK);
+			tile(&console_map, x, y, to_char(con_text_getc(&p->console, x, y)), 0, 0);
 			palette(&console_map, x, y, con_col_get(&p->console, x, y) & COL_FG_MASK);
+			
+			tile(&panel_text_map, x, y, to_char(con_text_getc(p->panel.text, x, y)), 0, 0);
+			palette(&panel_text_map, x, y, con_col_get(p->panel.text, x, y) & COL_FG_MASK);
 		}
 	}
 	
@@ -165,15 +172,23 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	background_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
 	struct tilemap foreground_map;
 	foreground_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
+	struct tilemap panel_bg_map;
+	panel_bg_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
 	
 	for (int x = 0; x < BG_WIDTH; ++x){
 		for (int y = 0; y < BG_HEIGHT; ++y){
+			// BG0 and BG1
 			u16 td = bg_tile(p,0,1,x,y);
 			tile(&background_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
 			palette(&background_map, x, y, (td & 0xf000) >> 12);
 			td = bg_tile(p,0,0,x,y);
 			tile(&foreground_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
 			palette(&foreground_map, x, y, (td & 0xf000) >> 12);
+			// panel
+			td = bg_tile(p,1,2,x,y);
+			tile(&panel_bg_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
+			palette(&panel_bg_map, x, y, 0);
+			// doesn't use any palette other than zero
 		}
 	}
 	
@@ -184,6 +199,22 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 			add_sprite(sprites, &p->sprites.info[0][i]);
 		}
 	}
+	
+	struct sprite_array panel_keys = init_sprite_array();
+	if (p->panel.type != PNL_OFF && p->panel.type != PNL_PNL){
+		for (int i = 0; i < PANEL_KEYS; ++i){
+			// active is a good check to see if the sprite is correctly defined, for now
+			if (p->panel.keys[i].active){
+				add_sprite(panel_keys, &p->panel.keys[i]);
+			}
+		}
+	}
+	
+	// SFML stuff
+	sfView* view;
+	view = sfView_createFromRect((sfFloatRect){0, 0, 256, 192});
+	sfView_setViewport(view, (sfFloatRect){0, 0, 1, 0.5f});
+	sfRenderWindow_setView(rw, view);
 	
 	// actual draw commands
 	sfRenderStates rs = sfRenderStates_default();
@@ -216,10 +247,43 @@ void system_draw(sfRenderWindow* rw, struct ptc* p){
 	sfShader_setBoolUniform(shader, "grp_mode", false);
 	sfRenderWindow_drawVertexArray(rw, console_map.va, &rs);
 	
+	// lower screen
+	// Translate and set views to render on lower screen
+	sfView_setViewport(view, (sfFloatRect){0, 0.5f, 1, 0.5f});
+	sfRenderWindow_setView(rw, view);
+	
+	/*sfTransform tf = sfTransform_fromMatrix(
+		1, 0, 0,
+		0, 1, 0,
+		0, 0, 1
+	);
+	rs.transform = tf;*/
+	
+	// Panel render
+	// BG layer
+	rs.texture = p->res.chr_tex[6];
+	sfShader_setFloatUniform(shader, "colbank", 3);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
+	sfRenderWindow_drawVertexArray(rw, panel_bg_map.va, &rs);
+	// Sprite layer
+	rs.texture = p->res.chr_tex[8];
+	sfShader_setFloatUniform(shader, "colbank", 4);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
+	sfRenderWindow_drawVertexArray(rw, panel_keys.va, &rs);
+	// Text layer
+	rs.texture = p->res.chr_tex[5];
+	sfShader_setFloatUniform(shader, "colbank", 3);
+	sfShader_setBoolUniform(shader, "grp_mode", false);
+	sfRenderWindow_drawVertexArray(rw, panel_text_map.va, &rs);
+	
 	free_tilemap(&console_map);
 	free_graphic(&graphic);
 	free_tilemap(&background_map);
 	free_tilemap(&foreground_map);
 	free_sprite_array(sprites);
+	free_tilemap(&panel_bg_map);
+	free_tilemap(&panel_text_map);
+	
+	sfView_destroy(view);
 }
 #endif

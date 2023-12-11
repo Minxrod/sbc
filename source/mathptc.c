@@ -59,7 +59,7 @@ void func_floor(struct ptc* p){
 }
 
 fixp func_log_internal(fixp value){
-	return 4096*log(value/4096.0);
+	return round(4096*log(value/4096));
 }
 
 void func_log(struct ptc* p){
@@ -72,4 +72,23 @@ void func_log(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_log_internal(log_a)}});
 }
 
+fixp func_cos_internal(fixp value){
+	fixp res = floor(4096*(cos(value/4096.0)));
+	return res;
+}
+
+fixp func_tan_internal(fixp value){
+	fixp res = floor(4096*(tan(value/4096.0)));
+	return res;
+}
+
+fixp func_atan_internal(fixp value){
+	fixp res = floor(4096*(atan(value/4096.0)));
+	return res;
+}
+
+fixp func_atan2_internal(fixp y, fixp x){
+	fixp res = floor(4096*(atan2(y/4096.0, x/4096.0)));
+	return res;
+}
 

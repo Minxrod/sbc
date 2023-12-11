@@ -26,6 +26,8 @@
 struct ptc;
 
 #define CHR_BANKS (4+4+4+8+2)
+#define SCR_BANKS 4
+#define COL_BANKS 3
 
 #define VISIBLE_CONSOLE 1
 #define VISIBLE_BG0 2
@@ -50,7 +52,7 @@ struct resources {
 	
 	u8* chr[CHR_BANKS*2]; 
 	
-	u16* scr[2*2]; //8K*4*2 -> 64K (VRAM)
+	u16* scr[4*2]; //8K*4*2 -> 64K (VRAM)
 	
 	u8* grp[4]; //48K*4 -> 192K (RAM) 96K VRAM
 	
@@ -73,6 +75,11 @@ struct resources {
 	
 	u8 visible;
 };
+
+bool load_file(u8* dest, const char* name, int skip, int len);
+bool load_chr(u8* dest, const char* name);
+bool load_col(u8* dest, const char* name);
+bool load_scr(u16* dest, const char* name);
 
 void init_resource(struct resources* r);
 void free_resource(struct resources* r);

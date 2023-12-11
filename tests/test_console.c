@@ -13,7 +13,7 @@ int test_console(void){
 		ASSERT(c->y == 0, "[console] Correct starting Y");
 		ASSERT(c->col == 0, "[console] Correct starting color");
 		ASSERT(c->tabstep == 4, "[console] Correct starting tabstep");
-		free(c);
+		free_console(c);
 	}
 	
 	// Test console puts
@@ -31,7 +31,7 @@ int test_console(void){
 		
 		ASSERT(c->x == 6, "[console] Correct ending coordinates");
 		ASSERT(c->y == 0, "[console] Correct ending coordinates");
-		free(c);
+		free_console(c);
 	}
 	
 	/*

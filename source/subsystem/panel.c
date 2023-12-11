@@ -5,6 +5,19 @@
 #include "console.h"
 #include "system.h"
 
+#include <string.h>
+
+void init_panel(struct ptc* p){
+//	struct panel* panel = calloc(sizeof(struct panel), 1);
+	p->panel.type = PNL_KYA;
+	p->panel.text = init_console();
+	set_keyboard(p, p->panel.type);
+}
+
+void free_panel(struct ptc* p){
+	free_console(p->panel.text);
+}
+
 void cmd_pnltype(struct ptc* p){
 	void* type = value_str(ARG(0));
 	
@@ -27,11 +40,6 @@ void cmd_pnlstr(struct ptc* p){
 	(void)p;
 }
 
-enum key_sprite_size {
-	KEY_SPR_16_16,
-	KEY_SPR_16_32,
-	KEY_SPR_32_32,
-};
 
 // Actual characters associated to the sprites
 char* keyboard_chr[6]={
@@ -50,31 +58,134 @@ char* keyboard_chr[6]={
 	"\0 \xC0\xDE\xC1\xDE\xC2\xDE\xC3\xDE\xC4\xDE\x36\0\x37\0\x38\0\x39\0\x30\0\0 \0 \r\0\0 \0 \0 \0  \0\0 \0 \0 " //shift_kana
 };
 
-// x-coordinate, sprite size
-u8 keyboard_pos[][2]={
-	{0, KEY_SPR_32_32},
-	{24, KEY_SPR_16_32},
-	{40, KEY_SPR_16_32},
-	{56, KEY_SPR_16_32},
-	{72, KEY_SPR_16_32},
-	{88, KEY_SPR_16_32},
-	{104, KEY_SPR_16_32},
-	{120, KEY_SPR_16_32},
-	{136, KEY_SPR_16_32},
-	{152, KEY_SPR_16_32},
-	{168, KEY_SPR_16_32},
-	{184, KEY_SPR_16_32},
-	{200, KEY_SPR_16_32},
-	{216, KEY_SPR_16_32},
-	{232, KEY_SPR_16_32},
+// x,y,w,h,chr
+u16 keyboard_pos[][5]={
+// The primary keyboard keys [1-68]
+// First row
+	{0, 48, 32, 32, 280}, // Escape
+	{24, 48, 16, 32, 384},
+	{40, 48, 16, 32, 386},
+	{56, 48, 16, 32, 388},
+	{72, 48, 16, 32, 390},
+	{88, 48, 16, 32, 392},
+	{104, 48, 16, 32, 394},
+	{120, 48, 16, 32, 396},
+	{136, 48, 16, 32, 398},
+	{152, 48, 16, 32, 400},
+	{168, 48, 16, 32, 402},
+	{184, 48, 16, 32, 404},
+	{200, 48, 16, 32, 406},
+	{216, 48, 16, 32, 408},
+	{232, 48, 32, 32, 276}, // Backspace
+// Second row
+	{0, 72, 16, 32, 410},
+	{16, 72, 16, 32, 412},
+	{32, 72, 16, 32, 414},
+	{48, 72, 16, 32, 416},
+	{64, 72, 16, 32, 418},
+	{80, 72, 16, 32, 420},
+	{96, 72, 16, 32, 422},
+	{112, 72, 16, 32, 424},
+	{128, 72, 16, 32, 426},
+	{144, 72, 16, 32, 428},
+	{160, 72, 16, 32, 430},
+	{176, 72, 16, 32, 432},
+	{192, 72, 16, 32, 434},
+	{208, 72, 16, 32, 436},
+	{224, 72, 16, 32, 438},
+	{240, 72, 16, 32, 440},
+// Third row
+	{0, 96, 32, 32, 284}, // Tab
+	{24, 96, 16, 32, 442},
+	{40, 96, 16, 32, 444},
+	{56, 96, 16, 32, 446},
+	{72, 96, 16, 32, 448},
+	{88, 96, 16, 32, 450},
+	{104, 96, 16, 32, 452},
+	{120, 96, 16, 32, 454},
+	{136, 96, 16, 32, 456},
+	{152, 96, 16, 32, 458},
+	{168, 96, 16, 32, 460},
+	{184, 96, 16, 32, 462},
+	{200, 96, 16, 32, 464},
+	{216, 96, 16, 32, 466},
+	{232, 96, 16, 32, 468},
+// Fourth row
+	{0, 120, 32, 32, 296}, // Shift
+	{32, 120, 16, 32, 470},
+	{48, 120, 16, 32, 472},
+	{64, 120, 16, 32, 474},
+	{80, 120, 16, 32, 476},
+	{96, 120, 16, 32, 478},
+	{112, 120, 16, 32, 480},
+	{128, 120, 16, 32, 482},
+	{144, 120, 16, 32, 484},
+	{160, 120, 16, 32, 486},
+	{176, 120, 16, 32, 488},
+	{192, 120, 16, 32, 490},
+	{208, 120, 16, 32, 492},
+	{224, 120, 32, 32, 300}, // Enter
+// Fifth row (all special keys)
+	{0, 144, 16, 16, 313}, // Caps lock
+	{24, 144, 16, 16, 508}, // KYA select
+	{40, 144, 16, 16, 509}, // KYM select
+	{56, 144, 16, 16, 510}, // KYK select
+	{80, 144, 32, 16, 496}, // Spacebar left
+	{112, 144, 16, 16, 495},
+	{128, 144, 16, 16, 495},
+	{144, 144, 16, 16, 495},
+	{160, 144, 16, 16, 495},
+	{176, 144, 16, 16, 494}, // Spacebar right
+	{200, 144, 16, 16, 309}, // Insert
+	{216, 144, 16, 16, 310}, // Delete
+	{240, 144, 16, 16, 311}, // Search
+// Function keys + exit
+	{0, 0, 16, 16, 505}, // Function Key 1 Left
+	{16, 0, 32, 16, 499}, // Function Key Right
+	{48, 0, 16, 16, 504}, // Function Key 2 Left
+	{64, 0, 32, 16, 499}, // Function Key Right
+	{96, 0, 16, 16, 503}, // Function Key 3 Left
+	{112, 0, 32, 16, 499}, // Function Key Right
+	{144, 0, 16, 16, 502}, // Function Key 4 Left
+	{160, 0, 32, 16, 499}, // Function Key Right
+	{192, 0, 16, 16, 501}, // Function Key 5 Left
+	{208, 0, 32, 16, 499}, // Function Key Right
+	{240, 0, 16, 16, 315},
+// Bottom bar keys
+	{0, 168, 32, 32, 304}, // Help key
+	{40, 168, 32, 32, 256}, // RUN/STOP Key Left
+	{72, 168, 16, 32, 260}, // RUN/STOP Key Right
+	{88, 168, 16, 32, 262}, // EDIT Key Left
+	{104, 168, 32, 32, 264}, // EDIT Key Right
+// Icon (TODO:CODE:MED split into the icon subsystem)
+	{144, 168, 16, 16, 316}, // Icon page up
+	{144, 180, 16, 16, 317}, // Icon page down
 };
 
-void set_keyboard(struct panel* p, enum pnltype type){
+void set_keyboard(struct ptc* p, enum pnltype type){
 	// TODO:PERF:LOW Check previous state to change less if possible
 	// Set BG layout (load layout)
-	(void)p;
-	(void)type;
+	// Note that only a portion of the grid is ever needed
+	if (type == PNL_OFF){
+		memset(bg_page(p,1,2), 0, 32*24);
+	} else if (type == PNL_PNL){
+		load_file((u8*)bg_page(p,1,2), "resources/pnlPANEL.NSCR", 36, 32*24*2);
+	} else {
+		load_file((u8*)bg_page(p,1,2), "resources/pnlKEY.NSCR", 36, 32*24*2);
+	}
 	// Set sprites locations
-	
+	// TODO: run this once and only update CHR + POS as needed?
+	for (unsigned int i = 0; i < sizeof(keyboard_pos) / sizeof(keyboard_pos[0]); ++i){
+		int x,y,w,h,c;
+		x = INT_TO_FP(keyboard_pos[i][0]);
+		y = INT_TO_FP(keyboard_pos[i][1]);
+		w = keyboard_pos[i][2];
+		h = keyboard_pos[i][3];
+		c = keyboard_pos[i][4];
+		
+		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,1,w,h);
+		p->panel.keys[i].pos.x = x;
+		p->panel.keys[i].pos.y = y;
+	}
 	
 }

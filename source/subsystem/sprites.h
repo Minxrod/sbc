@@ -113,6 +113,8 @@ struct sprites {
 void init_sprites(struct sprites* s);
 void free_sprites(struct sprites* s);
 
+struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,int prio,int w, int h);
+
 struct ptc;
 
 void cmd_sppage(struct ptc* p);

@@ -28,36 +28,44 @@
 #define VRAM_LOWER_PAL_SP 0x05000600
 #endif
 
-// load from file `name` into dest
-// returns false on failure
-bool load_chr(u8* dest, const char* name){
+/// Load from a file, skipping past part of it if needed and reading only a certain length
+bool load_file(u8* dest, const char* name, int skip, int len){
 	FILE* f = fopen(name, "rb");
 	if (!f){
 		iprintf("Failed to load file: %s\n", name);
 		return false;
 	}
-	fread(dest, sizeof(u8), HEADER_SIZE, f);
-	fread(dest, sizeof(u8), CHR_SIZE, f);
-	
+	if (fseek(f, skip, SEEK_SET) == -1){
+		fclose(f);
+		iprintf("Failed to fseek to %d within %s\n", skip, name);
+		return false;
+	}
+	fread(dest, sizeof(u8), len, f);
+	if (ferror(f)){
+		fclose(f);
+		iprintf("Failed to read file %s\n", name);
+		return false;
+	}
 	fclose(f);
-	iprintf("Sucessfully loaded file: %s\n", name);
 	return true;
+}
+
+// Load from file `name` into dest
+// returns false on failure
+bool load_chr(u8* dest, const char* name){
+	return load_file(dest, name, HEADER_SIZE, CHR_SIZE);
 }
 
 // load from file `name` into dest
 // returns false on failure
 bool load_col(u8* dest, const char* name){
-	FILE* f = fopen(name, "rb");
-	if (!f){
-		iprintf("Failed to load file: %s\n", name);
-		return false;
-	}
-	fread(dest, sizeof(u8), HEADER_SIZE, f);
-	fread(dest, sizeof(u8), COL_SIZE, f);
-	
-	fclose(f);
-	iprintf("Sucessfully loaded file: %s\n", name);
-	return true;
+	return load_file(dest, name, HEADER_SIZE, COL_SIZE);
+}
+
+// load from file `name` into dest
+// returns false on failure
+bool load_scr(u16* dest, const char* name){
+	return load_file((u8*)dest, name, HEADER_SIZE, SCR_SIZE);
 }
 
 void init_resource(struct resources* r){
@@ -70,9 +78,8 @@ void init_resource(struct resources* r){
 		for (int i = 12; i < CHR_BANKS; ++i){
 			r->chr[i + CHR_BANKS * lower] = (u8*)(VRAM_SP_CHR + CHR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
-		// TODO:IMPL:LOW May need RAM copies
-		for (int i = 0; i < 2; ++i){
-			r->scr[i + 2 * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
+		for (int i = 0; i < SCR_BANKS; ++i){
+			r->scr[i + SCR_BANKS * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
 		r->col[0] = (u16*) VRAM_UPPER_PAL_BG;
 		r->col[1] = (u16*) VRAM_UPPER_PAL_SP;
@@ -97,11 +104,11 @@ void init_resource(struct resources* r){
 		for (int i = 0; i < CHR_BANKS; ++i){
 			r->chr[i + CHR_BANKS * lower] = &r->all_banks[(i + CHR_BANKS * lower) * CHR_SIZE];
 		}
-		for (int i = 0; i < 2; ++i){
-			r->scr[i + 2 * lower] = calloc(1, SCR_SIZE);
+		for (int i = 0; i < SCR_BANKS; ++i){
+			r->scr[i + SCR_BANKS * lower] = calloc(1, SCR_SIZE);
 		}
-		for (int i = 0; i < 3; ++i){
-			r->col[i + 3 * lower] = &r->col_banks[(i + lower * 3) * COL_SIZE / 2];
+		for (int i = 0; i < COL_BANKS; ++i){
+			r->col[i + COL_BANKS * lower] = &r->col_banks[(i + lower * 3) * COL_SIZE / 2];
 		}
 	}
 	for (int i = 0; i < 4; ++i){
@@ -118,7 +125,7 @@ void init_resource(struct resources* r){
 	
 	char name[] = "resources/XXXX.PTC";
 	
-	for (int i = 0; i < 22; ++i){
+	for (int i = 0; i < CHR_BANKS * 2; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = chr_files[4*i+j];
 		}
@@ -136,13 +143,15 @@ void init_resource(struct resources* r){
 	}
 #ifdef PC
 	// Generate PC textures here
-	r->chr_tex[0] = gen_chr_texture(r->chr[0], 512);
-	r->chr_tex[1] = gen_chr_texture(r->chr[4], 1024);
-	r->chr_tex[2] = gen_chr_texture(r->chr[8], 1024);
-	r->chr_tex[3] = gen_chr_texture(r->chr[12], 2048);
-	r->chr_tex[4] = gen_chr_texture(r->chr[20], 512);
-	// 5 does not exist (no SPD on upper screen)
-	r->col_tex = gen_col_texture(r->col[0]);
+	for (int p = 0; p <= 1; ++p){
+		r->chr_tex[0+5*p] = gen_chr_texture(r->chr[0+CHR_BANKS*p], 512); //BGF
+		r->chr_tex[1+5*p] = gen_chr_texture(r->chr[4+CHR_BANKS*p], 1024); //BGD
+		r->chr_tex[2+5*p] = gen_chr_texture(r->chr[8+CHR_BANKS*p], 1024); //BGU
+		r->chr_tex[3+5*p] = gen_chr_texture(r->chr[12+CHR_BANKS*p], 2048); // SPU or SPD
+		r->chr_tex[4+5*p] = gen_chr_texture(r->chr[20+CHR_BANKS*p], 512); //SPS
+	}
+	// Generates all colors at once
+	r->col_tex = gen_col_texture(r->col_banks);
 	
 	if (!sfShader_isAvailable()){
 		iprintf("Error: Shaders are unavailable!\n");
@@ -164,12 +173,14 @@ void free_resource(struct resources* r){
 	for (int i = 0; i < 4; ++i){
 		free(r->grp[i]);
 	}
-	for (int i = 0; i < 4; ++i){
+	for (int i = 0; i < 2*SCR_BANKS; ++i){
 		free(r->scr[i]);
 	}
 	
 	// Destroy textures here
-	sfTexture_destroy(r->chr_tex[0]);
+	for (int i = 0; i < 10; ++i){
+		sfTexture_destroy(r->chr_tex[i]);
+	}
 	sfTexture_destroy(r->col_tex);
 	sfShader_destroy(r->shader);
 #endif
@@ -283,7 +294,7 @@ sfTexture* gen_col_texture(u16* src){
 //		s = ((s & 0xff00) >> 8) | ((s & 0x00ff) << 8);
 		
 		array[4*i+0] = (s & 0x001f) << 3; //TODO:IMPL:LOW Adjust values to match PTC
-		array[4*i+1] = ((s & 0x03e0) >> 2) | ((src[2*i] & 0x8000) >> 13);
+		array[4*i+1] = ((s & 0x03e0) >> 2) | ((s & 0x8000) >> 13);
 		array[4*i+2] = ((s & 0x7c00) >> 7);
 		array[4*i+3] = ((i % 16) || (((i % 3) == 2) && (i != 0))) ? 255 : 0;
 //		iprintf("%ld:(%d,%d,%d,%d)",i,array[4*i+0],array[4*i+1],array[4*i+2],array[4*i+3]);
