@@ -6,12 +6,19 @@
 #include "system.h"
 
 #include <string.h>
+#include <assert.h>
 
 void init_panel(struct ptc* p){
 //	struct panel* panel = calloc(sizeof(struct panel), 1);
 	p->panel.type = PNL_KYA;
 	p->panel.text = init_console();
 	set_keyboard(p, p->panel.type);
+	
+	set_function_key(p, 1, "S\5FILES");
+	set_function_key(p, 2, "S\5LOAD\"");
+	set_function_key(p, 3, "S\5SAVE\"");
+	set_function_key(p, 4, "S\4CONT");
+	set_function_key(p, 5, "S\3RUN");
 }
 
 void free_panel(struct ptc* p){
@@ -58,108 +65,112 @@ char* keyboard_chr[6]={
 	"\0 \xC0\xDE\xC1\xDE\xC2\xDE\xC3\xDE\xC4\xDE\x36\0\x37\0\x38\0\x39\0\x30\0\0 \0 \r\0\0 \0 \0 \0  \0\0 \0 \0 " //shift_kana
 };
 
-// x,y,w,h,chr
-u16 keyboard_pos[][5]={
+// x,y,w,h,chr,keycode
+s16 keyboard_pos[][6]={
 // The primary keyboard keys [1-68]
 // First row
-	{0, 48, 32, 32, 280}, // Escape
-	{24, 48, 16, 32, 384},
-	{40, 48, 16, 32, 386},
-	{56, 48, 16, 32, 388},
-	{72, 48, 16, 32, 390},
-	{88, 48, 16, 32, 392},
-	{104, 48, 16, 32, 394},
-	{120, 48, 16, 32, 396},
-	{136, 48, 16, 32, 398},
-	{152, 48, 16, 32, 400},
-	{168, 48, 16, 32, 402},
-	{184, 48, 16, 32, 404},
-	{200, 48, 16, 32, 406},
-	{216, 48, 16, 32, 408},
-	{232, 48, 32, 32, 276}, // Backspace
+	{0, 48, 32, 32, 280, 1}, // Escape
+	{24, 48, 16, 32, 384, 2},
+	{40, 48, 16, 32, 386, 3},
+	{56, 48, 16, 32, 388, 4},
+	{72, 48, 16, 32, 390, 5},
+	{88, 48, 16, 32, 392, 6},
+	{104, 48, 16, 32, 394, 7},
+	{120, 48, 16, 32, 396, 8},
+	{136, 48, 16, 32, 398, 9},
+	{152, 48, 16, 32, 400, 10},
+	{168, 48, 16, 32, 402, 11},
+	{184, 48, 16, 32, 404, 12},
+	{200, 48, 16, 32, 406, 13},
+	{216, 48, 16, 32, 408, 14},
+	{232, 48, 32, 32, 276, 15}, // Backspace
 // Second row
-	{0, 72, 16, 32, 410},
-	{16, 72, 16, 32, 412},
-	{32, 72, 16, 32, 414},
-	{48, 72, 16, 32, 416},
-	{64, 72, 16, 32, 418},
-	{80, 72, 16, 32, 420},
-	{96, 72, 16, 32, 422},
-	{112, 72, 16, 32, 424},
-	{128, 72, 16, 32, 426},
-	{144, 72, 16, 32, 428},
-	{160, 72, 16, 32, 430},
-	{176, 72, 16, 32, 432},
-	{192, 72, 16, 32, 434},
-	{208, 72, 16, 32, 436},
-	{224, 72, 16, 32, 438},
-	{240, 72, 16, 32, 440},
+	{0, 72, 16, 32, 410, 16},
+	{16, 72, 16, 32, 412, 17},
+	{32, 72, 16, 32, 414, 18},
+	{48, 72, 16, 32, 416, 19},
+	{64, 72, 16, 32, 418, 20},
+	{80, 72, 16, 32, 420, 21},
+	{96, 72, 16, 32, 422, 22},
+	{112, 72, 16, 32, 424, 23},
+	{128, 72, 16, 32, 426, 24},
+	{144, 72, 16, 32, 428, 25},
+	{160, 72, 16, 32, 430, 26},
+	{176, 72, 16, 32, 432, 27},
+	{192, 72, 16, 32, 434, 28},
+	{208, 72, 16, 32, 436, 29},
+	{224, 72, 16, 32, 438, 30},
+	{240, 72, 16, 32, 440, 31},
 // Third row
-	{0, 96, 32, 32, 284}, // Tab
-	{24, 96, 16, 32, 442},
-	{40, 96, 16, 32, 444},
-	{56, 96, 16, 32, 446},
-	{72, 96, 16, 32, 448},
-	{88, 96, 16, 32, 450},
-	{104, 96, 16, 32, 452},
-	{120, 96, 16, 32, 454},
-	{136, 96, 16, 32, 456},
-	{152, 96, 16, 32, 458},
-	{168, 96, 16, 32, 460},
-	{184, 96, 16, 32, 462},
-	{200, 96, 16, 32, 464},
-	{216, 96, 16, 32, 466},
-	{232, 96, 16, 32, 468},
+	{0, 96, 32, 32, 284, 32}, // Tab
+	{24, 96, 16, 32, 442, 33},
+	{40, 96, 16, 32, 444, 34},
+	{56, 96, 16, 32, 446, 35},
+	{72, 96, 16, 32, 448, 36},
+	{88, 96, 16, 32, 450, 37},
+	{104, 96, 16, 32, 452, 38},
+	{120, 96, 16, 32, 454, 39},
+	{136, 96, 16, 32, 456, 40},
+	{152, 96, 16, 32, 458, 41},
+	{168, 96, 16, 32, 460, 42},
+	{184, 96, 16, 32, 462, 43},
+	{200, 96, 16, 32, 464, 44},
+	{216, 96, 16, 32, 466, 45},
+	{232, 96, 16, 32, 468, 46},
 // Fourth row
-	{0, 120, 32, 32, 296}, // Shift
-	{32, 120, 16, 32, 470},
-	{48, 120, 16, 32, 472},
-	{64, 120, 16, 32, 474},
-	{80, 120, 16, 32, 476},
-	{96, 120, 16, 32, 478},
-	{112, 120, 16, 32, 480},
-	{128, 120, 16, 32, 482},
-	{144, 120, 16, 32, 484},
-	{160, 120, 16, 32, 486},
-	{176, 120, 16, 32, 488},
-	{192, 120, 16, 32, 490},
-	{208, 120, 16, 32, 492},
-	{224, 120, 32, 32, 300}, // Enter
+	{0, 120, 32, 32, 296, 47}, // Shift
+	{32, 120, 16, 32, 470, 48},
+	{48, 120, 16, 32, 472, 49},
+	{64, 120, 16, 32, 474, 50},
+	{80, 120, 16, 32, 476, 51},
+	{96, 120, 16, 32, 478, 52},
+	{112, 120, 16, 32, 480, 53},
+	{128, 120, 16, 32, 482, 54},
+	{144, 120, 16, 32, 484, 55},
+	{160, 120, 16, 32, 486, 56},
+	{176, 120, 16, 32, 488, 57},
+	{192, 120, 16, 32, 490, 58},
+	{208, 120, 16, 32, 492, 59},
+	{224, 120, 32, 32, 300, 60}, // Enter
 // Fifth row (all special keys)
-	{0, 144, 16, 16, 313}, // Caps lock
-	{24, 144, 16, 16, 508}, // KYA select
-	{40, 144, 16, 16, 509}, // KYM select
-	{56, 144, 16, 16, 510}, // KYK select
-	{80, 144, 32, 16, 496}, // Spacebar left
-	{112, 144, 16, 16, 495},
-	{128, 144, 16, 16, 495},
-	{144, 144, 16, 16, 495},
-	{160, 144, 16, 16, 495},
-	{176, 144, 16, 16, 494}, // Spacebar right
-	{200, 144, 16, 16, 309}, // Insert
-	{216, 144, 16, 16, 310}, // Delete
-	{240, 144, 16, 16, 311}, // Search
+	{0, 144, 16, 16, 313, 61}, // Caps lock
+	{24, 144, 16, 16, 508, 62}, // KYA select
+	{40, 144, 16, 16, 509, 63}, // KYM select
+	{56, 144, 16, 16, 510, 64}, // KYK select
+	{80, 144, 32, 16, 496, 65}, // Spacebar left
+	{112, 144, 16, 16, 495, 65},
+	{128, 144, 16, 16, 495, 65},
+	{144, 144, 16, 16, 495, 65},
+	{160, 144, 16, 16, 495, 65},
+	{176, 144, 16, 16, 494, 65}, // Spacebar right
+	{200, 144, 16, 16, 309, 66}, // Insert
+	{216, 144, 16, 16, 310, 67}, // Delete
+	{240, 144, 16, 16, 311, 68}, // Search
 // Function keys + exit
-	{0, 0, 16, 16, 505}, // Function Key 1 Left
-	{16, 0, 32, 16, 499}, // Function Key Right
-	{48, 0, 16, 16, 504}, // Function Key 2 Left
-	{64, 0, 32, 16, 499}, // Function Key Right
-	{96, 0, 16, 16, 503}, // Function Key 3 Left
-	{112, 0, 32, 16, 499}, // Function Key Right
-	{144, 0, 16, 16, 502}, // Function Key 4 Left
-	{160, 0, 32, 16, 499}, // Function Key Right
-	{192, 0, 16, 16, 501}, // Function Key 5 Left
-	{208, 0, 32, 16, 499}, // Function Key Right
-	{240, 0, 16, 16, 315},
+	{0, -1, 16, 16, 505, 101}, // Function Key 1 Left
+	{16, -1, 32, 16, 499, 101}, // Function Key Right
+	{48, -1, 16, 16, 504, 102}, // Function Key 2 Left
+	{64, -1, 32, 16, 499, 102}, // Function Key Right
+	{96, -1, 16, 16, 503, 103}, // Function Key 3 Left
+	{112, -1, 32, 16, 499, 103}, // Function Key Right
+	{144, -1, 16, 16, 502, 104}, // Function Key 4 Left
+	{160, -1, 32, 16, 499, 104}, // Function Key Right
+	{192, -1, 16, 16, 501, 105}, // Function Key 5 Left
+	{208, -1, 32, 16, 499, 105}, // Function Key Right
+	{240, -1, 16, 16, 315, 106}, // Exit button
 // Bottom bar keys
-	{0, 168, 32, 32, 304}, // Help key
-	{40, 168, 32, 32, 256}, // RUN/STOP Key Left
-	{72, 168, 16, 32, 260}, // RUN/STOP Key Right
-	{88, 168, 16, 32, 262}, // EDIT Key Left
-	{104, 168, 32, 32, 264}, // EDIT Key Right
+	{0, 168, 32, 32, 304, 70}, // Help key
+	{40, 168, 32, 32, 256, 71}, // RUN/STOP Key Left
+	{72, 168, 16, 32, 260, 71}, // RUN/STOP Key Right
+	{88, 168, 16, 32, 262, 72}, // EDIT Key Left
+	{104, 168, 32, 32, 264, 72}, // EDIT Key Right
 // Icon (TODO:CODE:MED split into the icon subsystem)
-	{144, 168, 16, 16, 316}, // Icon page up
-	{144, 180, 16, 16, 317}, // Icon page down
+	{144, 168, 16, 16, 316, 80}, // Icon page up
+	{144, 180, 16, 16, 317, 81}, // Icon page down
+	{160, 168, 32, 32, 0, 90}, // Icon page down
+	{184, 168, 32, 32, 4, 91}, // Icon page down
+	{208, 168, 32, 32, 8, 92}, // Icon page down
+	{232, 168, 32, 32, 12, 93}, // Icon page down
 };
 
 void set_keyboard(struct ptc* p, enum pnltype type){
@@ -174,18 +185,98 @@ void set_keyboard(struct ptc* p, enum pnltype type){
 		load_file((u8*)bg_page(p,1,2), "resources/pnlKEY.NSCR", 36, 32*24*2);
 	}
 	// Set sprites locations
-	// TODO: run this once and only update CHR + POS as needed?
-	for (unsigned int i = 0; i < sizeof(keyboard_pos) / sizeof(keyboard_pos[0]); ++i){
-		int x,y,w,h,c;
+	// TODO:PERF:LOW run this once and only update CHR + POS as needed?
+	for (idx i = 0; i < sizeof(keyboard_pos) / sizeof(keyboard_pos[0]); ++i){
+		int x,y,w,h,c,k;
 		x = INT_TO_FP(keyboard_pos[i][0]);
 		y = INT_TO_FP(keyboard_pos[i][1]);
 		w = keyboard_pos[i][2];
 		h = keyboard_pos[i][3];
 		c = keyboard_pos[i][4];
+		k = keyboard_pos[i][5];
 		
 		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,1,w,h);
 		p->panel.keys[i].pos.x = x;
 		p->panel.keys[i].pos.y = y;
+		p->panel.keys[i].hit.x = INT_TO_FP(1);
+		p->panel.keys[i].hit.y = INT_TO_FP(1);
+		if (k < 70){
+			// TODO:IMPL:HIGH Identify wide keys and change hitbox accordingly
+			p->panel.keys[i].hit.w = INT_TO_FP(14);
+			p->panel.keys[i].hit.h = INT_TO_FP(22);
+		} else if (k >= 70 && k <= 79){
+			// TODO:IMPL:MED Determine hitbox sizes for other keys
+		} else if (k >= 90 && k <= 99){
+			p->panel.keys[i].hit.w = INT_TO_FP(22);
+		}
+		p->panel.keys[i].hit.h = INT_TO_FP(22);
+		p->panel.keys[i].vars[0] = k;
+	}
+}
+
+void set_function_key(struct ptc* p, int key, const void* string){
+	assert(1 <= key && key <= 5);
+	key--;
+	p->panel.func_keys_len[key] = str_len(string);
+	str_wide_copy(string, p->panel.func_keys[key]);
+	struct console* c = p->panel.text;
+	c->x = 1+key*6;
+	for (idx i = 0; i < 5; ++i){
+		if (i == 4 && str_len(string) > 4){
+			con_put(c, to_wide('.'));
+		} else if (i < str_len(string)){
+			con_put(c, str_at_wide(string, i));
+		}
+	}
+}
+
+void press_key(struct ptc* ptc, bool t, int x, int y){
+	struct panel* p = &ptc->panel;
+	p->key_pressed = 0;
+	p->id_pressed = -1;
+	if (!t)
+		return; // no touch = no press
+	if (p->type == PNL_OFF || p->type == PNL_PNL)
+		return; // no keys = no press
+	
+	// TODO:PERF:NONE Don't recreate the sprite every time
+	// Idea: Make this a cursor/possible to be a cursor?
+	// Note: Width+height of zero leads to a 1-pixel hitbox
+	struct sprite_info touch = init_sprite_info(0,0,0,0,0,0,0,0);
+	touch.pos.x = INT_TO_FP(x);
+	touch.pos.y = INT_TO_FP(y);
+	
+//	iprintf("%d,%d\n",x,y);
+	for (idx i = 0; i < PANEL_KEYS; ++i){
+		if (is_hit(&touch, &p->keys[i])){
+//			iprintf("HIT:%d,%d\n",FP_TO_INT(p->keys[i].pos.x),FP_TO_INT(p->keys[i].pos.y));
+			// found hit! save index
+			p->id_pressed = i;
+			p->key_pressed = p->keys[i].vars[0];
+			break;
+		}
 	}
 	
+	// TODO:IMPL:HIGH Keyboard repeat timings
+	// TODO:IMPL:HIGH Keyboard modes; shift; caps lock
+	if (p->key_pressed && p->key_pressed <= 60){
+		char c = keyboard_chr[0][p->key_pressed];
+		if (c)
+			set_inkey(&ptc->input, to_wide(c));
+	}
+}
+
+void offset_key(struct ptc* p, int id, int d){
+	if (id<PANEL_KEYS){
+		for (int i = id; p->panel.keys[i].vars[0] == p->panel.key_pressed; ++i){
+			p->panel.keys[i].pos.x += d;
+			p->panel.keys[i].pos.y += d;
+		}
+	}
+	if (id>0){
+		for (int i = id-1; p->panel.keys[i].vars[0] == p->panel.key_pressed; --i){
+			p->panel.keys[i].pos.x += d;
+			p->panel.keys[i].pos.y += d;
+		}
+	}
 }

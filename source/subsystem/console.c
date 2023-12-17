@@ -70,12 +70,10 @@ void con_put(struct console* c, u16 w){
 //(color still separate here)
 
 void con_puts(struct console* c, void* s){
-	u16 buf[256];
-	str_wide_copy(s, buf);
 	// now the string is already wide chars for printing
 	u32 len = str_len(s);
 	for (size_t i = 0; i < len; ++i){
-		con_put(c, buf[i]);
+		con_put(c, str_at_wide(s, i));
 	}
 }
 
@@ -195,6 +193,45 @@ u16 input_keys(struct ptc* p){
 	return get_inkey(i); //returns 0 if no keys
 }
 
+u16* shared_input(struct ptc* p){
+	// TODO:IMPL:LOW Use BREPEAT values if set
+	// TODO:IMPL:LOW Set color when entering text
+	// TODO:IMPL:LOW Remove color when backspacing
+	// TODO:IMPL:MED Blinking text cursor
+	// TODO:IMPL:MED Delete, insert functionality
+	// TODO:IMPL:MED Left/right movement of cursor
+	// TODO:TEST:MED Write tests for these
+	struct console* con = &p->console;
+	u16 inkey;
+	u16* output = con->text[con->y]; // start of current line
+	u8 out_index = 0;
+	do {
+		inkey = get_inkey(&p->input);
+		// wait for a frame to pass
+		int t = get_time(&p->time);
+		// TODO:CODE:MED This test_mode check isn't ideal, but it allows test
+		// cases to run without waiting for an update from another thread
+		while (!con->test_mode && t == get_time(&p->time)){
+			// sleep for user input
+			struct timespec tspec = {.tv_nsec=1000000000/600};
+			thrd_sleep(&tspec, NULL);
+		}
+		// Check for special keys
+		if ((p->panel.key_pressed == 15 || check_pressed_manual(&p->input, BUTTON_ID_Y, 15 ,4))){
+			if (out_index > 0){
+				output[--out_index] = 0;
+			}
+		} else if (inkey == '\r'){
+			// don't add this one
+		} else if (inkey && out_index < CONSOLE_WIDTH){
+			output[out_index++] = inkey;
+		}
+	} while (inkey != '\r'
+			&& p->panel.key_pressed != 60
+			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
+	return output;
+}
+
 void cmd_input(struct ptc* p){
 	struct console* con = &p->console;
 	// INPUT [prompt;]var[,var...]
@@ -221,7 +258,6 @@ void cmd_input(struct ptc* p){
 	}
 	u8 len = p->stack.stack_i - index;
 	// len: number of vars
-	// TODO:ERR:MED validate all are variables?
 	
 	// Display prompt
 	if (prompt_str) // only display string if it exists
@@ -230,28 +266,12 @@ void cmd_input(struct ptc* p){
 	if (con->x) con_newline(con, true); // only newline if necessary for full line of input
 	
 	// Prompt user for input
-	u16 inkey;
 	u16* output;
-	u8 out_index;
+//	u8 out_index;
 	bool valid = false;
 	while (!valid){
 		valid = true;
-		output = con->text[con->y];
-		out_index = 0;
-		while ((inkey = get_inkey(&p->input)) != '\r'){
-			if ((inkey == '\b' || check_pressed_manual(&p->input, BUTTON_ID_Y, 15, 4))){
-				if (out_index > 0)
-					output[--out_index] = 0;
-			} else if (inkey && out_index < CONSOLE_WIDTH){
-				output[out_index++] = inkey;
-			} else {
-#if defined(PC) || defined(ARM9)
-				// sleep for user input?
-				struct timespec tspec = {.tv_nsec=1000000000/60};
-				thrd_sleep(&tspec, NULL);
-#endif
-			}
-		}
+		output = shared_input(p);
 		// scan commas
 		int commas = 0;
 		for (int x = 0; x < CONSOLE_WIDTH; ++x){
@@ -261,7 +281,6 @@ void cmd_input(struct ptc* p){
 			valid = false;
 			continue; //TODO:IMPL:MED ?Redo from start
 		}
-		// TODO:ERR:HIGH Validate types
 		u8 conversion_copy[CONSOLE_WIDTH];
 		int prev_i = 0;
 		int out_i = 0;
@@ -275,6 +294,10 @@ void cmd_input(struct ptc* p){
 				if (is_number(c) || c == '.' || c == '-'){
 				} else if (c == ',' || c == '\0' || c == ' ' || out_i >= CONSOLE_WIDTH){
 					// convert from previous to out_i
+					if (out_i - prev_i - 1 == 0){
+						valid = false;
+						break;
+					}
 					s32 n = str_to_num(&conversion_copy[prev_i], out_i - prev_i - 1);
 					prev_i = out_i;
 					*(s32*)e->value.ptr = n; //store result to variable
@@ -342,26 +365,7 @@ void cmd_linput(struct ptc* p){
 	con_put(con, to_wide('?'));
 	if (con->x) con_newline(con, true); // only newline if necessary for full line of input
 	
-	u16 inkey;
-	u16* output;
-	u8 out_index;
-	output = con->text[con->y];
-	out_index = 0;
-	while ((inkey = get_inkey(&p->input)) != '\r'){
-		if ((inkey == '\b' || check_pressed_manual(&p->input, BUTTON_ID_Y, 15, 4))){
-			if (out_index > 0)
-				output[--out_index] = 0;
-		} else if (inkey && out_index < CONSOLE_WIDTH){
-			output[out_index++] = inkey;
-		} else {
-#if defined(PC) || defined(ARM9)
-			// sleep for user input?
-			struct timespec tspec = {.tv_nsec=1000000000/60};
-			thrd_sleep(&tspec, NULL);
-#endif
-		}
-	}
-	con_newline(con, true); // from user entering the line.
+	u16* output = shared_input(p);
 	
 	// Now store the result to a new string
 	struct string* s = get_new_str(&p->strs);
@@ -373,9 +377,12 @@ void cmd_linput(struct ptc* p){
 	
 	// TODO:IMPL:LOW Wide string support?
 	s->uses = 1;
-	s->len = out_index;
-	for (int j = 0; j < s->len; ++j){
-		s->ptr.s[j] = to_char(output[j]);
+	s->len = 0;
+	for (int j = 0; j < CONSOLE_WIDTH; ++j){
+		u8 c = to_char(output[j]);
+		if (!c) break;
+		s->ptr.s[j] = c;
+		s->len++;
 	}
 }
 

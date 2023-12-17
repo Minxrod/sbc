@@ -1,5 +1,3 @@
-#include "test_arrs.h"
-
 #include "interpreter/arrays.h"
 
 #include "test_util.h"

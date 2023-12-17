@@ -14,17 +14,19 @@ void func_len(struct ptc* p){
 
 void func_mid(struct ptc* p){
 	struct value_stack* s = &p->stack;
-	struct stack_entry* len_e = stack_pop(s);
-	struct stack_entry* start_e = stack_pop(s);
-	struct stack_entry* str_e = stack_pop(s);
+//	struct stack_entry* len_e = stack_pop(s);
+//	struct stack_entry* start_e = stack_pop(s);
+//	struct stack_entry* str_e = stack_pop(s);
 	
 	// Must be done first to ensure uses are kept correctly
 	struct string* dest = get_new_str(&p->strs);
 	
-	void* str = value_str(str_e);
-	u16 start = VALUE_INT(start_e);
-	u16 len = VALUE_INT(len_e);
-	//TODO:ERR:MED start, len must be postiive
+	u16 start, len;
+	
+	void* str = STACK_REL_STR(-3);
+	STACK_REL_INT_MIN(-2,0,start);
+	STACK_REL_INT_MIN(-1,0,len);
+	s->stack_i -= 3;
 	
 	s16 max_len = (s16)str_len(str) - (s16)start;
 	if (max_len <= 0){
@@ -127,7 +129,6 @@ void func_instr(struct ptc* p){
 }
 
 void func_chr(struct ptc* p){
-	//TODO:TEST:LOW Create tests for CHR$
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	

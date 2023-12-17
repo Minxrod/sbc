@@ -150,11 +150,13 @@ void cmd_bgfill(struct ptc* p){
 }
 
 void cmd_bgofs(struct ptc* p){
-	// TODO:ERR:MED check bounds? (maybe only for layer?)
-	// TODO:ERR:HIGH interpolation form
-	uint_fast8_t layer;
+	// TODO:IMPL:HIGH interpolation form
+	int layer;
 	fixp x, y;
 	layer = STACK_INT(0);
+	if (layer < 0 || layer > 1){
+		ERROR(ERR_OUT_OF_RANGE);
+	}
 	x = STACK_NUM(1);
 	y = STACK_NUM(2);
 	

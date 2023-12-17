@@ -115,6 +115,8 @@ void free_sprites(struct sprites* s);
 
 struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,int prio,int w, int h);
 
+bool is_hit(struct sprite_info* a, struct sprite_info* b);
+
 struct ptc;
 
 void cmd_sppage(struct ptc* p);

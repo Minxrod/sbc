@@ -21,25 +21,25 @@ u8* grp_drawpage(struct ptc* p, u8 page){
 }
 
 void cmd_gpage(struct ptc* p){
-	//TODO:ERR:MED argument range
-	//TODO:IMPL:HIGH 3-argument form
-	struct stack_entry* e = stack_pop(&p->stack);
-	p->graphics.screen = FP_TO_INT(VALUE_NUM(e));
-	p->stack.stack_i = 0;
+	if (p->stack.stack_i == 1){
+		STACK_INT_RANGE(0,0,1,p->graphics.screen);
+	} else {
+		ERROR(ERR_UNIMPLEMENTED);
+	}
 }
 
 void cmd_gcolor(struct ptc* p){
-	//TODO:ERR:MED argument range
-	struct stack_entry* e = stack_pop(&p->stack);
-	p->graphics.color = FP_TO_INT(VALUE_NUM(e));
+	STACK_INT_RANGE(0,0,255,p->graphics.color);
 }
 
 void cmd_gcls(struct ptc* p){
-	//TODO:ERR:MED argument range
 	u8 color;
 	if (p->stack.stack_i == 1){
-		struct stack_entry* e = stack_pop(&p->stack);
-		color = FP_TO_INT(VALUE_NUM(e));
+		int c = STACK_INT(0);
+		if (c > 255 || c < 0){
+			ERROR(ERR_OUT_OF_RANGE);
+		}
+		color = c;
 	} else if (p->stack.stack_i == 0){
 		color = p->graphics.color;
 	} else {
@@ -69,7 +69,11 @@ void cmd_gfill(struct ptc* p){
 	y2 = y2 < 0 ? 0 : y2 > GRP_HEIGHT ? GRP_HEIGHT : y2;
 	
 	if (p->stack.stack_i == 5){
-		color = STACK_INT(4); //TODO:ERR:MED Argument ranges
+		int c = STACK_INT(4);
+		if (c > 255 || c < 0){
+			ERROR(ERR_OUT_OF_RANGE);
+		}
+		color = c;
 	} else if (p->stack.stack_i == 4){
 		color = p->graphics.color;
 	} else {
@@ -99,7 +103,11 @@ void cmd_gbox(struct ptc* p){
 	y2 = y2 < 0 ? 0 : y2 > GRP_HEIGHT ? GRP_HEIGHT : y2;
 	
 	if (p->stack.stack_i == 5){
-		color = STACK_INT(4); //TODO:ERR:MED Argument ranges
+		int c = STACK_INT(4);
+		if (c > 255 || c < 0){
+			ERROR(ERR_OUT_OF_RANGE);
+		}
+		color = c;
 	} else if (p->stack.stack_i == 4){
 		color = p->graphics.color;
 	} else {
@@ -139,7 +147,7 @@ void cmd_gline(struct ptc* p){
 	u8 color;
 	
 	if (p->stack.stack_i == 5){
-		color = STACK_INT(4); //TODO:ERR:MED Argument ranges
+		STACK_INT_RANGE(4,0,255,color);
 	} else if (p->stack.stack_i == 4){
 		color = p->graphics.color;
 	} else {
@@ -190,21 +198,20 @@ void cmd_gline(struct ptc* p){
 }
 
 void cmd_gpset(struct ptc* p){
-	int x = STACK_INT(0);
-	int y = STACK_INT(1);
+	int x, y;
+	STACK_INT_RANGE_SILENT(0,0,GRP_WIDTH-1,x);
+	STACK_INT_RANGE_SILENT(1,0,GRP_HEIGHT-1,y);
+	
 	u8 color;
 	
 	if (p->stack.stack_i == 3){
-		color = STACK_INT(2); //TODO:ERR:MED Argument ranges
+		STACK_INT_RANGE(2,0,255,color);
 	} else if (p->stack.stack_i == 2){
 		color = p->graphics.color;
-	} else {
-		ERROR(ERR_WRONG_ARG_COUNT);
 	}
 	
 	u8* page = grp_drawpage(p, p->graphics.drawpage);
 	
-	//TODO:ERR:MED Argument ranges
 	page[grp_index(x,y)] = color;
 	
 	p->stack.stack_i = 0;

@@ -7,9 +7,6 @@
 #include "error.h"
 #include "ptc.h"
 
-//TODO:CODE:NONE Use a macro or something to reduce duplication?
-// Returns number of characters read OR READ_ONE_ERR if an error occurs
-
 // Returns number of characters read OR READ_ONE_ERR if an error occurs
 int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 	// skip leading spaces

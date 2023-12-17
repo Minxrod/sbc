@@ -8,21 +8,21 @@
 
 #include "test_util.h"
 
-#ifndef EZ80
-#include "test_vars.h"
-#include "test_strs.h"
-#include "test_arrs.h"
-#include "test_tokens.h"
+int test_vars();
+int test_strs();
+int test_arrs();
+int test_tokens();
 
-#include "test_math.h"
+int test_math();
 
-#include "test_int_vars.h"
-#include "test_int_code.h"
-#endif
+int test_int_vars();
+int test_int_code();
+int test_int_math();
 
-#include "test_input.h"
-#include "test_console.h"
-#include "test_background.h"
+int test_input();
+int test_console();
+int test_background();
+int test_sprite();
 
 int run_tests(){
 #ifdef ARM9
@@ -40,11 +40,13 @@ int run_tests(){
 	
 	FAST(test_int_vars());
 	FAST(test_int_code());
+	FAST(test_int_math());
 	
 #endif
 	FAST(test_input());
 	FAST(test_console());
 	FAST(test_background());
+	FAST(test_sprite());
 	
 	return 0;
 }

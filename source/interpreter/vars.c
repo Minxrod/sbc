@@ -94,6 +94,7 @@ struct named_var* search_name_type(struct variables* v, char* name, u32 len, enu
 
 struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum types type, u32 dim1, u32 dim2){
 	struct named_var* var = search_name_type(v, name, len, type);
+	if (!var) return var; // Out of memory
 	
 	// make new array type
 	//if VAR_EMPTY then create it?
@@ -122,6 +123,7 @@ struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum
 
 struct named_var* get_var(struct variables* v, char* name, u32 len, enum types type){
 	struct named_var* var = search_name_type(v, name, len, type);
+	if (!var) return var; // Out of memory
 	//if VAR_EMPTY then create it?
 	if (var->type == VAR_EMPTY){
 		// set var type
@@ -154,6 +156,7 @@ union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types 
 	struct named_var* a = get_var(v, name, len, type);
 	if (a == NULL){
 		// out of memory
+		// TODO:ERR:LOW Better error indication?
 		iprintf("Error: Out of memory!\n");
 		abort();
 	}

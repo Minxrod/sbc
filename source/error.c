@@ -39,4 +39,6 @@ const char * error_messages[] = {
 	"Entered BC_BEGIN_LOOP with no FOR call!",
 	"Failed to load file",
 	"Arugment out of range!",
+	"Division by zero!",
+	"Overflow!",
 };

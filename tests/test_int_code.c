@@ -1,4 +1,3 @@
-#include "test_int_code.h"
 #include "test_util.h"
 
 #include "interpreter.h"

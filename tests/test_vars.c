@@ -1,5 +1,3 @@
-#include "test_vars.h"
-
 #include "test_util.h"
 
 #include "interpreter/vars.h"

@@ -213,7 +213,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	char* label;
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
-		s32 label_index = FP_TO_INT(VALUE_NUM(e)); //TODO:TEST:LOW Do fractional values round down for this one?
+		s32 label_index = VALUE_INT(e);
 //		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
 		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
 			p->stack.stack_i = 0;

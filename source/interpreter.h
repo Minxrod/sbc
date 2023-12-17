@@ -10,6 +10,10 @@
 #include "interpreter/vars.h"
 #include "interpreter/strs.h"
 
+// Common functions on core types
+#include "interpreter/mathptc.h"
+#include "interpreter/strfuncs.h"
+
 // Program initialization and execution
 #include "interpreter/tokens.h"
 #include "interpreter/runner.h"

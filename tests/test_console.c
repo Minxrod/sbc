@@ -1,8 +1,9 @@
-#include "test_console.h"
 #include "test_util.h"
 
 #include "common.h"
 #include "program.h"
+
+#include "system.h"
 
 int test_console(void){
 	// Test console creation

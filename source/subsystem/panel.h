@@ -18,8 +18,8 @@ struct panel {
 		PNL_KYK
 	} type;
 	
-	// TODO:IMPL:LOW Function keys need separate string storage
-	void* func_keys[5];
+	u16 func_keys[5][256];
+	u16 func_keys_len[5];
 	
 	// TODO:IMPL:MED function keys
 	// TODO:IMPL:HIGH keyboard
@@ -27,6 +27,11 @@ struct panel {
 	struct console* text;
 	
 	struct sprite_info keys[PANEL_KEYS];
+	
+	u8 key_pressed;
+	u8 id_pressed;
+	
+	// TODO:IMPL:MED Last pressed timer
 };
 
 void init_panel(struct ptc*);
@@ -35,4 +40,15 @@ void free_panel(struct ptc*);
 void cmd_pnltype(struct ptc* p);
 void cmd_pnlstr(struct ptc* p);
 
+void cmd_key(struct ptc* p);
+
+void cmd_iconset(struct ptc* p);
+void cmd_iconclr(struct ptc* p);
+void func_iconchk(struct ptc* p);
+void sys_iconpage(struct ptc* p);
+void sys_iconpmax(struct ptc* p);
+
 void set_keyboard(struct ptc* p, enum pnltype type);
+void set_function_key(struct ptc* p, int key, const void* string);
+void press_key(struct ptc* p, bool t, int x, int y);
+void offset_key(struct ptc* p, int id, int d);

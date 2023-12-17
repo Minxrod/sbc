@@ -1,5 +1,3 @@
-#include "test_strs.h"
-
 #include "test_util.h"
 
 #include "interpreter/strs.h"

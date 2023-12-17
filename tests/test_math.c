@@ -1,5 +1,3 @@
-#include "test_math.h"
-
 #include "test_util.h"
 
 #include "mathptc.h"

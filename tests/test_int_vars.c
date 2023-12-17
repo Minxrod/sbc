@@ -1,5 +1,3 @@
-#include "test_int_vars.h"
-
 #include "test_util.h"
 
 #include "interpreter.h"
@@ -392,6 +390,19 @@ int test_int_vars(){
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(65), "[asc] Value of \"A\" string");
 		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(0), "[asc] Value of CHR$(0) string");
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(97), "[asc] Value of first char of \"abc\" string");
+		
+		free_code(p);
+	}
+	
+	// CHR$
+	{
+		char* code = "A$=CHR$(48)\rB$=CHR$(65)\rC$=CHR$(0)\r";
+		
+		struct ptc* p = run_code(code);
+		
+		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1\x30"), "[chr$] \"0\" string");
+		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\1\x41"), "[chr$] \"A\" string");
+		ASSERT(str_comp(test_var(&p->vars, "C", VAR_STRING)->value.ptr, "S\1\x00"), "[chr$] CHR$(0)");
 		
 		free_code(p);
 	}

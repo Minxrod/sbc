@@ -111,4 +111,4 @@ bool str_comp(const void* str1, const void* str2);
 void str_copy(void* str1, void* str2);
 
 // Concatenate two strings
-void str_concat(void* str1, void* str2, void* dest);
+bool str_concat(void* str1, void* str2, void* dest);

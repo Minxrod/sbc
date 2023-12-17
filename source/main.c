@@ -189,10 +189,6 @@ int main(int argc, char** argv){
 				if (event.text.unicode <= 128){
 					set_inkey(&ptc->input, to_wide(event.text.unicode));
 				} else if (event.text.unicode >= 12289 && event.text.unicode <= 12540){
-					//match = {12290: '¡', 12296: '¢', 12297: '£', 12289: '¤', 12539: '¥', 12530: '¦', 12449: '§', 12451: '¨', 12453: '©', 12455: 'ª', 12457: '«', 12515: '¬', 12517: '\xad', 12519: '®', 12483: '¯', 12540: '°', 12450: '±', 12452: '²', 12454: '³', 12456: '´', 12458: 'µ', 12459: '¶', 12461: '·', 12463: '¸', 12465: '¹', 12467: 'º', 12469: '»', 12471: '¼', 12473: '½', 12475: '¾', 12477: '¿', 12479: 'À', 12481: 'Á', 12484: 'Â', 12486: 'Ã', 12488: 'Ä', 12490: 'Å', 12491: 'Æ', 12492: 'Ç', 12493: 'È', 12494: 'É', 12495: 'Ê', 12498: 'Ë', 12501: 'Ì', 12504: 'Í', 12507: 'Î', 12510: 'Ï', 12511: 'Ð', 12512: 'Ñ', 12513: 'Ò', 12514: 'Ó', 12516: 'Ô', 12518: 'Õ', 12520: 'Ö', 12521: '×', 12522: 'Ø', 12523: 'Ù', 12524: 'Ú', 12525: 'Û', 12527: 'Ü', 12531: 'Ý', 12443: 'Þ', 12444: 'ß'}
-					//"".join([match[x + min(match)] if x + min(match) in match else '?' for x in range(0,256)])
-//					u8* text_to_key = (u8*)"¤¡?????¢£?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????Þß????§±¨²©³ª´«µ¶?·?¸?¹?º?»?¼?½?¾?¿?À?Á?¯Â?Ã?Ä?ÅÆÇÈÉÊ??Ë??Ì??Í??Î??ÏÐÑÒÓ¬Ô\xadÕ®Ö×ØÙÚÛ?Ü??¦Ý???????¥°????";
-					//printf("%04x,%02x\n", event.text.unicode, text_to_key[event.text.unicode - 12289]);
 					if (to_char(event.text.unicode) >= 0xa1){
 						set_inkey(&ptc->input, event.text.unicode - 12289);
 					}
@@ -226,15 +222,17 @@ int main(int argc, char** argv){
 		}
 		set_input(&ptc->input, b);
 		
+		// TODO:IMPL:MED Make touch coordinates make more sense
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
-		set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y);
+		set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+		press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+		inc_time(&ptc->time);
 		
 		sfRenderWindow_clear(window, sfBlack);
 		
 		system_draw(window, ptc);
 		
 		sfRenderWindow_display(window);
-		inc_time(&ptc->time);
 	}
 	
 	//TODO:CODE:MED Signal thread to die on exit

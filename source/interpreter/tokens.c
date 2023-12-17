@@ -346,6 +346,10 @@ void tok_test(struct tokenizer* state){
 	char stack[40];
 	u8 stack_i = 0;
 	int argc = 0;
+	stack[0] = 0; // Fixes undefined reads detected via -fanalyzer
+	
+	const char* valid; // Local used for some cases
+	bool is_valid; // Used by some cases
 	
 	iprintf("Validation:\n");
 	for (u8 i = 0; i < state->token_i; ++i){
@@ -368,7 +372,7 @@ void tok_test(struct tokenizer* state){
 				if (!check_cmd(stack, stack_i, valid)){
 					// Set error state on invalid command
 					print_token(state, state->tokens[i]);
-					iprintf("Stack: %d %s\n", stack_i, stack);
+					iprintf("Stack: %d %.*s\n", stack_i, stack_i, stack);
 					abort();
 				}
 				// relies on variable carrying through for assignment
@@ -381,27 +385,34 @@ void tok_test(struct tokenizer* state){
 			case operation:
 				{
 				u8 prio = state->tokens[i].prio;
-				const char* valid;
-				bool is_valid = true;
+				is_valid = true;
 				if (state->tokens[i].ofs == OP_COMMA){
 					stack[stack_i++] = '<';
 				} else if (state->tokens[i].ofs == OP_SEMICOLON){
 					stack[stack_i++] = ';';
 				} else if (prio % 8 != 6){
 					// binary
-					valid = op_format[state->tokens[i].ofs];
-					is_valid = check_cmd(&stack[stack_i-2], 2, valid);
-					stack_i -= 2; // +2 -1
-					// note: any binary op will have the type of the first argument
-					if (state->tokens[i].ofs != OP_ASSIGN)
-						stack[stack_i++] &= 0x5f;  //binary op returns value type of first argument. unless it's =, that doesn't return anything.
+					if (stack_i < 2){
+						is_valid = false;
+					} else {
+						valid = op_format[state->tokens[i].ofs];
+						is_valid = check_cmd(&stack[stack_i-2], 2, valid);
+						stack_i -= 2; // +2 -1
+						// note: any binary op will have the type of the first argument
+						if (state->tokens[i].ofs != OP_ASSIGN)
+							stack[stack_i++] &= 0x5f;  //binary op returns value type of first argument. unless it's =, that doesn't return anything.
+					}
 				} else {
 					// unary: all of these take numbers, so
-					valid = "N";
-					is_valid = check_cmd(&stack[stack_i-1], 1, valid);
-					// +1 -1
-					stack_i--;
-					stack[stack_i++] = 'N';  //any unary op returns number
+					if (stack_i < 1){
+						is_valid = false;
+					} else {
+						valid = "N";
+						is_valid = check_cmd(&stack[stack_i-1], 1, valid);
+						// +1 -1
+						stack_i--;
+						stack[stack_i++] = 'N';  //any unary op returns number
+					}
 				}
 				if (!is_valid){
 					// Set error state on invalid command
@@ -417,8 +428,8 @@ void tok_test(struct tokenizer* state){
 					stack_i -= argc;
 				}
 				u8 func = state->tokens[i].ofs;
-				const char* valid = func_format[func];
-				bool is_valid = check_cmd(&stack[stack_i], argc, valid);
+				valid = func_format[func];
+				is_valid = check_cmd(&stack[stack_i], argc, valid);
 				if (!is_valid){
 					// Set error state on invalid command
 					print_token(state, state->tokens[i]);

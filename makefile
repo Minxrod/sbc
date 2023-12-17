@@ -16,10 +16,10 @@ CSFML_LIB = $(CSFML)lib/
 CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
-CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC
-# https://stackoverflow.com/a/10168396
 # The -MMD is important. It generates the actual dependencies...
-LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB) -MMD
+CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD
+# https://stackoverflow.com/a/10168396
+LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 # All the libraries that need to be linked
 LIBFLAGS = -lm -lcsfml-graphics -lcsfml-window -lcsfml-system
 
@@ -27,7 +27,7 @@ LIBFLAGS = -lm -lcsfml-graphics -lcsfml-window -lcsfml-system
 # get source files list 
 srcfiles = $(foreach srcdir,$(SOURCE),$(wildcard $(srcdir)/*.c))
 # convert to object files list (remove 'main' files)
-objects = $(filter-out source/main.o tests/test_main.o, $(srcfiles:%.c=%.o))
+objects = $(filter-out source/main.o tests/test_main.o source/opengl_test.o, $(srcfiles:%.c=%.o))
 # convert to build location list
 build = $(objects:%=$(BUILD)%)
 
@@ -44,6 +44,9 @@ main: $(main_objs)
 	# TODO: Better CSFML library location? (How do you install it?)
 	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o test $(LIBFLAGS)
 #	gcc $(CFLAGS) -Isource/ $(objs) source/main.c -o test
+
+#gl:
+#	$(CC) $(CFLAGS) $(LFLAGS) source/opengl_test.c -o test $(LIBFLAGS) -lGL
 
 test: $(test_objs)
 	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)

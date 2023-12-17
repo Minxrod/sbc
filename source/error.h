@@ -39,6 +39,8 @@ enum err_code {
 	ERR_BEGIN_LOOP_FAIL,
 	ERR_FILE_LOAD_FAILED,
 	ERR_OUT_OF_RANGE,
+	ERR_DIVIDE_BY_ZERO,
+	ERR_OVERFLOW,
 };
 
 extern const char * error_messages[];

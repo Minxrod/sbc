@@ -18,6 +18,10 @@ void op_add(struct ptc* p){
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
+		int64_t z = (int64_t)x + y;
+		if (z < INT_MIN || z > INT_MAX){
+			ERROR(ERR_OVERFLOW);
+		}
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x + y}});
 	} else if (a->type & b->type & VAR_STRING){
@@ -59,10 +63,15 @@ void op_mult(struct ptc* p){
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(int64_t)x * y >> FIXPOINT}});
+		int64_t z = (int64_t)x * y >> FIXPOINT;
+		if (z < INT_MIN || z > INT_MAX){
+			ERROR(ERR_OVERFLOW);
+		}
+	
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {z}});
 	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
-		s32 count = FP_TO_INT(VALUE_NUM(b)); //TODO:TEST:LOW Does this round down?
+		s32 count = FP_TO_INT(VALUE_NUM(b));
+		if (count < 0) count = 0;
 		struct string* x, * y;
 		
 		x = value_str(a);
@@ -85,22 +94,30 @@ void op_mult(struct ptc* p){
 }
 
 void op_div(struct ptc* p){
-	//TODO:ERR:MID Check for overflow, division by zero
 	s32 x, y;
 	
 	x = STACK_REL_NUM(-2);
 	y = STACK_REL_NUM(-1);
 	
+	if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
+	int64_t z = ((int64_t)x << FIXPOINT) / y;
+	if (z < INT_MIN || z > INT_MAX){
+		ERROR(ERR_OVERFLOW);
+	}
+	
 	p->stack.stack_i -= 2;
-	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(((int64_t)x << FIXPOINT) / y)}});
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {z}});
 }
 
 void op_sub(struct ptc* p){
-	//TODO:ERR:MID Check for overflow
 	s32 x, y;
 	
 	x = STACK_REL_NUM(-2);
 	y = STACK_REL_NUM(-1);
+	int64_t z = (int64_t)x - y;
+	if (z < INT_MIN || z > INT_MAX){
+		ERROR(ERR_OVERFLOW);
+	}
 	
 	p->stack.stack_i -= 2;
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {x - y}});
@@ -307,8 +324,9 @@ void op_modulo(struct ptc* p){
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
-		//TODO:ERR:MED Check for y=0
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {(INT_TO_FP(FP_TO_INT(x) % FP_TO_INT(y)))}});
+		if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
+		
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {x % y}});
 	} else {
 		p->exec.error = ERR_OP_INVALID_TYPES;
 	}

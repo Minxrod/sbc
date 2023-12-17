@@ -1,4 +1,3 @@
-#include "test_background.h"
 #include "test_util.h"
 
 #include "common.h"
