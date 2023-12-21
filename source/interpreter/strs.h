@@ -14,6 +14,8 @@ enum string_type {
 	STRING_EMPTY = 'e',
 	STRING_CHAR = 's',
 	STRING_WIDE = 'w',
+	STRING_INLINE_CHAR = '8',
+	STRING_INLINE_WIDE = 'X',
 };
 
 // string table info
@@ -73,8 +75,11 @@ u8 to_char(u16 c);
 // (Only 2,10,16 support is required)
 fixp str_to_number(u8* data, idx len, int base, bool allow_decimal);
 
-// Convert number to string PTC style
-void str_num(s32 num, u8* str);
+// Convert number to string PTC style + sets length
+void fixp_to_str(fixp num, void* str);
+
+// Convert number to u8* PTC style
+void fixp_to_char(fixp num, u8* str);
 
 // Convert string to number PTC style
 fixp str_to_num(u8* data, idx len);
@@ -101,8 +106,14 @@ void str_char_copy(const void* src, u8* dest);
 // Copy to u16 str
 void str_wide_copy(const void* src, u16* dest);
 
+// Get string type
+int str_type(const void* src);
+
 // Get string length
 u32 str_len(const void* src);
+
+// Set string length
+void str_set_len(void* src, int len);
 
 // Compare two strings for equality
 bool str_comp(const void* str1, const void* str2);

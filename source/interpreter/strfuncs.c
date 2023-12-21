@@ -3,6 +3,8 @@
 #include "system.h"
 #include "error.h"
 
+#include <string.h>
+
 void func_len(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
@@ -79,6 +81,19 @@ void func_val(struct ptc* p){
 	if (negate) v = -v;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {v}});
+}
+
+void func_str(struct ptc* p){
+	fixp n = STACK_REL_NUM(-1);
+	
+	struct string* s = get_new_str(&p->strs);
+	
+	fixp_to_str(n, s);
+	s->uses = 1;
+	
+	p->stack.stack_i -= 1;
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = s}});
 }
 
 void func_instr(struct ptc* p){

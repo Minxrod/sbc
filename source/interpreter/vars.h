@@ -7,6 +7,7 @@
  */
 
 #include "common.h"
+#include "error.h"
 
 /**
  * Variable and value types. Used for both @sa stack_entry and @sa named_var.
@@ -89,6 +90,8 @@ struct variables {
 	struct arrays* arrs;
 	/// Variable table
 	struct named_var* vars;
+	/// Error status for variable accesses
+	enum err_code error;
 };
 
 int var_name_hash(char*, u32, u32);

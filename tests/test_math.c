@@ -27,6 +27,7 @@ int test_math(){
 		}
 	}
 	
+#ifdef TEST_FULL
 	// Test sine function for positive fixedpoint values in [0,262143]
 	{
 		const char* test_data = "tests/data/sin_data.bin";
@@ -54,6 +55,7 @@ int test_math(){
 		}
 		fclose(f);
 	}
+#endif // TEST_FULL
 	
 	// Test log function for selected values
 	{
@@ -70,7 +72,7 @@ int test_math(){
 		
 		for (u32 i = 1; i < sizeof logs / sizeof logs[0]; ++i){
 			fixp log_result = func_log_internal(INT_TO_FP(i));
-			iprintf("input=%d expected=%d log=%d",i, logs[i], log_result);
+			iprintf("input=%d expected=%d log=%d",(int)i, logs[i], log_result);
 			CHECK(logs[i] == log_result, "[math] Log function");
 			iprintf("\n");
 		}
@@ -92,12 +94,12 @@ int test_math(){
 		
 		for (u32 i = 0; i < sizeof cosine / sizeof cosine[0]; ++i){
 			fixp cos_result = func_cos_internal(INT_TO_FP(i-63));
-			iprintf("input=%d expected=%d cos=%d",i, cosine[i], cos_result);
+			iprintf("input=%d expected=%d cos=%d",(int)i, cosine[i], cos_result);
 			CHECK(cosine[i] == cos_result, "[math] Cosine function");
 			iprintf("\n");
 			// via symmetry
 			cos_result = func_cos_internal(INT_TO_FP(i));
-			iprintf("input=%d expected=%d cos=%d",i, cosine[63-i], cos_result);
+			iprintf("input=%d expected=%d cos=%d",(int)i, cosine[63-i], cos_result);
 			CHECK(cosine[63-i] == cos_result, "[math] Cosine function");
 			iprintf("\n");
 		}

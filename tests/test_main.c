@@ -18,6 +18,7 @@ int test_math();
 int test_int_vars();
 int test_int_code();
 int test_int_math();
+int test_int_func();
 
 int test_input();
 int test_console();
@@ -41,6 +42,7 @@ int run_tests(){
 	FAST(test_int_vars());
 	FAST(test_int_code());
 	FAST(test_int_math());
+	FAST(test_int_func());
 	
 #endif
 	FAST(test_input());

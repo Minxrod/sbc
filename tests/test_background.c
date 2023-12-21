@@ -35,8 +35,8 @@ int test_background(void){
 	{
 		struct ptc* p = run_code("BGPUT 0,1,2,3456\rBGPUT 1,33,34,1235\r");
 		
-		ASSERT(p->res.scr[0][bg_index(1,2)] == 3456, "[bg] BGPUT tiledata test");
-		ASSERT(p->res.scr[1][bg_index(33,34)] == 1235, "[bg] BGPUT tiledata test II");
+		ASSERT(p->res.scr[2][bg_index(1,2)] == 3456, "[bg] BGPUT tiledata test");
+		ASSERT(p->res.scr[3][bg_index(33,34)] == 1235, "[bg] BGPUT tiledata test II");
 		
 		free_code(p);
 	}
@@ -45,8 +45,8 @@ int test_background(void){
 	{
 		struct ptc* p = run_code("BGPUT 0,1,2,3456\rBGPUT 1,33,34,1235\rBGCLR\r");
 		
-		ASSERT(p->res.scr[0][bg_index(1,2)] == 0, "[bg] BGCLR test");
-		ASSERT(p->res.scr[1][bg_index(33,34)] == 0, "[bg] BGCLR test II");
+		ASSERT(p->res.scr[2][bg_index(1,2)] == 0, "[bg] BGCLR test");
+		ASSERT(p->res.scr[3][bg_index(33,34)] == 0, "[bg] BGCLR test II");
 		
 		free_code(p);
 	}
@@ -56,17 +56,17 @@ int test_background(void){
 	{
 		struct ptc* p = run_code("BGFILL 1,3,4,36,37,1024\r");
 		
-		ASSERT(p->res.scr[1][bg_index(3,4)] == 1024, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(36,4)] == 1024, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(36,37)] == 1024, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(3,37)] == 1024, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(20,20)] == 1024, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(2,4)] == 0, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(3,3)] == 0, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(37,37)] == 0, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(36,38)] == 0, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(2,37)] == 0, "[bg] BGFILL test");
-		ASSERT(p->res.scr[1][bg_index(3,38)] == 0, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(3,4)] == 1024, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(36,4)] == 1024, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(36,37)] == 1024, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(3,37)] == 1024, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(20,20)] == 1024, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(2,4)] == 0, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(3,3)] == 0, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(37,37)] == 0, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(36,38)] == 0, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(2,37)] == 0, "[bg] BGFILL test");
+		ASSERT(p->res.scr[3][bg_index(3,38)] == 0, "[bg] BGFILL test");
 		
 		free_code(p);
 	}

@@ -16,7 +16,7 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	nds
-SOURCES		:=	gfx source data tests source/interpreter source/subsystem
+SOURCES		:=	gfx source data tests source/interpreter source/subsystem source/graphics/nds
 INCLUDES	:=	include build source source/interpreter source/subsystem
 
 #---------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ export BUILD_TYPE
 # https://stackoverflow.com/questions/3963989/compiling-with-different-flags-in-makefile
 # some trickery to separate main and test builds more easily
 .PHONY: test main
-main: BUILD_TYPE=-DARM9_BUILD
+main: BUILD_TYPE=-DARM9_BUILD -DNDEBUG
 test: BUILD_TYPE=
 
 main test: $(BUILD)

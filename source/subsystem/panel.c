@@ -177,12 +177,13 @@ void set_keyboard(struct ptc* p, enum pnltype type){
 	// TODO:PERF:LOW Check previous state to change less if possible
 	// Set BG layout (load layout)
 	// Note that only a portion of the grid is ever needed
+	u16* panel_bg = p->res.scr[SCR_BANKS+1];
 	if (type == PNL_OFF){
-		memset(bg_page(p,1,2), 0, 32*24);
+		memset(panel_bg, 0, 32*24);
 	} else if (type == PNL_PNL){
-		load_file((u8*)bg_page(p,1,2), "resources/pnlPANEL.NSCR", 36, 32*24*2);
+		load_file((u8*)panel_bg, "resources/pnlPANEL.NSCR", 36, 32*24*2);
 	} else {
-		load_file((u8*)bg_page(p,1,2), "resources/pnlKEY.NSCR", 36, 32*24*2);
+		load_file((u8*)panel_bg, "resources/pnlKEY.NSCR", 36, 32*24*2);
 	}
 	// Set sprites locations
 	// TODO:PERF:LOW run this once and only update CHR + POS as needed?
@@ -195,7 +196,7 @@ void set_keyboard(struct ptc* p, enum pnltype type){
 		c = keyboard_pos[i][4];
 		k = keyboard_pos[i][5];
 		
-		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,1,w,h);
+		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,0,w,h);
 		p->panel.keys[i].pos.x = x;
 		p->panel.keys[i].pos.y = y;
 		p->panel.keys[i].hit.x = INT_TO_FP(1);
@@ -257,6 +258,7 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 		}
 	}
 	
+	// TODO:IMPL:HIGH Check panel state
 	// TODO:IMPL:HIGH Keyboard repeat timings
 	// TODO:IMPL:HIGH Keyboard modes; shift; caps lock
 	if (p->key_pressed && p->key_pressed <= 60){

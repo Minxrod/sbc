@@ -20,7 +20,7 @@ void cmd_for(struct ptc* p){
 	//note: this points to just after FOR
 	u32 index = p->exec.index;
 	do {
-		index = bc_scan(p->exec.code, index, BC_OPERATOR);
+		index = bc_scan(p->exec.code, index + 2, BC_OPERATOR);
 	} while (index != BC_SCAN_NOT_FOUND && p->exec.code->data[index+1] != OP_ASSIGN);
 //	iprintf("\nIndex of OP_ASSIGN: %ld", index);
 	if (index == BC_SCAN_NOT_FOUND){
@@ -105,7 +105,11 @@ void cmd_next(struct ptc* p){
 	} else {
 		step = STACK_NUM(1);
 	}
-	(*current) += step;
+	int64_t overflow_check= (int64_t)*current + step;
+	if (overflow_check > INT_MAX || overflow_check < INT_MIN){
+		ERROR(ERR_OVERFLOW);
+	}
+	(*current) = overflow_check;
 	s32 val = *current;
 	// check if need to loop
 	if ((step < 0 && end > val) || (step >= 0 && end < val)){

@@ -30,7 +30,7 @@ struct background {
 struct background* init_background(void);
 void free_background(struct background* b);
 
-u16* bg_page(struct ptc* p, u8 page, u8 layer);
+//u16* bg_page(struct ptc* p, u8 page, u8 layer);
 u16 bg_index(uint_fast8_t x, uint_fast8_t y);
 u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y);
 

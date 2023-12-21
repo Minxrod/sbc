@@ -81,16 +81,15 @@ void cmd_print(struct ptc* p){
 //	struct stack* s = &p->stack;
 	struct console* c = &p->console;
 	u8 buf[16]; //S#-524287.999\0 max length is 2+12 chars
-	buf[0]='S';
+	buf[0]=STRING_INLINE_CHAR;
 	
 	u32 i = 0;
 	while (i < p->stack.stack_i){
 		struct stack_entry* e = &p->stack.entry[i];
 		
 		if (e->type & VAR_NUMBER){
-			s32 x = VALUE_NUM(e);
-			str_num(x, &buf[2]);
-			buf[1] = strlen((char*)&buf[2]); //TODO:CODE:NONE remove this bit
+			fixp x = VALUE_NUM(e);
+			fixp_to_str(x, buf);
 			
 			con_puts(c, buf);
 		} else if (e->type & VAR_STRING) {

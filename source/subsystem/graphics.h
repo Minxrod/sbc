@@ -6,10 +6,15 @@ struct ptc;
 
 struct graphics {
 	u8 screen;
-	u8 drawpage;
-	u8 displaypage;
-	
 	u8 color;
+	
+	// Information stored for two pages
+	struct {
+		u8 drawpage;
+		u8 displaypage;
+		
+		u8 prio;
+	} info[2];
 };
 
 void init_graphics(struct graphics* g);

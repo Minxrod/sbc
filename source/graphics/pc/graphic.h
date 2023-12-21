@@ -26,6 +26,6 @@ struct graphic {
 
 struct graphic init_graphic(int w, int h);
 
-void draw_graphic(struct graphic* g, struct ptc* p);
+void draw_graphic(struct graphic* g, struct ptc* p, int screen);
 
 void free_graphic(struct graphic* g);

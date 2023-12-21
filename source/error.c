@@ -41,4 +41,9 @@ const char * error_messages[] = {
 	"Arugment out of range!",
 	"Division by zero!",
 	"Overflow!",
+	"Subscript out of range",
+	"Duplicate definition",
+	"Out of memory",
+	"Subscript out of range [X]",
+	"Subscript out of range [Y]",
 };

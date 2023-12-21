@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
+#include <string.h>
 
 //Note: Should be const, but need to pass void* into this.
 char* single_char_strs = 
@@ -173,10 +175,43 @@ fixp str_to_num(u8* data, idx len){
 	return str_to_number(data, len, 10, true);
 }
 
+// Returns STR_COPY_SRC_8 if string is u8 type
+// Returns STR_COPY_SRC_16 if string is u16 type
+int str_type(const void* src){
+	assert(src);
+	
+	switch (*(char*)src){
+		case STRING_EMPTY: // this one doesn't really matter
+		case STRING_CHAR:
+		case BC_LABEL_STRING:
+		case BC_LABEL:
+		case BC_STRING:
+		case STRING_INLINE_CHAR:
+			return STR_COPY_SRC_8;
+		case BC_WIDE_STRING:
+		case STRING_WIDE:
+		case STRING_INLINE_WIDE:
+			return STR_COPY_SRC_16;
+		default:
+			iprintf("Unimplemented/Not a valid string type! (String type)\n");
+			abort();
+	}
+}
+
+void fixp_to_str(fixp num, void* dest){
+	if (str_type(dest) == STR_COPY_SRC_16){
+		iprintf("Unimplemented: fixp_to_str wide destination");
+		abort();
+	} else {
+		fixp_to_char(num, (u8*)str_at(dest, 0));
+		str_set_len(dest, strlen((char*)str_at(dest, 0)));
+	}
+}
+
 // Convert 20.12 fixed point number to string
 // Using PTC rounding rules
-// TODO:CODE:LOW rename
-void str_num(s32 num, u8* str){
+// Note: This function null-terminates the string instead of storing the length.
+void fixp_to_char(fixp num, u8* str){
 //	u16* begin = str;
 	if (num < 0){
 		(*str++) = '-';
@@ -297,6 +332,8 @@ u8 to_char(u16 w){
 /// 
 /// @note src and dest should be either u8* or u16*
 void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count){
+	assert(src);
+	assert(dest);
 	///TODO:PERF:LOW profile this and see if swapping loop/condition order is better?
 	for (size_t i = 0; i < count; ++i){
 		if (types == 0){
@@ -318,6 +355,9 @@ void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count){
 /// Copies a string from src (any valid string data, determined by first byte) to dest
 /// @note strings are NOT null-terminated. Length should be stored if needed.
 void str_wide_copy(const void* src, u16* dest){
+	assert(src);
+	assert(dest);
+	
 	struct string* s = (struct string*)src;
 	if (!src) return; // nothing to copy
 	
@@ -330,8 +370,10 @@ void str_wide_copy(const void* src, u16* dest){
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
+		case STRING_INLINE_CHAR:
 			str_copy_buf(&((u8*)src)[2], dest, STR_COPY_DEST_16, ((u8*)src)[1]);
 			return;
+		case STRING_INLINE_WIDE:
 		default:
 			iprintf("Unimplemented/Not a valid string type! (Copy u16)\n");
 			abort();
@@ -341,6 +383,9 @@ void str_wide_copy(const void* src, u16* dest){
 /// Copies a string from src (any valid string data, determined by first byte) to dest
 /// @note strings are NOT null-terminated. Length should be stored if needed.
 void str_char_copy(const void* src, u8* dest){
+	assert(src);
+	assert(dest);
+	
 	struct string* s = (struct string*)src;
 	if (!src) return; // nothing to copy
 	
@@ -363,6 +408,8 @@ void str_char_copy(const void* src, u8* dest){
 
 // Gets a pointer to a character in the string at the given index.
 void* str_at(const void* src, const u16 index){
+	assert(src);
+	
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
@@ -373,7 +420,9 @@ void* str_at(const void* src, const u16 index){
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
+		case STRING_INLINE_CHAR:
 			return &((u8*)src)[2+index];
+		case STRING_INLINE_WIDE:
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at)\n");
 			abort();
@@ -382,6 +431,8 @@ void* str_at(const void* src, const u16 index){
 
 // Gets the wide character value in the string at the given index.
 u16 str_at_wide(const void* src, const u16 index){
+	assert(src);
+	
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
@@ -390,8 +441,11 @@ u16 str_at_wide(const void* src, const u16 index){
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
+		case STRING_INLINE_CHAR:
 			return to_wide(((u8*)src)[2+index]);
 		case STRING_EMPTY:
+		case STRING_INLINE_WIDE:
+		case STRING_WIDE:
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at_wide)\n");
 			abort();
@@ -399,8 +453,9 @@ u16 str_at_wide(const void* src, const u16 index){
 }
 
 u32 str_len(const void* src){
+	assert(src);
+	
 	struct string* s = (struct string*)src;
-	if (!src) return 0;
 	
 	switch (*(char*)src){
 		case STRING_EMPTY:
@@ -411,6 +466,8 @@ u32 str_len(const void* src){
 		case BC_LABEL:
 		case BC_LABEL_STRING:
 		case BC_WIDE_STRING:
+		case STRING_INLINE_CHAR:
+		case STRING_INLINE_WIDE:
 			return ((u8*)src)[1];
 		default:
 			iprintf("Unimplemented/Not a valid string type! (Length)\n");
@@ -418,7 +475,38 @@ u32 str_len(const void* src){
 	}
 }
 
+void str_set_len(void* src, int len){
+	assert(src);
+	assert(len >= 0 && len < 256);
+	
+	struct string* s = (struct string*)src;
+	
+	switch (*(char*)src){
+		case STRING_CHAR:
+			s->len = len;
+			break;
+		case STRING_INLINE_CHAR:
+		case STRING_INLINE_WIDE:
+			((u8*)src)[1] = len;
+			break;
+		case STRING_EMPTY:
+		case BC_LABEL:
+		case BC_STRING:
+		case BC_LABEL_STRING:
+		case BC_WIDE_STRING:
+		default:
+			iprintf("Attempted to write to a read-only string type! (Set length)\n");
+			abort();
+	}
+}
+
+
 bool str_comp(const void* str1, const void* str2){
+	// TODO:PERF:NONE
+	// Check if iterating without a copy is faster (using str_at_wide)
+	assert(str1);
+	assert(str2);
+	
 	u16 cmp1[256];
 	u16 cmp2[256];
 	
@@ -442,6 +530,9 @@ bool str_comp(const void* str1, const void* str2){
 
 // Copy str1 to str2
 void str_copy(void* src, void* src_dest){
+	assert(src);
+	assert(src_dest);
+	
 	switch (*(char*)src_dest){
 		case STRING_EMPTY:
 			iprintf("Error: Attempted to copy to empty string!\n");
@@ -465,6 +556,10 @@ void str_copy(void* src, void* src_dest){
 
 /// Returns true if copy occurs
 bool str_concat(void* src1, void* src2, void* dest){
+	assert(src1);
+	assert(src2);
+	assert(dest);
+	
 	if (str_len(src1) + str_len(src2) > MAX_STRLEN){
 		// Copy fails
 		return false;

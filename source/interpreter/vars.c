@@ -47,12 +47,17 @@ bool namecmp(char* a, u32 len, char b[16]){
 
 /// Allocate memory for vars.
 void init_mem_var(struct variables* v, uint_fast16_t var_count){
+	// Check for power of two
+	// http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+	// This is used for search_name_type quad walk to work correctly
+	assert((var_count & (var_count - 1)) == 0);
 	v->vars_max = var_count;
 	iprintf("init_mem_var calloc=%d\n", (int)var_count * (int)sizeof(struct named_var));
 	v->vars = calloc(var_count, sizeof(struct named_var));
 	for (uint_fast16_t i = 0; i < v->vars_max; ++i){
 		v->vars[i].type = VAR_EMPTY;
 	}
+	v->error = ERR_NONE;
 }
 
 void reset_var(struct variables* v){
@@ -82,11 +87,11 @@ struct named_var* search_name_type(struct variables* v, char* name, u32 len, enu
 	do {
 		// quad walk (hits all values once for 2^n up to 65k)
 		// does it work for all vars_max=2^n?
-		hash = (hash + step++) % v->vars_max;
+		hash = (hash + step) % v->vars_max;
 		var = &v->vars[hash];
-		if (step >= v->vars_max){
+		if (step++ >= v->vars_max){
 			return NULL;
-		} 
+		}
 	} while (var->type != VAR_EMPTY && (!namecmp(name, len, var->name) || var->type != type));
 	
 	return var;
@@ -94,7 +99,10 @@ struct named_var* search_name_type(struct variables* v, char* name, u32 len, enu
 
 struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum types type, u32 dim1, u32 dim2){
 	struct named_var* var = search_name_type(v, name, len, type);
-	if (!var) return var; // Out of memory
+	if (!var) {
+		v->error = ERR_OUT_OF_MEMORY;
+		return var; // Out of memory
+	}
 	
 	// make new array type
 	//if VAR_EMPTY then create it?
@@ -116,15 +124,19 @@ struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum
 		return var;
 	} else {
 		// array already exists!
-		iprintf("Error: Array already exists!\n");
-		abort();
+		v->error = ERR_DUPLICATE_DIM;
+		return NULL;
 	}
 }
 
 struct named_var* get_var(struct variables* v, char* name, u32 len, enum types type){
 	struct named_var* var = search_name_type(v, name, len, type);
-	if (!var) return var; // Out of memory
-	//if VAR_EMPTY then create it?
+	if (!var) {
+		v->error = ERR_OUT_OF_MEMORY;
+		return var; // Out of memory
+	}
+	
+	//if VAR_EMPTY then create it
 	if (var->type == VAR_EMPTY){
 		// set var type
 		var->type = type;
@@ -154,11 +166,9 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 
 union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types type, u32 ix, u32 iy){
 	struct named_var* a = get_var(v, name, len, type);
-	if (a == NULL){
-		// out of memory
-		// TODO:ERR:LOW Better error indication?
-		iprintf("Error: Out of memory!\n");
-		abort();
+	if (!a) {
+		v->error = ERR_OUT_OF_MEMORY;
+		return NULL; // Out of memory
 	}
 	
 	if (a->value.ptr == NULL){
@@ -176,11 +186,11 @@ union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types 
 		} else if (iy < arr_size(a->value.ptr, ARR_DIM2)){
 			return arr_entry(a->value.ptr, ix, iy);
 		} else {
-			iprintf("Error: Index iy out of range\n");
-			abort();
+			v->error = ERR_SUBSCRIPT_OUT_OF_RANGE_Y;
+			return NULL;
 		}
 	} else {
-		iprintf("Error: Index ix out of range\n");
-		abort();
+		v->error = ERR_SUBSCRIPT_OUT_OF_RANGE_X;
+		return NULL;
 	}
 }

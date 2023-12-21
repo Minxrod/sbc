@@ -22,9 +22,11 @@
 #define FAST(f) if (f && FASTEND) { return 1; }
 
 // Quick checks
-// TODO:CODE Should this be a function?
-#define CHECK_VAR_INT(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == INT_TO_FP(num), var" == "#num);}
-#define CHECK_VAR_NUM(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == num, var" == "#num" (fixp)");}
+// TODO:CODE:LOW Should this be a function?
+// TODO:CODE:MED Add line numbers here somehow
+#define CHECK_VAR_INT(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == INT_TO_FP(num), var" == "#num); }
+#define CHECK_VAR_NUM(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == num, var" == "#num" (fixp)"); }
+#define CHECK_VAR_STR(var,str) {ASSERT(str_comp(test_var(&p->vars, var, VAR_STRING)->value.ptr, str), var" == "#str);}
 
 extern int check_fail;
 
@@ -36,7 +38,10 @@ extern int check_fail;
 #include <stdlib.h>
 
 struct ptc* run_code(char* code);
+struct ptc* run_code_lowmem(char* code);
 struct ptc* run_code_keys(char* code, char* keys, int len);
+bool check_code_error(char* code, enum err_code expected);
+
 void free_code(struct ptc* ptc);
 
 int token_code(char* code, char* expected, int size);

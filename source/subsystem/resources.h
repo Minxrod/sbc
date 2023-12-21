@@ -66,13 +66,6 @@ struct resources {
 	
 	u16* bg_upper;
 	
-#ifdef PC
-	struct sfTexture* chr_tex[12];
-	struct sfTexture* col_tex;
-	
-	struct sfShader* shader;
-#endif
-	
 	u8 visible;
 };
 

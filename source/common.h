@@ -28,8 +28,9 @@
 #include <nds/ndstypes.h>
 #include <nds.h>
 
-// Use this to build the "Main program" version of the software
-// Instead of the test cases
+#ifdef NDEBUG
+#define iprintf if(0)iprintf
+#endif
 #endif
 
 #ifndef ARM9

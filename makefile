@@ -6,7 +6,7 @@
 # https://stackoverflow.com/questions/44754190/how-to-use-gccs-i-flag-to-include-multiple-folders
 
 # Source, build settings
-SOURCE = source source/graphics/pc source/interpreter source/subsystem tests
+SOURCE = source source/graphics/pc source/graphics source/interpreter source/subsystem tests
 BUILD = build/
 CSFML = /home/minxrod/Documents/source/notmine/CSFML/
 CSFML_INCLUDE = $(CSFML)include/
@@ -27,7 +27,7 @@ LIBFLAGS = -lm -lcsfml-graphics -lcsfml-window -lcsfml-system
 # get source files list 
 srcfiles = $(foreach srcdir,$(SOURCE),$(wildcard $(srcdir)/*.c))
 # convert to object files list (remove 'main' files)
-objects = $(filter-out source/main.o tests/test_main.o source/opengl_test.o, $(srcfiles:%.c=%.o))
+objects = $(filter-out source/main.o tests/test_main.o source/graphics/pc/opengl_test.o, $(srcfiles:%.c=%.o))
 # convert to build location list
 build = $(objects:%=$(BUILD)%)
 

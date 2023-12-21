@@ -14,7 +14,7 @@ void free_background(struct background* b){
 }
 
 u16* bg_page(struct ptc* p, u8 page, u8 layer){
-	return p->res.scr[SCR_BANKS*page+layer];
+	return p->res.scr[SCR_BANKS*page+2+layer];
 }
 
 u16 bg_index(uint_fast8_t x, uint_fast8_t y){

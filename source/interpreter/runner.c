@@ -73,7 +73,7 @@ const ptc_call ptc_functions[] = {
 	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, NULL, //FUN_ICONCHK
 	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, NULL, NULL, //FUN_RAD
 	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUN_SPHITRC
-	NULL, NULL, NULL, func_subst, NULL, func_val, //FUN_VAL
+	NULL, NULL, func_str, func_subst, NULL, func_val, //FUN_VAL
 };
 
 const ptc_call ptc_sysvars[] = {
@@ -237,7 +237,7 @@ void run(struct program* code, struct ptc* p) {
 				if (!r->argcount){
 					struct named_var* v = get_var(&p->vars, name, len, t);
 					if (!v){
-						r->error = ERR_VARIABLE_CREATION_FAIL;
+						r->error = p->vars.error;
 						break;
 					}
 					x = t & VAR_NUMBER ? (void*)&v->value.number : &v->value.ptr;
@@ -252,6 +252,10 @@ void run(struct program* code, struct ptc* p) {
 					a = FP_TO_INT(VALUE_NUM(z));
 					
 					union value* val = get_arr_entry(&p->vars, name, len, t | VAR_ARRAY, a, b);
+					if (!val){
+						r->error = p->vars.error;
+						break;
+					}
 					x = t & VAR_NUMBER ? (void*)&val->number : &val->ptr;
 				}
 				
@@ -281,6 +285,7 @@ void run(struct program* code, struct ptc* p) {
 				if (data >= 'A'){
 					iprintf("%c ", data);
 					get_new_arr_var(&p->vars, &data, 1, VAR_NUMBER | VAR_ARRAY, a, b);
+					r->error = p->vars.error;
 				} else {
 					char* x = &code->data[r->index];
 					iprintf("%.*s", data, x);
@@ -290,6 +295,7 @@ void run(struct program* code, struct ptc* p) {
 					u32 len = t & VAR_NUMBER ? data : data-1;
 					
 					get_new_arr_var(&p->vars, x, len, t | VAR_ARRAY, a, b);
+					r->error = p->vars.error;
 				}
 				
 				iprintf(" dim=%d,%d", (int)a, (int)b);

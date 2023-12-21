@@ -16,8 +16,8 @@ u16 grp_index(uint_fast8_t x, uint_fast8_t y){
 	return px + py * 8 + tx * 64 + ty * 512 + cx * 4096 + cy * 16384;
 }
 
-u8* grp_drawpage(struct ptc* p, u8 page){
-	return p->res.grp[page];
+u8* grp_drawpage(struct ptc* p){
+	return p->res.grp[p->graphics.info[p->graphics.screen].drawpage];
 }
 
 void cmd_gpage(struct ptc* p){
@@ -40,13 +40,11 @@ void cmd_gcls(struct ptc* p){
 			ERROR(ERR_OUT_OF_RANGE);
 		}
 		color = c;
-	} else if (p->stack.stack_i == 0){
-		color = p->graphics.color;
 	} else {
-		ERROR(ERR_WRONG_ARG_COUNT);
+		color = p->graphics.color;
 	}
 	
-	u8* page = grp_drawpage(p, p->graphics.drawpage);
+	u8* page = grp_drawpage(p);
 	
 	for (u16 i = 0; i < GRP_SIZE; ++i){
 		page[i] = color;
@@ -80,7 +78,7 @@ void cmd_gfill(struct ptc* p){
 		ERROR(ERR_WRONG_ARG_COUNT);
 	}
 	
-	u8* page = grp_drawpage(p, p->graphics.drawpage);
+	u8* page = grp_drawpage(p);
 	
 	for (int_fast16_t x = x1; x <= x2; ++x){
 		for (int_fast16_t y = y1; y <= y2; ++y){
@@ -114,7 +112,7 @@ void cmd_gbox(struct ptc* p){
 		ERROR(ERR_WRONG_ARG_COUNT);
 	}
 	
-	u8* page = grp_drawpage(p, p->graphics.drawpage);
+	u8* page = grp_drawpage(p);
 	
 	int x = x1;
 	int y = y1;
@@ -154,7 +152,7 @@ void cmd_gline(struct ptc* p){
 		ERROR(ERR_WRONG_ARG_COUNT);
 	}
 	
-	u8* page = grp_drawpage(p, p->graphics.drawpage);
+	u8* page = grp_drawpage(p);
 	
 	// Draw a line :)
 	if (abs(x2 - x1) >= abs(y2 - y1)){
@@ -206,11 +204,11 @@ void cmd_gpset(struct ptc* p){
 	
 	if (p->stack.stack_i == 3){
 		STACK_INT_RANGE(2,0,255,color);
-	} else if (p->stack.stack_i == 2){
+	} else {
 		color = p->graphics.color;
 	}
 	
-	u8* page = grp_drawpage(p, p->graphics.drawpage);
+	u8* page = grp_drawpage(p);
 	
 	page[grp_index(x,y)] = color;
 	

@@ -299,5 +299,21 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// FOR loop starting with negative value/expression for starting value
+	{
+		char code[] = "FOR I=-6 TO 0\rS=S+I\rNEXT\r";
+		
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_NUM("S",-INT_TO_FP(21));
+		
+		free_code(p);
+	}
+	
+	// FOR loop ending at maximum value (int)
+	{
+		ASSERT(check_code_error("FOR I=524286 TO 524287\rNEXT\r", ERR_OVERFLOW), "[for] Overfow on FOR ending at 524287 with step 1");
+	}
+	
 	SUCCESS("test_int_code success");
 }

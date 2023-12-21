@@ -2,15 +2,16 @@
 
 #include "interpreter.h"
 
-// TODO:CODE:LOW Mode console, graphics, etc to subsystem/?
-#include "resources.h"
-#include "input.h"
-#include "console.h"
-#include "graphics.h"
+#include "subsystem/resources.h"
+#include "subsystem/console.h"
+#include "subsystem/graphics.h"
 #include "subsystem/panel.h"
 #include "subsystem/background.h"
 #include "subsystem/sprites.h"
+#include "input.h"
 #include "timers.h"
+
+#include "graphics/display.h"
 
 // note that VAR_LIMIT should be a multiple of 2 to ensure that
 // the current hash algorithm works
@@ -60,6 +61,9 @@ struct ptc {
 	struct strings strs;
 	
 	struct arrays arrs;
+	
+	// rendering information (system-specific)
+	struct display display;
 };
 
 struct ptc* init_system(int var, int str, int arr);

@@ -28,6 +28,9 @@ void init(void){
 	bgInitSub(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
 	bgInitSub(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
 	
+	oamInit(&oamMain, SpriteMapping_1D_128, true);
+	oamInit(&oamSub, SpriteMapping_1D_128, true);
+	
 	// extended palette mode
 //	vramSetBankF(VRAM_F_BG_EXT_PALETTE);
 //	vramSetBankG(VRAM_G_SPRITE_EXT_PALETTE);
@@ -39,25 +42,35 @@ void init(void){
 struct ptc* ptc;
 
 void frame_update(){
+	// scan buttons
 	scanKeys();
-	// set buttons here
-	keysCurrent();
+	// set touch here
+	touchPosition touch;
+	touchRead(&touch);
 	
-	set_input(&ptc->input, keysCurrent());
+	// apply inputs
+	int b = keysCurrent();
+	set_input(&ptc->input, b);
+	
+	set_touch(&ptc->input, b & KEY_TOUCH, touch.px, touch.py);
+	press_key(ptc, b & KEY_TOUCH, touch.px, touch.py);
+	// increment frame count
+	inc_time(&ptc->time);
+	
 	// draw
-	system_draw(ptc);
+	display_draw_all(ptc);
 }
 
 int main(void){
 	init();
 	fatInitDefault();
-	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
-//	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_512x512, 0, 2, false, true); 
+//	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
+	
 	struct program program;
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	// set this after creating system to ensure resources are loaded
 	
-	prg_load(&program, "SAMPLE6.PTC");
+	prg_load(&program, "programs/SAMPLE6.PTC");
 	iprintf("program malloc: %d\n", 2*program.size);
 	struct program bc = {0, malloc(2*program.size)};
 	tokenize(&program, &bc);
@@ -149,6 +162,7 @@ int main(int argc, char** argv){
 		printf("Failed to create the render window!\n");
 		abort();
 	}
+	ptc->display.rw = window;
 	
 	// THREAD MODEL
 	// WINDOW                    PROGRAM
@@ -228,11 +242,7 @@ int main(int argc, char** argv){
 		press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
 		inc_time(&ptc->time);
 		
-		sfRenderWindow_clear(window, sfBlack);
-		
-		system_draw(window, ptc);
-		
-		sfRenderWindow_display(window);
+		display_draw_all(ptc);
 	}
 	
 	//TODO:CODE:MED Signal thread to die on exit
