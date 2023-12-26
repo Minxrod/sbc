@@ -40,8 +40,9 @@ void func_mid(struct ptc* p){
 	
 	dest->uses = 1;
 	dest->len = len;
-	// TODO:IMPL:LOW Determine type(s) of strings to get types for copying
-	str_copy_buf(str_at(str, start), str_at(dest, 0), 0, len);
+	// TODO:IMPL:LOW Determine type for destination string
+	u8 type = str_type(str);
+	str_copy_buf(str_at(str, start), str_at(dest, 0), type, len);
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }

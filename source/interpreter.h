@@ -4,6 +4,7 @@
 
 // Used more or less everywhere
 #include "common.h"
+#include "error.h"
 
 // Core data storage types and functions to operate on them
 #include "interpreter/arrays.h"

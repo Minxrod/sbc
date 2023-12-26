@@ -80,6 +80,7 @@ bool check_pressed_manual(struct input* i, int id, int start, int repeat);
 
 struct ptc;
 
+void cmd_brepeat(struct ptc* p);
 void func_btrig(struct ptc* p);
 void func_button(struct ptc* p);
 void func_inkey(struct ptc* p);

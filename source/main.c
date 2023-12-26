@@ -70,7 +70,7 @@ int main(void){
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	// set this after creating system to ensure resources are loaded
 	
-	prg_load(&program, "programs/SAMPLE6.PTC");
+	prg_load(&program, "programs/SAMPLE5.PTC");
 	iprintf("program malloc: %d\n", 2*program.size);
 	struct program bc = {0, malloc(2*program.size)};
 	tokenize(&program, &bc);

@@ -1,8 +1,6 @@
 #include "runner.h"
 #include "system.h"
 
-// TODO:CODE:NONE Move these files to a subdirectory?
-#include "console.h"
 #include "operators.h"
 #include "sysvars.h"
 #include "error.h"
@@ -13,14 +11,16 @@
 #include "flow.h"
 #include "data.h"
 #include "input.h"
-#include "graphics.h"
 
 #include "mathptc.h"
 #include "strfuncs.h"
 
+#include "subsystem/console.h"
 #include "subsystem/background.h"
 #include "subsystem/panel.h"
 #include "subsystem/resources.h"
+#include "subsystem/sprites.h"
+#include "subsystem/graphics.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,11 +48,11 @@ const ptc_call ptc_commands[] = {
 	NULL, ptc_stub, //BEEP
 	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, NULL, //BGMCLEAR 
 	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
-	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, NULL, cmd_chrinit, NULL, //CHRREAD
+	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, NULL, //CHRREAD
 	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
 	ptc_stub, NULL, cmd_dtread, NULL, cmd_gbox, //GBOX
 	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, cmd_gfill, cmd_gline, // GLINE, 
-	cmd_gpage, NULL, cmd_gpset, NULL, NULL, NULL, NULL, //ICONSET, 
+	cmd_gpage, NULL, cmd_gpset, NULL, NULL, cmd_iconclr, cmd_iconset, //ICONSET, 
 	NULL, NULL, NULL, NULL, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, NULL, NULL, NULL, //RENAME, 
 	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
@@ -70,10 +70,10 @@ const ptc_call ptc_operators[] = {
 
 const ptc_call ptc_functions[] = {
 	NULL, func_asc, NULL, NULL, NULL, NULL, func_btrig, func_button,
-	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, NULL, //FUN_ICONCHK
-	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, NULL, NULL, //FUN_RAD
-	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUN_SPHITRC
-	NULL, NULL, func_str, func_subst, NULL, func_val, //FUN_VAL
+	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, func_iconchk, //FUNC_ICONCHK
+	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, NULL, NULL, //FUNC_RAD
+	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUNC_SPHITRC
+	NULL, NULL, func_str, func_subst, NULL, func_val, //FUNC_VAL
 };
 
 const ptc_call ptc_sysvars[] = {

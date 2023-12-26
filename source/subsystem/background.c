@@ -3,6 +3,8 @@
 #include "system.h"
 #include "error.h"
 
+#include <assert.h>
+
 struct background* init_background(void){
 	struct background* b = calloc(sizeof(struct background), 1);
 	// everything defaults to zero for now
@@ -60,6 +62,13 @@ void cmd_bgclr(struct ptc* p){
 	}
 }
 
+u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
+	assert((chr & 0x3ff) == chr);
+	assert((pal & 0xf) == pal);
+	
+	return (chr & 0x3ff) | ((h & 0x1) << 10) | ((v & 0x1) << 11) | ((pal & 0xf) << 12);
+}
+
 // BGPUT l,x,y,td
 // BGPUT l,x,y,td$
 // BGPUT l,x,y,c,p,h,v
@@ -78,14 +87,13 @@ void cmd_bgput(struct ptc* p){
 			ERROR(ERR_UNIMPLEMENTED);
 		}
 	} else {
-		//TODO:IMPL:MED this should be a function probably? implement error checks only once
 		int chr = STACK_INT(3);
 		int pal = STACK_INT(4);
 		int h = STACK_INT(5);
 		int v = STACK_INT(6);
-		//TODO:ERR:MED bounds checking...
-		//TODO:TEST:LOW tests for this form?
-		tiledata = (chr & 0x3ff) | ((h & 0x1) << 10) | ((v & 0x1) << 11) | ((pal & 0xf) << 12);
+		
+		// TODO:ERR:MED bounds checking
+		tiledata = to_tiledata(chr, pal, h, v);
 	}
 	
 	// valid args: put tile

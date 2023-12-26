@@ -124,12 +124,27 @@ bool check_pressed(struct input* i, int id){
 	return check_pressed_manual(i, id, i->times[id].start, i->times[id].repeat);
 }
 
+void cmd_brepeat(struct ptc* p){
+	// BREPEAT id[,start,repeat]
+	// https://petitcomputer.fandom.com/wiki/BREPEAT_(Command)
+	// Apparently 12 is a valid ID, even if it doesn't seem to do anything?
+	int id;
+	STACK_INT_RANGE(0,0,12,id);
+	if (p->stack.stack_i == 0){
+		if (id == 12) return;
+		p->input.times[id].start = 0;
+		p->input.times[id].repeat = 0;
+	} else {
+		//TODO:IMPL:NONE Figure out what this does and add it maybe?
+		if (id == 12) return;
+		STACK_INT_MIN(1,0,p->input.times[id].start);
+		STACK_INT_MIN(2,0,p->input.times[id].repeat);
+	}
+}
+
 void func_btrig(struct ptc* p){
 	struct input* i = &p->input;
-	if (p->exec.argcount){
-		p->exec.error = ERR_WRONG_ARG_COUNT;
-		return;
-	}
+	
 	s32 b = 0;
 	for (int j = 0; j < BUTTON_COUNT; ++j){
 		b |= check_pressed(i, j) << j;

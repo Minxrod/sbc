@@ -44,19 +44,39 @@ struct sfTexture* gen_chr_texture(u8* src, size_t size);
 struct sfTexture* gen_col_texture(u16* src);
 #endif
 
+#ifdef ARM9
+#define VRAM_BASE (0x06000000)
+#define VRAM_BG_BASE (VRAM_BASE + 0x0)
+#define VRAM_BG_CHR (VRAM_BG_BASE + 0x8000)
+#define VRAM_BG_SCR (VRAM_BG_BASE + 0x0)
+
+#define VRAM_SP_BASE (VRAM_BASE + 0x00400000)
+#define VRAM_SP_CHR (VRAM_SP_BASE)
+#define VRAM_GRP_CHR (VRAM_SP_BASE + (CHR_SIZE*10))
+
+#define VRAM_LOWER_OFS (0x00200000)
+
+#define VRAM_UPPER_PAL_BG 0x05000000
+#define VRAM_UPPER_PAL_SP 0x05000200
+#define VRAM_LOWER_PAL_BG 0x05000400
+#define VRAM_LOWER_PAL_SP 0x05000600
+#endif
+
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
 	// TODO:IMPL:MED MEM type?
 	//BGU,D,F,[SPU,S or SPD,K,S]
 	
-	u8* chr[CHR_BANKS*2]; 
+	u8* chr[CHR_BANKS*2];
+	bool regen_chr[CHR_BANKS*2];
 	
 	u16* scr[4*2]; //8K*4*2 -> 64K (VRAM)
 	
 	u8* grp[4]; //48K*4 -> 192K (RAM) 96K VRAM
 	
-	u16* col[6]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
+	u16* col[COL_BANKS*2]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
+	bool regen_col[COL_BANKS*2];
 	
 	// 512K of VRAM in use total + 192K~256K RAM (via GRP~SCR)
 	// All banks: CHR_SIZE*CHR_BANKS*2 -> 44*8 352K (VRAM)

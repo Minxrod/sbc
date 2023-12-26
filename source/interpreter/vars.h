@@ -51,6 +51,7 @@ void* value_str(struct stack_entry* e);
 // Error checking definitions
 #define STACK_INT_RANGE(i,min,max,dest) { int v = STACK_INT(i); if (v < min || v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
 #define STACK_INT_RANGE_SILENT(i,min,max,dest) { int v = STACK_INT(i); if (v < min || v > max) { return; } dest = v; }
+#define STACK_INT_MIN(i,min,dest) { int v = STACK_INT(i); if (v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
 #define STACK_REL_INT_RANGE(i,min,max,dest) { int v = STACK_REL_INT(i); if (v < min || v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
 #define STACK_REL_INT_RANGE_SILENT(i,min,max,dest) { int v = STACK_REL_INT(i); if (v < min || v > max) { return; } dest = v; }
 

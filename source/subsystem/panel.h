@@ -5,8 +5,11 @@
 struct ptc;
 struct console;
 
-//TODO:PERF:LOW It's not this many but close?
-#define PANEL_KEYS 100
+#define KEYBOARD_KEYS 89
+#define ICON_KEYS 6
+#define ICON_PAGE_START (KEYBOARD_KEYS)
+#define ICON_START (KEYBOARD_KEYS + 2)
+#define PANEL_KEYS (KEYBOARD_KEYS + ICON_KEYS)
 
 struct panel {
 	/// Current panel type
@@ -21,10 +24,10 @@ struct panel {
 	u16 func_keys[5][256];
 	u16 func_keys_len[5];
 	
-	// TODO:IMPL:MED function keys
-	// TODO:IMPL:HIGH keyboard
-	
 	struct console* text;
+	
+	// Stores text for function keys and shortcut keys
+	struct console* keys_text;
 	
 	struct sprite_info keys[PANEL_KEYS];
 	
@@ -47,6 +50,7 @@ void cmd_iconclr(struct ptc* p);
 void func_iconchk(struct ptc* p);
 void sys_iconpage(struct ptc* p);
 void sys_iconpmax(struct ptc* p);
+void sys_iconpuse(struct ptc* p);
 
 void set_keyboard(struct ptc* p, enum pnltype type);
 void set_function_key(struct ptc* p, int key, const void* string);

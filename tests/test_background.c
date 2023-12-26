@@ -71,5 +71,23 @@ int test_background(void){
 		free_code(p);
 	}
 	
+	// Tiledata
+	{
+		ASSERT(to_tiledata(0,0,0,0) == 0, "[tile] Basic case");
+		ASSERT(to_tiledata(256,0,0,0) == 256, "[tile] Basic case ");
+		ASSERT(to_tiledata(512,0,0,0) == 512, "[tile] Basic case ");
+		ASSERT(to_tiledata(768,0,0,0) == 768, "[tile] Basic case ");
+		
+		ASSERT(to_tiledata(0,0,1,0) == 1024, "[tile] Horizontal flip");
+		ASSERT(to_tiledata(0,0,0,1) == 2048, "[tile] Vertical flip");
+		ASSERT(to_tiledata(0,0,1,1) == 3072, "[tile] Rotate 180");
+		
+		ASSERT(to_tiledata(256,3,0,0) == 256+12288, "[tile] Palette 3");
+		ASSERT(to_tiledata(512,5,0,0) == 512+20480, "[tile] Palette 5");
+		ASSERT(to_tiledata(768,7,0,0) == 768+28672, "[tile] Palette 7");
+		
+		ASSERT(to_tiledata(1023,15,1,1) == 65535, "[tile] Everything");
+	}
+	
 	SUCCESS("test_background success");
 }

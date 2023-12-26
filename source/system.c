@@ -22,7 +22,7 @@ struct ptc* init_system(int var, int str, int arr){
 	// init vars memory
 	init_mem_var(&ptc->vars, var);
 	init_mem_str(&ptc->strs, str, STRING_CHAR);
-	iprintf("%p %p %p %p\n", (void*)ptc->vars.vars, (void*)ptc->strs.strs, ptc->strs.str_data, NULL);
+//	iprintf("%p %p %p %p\n", (void*)ptc->vars.vars, (void*)ptc->strs.strs, ptc->strs.str_data, NULL);
 //	return ptc;
 	init_mem_arr(&ptc->arrs, var, arr);
 	ptc->vars.strs = &ptc->strs;
@@ -35,6 +35,8 @@ struct ptc* init_system(int var, int str, int arr){
 	init_sprites(&ptc->sprites);
 	ptc->graphics.info[1].drawpage = 1;
 	ptc->graphics.info[1].displaypage = 1;
+	ptc->graphics.info[0].prio = 3;
+	ptc->graphics.info[1].prio = 3;
 	
 	init_resource(&ptc->res);
 	init_display(ptc); // needs resources as well
@@ -114,7 +116,9 @@ void cmd_wait(struct ptc* p){
 	int big = delay / 60;
 	int small = delay % 60;
 	
-	thrd_sleep(&(struct timespec){.tv_sec = big, .tv_nsec=(1e7*small/60*1e2)}, NULL);
+	int64_t nsec = 1e9l * small / 60l;
+	
+	thrd_sleep(&(struct timespec){.tv_sec = big, .tv_nsec=nsec}, NULL);
 }
 
 void cmd_clear(struct ptc* p){

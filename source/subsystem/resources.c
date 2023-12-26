@@ -6,28 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-//#ifdef PC
-//#include <SFML/Graphics.h>
-//#endif
-
-#ifdef ARM9
-#define VRAM_BASE (0x06000000)
-#define VRAM_BG_BASE (VRAM_BASE + 0x0)
-#define VRAM_BG_CHR (VRAM_BG_BASE + 0x8000)
-#define VRAM_BG_SCR (VRAM_BG_BASE + 0x0)
-
-#define VRAM_SP_BASE (VRAM_BASE + 0x00400000)
-#define VRAM_SP_CHR (VRAM_SP_BASE)
-#define VRAM_GRP_CHR (VRAM_SP_BASE + CHR_SIZE*10)
-
-#define VRAM_LOWER_OFS (0x00200000)
-
-#define VRAM_UPPER_PAL_BG 0x05000000
-#define VRAM_UPPER_PAL_SP 0x05000200
-#define VRAM_LOWER_PAL_BG 0x05000400
-#define VRAM_LOWER_PAL_SP 0x05000600
-#endif
-
 /// Load from a file, skipping past part of it if needed and reading only a certain length
 bool load_file(u8* dest, const char* name, int skip, int len){
 	FILE* f = fopen(name, "rb");
@@ -81,12 +59,9 @@ void init_resource(struct resources* r){
 		for (int i = 0; i < SCR_BANKS; ++i){
 			r->scr[i + SCR_BANKS * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
-		r->col[0] = (u16*) VRAM_UPPER_PAL_BG;
-		r->col[1] = (u16*) VRAM_UPPER_PAL_SP;
-		r->col[2] = (u16*) 0; //TODO:IMPL:HIGH GRP
-		r->col[3] = (u16*) VRAM_LOWER_PAL_BG;
-		r->col[4] = (u16*) VRAM_LOWER_PAL_SP;
-		r->col[5] = (u16*) 0; //TODO:IMPL:HIGH GRP
+		for (int i = 0; i < COL_BANKS; ++i){
+			r->col[i + COL_BANKS * lower] = calloc(COL_SIZE, 1);
+		}
 	}
 	for (int i = 0; i < 4; ++i){
 		iprintf("GRP%d calloc: %d\n", i, GRP_SIZE);
@@ -125,9 +100,6 @@ void init_resource(struct resources* r){
 	char name[] = "resources/XXXX.PTC";
 	
 	for (int i = 0; i < CHR_BANKS * 2; ++i){
-//#ifdef ARM9
-//		if ((i % CHR_BANKS) >= 12) continue; // TODO:IMPL:HIGH skip sprites for now
-//#endif
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = chr_files[4*i+j];
 		}
@@ -135,9 +107,6 @@ void init_resource(struct resources* r){
 	}
 	
 	for (int i = 0; i < 6; ++i){
-#ifdef ARM9
-		if ((i % 3) == 2) continue; // TODO:IMPL:HIGH skip GRP, lower screen
-#endif
 		for (int j = 0; j < 4; ++j){
 			name[10+j] = col_files[4*i+j];
 		}

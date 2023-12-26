@@ -37,6 +37,29 @@ void init_display(struct ptc* p){
 		}
 	}
 	
+	// TODO:CODE:LOW
+	const char* chr_files = 
+	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
+	"SPU0SPU1SPU2SPU3SPU4SPU5SPU6SPU7SPS0SPS1"
+	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
+	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
+	const char* col_files = "COL0COL1COL2COL0COL1COL2";
+	char name[] = "resources/XXXX.PTC";
+
+	for (int i = 0; i < CHR_BANKS * 2; ++i){
+		for (int j = 0; j < 4; ++j){
+			name[10+j] = chr_files[4*i+j];
+		}
+		load_chr(r->chr[i], name);
+	}
+	
+	for (int i = 0; i < 6; ++i){
+		for (int j = 0; j < 4; ++j){
+			name[10+j] = col_files[4*i+j];
+		}
+		load_col((u8*)r->col[i], name);
+	}
+	
 	// Generate PC textures here
 	for (int page = 0; page <= 1; ++page){
 		d->chr_tex[0+5*page] = gen_chr_texture(r->chr[0+CHR_BANKS*page], 512); //BGF
@@ -126,6 +149,7 @@ void free_display(struct display* d){
 void display_draw_all(struct ptc* p){
 	// SFML stuff
 	struct display* d = &p->display;
+	struct resources* r = &p->res;
 //	d->view = sfView_createFromRect((sfFloatRect){0, 0, 256, 192});
 //	sfView_setViewport(d->view, (sfFloatRect){0, 0, 1, 0.5f});
 //	sfRenderWindow_setView(d->rw, d->view);
@@ -143,6 +167,43 @@ void display_draw_all(struct ptc* p){
 	sfShader_setFloatUniform(shader, "colbank", 0);
 	
 	sfRenderWindow_clear(d->rw, sfBlack);
+	
+	for (int page = 0; page <= 1; ++page){
+		if (r->regen_chr[0 + CHR_BANKS * page] || r->regen_chr[1 + CHR_BANKS * page]){
+			d->chr_tex[0+5*page] = gen_chr_texture(r->chr[0+CHR_BANKS*page], 512); //BGF
+		}
+		if (r->regen_chr[4 + CHR_BANKS * page] ||
+			r->regen_chr[5 + CHR_BANKS * page] ||
+			r->regen_chr[6 + CHR_BANKS * page] ||
+			r->regen_chr[7 + CHR_BANKS * page])
+		{
+			d->chr_tex[1+5*page] = gen_chr_texture(r->chr[4+CHR_BANKS*page], 1024); //BGD
+		}
+		if (r->regen_chr[8 + CHR_BANKS * page] ||
+			r->regen_chr[9 + CHR_BANKS * page] ||
+			r->regen_chr[10 + CHR_BANKS * page] ||
+			r->regen_chr[11 + CHR_BANKS * page])
+		{
+			d->chr_tex[2+5*page] = gen_chr_texture(r->chr[8+CHR_BANKS*page], 1024); //BGU
+		}
+		if (r->regen_chr[12 + CHR_BANKS * page] ||
+			r->regen_chr[13 + CHR_BANKS * page] ||
+			r->regen_chr[14 + CHR_BANKS * page] ||
+			r->regen_chr[15 + CHR_BANKS * page] ||
+			r->regen_chr[16 + CHR_BANKS * page] ||
+			r->regen_chr[17 + CHR_BANKS * page] ||
+			r->regen_chr[18 + CHR_BANKS * page] ||
+			r->regen_chr[19 + CHR_BANKS * page])
+		{
+			d->chr_tex[3+5*page] = gen_chr_texture(r->chr[12+CHR_BANKS*page], 2048); // SPU or SPD
+		}
+		if (r->regen_chr[20 + CHR_BANKS * page] ||
+			r->regen_chr[21 + CHR_BANKS * page])
+		{
+			d->chr_tex[4+5*page] = gen_chr_texture(r->chr[20+CHR_BANKS*page], 512); //SPS
+		}
+	}
+	
 	// Set screen
 	for (int screen = 0; screen <= 1; ++screen){
 		// Set part of screen to draw to
@@ -220,6 +281,7 @@ void display_draw_text(struct ptc* p, int screen, int prio){
 }
 
 void display_draw_background(struct ptc* p, int screen, int prio){
+	// TODO:IMPL:MED Background scrolling
 	struct display* d = &p->display;
 	if (prio == 1 || prio == 2){
 		for (int x = 0; x < BG_WIDTH; ++x){
@@ -254,8 +316,12 @@ void display_draw_background(struct ptc* p, int screen, int prio){
 
 void display_draw_sprite(struct ptc* p, int screen, int prio){
 	struct display* d = &p->display;
+	// TODO:PERF:LOW Re-use sprite array to prevent frequent allocations?
 	struct sprite_array sprites = init_sprite_array();
 	
+	if (p->panel.key_pressed){
+		offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
+	}
 	if (screen == 0 || p->panel.type == PNL_OFF){
 		for (int i = 0; i < MAX_SPRITES; ++i){
 			if (p->sprites.info[screen][i].active && p->sprites.info[screen][i].prio == prio){
@@ -264,20 +330,27 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 		}
 	} else {
 		if (p->panel.type != PNL_OFF && p->panel.type != PNL_PNL){
-		if (p->panel.key_pressed){
-			offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
+			for (int i = 0; i < KEYBOARD_KEYS; ++i){
+				struct sprite_info* key = &p->panel.keys[i];
+				// active is a good check to see if the sprite is correctly defined, for now
+				if (key->active){
+					add_sprite(sprites, key);
+				}
+			}
 		}
-		for (int i = 0; i < PANEL_KEYS; ++i){
-			struct sprite_info* key = &p->panel.keys[i];
+	}
+	if (screen == 1){
+		// Icons are drawn on any panel setting
+		for (int i = 0; i < ICON_KEYS; ++i){
+			struct sprite_info* key = &p->panel.keys[ICON_PAGE_START+i];
 			// active is a good check to see if the sprite is correctly defined, for now
 			if (key->active){
 				add_sprite(sprites, key);
 			}
 		}
-		if (p->panel.key_pressed){
-			offset_key(p, p->panel.id_pressed, -INT_TO_FP(1));
-		}
 	}
+	if (p->panel.key_pressed){
+		offset_key(p, p->panel.id_pressed, -INT_TO_FP(1));
 	}
 	
 	d->rs.texture = d->chr_tex[3+5*screen];

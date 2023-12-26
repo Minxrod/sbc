@@ -231,6 +231,21 @@ u16* shared_input(struct ptc* p){
 	return output;
 }
 
+void con_prompt(struct console* con, void* prompt_str){
+	// Displays prompt string
+	if (prompt_str) // only display string if it exists
+		con_puts(con, prompt_str);
+	con_put(con, to_wide('?'));
+	if (con->x) con_newline(con, true); // only newline if necessary for user to have full line of input
+}
+
+void con_reprompt(struct console* con, void* prompt_str){
+	con_newline(con, true); // from user entering the line.
+	con_puts(con, "S\20?Redo from start");
+	con_newline(con, true);
+	con_prompt(con, prompt_str);
+}
+
 void cmd_input(struct ptc* p){
 	struct console* con = &p->console;
 	// INPUT [prompt;]var[,var...]
@@ -258,11 +273,8 @@ void cmd_input(struct ptc* p){
 	u8 len = p->stack.stack_i - index;
 	// len: number of vars
 	
-	// Display prompt
-	if (prompt_str) // only display string if it exists
-		con_puts(con, prompt_str);
-	con_put(con, to_wide('?'));
-	if (con->x) con_newline(con, true); // only newline if necessary for full line of input
+	// Initial prompt
+	con_prompt(con, prompt_str);
 	
 	// Prompt user for input
 	u16* output;
@@ -278,6 +290,7 @@ void cmd_input(struct ptc* p){
 		}
 		if (len != commas + 1){
 			valid = false;
+			con_reprompt(con, prompt_str);
 			continue; //TODO:IMPL:MED ?Redo from start
 		}
 		u8 conversion_copy[CONSOLE_WIDTH];
@@ -316,11 +329,20 @@ void cmd_input(struct ptc* p){
 					}
 					(*(struct string**)e->value.ptr) = s;
 					
-					// TODO:IMPL:LOW Wide string support?
+					// TODO:TEST:LOW Check that wide strings work here
+					bool require_wide = false;
+					for (int j = prev_i; j < out_i; ++j){
+						if (!is_char(output[j])) require_wide = true;
+					}
+					
 					s->uses = 1;
 					s->len = out_i - prev_i - 1;
 					for (int j = prev_i; j < out_i; ++j){
-						s->ptr.s[j - prev_i] = conversion_copy[j];
+						if (require_wide){
+							s->ptr.w[j - prev_i] = output[j];
+						} else {
+							s->ptr.s[j - prev_i] = conversion_copy[j];
+						}
 					}
 					prev_i = out_i;
 					++i;
@@ -332,17 +354,12 @@ void cmd_input(struct ptc* p){
 				return;
 			}
 		}
-		con_newline(con, true); // from user entering the line.
 		// Note that this has to be after reading the characters, or the positions get messed up
 		if (!valid){
-			con_puts(con, "S\20?Redo from start");
-			con_newline(con, true);
-			if (prompt_str) // only display string if it exists
-				con_puts(con, prompt_str);
-			con_put(con, to_wide('?'));
-			if (con->x) con_newline(con, true); // only newline if necessary for full line of input
+			con_reprompt(con, prompt_str);
 		}
 	}
+	con_newline(con, true); // from user entering the line successfully.
 	p->stack.stack_i = 0;
 }
 
@@ -359,10 +376,7 @@ void cmd_linput(struct ptc* p){
 		e = ARG(0);
 	}
 	
-	if (prompt_str) // only display string if it exists
-		con_puts(con, prompt_str);
-	con_put(con, to_wide('?'));
-	if (con->x) con_newline(con, true); // only newline if necessary for full line of input
+	con_prompt(con, prompt_str);
 	
 	u16* output = shared_input(p);
 	
