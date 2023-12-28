@@ -38,21 +38,26 @@ $(BUILD)%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-main: $(main_objs)
-#	echo $(objects)
-#	echo $(build)
+.phony: main test
+
+main: main_build
+test: CFLAGS+=--coverage
+test: LFLAGS+=-lgcov
+
+test: test_build
+
+main_build: $(main_objs)
 	# TODO: Better CSFML library location? (How do you install it?)
 	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o test $(LIBFLAGS)
-#	gcc $(CFLAGS) -Isource/ $(objs) source/main.c -o test
 
 #gl:
 #	$(CC) $(CFLAGS) $(LFLAGS) source/opengl_test.c -o test $(LIBFLAGS) -lGL
 
-test: $(test_objs)
+test_build: $(test_objs)
 	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)
-#	gcc $(CFLAGS) -I$(SOURCE) $(BUILD) tests/test_main.c -o test
+	./test
 
-.phony clean:
+clean:
 	rm -f $(main_objs) $(test_objs)
 	rm -f test
 	rm -f $(build:%.o=%.d)

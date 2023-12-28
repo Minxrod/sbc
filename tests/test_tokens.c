@@ -8,6 +8,25 @@
 #include <string.h>
 
 int test_tokens(void){
+	// Command stack validation
+	{
+		ASSERT(!check_cmd("N", 1, "NN"), "[args] 1 for 2");
+		ASSERT( check_cmd("NN", 2, "NN"), "[args] 2 for 2");
+		ASSERT(!check_cmd("NNN", 3, "NN"), "[args] 3 for 2");
+		
+		ASSERT( check_cmd("N", 1, "N,NN"), "[args] 1 for 1,2");
+		ASSERT( check_cmd("NN", 2, "N,NN"), "[args] 2 for 1,2");
+		ASSERT(!check_cmd("NNN", 3, "N,NN"), "[args] 3 for 1,2");
+		
+		ASSERT(check_cmd("LLLLL", 5, "L,l"), "[args] Multiple labels");
+		ASSERT(check_cmd("n", 1, "v,S;v"), "[args] Variable list 1");
+		ASSERT(check_cmd("nn", 2, "v,S;v"), "[args] Variable list 2");
+		ASSERT(check_cmd("nnn", 3, "v,S;v"), "[args] Variable list 3");
+		ASSERT(check_cmd("nnnn", 4, "v,S;v"), "[args] Variable list 4");
+		
+		ASSERT(check_cmd("", 0, "0"), "[args] Empty args list");
+	}
+	
 	// Tokenization of array declaration
 	{
 		char* code = "DIM A[16]\r";
@@ -108,12 +127,12 @@ int test_tokens(void){
 			0, code2,
 		};
 		
-		char* bytecode = "A\000F\027C\000";
+		char* bytecode = "A\000F\027c\000";
 		// compile program
 		tokenize(&p, &o);
 		for (int i = 0; i < 6; i+=1){
 			iprintf("%c:%d,", o.data[i], o.data[i]);
-			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM with enclosed array access");
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Call function with no arguments");
 		}
 		iprintf("\n");
 	}
@@ -130,12 +149,12 @@ int test_tokens(void){
 			0, code2,
 		};
 		
-		char* bytecode = "n\002n\004A\002F\002C\000";
+		char* bytecode = "n\002n\004A\002F\002c\000";
 		// compile program
 		tokenize(&p, &o);
 		for (int i = 0; i < 10; i+=1){
 			iprintf("%c:%d,", o.data[i], o.data[i]);
-			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM with enclosed array access");
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Call function with two simple arguments");
 		}
 		iprintf("\n");
 	}
@@ -152,12 +171,12 @@ int test_tokens(void){
 			0, code2,
 		};
 		
-		char* bytecode = "n\002A\001F\000n\006A\001F\000A\002F\002C\000";
+		char* bytecode = "n\002A\001F\000n\006A\001F\000A\002F\002c\000";
 		// compile program
 		tokenize(&p, &o);
 		for (int i = 0; i < 18; i+=1){
 			iprintf("%c:%d,", o.data[i], o.data[i]);
-			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM with enclosed array access");
+			ASSERT(o.data[i] == bytecode[i], "[tokens] Call function with two expression arguments");
 		}
 		iprintf("\n");
 	}
@@ -218,7 +237,7 @@ int test_tokens(void){
 			0, code2,
 		};
 		
-		char* bytecode = "VAO\1VBO\1O\1VCO\5VDO\1VEO\1O\5VFVGC\0";
+		char* bytecode = "VAO\1VBO\1O\1VCO\5VDO\1VEO\1O\5VFVGc\0";
 		// compile program
 		tokenize(&p, &o);
 		for (int i = 0; i < 30; i+=1){
@@ -240,7 +259,7 @@ int test_tokens(void){
 			0, code2,
 		};
 		
-		char* bytecode = "VIC\4n\0O\6n\11C\5B\0VIC\0C\7";
+		char* bytecode = "VIc\4n\0O\6n\11C\5B\0VIc\0c\7";
 		// compile program
 		tokenize(&p, &o);
 		for (int i = 0; i < 20; i+=1){
@@ -255,7 +274,7 @@ int test_tokens(void){
 		ASSERT(
 			token_code(
 				"IF 0+1 THEN ?\"A\" ELSE A=0:?\"B\"\r",
-				"n\0n\1O\0C\10S\1A\0C\0C\12VAn\0O\6S\1B\0C\0C\13",
+				"n\0n\1O\0c\10S\1A\0C\0C\12VAn\0O\6S\1B\0c\0C\13",
 				30
 			), "[tokens] Test IF tokenization"
 		);
@@ -265,7 +284,7 @@ int test_tokens(void){
 	{
 		char bc[] = {
 			BC_SYSVAR, SYS_TRUE,
-			BC_COMMAND, CMD_PRINT
+			BC_COMMAND_FIRST, CMD_PRINT
 		};
 		ASSERT(
 			token_code(
@@ -281,7 +300,7 @@ int test_tokens(void){
 		ASSERT(
 			token_code(
 				"IF TRUE THEN A=0:B=1 ELSE B=0:A=1\r",
-				"Y\0C\10VAn\0O\6VBn\1O\6C\12VBn\0O\6VAn\1O\6C\13",
+				"Y\0c\10VAn\0O\6VBn\1O\6C\12VBn\0O\6VAn\1O\6C\13",
 				30
 			), "[tokens] Test IF tokenization with sysvar"
 		);
@@ -292,7 +311,7 @@ int test_tokens(void){
 		char bc[] = {
 			BC_LABEL, 4, 'A', 'B', 'C', 'D',
 			BC_LABEL_STRING, 4, 'A', 'B', 'C', 'D',
-			BC_COMMAND, CMD_GOTO,
+			BC_COMMAND_FIRST, CMD_GOTO,
 		};
 		ASSERT(
 			token_code(
@@ -307,7 +326,7 @@ int test_tokens(void){
 		char bc[] = {
 			BC_SMALL_NUMBER, 5,
 			BC_SMALL_NUMBER, 11,
-			BC_COMMAND, CMD_LOCATE,
+			BC_COMMAND_FIRST, CMD_LOCATE,
 		};
 		ASSERT(
 			token_code(
@@ -338,7 +357,6 @@ int test_tokens(void){
 			), "[tokens] FLOOR argcount sample6"
 		)
 	}
-	
 	
 	SUCCESS("test_tokens success");
 }

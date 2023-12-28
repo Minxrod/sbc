@@ -296,7 +296,7 @@ void cmd_input(struct ptc* p){
 		u8 conversion_copy[CONSOLE_WIDTH];
 		int prev_i = 0;
 		int out_i = 0;
-		//TODO:CODE:LOW This loop is stupid? Fix it?
+		
 		for (int i = 0; i < len; ){
 			struct stack_entry* e = ARG(index+i);
 			u8 c = to_char(output[out_i]);
@@ -310,9 +310,9 @@ void cmd_input(struct ptc* p){
 						valid = false;
 						break;
 					}
-					s32 n = str_to_num(&conversion_copy[prev_i], out_i - prev_i - 1);
+					fixp n = u8_to_num(&conversion_copy[prev_i], out_i - prev_i - 1);
 					prev_i = out_i;
-					*(s32*)e->value.ptr = n; //store result to variable
+					*(fixp*)e->value.ptr = n; //store result to variable
 					++i;
 					
 				} else {

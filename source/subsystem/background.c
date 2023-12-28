@@ -4,6 +4,7 @@
 #include "error.h"
 
 #include <assert.h>
+#include <string.h>
 
 struct background* init_background(void){
 	struct background* b = calloc(sizeof(struct background), 1);
@@ -38,27 +39,18 @@ void cmd_bgpage(struct ptc* p){
 }
 
 void cmd_bgclr(struct ptc* p){
-	// TODO:ERR:MED bounds checking
 	if (p->stack.stack_i == 0){
 		// clear both layers on current page
 		for (int l = 0; l <= 1; ++l){
 			u16* bg = bg_page(p, p->background.page, l);
-			//TODO:PERF:NONE this can be faster
-			for (uint_fast8_t y = 0; y < BG_HEIGHT; ++y){
-				for (uint_fast8_t x = 0; x < BG_HEIGHT; ++x){
-					bg[bg_index(x,y)] = 0;
-				}
-			}
+			memset(bg, 0, SCR_SIZE);
 		}
 	} else {
 		// clear specific layer
-		u16* bg = bg_page(p, p->background.page, STACK_INT(0));
-		//TODO:PERF:NONE this can be faster
-		for (uint_fast8_t y = 0; y < BG_HEIGHT; ++y){
-			for (uint_fast8_t x = 0; x < BG_HEIGHT; ++x){
-				bg[bg_index(x,y)] = 0;
-			}
-		}
+		int layer;
+		STACK_INT_RANGE(0,0,1,layer);
+		u16* bg = bg_page(p, p->background.page, layer);
+		memset(bg, 0, SCR_SIZE);
 	}
 }
 
@@ -73,26 +65,25 @@ u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
 // BGPUT l,x,y,td$
 // BGPUT l,x,y,c,p,h,v
 void cmd_bgput(struct ptc* p){
-	// TODO:ERR:MED bounds checking
 	// TODO:IMPL:HIGH other argument forms
 	uint_fast8_t layer, x, y;
 	u16 tiledata;
-	layer = STACK_INT(0);
+	STACK_INT_RANGE(0,0,1,layer);
 	x = STACK_INT(1) % BG_WIDTH; //TODO:TEST:MED check that this works for negatives
 	y = STACK_INT(2) % BG_HEIGHT;
 	if (p->stack.stack_i == 4){
 		if (ARG(3)->type & VAR_NUMBER){
-			tiledata = STACK_INT(3);
+			tiledata = STACK_INT(3) & 0xffff;
 		} else {
 			ERROR(ERR_UNIMPLEMENTED);
 		}
 	} else {
-		int chr = STACK_INT(3);
-		int pal = STACK_INT(4);
-		int h = STACK_INT(5);
-		int v = STACK_INT(6);
+		int chr, pal, h, v;
+		STACK_INT_RANGE(3,0,1023,chr);
+		STACK_INT_RANGE(4,0,15,pal);
+		STACK_INT_RANGE(5,0,1,h);
+		STACK_INT_RANGE(6,0,1,v);
 		
-		// TODO:ERR:MED bounds checking
 		tiledata = to_tiledata(chr, pal, h, v);
 	}
 	

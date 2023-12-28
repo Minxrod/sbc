@@ -6,8 +6,15 @@
 #include <SFML/Graphics.h>
 
 struct graphic init_graphic(int w, int h){
-	//TODO:ERR:NONE check null alloc here
 	struct graphic grp = {w, h, 8, 8, 4, 3, sfTexture_create(GRP_WIDTH, GRP_HEIGHT), sfSprite_create()};
+	if (!grp.texture){
+		iprintf("Failed to create texture!\n");
+		abort();
+	}
+	if (!grp.sprite){
+		iprintf("Failed to create sprite!\n");
+		abort();
+	}
 	
 	sfSprite_setTexture(grp.sprite, grp.texture, true);
 	

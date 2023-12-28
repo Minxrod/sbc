@@ -3,6 +3,7 @@
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
 	BC_BEGIN_LOOP = 'B',
+	BC_COMMAND_FIRST = 'c',
 	BC_COMMAND = 'C',
 	BC_DIM = 'D',
 	BC_DATA = 'd',

@@ -70,7 +70,7 @@ int main(void){
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	// set this after creating system to ensure resources are loaded
 	
-	prg_load(&program, "programs/SAMPLE5.PTC");
+	prg_load(&program, "programs/SAMPLE7.PTC");
 	iprintf("program malloc: %d\n", 2*program.size);
 	struct program bc = {0, malloc(2*program.size)};
 	tokenize(&program, &bc);
@@ -229,7 +229,6 @@ int main(int argc, char** argv){
 			}
 		}
 		
-		// TODO:CODE:NONE SFML 2.6, use scan codes?
 		int b = 0;
 		for (int i = 0; i < 12; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[i]) << i;

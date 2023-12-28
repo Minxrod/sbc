@@ -315,5 +315,53 @@ int test_int_code(){
 		ASSERT(check_code_error("FOR I=524286 TO 524287\rNEXT\r", ERR_OVERFLOW), "[for] Overfow on FOR ending at 524287 with step 1");
 	}
 	
+	// FOR skip
+	{
+		char code[] = "FOR I=1 TO -1\rS=3\rNEXT\r";
+		
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_INT("I",1);
+		CHECK_VAR_INT("S",0);
+		ASSERT(p->exec.error == ERR_NONE, "[for] No error involving next or for");
+		
+		free_code(p);
+	}
+	
+	// FOR skip with ignored NEXT
+	{
+		char code[] = "FOR I=1 TO -1\rIF I THEN NEXT\rS=3\rNEXT\r";
+		
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_INT("I",1);
+		CHECK_VAR_INT("S",0);
+		ASSERT(p->exec.error == ERR_NONE, "[for] No error involving next or for");
+		
+		free_code(p);
+	}
+	
+	// Comments
+	{
+		char code[] = "' \x0aThis is a comment\x0a\rREM \x0aThis is also a comment\x0a\r";
+		
+		ASSERT(check_code_error(code, ERR_NONE), "[comment] No errors");
+	}
+	
+	// ELSE comment
+	// TODO:IMPL:LOW I don't think real programs use this anyways
+//	{
+//		ASSERT(check_code_error("ELSE \x0aWeirdly, this behaves like a comment\x0a\r", ERR_NONE), "[comment] No errors");
+//	}
+	
+	{
+		ASSERT(check_code_error("?I+\r", ERR_TEST_OPERATION), "[syntax] Check missing operator argument")
+		ASSERT(check_code_error("?PI(6)\r", ERR_TEST_FUNCTION), "[syntax] Check extra function argument")
+		ASSERT(check_code_error("LOCATE 7\r", ERR_TEST_COMMAND), "[syntax] Check missing command argument")
+		ASSERT(check_code_error("Among Us\r", ERR_TEST_STACK), "[syntax] Check extra stack values")
+		ASSERT(check_code_error("PI()\r", ERR_TEST_STACK), "[syntax] Check extra stack values")
+		ASSERT(check_code_error("\x0a\r", ERR_SYNTAX), "[syntax] Check extra stack values")
+	}
+	
 	SUCCESS("test_int_code success");
 }

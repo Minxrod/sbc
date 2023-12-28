@@ -63,73 +63,57 @@ void sys_date(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_STRING, .value.ptr = str});
 }
 
-
+#ifdef PC
+#define LOCK_TOUCH_MTX(msg) \
+	{if (mtx_lock(&p->input.touch_mtx) == thrd_error){\
+		ABORT(msg" mutex lock failure!");\
+	}}
+#define UNLOCK_TOUCH_MTX(msg) \
+	{if (mtx_lock(&p->input.touch_mtx) == thrd_error){\
+		ABORT(msg" mutex unlock failure!");\
+	}}
+#endif
+#ifndef PC
+#define LOCK_TOUCH_MTX(msg)
+#define UNLOCK_TOUCH_MTX(msg)
+#endif
 
 void sys_tchst(struct ptc* p){
-	// TODO:CODE:LOW Wrap all this mutex nonsense into a function in input.h
 	struct value_stack* s = &p->stack;
-#ifdef PC
-	if (mtx_lock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex lock failure!");
-	}
-#endif
+	
+	LOCK_TOUCH_MTX("sys_tchst");
 	bool tchst = p->input.tchtime > 0;
-#ifdef PC
-	if (mtx_unlock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex unlock failure!");
-	}
-#endif
+	UNLOCK_TOUCH_MTX("sys_tchst");
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchst)});
 }
 
 void sys_tchtime(struct ptc* p){
 	struct value_stack* s = &p->stack;
-#ifdef PC
-	if (mtx_lock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex lock failure!");
-	}
-#endif
+	
+	LOCK_TOUCH_MTX("sys_tchtime");
 	int tchtime = p->input.tchtime;
-#ifdef PC
-	if (mtx_unlock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex unlock failure!");
-	}
-#endif
+	UNLOCK_TOUCH_MTX("sys_tchtime");
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchtime)});
 }
 
 void sys_tchx(struct ptc* p){
 	struct value_stack* s = &p->stack;
-#ifdef PC
-	if (mtx_lock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex lock failure!");
-	}
-#endif
+	
+	LOCK_TOUCH_MTX("sys_tchx");
 	int tchx = p->input.tchx;
-#ifdef PC
-	if (mtx_unlock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex unlock failure!");
-	}
-#endif
+	UNLOCK_TOUCH_MTX("sys_tchx");
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchx)});
 }
 
 void sys_tchy(struct ptc* p){
 	struct value_stack* s = &p->stack;
-#ifdef PC
-	if (mtx_lock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex lock failure!");
-	}
-#endif
+	
+	LOCK_TOUCH_MTX("sys_tchy");
 	int tchy = p->input.tchy;
-#ifdef PC
-	if (mtx_unlock(&p->input.touch_mtx) == thrd_error){
-		ABORT("sys_tchst mutex unlock failure!");
-	}
-#endif
+	UNLOCK_TOUCH_MTX("sys_tchy");
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchy)});
 }

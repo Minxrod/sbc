@@ -62,21 +62,21 @@ void func_val(struct ptc* p){
 		negate = true;
 		str_begin = str_at(str, 1);
 		len--;
-		v = str_to_num(str_begin, str_len(str));
+		v = u8_to_num(str_begin, str_len(str));
 	} else if (first_char == '&'){
 		u8 second_char = *(u8*)str_at(str, 1);
 		str_begin = str_at(str, 2);
 		if (second_char == 'H'){
 			// parse as hex
-			v = str_to_number(str_begin, len-2, 16, false);
+			v = u8_to_number(str_begin, len-2, 16, false);
 		} else if (second_char == 'B'){
 			// parse as binary
-			v = str_to_number(str_begin, len-2, 2, false);
+			v = u8_to_number(str_begin, len-2, 2, false);
 		} else {
 			ERROR(ERR_SYNTAX);
 		}
 	} else {
-		v = str_to_num(str_begin, str_len(str));
+		v = u8_to_num(str_begin, str_len(str));
 	}
 	// TODO:IMPL:LOW This doesn't work for u16 strings
 	if (negate) v = -v;

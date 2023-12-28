@@ -49,14 +49,14 @@ void* value_str(struct stack_entry* e);
 #define STACK_REL_STR(i) STACK_STR(p->stack.stack_i + i)
 
 // Error checking definitions
-#define STACK_INT_RANGE(i,min,max,dest) { int v = STACK_INT(i); if (v < min || v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
-#define STACK_INT_RANGE_SILENT(i,min,max,dest) { int v = STACK_INT(i); if (v < min || v > max) { return; } dest = v; }
-#define STACK_INT_MIN(i,min,dest) { int v = STACK_INT(i); if (v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
-#define STACK_REL_INT_RANGE(i,min,max,dest) { int v = STACK_REL_INT(i); if (v < min || v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
-#define STACK_REL_INT_RANGE_SILENT(i,min,max,dest) { int v = STACK_REL_INT(i); if (v < min || v > max) { return; } dest = v; }
+#define STACK_INT_RANGE(i,min,max,dest) { int _v = STACK_INT(i); if (_v < min || _v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
+#define STACK_INT_RANGE_SILENT(i,min,max,dest) { int _v = STACK_INT(i); if (_v < min || _v > max) { return; } dest = _v; }
+#define STACK_INT_MIN(i,min,dest) { int _v = STACK_INT(i); if (_v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
+#define STACK_REL_INT_RANGE(i,min,max,dest) { int _v = STACK_REL_INT(i); if (_v < min || _v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
+#define STACK_REL_INT_RANGE_SILENT(i,min,max,dest) { int _v = STACK_REL_INT(i); if (_v < min || _v > max) { return; } dest = _v; }
 
-#define STACK_REL_INT_MIN(i,min,dest) { int v = STACK_REL_INT(i); if (v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = v; }
-#define STACK_REL_INT_MIN_SILENT(i,min,dest) { int v = STACK_REL_INT(i); if (v < min) { return; } dest = v; }
+#define STACK_REL_INT_MIN(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
+#define STACK_REL_INT_MIN_SILENT(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { return; } dest = _v; }
 
 // This file defines the data structures used to store variable information.
 

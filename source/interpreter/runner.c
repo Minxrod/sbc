@@ -138,6 +138,7 @@ void run(struct program* code, struct ptc* p) {
 				break;
 			
 			case BC_COMMAND:
+			case BC_COMMAND_FIRST:
 				print_name(commands, data);
 				//run command using current stack
 				if ((u8)data >= sizeof(ptc_commands)/sizeof(ptc_commands[0])){
@@ -335,34 +336,31 @@ void run(struct program* code, struct ptc* p) {
 					// if val + step will never reach end, then skip to NEXT
 					// treat valid NEXT as first in a line
 					int nest = 1;
-					// TODO:IMPL:HIGH
-					// This loop doesn't work, I don't think?
-					// It should scan for NEXT at line start
+					// Scan for NEXT only at start of line
+					// TODO:TEST:MED Check behavior of cases with ::NEXT
 					idx index = r->index;
 					while (nest > 0){
-						do {
-							index = bc_scan(p->exec.code, index, BC_OPERATOR);
-						} while (index != BC_SCAN_NOT_FOUND && p->exec.code->data[index] != BC_COMMAND);
+						index = bc_scan(p->exec.code, index, BC_COMMAND_FIRST);
 						if (index == BC_SCAN_NOT_FOUND){
 							p->exec.error = ERR_FOR_WITHOUT_NEXT;
 							break;
 						}
-						instr = p->exec.code->data[index];
+						// Found BC_COMMAND; check if NEXT or FOR
+//						instr = p->exec.code->data[index];
 						data = p->exec.code->data[index+1];
-						if (instr == BC_COMMAND){
-							if (data == CMD_NEXT){
-								// TODO:IMPL:HIGH Check variable for a given NEXT to see if it counts or not
-								// find NEXT, go back one instruction, execute statement if it is VAR?
-								// Found a NEXT
-								nest--;
-							} else if (data == CMD_FOR){
-								// Found a FOR, so we need to search for another NEXT
-								nest++;
-							}
+						if (data == CMD_NEXT){
+							// TODO:IMPL:HIGH Check variable for a given NEXT to see if it counts or not
+							// find NEXT, go back one instruction, execute statement if it is VAR?
+							// Found a NEXT
+							nest--;
+						} else if (data == CMD_FOR){
+							// Found a FOR, so we need to search for another NEXT
+							nest++;
 						}
 						index += 2; // advance past this command
 					}
 					// index now points to one past the NEXT, the correct location
+					r->index = index;
 				} else {
 					// execution continues as normal into the loop
 				}

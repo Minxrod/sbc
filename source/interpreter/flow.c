@@ -137,7 +137,7 @@ idx search_label(struct ptc* p, const char* label){
 			// this is the index, jump to here
 			break;
 		}
-		u8 len = p->exec.code->data[index+1]; //TODO:CODE:LOW Advance by length as a function
+		u8 len = p->exec.code->data[index+1];
 		index += 2 + len + (len & 1);
 	}
 	if (index == BC_SCAN_NOT_FOUND){

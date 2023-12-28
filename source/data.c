@@ -57,7 +57,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 		// Convert!
 		// Note; This only works with the off-by-one error of '-' cases 
 		// because str_to_num ignores invalid characters entirely
-		*((s32*)dest->value.ptr) = str_to_num(conversion, i - start) * (neg ? -1 : 1);
+		*((fixp*)dest->value.ptr) = u8_to_num(conversion, i - start) * (neg ? -1 : 1);
 	} else {
 		return READ_ONE_ERR;
 	}

@@ -5,6 +5,15 @@
 
 #include <math.h>
 
+void init_graphics(struct graphics* g){
+	g->info[0].drawpage = 0;
+	g->info[0].displaypage = 0;
+	g->info[0].prio = 3;
+	g->info[1].drawpage = 1;
+	g->info[1].displaypage = 1;
+	g->info[1].prio = 3;
+}
+
 /// Convert screen coordinates to GRP coordinates
 u16 grp_index(uint_fast8_t x, uint_fast8_t y){
 	int_fast8_t cx = x / 64;

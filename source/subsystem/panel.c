@@ -278,6 +278,35 @@ void set_function_key(struct ptc* p, int key, const void* string){
 	}
 }
 
+// This is used to calculate the sprite ID of the touched location.
+// This is a 32x24 grid of characters corresponding to sprite ID at that location.
+// \xff (-1) indicates no sprite currently is placed there.
+// TODO:CODE:MED Find a way to generate this from some sort of layout file instead
+const char* key_map = 
+"\1"
+""
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\00\00\00\01\01\02\02\03\03\04\04\05\05\06\06\07\07\10\10\11\11\12\12\13\13\14\14\15\15\16\16\16"
+"\00\00\00\01\01\02\02\03\03\04\04\05\05\06\06\07\07\10\10\11\11\12\12\13\13\14\14\15\15\16\16\16"
+"\00\00\00\01\01\02\02\03\03\04\04\05\05\06\06\07\07\10\10\11\11\12\12\13\13\14\14\15\15\16\16\16"
+"\17\17\20\20\21\21\22\22\23\23\24\24\25\25\26\26\27\27\30\30\31\31\32\32\33\33\34\34\35\35\36\36"
+"\17\17\20\20\21\21\22\22\23\23\24\24\25\25\26\26\27\27\30\30\31\31\32\32\33\33\34\34\35\35\36\36"
+"\17\17\20\20\21\21\22\22\23\23\24\24\25\25\26\26\27\27\30\30\31\31\32\32\33\33\34\34\35\35\36\36"
+"\37\37\37\40\40\41\41\42\42\43\43\44\44\45\45\46\46\47\47\50\50\51\51\52\52\53\53\54\54\55\55\xff"
+"\37\37\37\40\40\41\41\42\42\43\43\44\44\45\45\46\46\47\47\50\50\51\51\52\52\53\53\54\54\55\55\xff"
+"\37\37\37\40\40\41\41\42\42\43\43\44\44\45\45\46\46\47\47\50\50\51\51\52\52\53\53\54\54\55\55\xff"
+"\56\56\56\56\57\57\60\60\61\61\62\62\63\63\64\64\65\65\66\66\67\67\70\70\71\71\72\72\73\73\73\73"
+"\56\56\56\56\57\57\60\60\61\61\62\62\63\63\64\64\65\65\66\66\67\67\70\70\71\71\72\72\73\73\73\73"
+"\56\56\56\56\57\57\60\60\61\61\62\62\63\63\64\64\65\65\66\66\67\67\70\70\71\71\72\72\73\73\73\73"
+"\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\xff\105\105\106\106\xff\107\107"
+"\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\xff\105\105\106\106\xff\107\107"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+""
+;
+
 void press_key(struct ptc* ptc, bool t, int x, int y){
 	struct panel* p = &ptc->panel;
 	p->key_pressed = 0;

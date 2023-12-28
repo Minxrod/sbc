@@ -3,6 +3,7 @@
 #include "error.h"
 
 #include <assert.h>
+#include <string.h>
 
 int check_fail;
 
@@ -15,15 +16,16 @@ char outcode[2048];
 /// This is because \0 can be typed and is distinct from typing nothing.
 struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int var_limit, int str_limit, int arr_limit){
 	assert(strlen(code) < 1024); // prevents exceeding outcode buffer
+	memset(outcode, 0x0f, 2048); // identify errors of failing to write
+	// init system
+	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit);
+	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
 	// TODO:ERR:MED Add a check for bytecode size?
 	struct program p = { strlen(code), code };
 	struct program o = { 0, outcode };
-	tokenize(&p, &o);
+	ptc->exec.error = tokenize(&p, &o);
 	
-	// init system
-	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit);
-	ptc->console.test_mode = true;
 	// buffer inkeys
 	if (keys){
 		for (int i = 0; i < key_len; ++i)

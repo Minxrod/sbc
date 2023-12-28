@@ -46,4 +46,10 @@ const char * error_messages[] = {
 	"Out of memory",
 	"Subscript out of range [X]",
 	"Subscript out of range [Y]",
+	"Command has incorrect arguments",
+	"Operator has incorrect arguments",
+	"Function has incorrect arguments",
+	"Array has incorrect arguments",
+	"Unknown token type in tok_test!",
+	"Stack not empty after tok_test!",
 };

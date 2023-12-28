@@ -118,33 +118,40 @@ struct string* get_new_str(struct strings* s){
 	return &strs[i];
 }
 
-int digit_value(char c){
-	if (c >= '0' && c <= '9'){
-		return c - '0';
-	} else if (c >= 'A' && c <= 'F'){
-		return c - 'A' + 10;
+int digit_value(u16 c){
+	if (c >= to_wide('0') && c <= to_wide('9')){
+		return c - to_wide('0');
+	} else if (c >= to_wide('A') && c <= to_wide('F')){
+		return c - to_wide('A') + 10;
 	}
 	return -1;
 }
 
+fixp u8_to_number(u8* data, int len, int base, bool allow_decimal){
+	struct string str = {
+		.type = STRING_CHAR, .len = len, .ptr.s = data
+	};
+	return str_to_number(&str, base, allow_decimal);
+}
+
 // More general number parsing
-fixp str_to_number(u8* data, idx len, int base, bool allow_decimal){
-	//TODO:CODE:MED Find way to generalize this for strings AND pure data
-	// maybe create a temporary struct string?
+fixp str_to_number(const void* str, int base, bool allow_decimal){
+	size_t len = str_len(str);
+	
 	unsigned int number = 0;
 	unsigned int fraction = 0;
 	unsigned int maximum = 1;
 	
 	for (size_t i = 0; i < len; ++i){
-		char c = data[i];
+		u16 c = str_at_wide(str, i);
 		int digit = digit_value(c);
 		if (digit >= 0 && digit < base){
 			number *= base;
 			number += digit_value(c);
-		} else if (c == '.' && allow_decimal){
+		} else if (c == to_wide('.') && allow_decimal){
 			++i;
 			for (size_t k = i; k < len; ++k){
-				digit = digit_value(data[k]);
+				digit = digit_value(str_at_wide(str, k));
 				if (digit >= 0 && digit < base){
 					fraction *= base;
 					maximum *= base;
@@ -171,8 +178,8 @@ fixp str_to_number(u8* data, idx len, int base, bool allow_decimal){
 }
 
 //NOTE: Doesn't handle negatives
-fixp str_to_num(u8* data, idx len){
-	return str_to_number(data, len, 10, true);
+fixp u8_to_num(u8* data, idx len){
+	return u8_to_number(data, len, 10, true);
 }
 
 // Returns STR_COPY_SRC_8 if string is u8 type

@@ -67,7 +67,6 @@ void display_draw_text(struct ptc* p, int screen, int prio){
 		}
 	}
 	
-	//TODO:IMPL:MED background tile/color
 	for (int y = 0; y < CONSOLE_HEIGHT; ++y){
 		for (int x = 0; x < CONSOLE_WIDTH; ++x){
 			u16 t = to_tiledata(to_char(con_text_getc(con, x, y)), con_col_get(con, x, y) & COL_FG_MASK, 0, 0);
@@ -75,6 +74,17 @@ void display_draw_text(struct ptc* p, int screen, int prio){
 			map++;
 		}
 	}
+	/*
+	if (screen == 0){
+		map = p->res.scr[SCR_BANKS * screen + 1];
+		for (int y = 0; y < CONSOLE_HEIGHT; ++y){
+			for (int x = 0; x < CONSOLE_WIDTH; ++x){
+				u8 pal = (con_col_get(con, x, y) & COL_BG_MASK) >> 4;
+				u16 t = to_tiledata(pal ? 15 : 0, pal, 0, 0);
+				*map++ = t;
+			}
+		}
+	}*/
 }
 
 void display_draw_background(struct ptc* p, int screen, int prio){

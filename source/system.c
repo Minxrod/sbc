@@ -33,10 +33,7 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
 	init_sprites(&ptc->sprites);
-	ptc->graphics.info[1].drawpage = 1;
-	ptc->graphics.info[1].displaypage = 1;
-	ptc->graphics.info[0].prio = 3;
-	ptc->graphics.info[1].prio = 3;
+	init_graphics(&ptc->graphics);
 	
 	init_resource(&ptc->res);
 	init_display(ptc); // needs resources as well

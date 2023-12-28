@@ -24,6 +24,7 @@ int test_input();
 int test_console();
 int test_background();
 int test_sprite();
+int test_graphics();
 
 int run_tests(){
 #ifdef ARM9
@@ -49,6 +50,7 @@ int run_tests(){
 	FAST(test_console());
 	FAST(test_background());
 	FAST(test_sprite());
+	FAST(test_graphics());
 	
 	return 0;
 }

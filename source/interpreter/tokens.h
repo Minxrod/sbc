@@ -38,6 +38,7 @@ struct token {
 		loop_begin,
 		sysvar,
 		label_string,
+		first_of_line_command,
 	} type;
 	idx ofs;
 	u8 len;
@@ -65,9 +66,9 @@ struct tokenizer {
 	struct program* output;
 };
 
-void tokenize(struct program* src, struct program* output);
+int tokenize(struct program* src, struct program* output);
 
-void tok_none(struct tokenizer* state);
+int tok_none(struct tokenizer* state);
 
 void tok_name(struct tokenizer* state);
 
@@ -75,7 +76,7 @@ void tok_string(struct tokenizer* state);
 
 void tok_number(struct tokenizer* state);
 
-void tok_convert(struct tokenizer* state);
+int tok_convert(struct tokenizer* state);
 
 void tok_prio(struct tokenizer* state);
 
@@ -83,11 +84,16 @@ void tok_eval(struct tokenizer* state);
 
 void tok_code(struct tokenizer* state);
 
-void tok_test(struct tokenizer* state);
+/// Validate argument sequence
+bool check_cmd(const char* stack, int stack_len, const char* valid);
+
+/// Returns error code
+int tok_test(struct tokenizer* state);
 
 // Scans for location of some instruction starting from index
 // Returns the index of found string
 idx bc_scan(struct program* code, idx index, u8 find);
+idx bc_scan_2(struct program* code, idx index, u8 instr, u8 data);
 
 #include <limits.h>
 #define BC_SCAN_NOT_FOUND UINT_MAX
