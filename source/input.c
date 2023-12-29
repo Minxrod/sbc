@@ -3,6 +3,7 @@
 #include "common.h"
 #include "system.h"
 #include "error.h"
+#include "stack.h"
 #include "interpreter/strs.h"
 
 void init_input(struct input* i){
@@ -111,17 +112,11 @@ void set_repeat(struct input* i, int button, int start, int repeat){
 
 bool check_pressed_manual(struct input* i, int id, int start, int repeat){
 	int time = i->times[id].frame;
-	if (time == 1) return true;
-	if (repeat > 0){ //repeat=0 -> disabled
-		if (time > start){ //repeat only applies past start time
-			return ((time - 1 - start) % (repeat + 1) == 0);
-		}
-	}
-	return false;
+	return check_repeat(time, start, repeat);
 }
 
 bool check_pressed(struct input* i, int id){
-	return check_pressed_manual(i, id, i->times[id].start, i->times[id].repeat);
+	return check_repeat(i->times[id].frame, i->times[id].start, i->times[id].repeat);
 }
 
 void cmd_brepeat(struct ptc* p){

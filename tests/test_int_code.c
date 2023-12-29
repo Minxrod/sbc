@@ -1,6 +1,8 @@
 #include "test_util.h"
 
 #include "interpreter.h"
+#include "system.h"
+#include "program.h"
 
 #include "ptc.h"
 #include "error.h"

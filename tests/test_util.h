@@ -30,9 +30,11 @@
 
 extern int check_fail;
 
-#include "interpreter.h"
-#include "system.h"
-#include "program.h"
+#include "interpreter/vars.h"
+//#include "interpreter.h"
+//#include "system.h"
+//#include "program.h"
+struct ptc;
 
 #include <string.h>
 #include <stdlib.h>

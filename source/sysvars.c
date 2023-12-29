@@ -69,7 +69,7 @@ void sys_date(struct ptc* p){
 		ABORT(msg" mutex lock failure!");\
 	}}
 #define UNLOCK_TOUCH_MTX(msg) \
-	{if (mtx_lock(&p->input.touch_mtx) == thrd_error){\
+	{if (mtx_unlock(&p->input.touch_mtx) == thrd_error){\
 		ABORT(msg" mutex unlock failure!");\
 	}}
 #endif
@@ -116,5 +116,17 @@ void sys_tchy(struct ptc* p){
 	UNLOCK_TOUCH_MTX("sys_tchy");
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchy)});
+}
+
+void sys_maincntl(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((get_time(&p->time) & 0xfffff))}});
+}
+
+void sys_maincnth(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((get_time(&p->time) & 0xfffff00000) >> 20)}});
 }
 

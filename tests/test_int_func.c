@@ -1,5 +1,7 @@
 #include "test_util.h"
 
+#include "system.h"
+
 int test_int_func(){
 	// FLOOR
 	{

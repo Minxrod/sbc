@@ -47,7 +47,7 @@ const char* bc_conv_operations =
 
 const char* sysvars = 
 "TRUE    FALSE   CANCEL  VERSION "
-"TIME$   DATE$   MAINCTNLMAINCNTH"
+"TIME$   DATE$   MAINCNTLMAINCNTH"
 "FREEVAR FREEMEM PRGNAME$PACKAGE$RESULT  "
 "TCHST   TCHX    TCHY    TCHTIME "
 "CSRX    CSRY    TABSTEP "
@@ -66,13 +66,13 @@ idx bc_scan(struct program* code, idx index, u8 find){
 	// search for find in code->data
 	while (index < code->size){ 
 		u8 cur = code->data[index];
-		iprintf("%d: %c,%d", (int)index, cur >= 32 ? cur : '?', code->data[index+1]);
+//		iprintf("%d: %c,%d", (int)index, cur >= 32 ? cur : '?', code->data[index+1]);
 		if (cur == find){
 			return index;
 		}
 		//debug! 
 		u8 len = code->data[++index];
-		iprintf("/%.*s\n", len, &code->data[index+1]);
+//		iprintf("/%.*s\n", len, &code->data[index+1]);
 		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING || cur == BC_DATA){
 			index++;
 			index += len + (len & 1);
@@ -223,7 +223,8 @@ int tok_convert(struct tokenizer* state){
 	int test_res = tok_test(state);
 	if (test_res != ERR_NONE) return test_res;
 	
-	tok_code(state);
+	int code_res = tok_code(state);
+	if (code_res != ERR_NONE) return code_res;
 	
 	return ERR_NONE;
 }
@@ -245,7 +246,7 @@ int tok_convert(struct tokenizer* state){
 const char* cmd_format[] = {
 	"*","NN","N,NN","*", //DIM
 	"*","*","*","0,n", //NEXT
-	"N","","*","0", //ENDIF
+	"N","","*","*", //ENDIF
 	"L,l","L,l","N","0", //RETURN
 	"0","0", //STOP
 	"0","NNNNNN","0","N","N", //WAIT
@@ -583,7 +584,7 @@ fixp tok_to_num(struct tokenizer* state, struct token* t){
 	return number;
 }
 
-void tok_code(struct tokenizer* state){
+int tok_code(struct tokenizer* state){
 	// assume the order is fixed
 	char* data = state->output->data;
 	idx* size = &state->output->size;
@@ -758,11 +759,12 @@ void tok_code(struct tokenizer* state){
 				iprintf("Unknown token: ");
 				print_token(state, state->tokens[i]);
 				iprintf("\n");
-				//TODO:ERR:MED Code generation errors?
+				return ERR_UNKNOWN_TOKEN_TYPE;
 		}
 	}
 tok_code_exit:
 	state->token_i = 0;
+	return ERR_NONE;
 }
 
 // Remove operators until priority reaches prio

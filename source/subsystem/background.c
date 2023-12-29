@@ -54,13 +54,6 @@ void cmd_bgclr(struct ptc* p){
 	}
 }
 
-u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
-	assert((chr & 0x3ff) == chr);
-	assert((pal & 0xf) == pal);
-	
-	return (chr & 0x3ff) | ((h & 0x1) << 10) | ((v & 0x1) << 11) | ((pal & 0xf) << 12);
-}
-
 // BGPUT l,x,y,td
 // BGPUT l,x,y,td$
 // BGPUT l,x,y,c,p,h,v

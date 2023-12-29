@@ -9,6 +9,8 @@ void sys_version(struct ptc* p);
 
 void sys_date(struct ptc* p);
 void sys_time(struct ptc* p);
+void sys_maincnth(struct ptc* p);
+void sys_maincntl(struct ptc* p);
 
 void sys_tchst(struct ptc* p);
 void sys_tchtime(struct ptc* p);

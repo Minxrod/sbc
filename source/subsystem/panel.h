@@ -5,11 +5,17 @@
 struct ptc;
 struct console;
 
+#define PANEL_WIDTH 32
+#define PANEL_HEIGHT 24
+
 #define KEYBOARD_KEYS 89
 #define ICON_KEYS 6
 #define ICON_PAGE_START (KEYBOARD_KEYS)
 #define ICON_START (KEYBOARD_KEYS + 2)
 #define PANEL_KEYS (KEYBOARD_KEYS + ICON_KEYS)
+
+#define PNL_SHIFT 1
+#define PNL_CAPS_LOCK 2
 
 struct panel {
 	/// Current panel type
@@ -33,8 +39,10 @@ struct panel {
 	
 	u8 key_pressed;
 	u8 id_pressed;
+	int pressed_time;
 	
-	// TODO:IMPL:MED Last pressed timer
+	int mode;
+	int shift;
 };
 
 void init_panel(struct ptc*);
@@ -52,7 +60,8 @@ void sys_iconpage(struct ptc* p);
 void sys_iconpmax(struct ptc* p);
 void sys_iconpuse(struct ptc* p);
 
-void set_keyboard(struct ptc* p, enum pnltype type);
+void set_panel_bg(struct ptc* p, enum pnltype type);
 void set_function_key(struct ptc* p, int key, const void* string);
 void press_key(struct ptc* p, bool t, int x, int y);
 void offset_key(struct ptc* p, int id, int d);
+int get_pressed_key(struct ptc* p);

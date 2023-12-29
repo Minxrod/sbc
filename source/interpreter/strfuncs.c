@@ -2,6 +2,7 @@
 
 #include "system.h"
 #include "error.h"
+#include "stack.h"
 
 #include <string.h>
 

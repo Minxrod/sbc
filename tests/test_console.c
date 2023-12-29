@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "program.h"
+#include "subsystem/console.h"
 
 #include "system.h"
 

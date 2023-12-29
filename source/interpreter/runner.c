@@ -71,14 +71,14 @@ const ptc_call ptc_operators[] = {
 const ptc_call ptc_functions[] = {
 	NULL, func_asc, NULL, NULL, NULL, NULL, func_btrig, func_button,
 	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, func_iconchk, //FUNC_ICONCHK
-	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, NULL, NULL, //FUNC_RAD
+	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, func_pow, NULL, //FUNC_RAD
 	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUNC_SPHITRC
 	NULL, NULL, func_str, func_subst, NULL, func_val, //FUNC_VAL
 };
 
 const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
-	NULL, sys_date, NULL, NULL, //MAINCNTH
+	NULL, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
 	NULL, NULL, NULL, NULL, NULL, //RESULT
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
@@ -112,6 +112,7 @@ void run(struct program* code, struct ptc* p) {
 	
 	while (r->index < code->size && !p->exec.error){
 		// get one instruction and execute it
+		start_time(&p->time);
 		char instr = code->data[r->index++];
 		char data = code->data[r->index++];
 		
@@ -126,6 +127,7 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					r->error = ERR_NUM_INVALID;
 				}
+				check_time(&p->time, 0);
 				break;
 			
 			case BC_LABEL_STRING:
@@ -135,6 +137,7 @@ void run(struct program* code, struct ptc* p) {
 				// push string pointer to the stack
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_STRING, {.ptr = (void*)&code->data[r->index-2]}};
 				r->index += data + (data & 1); // to next instruction
+				check_time(&p->time, 1);
 				break;
 			
 			case BC_COMMAND:
@@ -154,6 +157,7 @@ void run(struct program* code, struct ptc* p) {
 				// ON ignores value to pass it to GOTO/GOSUB, so don't clear
 				if (data != CMD_FOR && data != CMD_TO && data != CMD_STEP && data != CMD_ON)
 					p->stack.stack_i=0; //clear stack after most commands
+				check_time(&p->time, 2);
 				break;
 				
 			case BC_OPERATOR:
@@ -168,6 +172,7 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					r->error = ERR_UNIMPLEMENTED;
 				}
+				check_time(&p->time, 3);
 				break;
 				
 			case BC_FUNCTION:
@@ -182,6 +187,7 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					r->error = ERR_UNIMPLEMENTED;
 				}
+				check_time(&p->time, 4);
 				break;
 				
 			case BC_SYSVAR:
@@ -195,11 +201,12 @@ void run(struct program* code, struct ptc* p) {
 				} else {
 					r->error = ERR_UNIMPLEMENTED;
 				}
+				check_time(&p->time, 5);
 				break;
 				
 			case BC_NUMBER:
 				{
-				s32 number = 0;
+				fixp number = 0;
 				
 				number |= (char)code->data[r->index++] << 24;
 				number |= (unsigned char)code->data[r->index++] << 16;
@@ -209,6 +216,7 @@ void run(struct program* code, struct ptc* p) {
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {number}};
 				iprintf("num=%.12f", number / 4096.0);
 				}
+				check_time(&p->time, 6);
 				break;
 				
 			case BC_VARIABLE_NAME:
@@ -269,6 +277,7 @@ void run(struct program* code, struct ptc* p) {
 				}
 				//debug
 	//			stack_print(&p->stack);
+				check_time(&p->time, 7);
 				break;
 			
 			case BC_DIM:
@@ -301,12 +310,14 @@ void run(struct program* code, struct ptc* p) {
 				
 				iprintf(" dim=%d,%d", (int)a, (int)b);
 				}
+				check_time(&p->time, 8);
 				break;
 			
 			case BC_ARGCOUNT:
 				r->argcount = data;
 				
 				iprintf("argc=%d", (int)r->argcount);
+				check_time(&p->time, 9);
 				break;
 			
 			case BC_BEGIN_LOOP:
@@ -367,17 +378,20 @@ void run(struct program* code, struct ptc* p) {
 				// clear the FOR arguments off the stack
 				p->stack.stack_i = 0;
 				}
+				check_time(&p->time, 10);
 				break;
 				
 			case BC_DATA:
 			case BC_LABEL:
 				// ignore these!
 				r->index += data + (data & 1); // to next instruction
+				check_time(&p->time, 11);
 				break;
 				
 			default:
 				iprintf("Unknown BC: %c %d", instr, data);
 				r->error = ERR_INVALID_BC;
+				check_time(&p->time, 12);
 				break;
 		}
 		

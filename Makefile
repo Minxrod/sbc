@@ -23,7 +23,7 @@ INCLUDES	:=	include build source source/interpreter source/subsystem
 # options for code generation
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
-
+# check asm: -S -fverbose-asm
 CFLAGS	:=	-Wall -Werror -Wpedantic -Wextra -O2\
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
 			-ffast-math $(BUILD_TYPE)\
@@ -93,11 +93,12 @@ export BUILD_TYPE
 
 # https://stackoverflow.com/questions/3963989/compiling-with-different-flags-in-makefile
 # some trickery to separate main and test builds more easily
-.PHONY: test main
+.PHONY: test main debug
 main: BUILD_TYPE=-DARM9_BUILD -DNDEBUG
+debug: BUILD_TYPE=-DARM9_BUILD
 test: BUILD_TYPE=
 
-main test: $(BUILD)
+main debug test: $(BUILD)
 
 # modified:
 #---------------------------------------------------------------------------------

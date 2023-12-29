@@ -52,4 +52,5 @@ const char * error_messages[] = {
 	"Array has incorrect arguments",
 	"Unknown token type in tok_test!",
 	"Stack not empty after tok_test!",
+	"Unknown token type in tok_code!",
 };

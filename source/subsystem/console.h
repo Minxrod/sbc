@@ -27,13 +27,13 @@ struct ptc;
  * Rendering is handled using character resources in a different location.
  */
 struct console {
-	u8 x; // if you need a bigger size fix it yourself, are you using an ultrawide monitor with no zoom??
-	u8 y; // same as above
-	u8 tabstep; //valid range is 1-16
+	uint_fast8_t x; // range [0,CONSOLE_WIDTH)
+	uint_fast8_t y; // range [0,CONSOLE_HEIGHT)
+	uint_fast8_t tabstep; //valid range is 1-16
 	u16 text[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	// low 4 bits: fg color; high 4: bg color
-	u8 col;
-	u8 color[CONSOLE_HEIGHT][CONSOLE_WIDTH];
+	uint_fast8_t col;
+	uint_fast8_t color[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	bool test_mode;
 };
 
@@ -42,6 +42,8 @@ void free_console(struct console*);
 
 void con_put(struct console* c, u16 w);
 void con_puts(struct console* c, void* s);
+void con_putn(struct console* c, fixp n);
+void con_putn_at(struct console* c, int x, int y, fixp n);
 
 void con_advance(struct console* c);
 void con_tab(struct console* c);
@@ -61,7 +63,18 @@ void sys_csrx(struct ptc* p);
 void sys_csry(struct ptc* p);
 void sys_tabstep(struct ptc* p);
 
-u16 con_text_getc(struct console* c, u32 x, u32 y);
-void con_text_setc(struct console* c, u32 x, u32 y, u16 w);
-u8 con_col_get(struct console* c, u32 x, u32 y);
-void con_col_set(struct console* c, u32 x, u32 y, u8 col);
+static inline u16 con_text_getc(struct console* c, u32 x, u32 y){
+	return c->text[y][x];
+}
+
+static inline void con_text_setc(struct console* c, u32 x, u32 y, u16 w){
+	c->text[y][x] = w;
+}
+
+static inline u8 con_col_get(struct console* c, u32 x, u32 y){
+	return c->color[y][x];
+}
+
+static inline void con_col_set(struct console* c, u32 x, u32 y, u8 col){
+	c->color[y][x] = col;
+}

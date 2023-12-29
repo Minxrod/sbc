@@ -82,7 +82,7 @@ void tok_prio(struct tokenizer* state);
 
 void tok_eval(struct tokenizer* state);
 
-void tok_code(struct tokenizer* state);
+int tok_code(struct tokenizer* state);
 
 /// Validate argument sequence
 bool check_cmd(const char* stack, int stack_len, const char* valid);

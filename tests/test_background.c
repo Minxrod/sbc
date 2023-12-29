@@ -1,5 +1,6 @@
 #include "test_util.h"
 
+#include "system.h"
 #include "common.h"
 #include "program.h"
 

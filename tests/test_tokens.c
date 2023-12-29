@@ -358,5 +358,10 @@ int test_tokens(void){
 		)
 	}
 	
+	// MAINCNTL
+	{
+		ASSERT(token_code("?MAINCNTL\r", "Y\6c\0", 4), "[tokens] Sysvar with eight character name");
+	}
+	
 	SUCCESS("test_tokens success");
 }

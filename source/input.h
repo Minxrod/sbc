@@ -75,6 +75,15 @@ u16 get_inkey(struct input* i);
 // Should also set keyboard, inkey!
 void set_touch(struct input* i, bool t, u8 x, u8 y);
 
+static inline bool check_repeat(int time, int start, int repeat){
+	if (repeat > 0){ //repeat=0 -> disabled
+		if (time > start){ //repeat only applies past start time
+			return ((time - 1 - start) % (repeat + 1) == 0);
+		}
+	}
+	return time == 1;
+}
+
 bool check_pressed(struct input* i, int id);
 bool check_pressed_manual(struct input* i, int id, int start, int repeat);
 

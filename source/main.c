@@ -64,13 +64,15 @@ void frame_update(){
 int main(void){
 	init();
 	fatInitDefault();
-//	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
+#ifndef NDEBUG
+	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
+#endif
 	
 	struct program program;
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	// set this after creating system to ensure resources are loaded
 	
-	prg_load(&program, "programs/SAMPLE7.PTC");
+	prg_load(&program, "programs/PERFTS2.PTC");
 	iprintf("program malloc: %d\n", 2*program.size);
 	struct program bc = {0, malloc(2*program.size)};
 	tokenize(&program, &bc);
@@ -115,7 +117,7 @@ int system_launch(void* launch_info){
 	
 	// TODO:IMPL:MED Check for escapes, pauses, etc.
 	struct program bc = {0, malloc(2*info->prg->size)};
-	tokenize(info->prg, &bc);
+	info->p->exec.error = tokenize(info->prg, &bc);
 	free(info->prg->data);
 	// only needs BC, not source
 	run(&bc, info->p);
@@ -235,10 +237,11 @@ int main(int argc, char** argv){
 		}
 		set_input(&ptc->input, b);
 		
-		// TODO:IMPL:MED Make touch coordinates make more sense
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
-		set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
-		press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+		if (pos.x >= 0 && pos.x < 256 && pos.y >= 192 && pos.y < 192+192){
+			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+			press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+		}
 		inc_time(&ptc->time);
 		
 		display_draw_all(ptc);

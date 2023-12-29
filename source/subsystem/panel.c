@@ -12,7 +12,7 @@
 s16 keyboard_pos[][6]={
 // The primary keyboard keys [1-68]
 // First row
-	{0, 48, 32, 32, 280, 1}, // Escape
+	{0, 48, 32, 32, 280, 1}, // Escape (sprite 0)
 	{24, 48, 16, 32, 384, 2},
 	{40, 48, 16, 32, 386, 3},
 	{56, 48, 16, 32, 388, 4},
@@ -74,23 +74,23 @@ s16 keyboard_pos[][6]={
 	{176, 120, 16, 32, 488, 57},
 	{192, 120, 16, 32, 490, 58},
 	{208, 120, 16, 32, 492, 59},
-	{224, 120, 32, 32, 300, 60}, // Enter
+	{224, 120, 32, 32, 300, 60}, // Enter (sprite 59)
 // Fifth row (all special keys)
 	{0, 144, 16, 16, 313, 61}, // Caps lock
 	{24, 144, 16, 16, 508, 62}, // KYA select
 	{40, 144, 16, 16, 509, 63}, // KYM select
 	{56, 144, 16, 16, 510, 64}, // KYK select
-	{80, 144, 32, 16, 496, 65}, // Spacebar left
+	{80, 144, 32, 16, 496, 65}, // Spacebar left (sprite 64)
 	{112, 144, 16, 16, 495, 65},
 	{128, 144, 16, 16, 495, 65},
 	{144, 144, 16, 16, 495, 65},
 	{160, 144, 16, 16, 495, 65},
-	{176, 144, 16, 16, 494, 65}, // Spacebar right
+	{176, 144, 16, 16, 494, 65}, // Spacebar right (sprite 69)
 	{200, 144, 16, 16, 309, 66}, // Insert
 	{216, 144, 16, 16, 310, 67}, // Delete
-	{240, 144, 16, 16, 311, 68}, // Search
+	{240, 144, 16, 16, 311, 68}, // Search (sprite 72)
 // Function keys + exit
-	{0, -1, 16, 16, 505, 101}, // Function Key 1 Left
+	{0, -1, 16, 16, 505, 101}, // Function Key 1 Left (sprite 73)
 	{16, -1, 32, 16, 499, 101}, // Function Key Right
 	{48, -1, 16, 16, 504, 102}, // Function Key 2 Left
 	{64, -1, 32, 16, 499, 102}, // Function Key Right
@@ -122,7 +122,9 @@ void init_panel(struct ptc* p){
 	p->panel.text = init_console();
 	// TODO:PERF:NONE Check if making console dynamically sized saves space?
 	p->panel.keys_text = init_console();
-	set_keyboard(p, p->panel.type);
+	p->panel.mode = 0;
+	p->panel.shift = 0;
+	set_panel_bg(p, p->panel.type);
 	
 	set_function_key(p, 1, "S\5FILES");
 	set_function_key(p, 2, "S\5LOAD\"");
@@ -185,13 +187,13 @@ void cmd_pnltype(struct ptc* p){
 	}
 	if (old_type != p->panel.type){
 		if ((old_type >= PNL_KYA) != (p->panel.type >= PNL_KYA))
-			set_keyboard(p, p->panel.type);
+			set_panel_bg(p, p->panel.type);
 	}
 }
 
 // TODO:TEST:MED Test this function, specifically edge behavior
 void cmd_pnlstr(struct ptc* p){
-	int x, y;
+	unsigned int x, y;
 	STACK_INT_RANGE_SILENT(0,0,CONSOLE_WIDTH-1,x);
 	STACK_INT_RANGE_SILENT(1,0,CONSOLE_HEIGHT-1,y);
 	void* str = value_str(ARG(2));
@@ -248,17 +250,16 @@ char* keyboard_chr[6]={
 	"\0 \xC0\xDE\xC1\xDE\xC2\xDE\xC3\xDE\xC4\xDE\x36\0\x37\0\x38\0\x39\0\x30\0\0 \0 \r\0\0 \0 \0 \0  \0\0 \0 \0 " //shift_kana
 };
 
-// TODO:CODE:NONE Rename to set_panel_bg or something?
-void set_keyboard(struct ptc* p, enum pnltype type){
+void set_panel_bg(struct ptc* p, enum pnltype type){
 	// Set BG layout (load layout)
 	// Note that only a portion of the grid is ever needed
 	u16* panel_bg = p->res.scr[SCR_BANKS+1];
 	if (type == PNL_OFF){
-		memset((u8*)panel_bg, 0, 32*24*2); //TODO:CODE:LOW Replace these with constants
+		memset((u8*)panel_bg, 0, PANEL_WIDTH*PANEL_HEIGHT*2);
 	} else if (type == PNL_PNL){
-		load_file((u8*)panel_bg, "resources/pnlPANEL.NSCR", 36, 32*24*2);
+		load_file((u8*)panel_bg, "resources/pnlPANEL.NSCR", 36, PANEL_WIDTH*PANEL_HEIGHT*2);
 	} else {
-		load_file((u8*)panel_bg, "resources/pnlKEY.NSCR", 36, 32*24*2);
+		load_file((u8*)panel_bg, "resources/pnlKEY.NSCR", 36, PANEL_WIDTH*PANEL_HEIGHT*2);
 	}
 }
 
@@ -282,9 +283,10 @@ void set_function_key(struct ptc* p, int key, const void* string){
 // This is a 32x24 grid of characters corresponding to sprite ID at that location.
 // \xff (-1) indicates no sprite currently is placed there.
 // TODO:CODE:MED Find a way to generate this from some sort of layout file instead
+// (then use this as a test case?)
 const char* key_map = 
-"\1"
-""
+"\111\111\112\112\112\112\113\113\114\114\114\114\115\115\116\116\116\116\117\117\120\120\120\120\121\121\122\122\122\122\123\123"
+"\111\111\112\112\112\112\113\113\114\114\114\114\115\115\116\116\116\116\117\117\120\120\120\120\121\121\122\122\122\122\123\123"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
@@ -301,67 +303,97 @@ const char* key_map =
 "\56\56\56\56\57\57\60\60\61\61\62\62\63\63\64\64\65\65\66\66\67\67\70\70\71\71\72\72\73\73\73\73"
 "\56\56\56\56\57\57\60\60\61\61\62\62\63\63\64\64\65\65\66\66\67\67\70\70\71\71\72\72\73\73\73\73"
 "\56\56\56\56\57\57\60\60\61\61\62\62\63\63\64\64\65\65\66\66\67\67\70\70\71\71\72\72\73\73\73\73"
-"\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\xff\105\105\106\106\xff\107\107"
-"\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\xff\105\105\106\106\xff\107\107"
+"\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
+"\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-""
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
 ;
 
 void press_key(struct ptc* ptc, bool t, int x, int y){
 	struct panel* p = &ptc->panel;
-	p->key_pressed = 0;
-	p->id_pressed = -1;
-	if (!t)
+	if (!t){
+		p->key_pressed = 0;
+		p->id_pressed = -1;
+		p->pressed_time = 0;
 		return; // no touch = no press
-	
-	// TODO:PERF:NONE Don't recreate the sprite every time
-	// Idea: Make this a cursor/possible to be a cursor?
-	// Note: Width+height of zero leads to a 1-pixel hitbox
-	struct sprite_info touch = init_sprite_info(0,0,0,0,0,0,0,0);
-	touch.pos.x = INT_TO_FP(x);
-	touch.pos.y = INT_TO_FP(y);
-	
-//	iprintf("%d,%d\n",x,y);
-	int start = 0;
-	if (p->type == PNL_OFF || p->type == PNL_PNL)
-		start = KEYBOARD_KEYS; // skip to past keyboard keys and only check icons
-	
-	for (idx i = start; i < PANEL_KEYS; ++i){
-		if (is_hit(&touch, &p->keys[i])){
-//			iprintf("HIT:%d,%d\n",FP_TO_INT(p->keys[i].pos.x),FP_TO_INT(p->keys[i].pos.y));
-			// found hit! save index
-			p->id_pressed = i;
-			p->key_pressed = p->keys[i].vars[0];
-			break;
+	} else if (t && p->key_pressed){ // touch and hold
+		char c = key_map[x/8 + 32*(y/8)];
+		if (p->keys[(int)c].vars[0] != p->key_pressed){
+			p->key_pressed = 0;
+			p->id_pressed = -1;
+		} else {
+			++p->pressed_time;
+		}
+	} else if (p->pressed_time > 0){ // was holding, but moved away from key (t && !last_pressed && timer is still active)
+//		return;
+	} else {
+		//press keyboard keys (touching, no previous hold, no previous timer)
+		char c = key_map[x/8 + 32*(y/8)];
+		if (c != '\xff'){
+			p->id_pressed = c;
+			p->key_pressed = p->keys[(int)c].vars[0];
+			p->pressed_time = 1;
+		} else {
+			// no key pressed
+			p->pressed_time = 0;
 		}
 	}
 	
-	// TODO:IMPL:HIGH Check panel state
-	// TODO:IMPL:HIGH Keyboard repeat timings
-	// TODO:IMPL:HIGH Keyboard modes;
-	// TODO:IMPL:HIGH shift; caps lock
-	if (p->key_pressed){
-		if (p->key_pressed <= 60 || p->key_pressed == 65){
-			char c = keyboard_chr[0][p->key_pressed];
-			if (c)
+	// TODO:IMPL:HIGH Check panel enabled before allowing keys to be pressed
+	int pressed_key = get_pressed_key(ptc);
+	if (pressed_key){
+		if (pressed_key <= 60 || pressed_key == 65){
+			int source_key_map = 2 * (p->type - 2) + (p->shift != 0);
+			int source_key = pressed_key;
+			if (source_key_map == 5) source_key *= 2;
+			char c = keyboard_chr[source_key_map][source_key];
+			if (c){
 				set_inkey(&ptc->input, to_wide(c));
-		} else if (p->key_pressed == 61){
-			ptc->res.regen_chr[18+CHR_BANKS] |= load_chr(ptc->res.chr[18+CHR_BANKS], "resources/SPD6.PTC");
-			ptc->res.regen_chr[19+CHR_BANKS] |= load_chr(ptc->res.chr[19+CHR_BANKS], "resources/SPD7.PTC");
-			// If files fail to load, just doesn't update keyboard
+				// Katakana shift keyboard can type two characters at once
+				if (source_key_map == 5){
+					char c2 = keyboard_chr[source_key_map][source_key+1];
+					if (c2){
+						set_inkey(&ptc->input, to_wide(c2));
+					}
+				}
+			}
+		} else if (pressed_key >= 61 && pressed_key <= 64){
+			if (pressed_key == 61) p->shift ^= PNL_CAPS_LOCK;
+			else if (pressed_key == 62) p->type = PNL_KYA;
+			else if (pressed_key == 63) p->type = PNL_KYM;
+			else if (pressed_key == 64) p->type = PNL_KYK;
+			
+			int source_key_chr = (2 * (p->type - 2) + (p->shift != 0)) * 2;
+			memcpy(ptc->res.chr[18+CHR_BANKS], ptc->res.key_chr[source_key_chr], CHR_SIZE);
+			memcpy(ptc->res.chr[19+CHR_BANKS], ptc->res.key_chr[source_key_chr + 1], CHR_SIZE);
+			
+			ptc->res.regen_chr[18+CHR_BANKS] |= true;
+			ptc->res.regen_chr[19+CHR_BANKS] |= true;
 		}
 	}
 }
 
+int get_pressed_key(struct ptc* ptc){
+	struct panel* p = &ptc->panel;
+	if (!p->key_pressed || !check_repeat(p->pressed_time, 15, 4)) // TODO:TEST:LOW Determine correct key repeat rate
+		return 0;
+	int k = p->key_pressed;
+	if (k < 69)
+		return k;
+	return 0;
+}
+
 void offset_key(struct ptc* p, int id, int d){
 	if (id<PANEL_KEYS){
-		for (int i = id; p->panel.keys[i].vars[0] == p->panel.key_pressed; ++i){
+		for (int i = id; p->panel.keys[i].vars[0] == p->panel.key_pressed && i<PANEL_KEYS; ++i){
 			p->panel.keys[i].pos.x += d;
 			p->panel.keys[i].pos.y += d;
 		}
 	}
 	if (id>0){
-		for (int i = id-1; p->panel.keys[i].vars[0] == p->panel.key_pressed; --i){
+		for (int i = id-1; p->panel.keys[i].vars[0] == p->panel.key_pressed && i>0; --i){
 			p->panel.keys[i].pos.x += d;
 			p->panel.keys[i].pos.y += d;
 		}

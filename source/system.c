@@ -5,6 +5,7 @@
 #include "common.h"
 #include "system.h"
 #include "resources.h"
+#include "stack.h"
 
 #include "interpreter.h"
 #include "program.h"

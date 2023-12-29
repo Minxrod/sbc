@@ -52,6 +52,7 @@ enum err_code {
 	ERR_TEST_ARRAY,
 	ERR_TEST_UNKNOWN,
 	ERR_TEST_STACK,
+	ERR_UNKNOWN_TOKEN_TYPE,
 };
 
 extern const char * error_messages[];

@@ -65,33 +65,42 @@ void con_put(struct console* c, u16 w){
 }
 
 //TODO:PERF:LOW optimize via copying multiple lines at once for large strings?
-//TODO:PERF:LOW memcpy instead of manual copy? probably nicer on cache...?
 //TODO:PERF:LOW con_puts write directly to console via str_wide_copy?
 //(color still separate here)
 
 void con_puts(struct console* c, void* s){
-	// now the string is already wide chars for printing
 	u32 len = str_len(s);
 	for (size_t i = 0; i < len; ++i){
 		con_put(c, str_at_wide(s, i));
 	}
 }
 
+void con_putn(struct console* c, fixp n){
+	u8 buf[16]; ///S#-524287.999\0 max length is 2+12 chars
+	buf[0] = STRING_INLINE_CHAR;
+	fixp_to_str(n, buf);
+	
+	con_puts(c, buf);
+}
+
+void con_putn_at(struct console* c, int x, int y, fixp n){
+	c->x = x;
+	c->y = y;
+	con_putn(c, n);
+}
+
 void cmd_print(struct ptc* p){
 //	struct stack* s = &p->stack;
 	struct console* c = &p->console;
-	u8 buf[16]; //S#-524287.999\0 max length is 2+12 chars
-	buf[0]=STRING_INLINE_CHAR;
+//	u8 buf[16]; 
+//	buf[0]=STRING_INLINE_CHAR;
 	
 	u32 i = 0;
 	while (i < p->stack.stack_i){
 		struct stack_entry* e = &p->stack.entry[i];
 		
 		if (e->type & VAR_NUMBER){
-			fixp x = VALUE_NUM(e);
-			fixp_to_str(x, buf);
-			
-			con_puts(c, buf);
+			con_putn(c, VALUE_NUM(e));
 		} else if (e->type & VAR_STRING) {
 			con_puts(c, VALUE_STR(e));
 		} else if (e->type & STACK_OP) { 
@@ -200,15 +209,18 @@ u16* shared_input(struct ptc* p){
 	// TODO:IMPL:MED Delete, insert functionality
 	// TODO:IMPL:MED Left/right movement of cursor
 	// TODO:TEST:MED Write tests for these
+	// TODO:IMPL:MED Entering multiple characters at once with funckeys or kana should be instant
 	struct console* con = &p->console;
-	u16 inkey;
+	uint_fast16_t inkey;
+	uint_fast8_t keyboard;
 	u16* output = con->text[con->y]; // start of current line
-	u8 out_index = 0;
+	uint_fast8_t out_index = 0;
 	do {
 		inkey = get_inkey(&p->input);
+		keyboard = get_pressed_key(p);
 		// wait for a frame to pass
 		int t = get_time(&p->time);
-		// TODO:CODE:MED This test_mode check isn't ideal, but it allows test
+		// This test_mode check isn't ideal, but it allows test
 		// cases to run without waiting for an update from another thread
 		while (!con->test_mode && t == get_time(&p->time)){
 			// sleep for user input
@@ -216,7 +228,7 @@ u16* shared_input(struct ptc* p){
 			thrd_sleep(&tspec, NULL);
 		}
 		// Check for special keys
-		if ((p->panel.key_pressed == 15 || check_pressed_manual(&p->input, BUTTON_ID_Y, 15 ,4))){
+		if ((keyboard == 15 || check_pressed_manual(&p->input, BUTTON_ID_Y, 15 ,4))){
 			if (out_index > 0){
 				output[--out_index] = 0;
 			}
@@ -226,7 +238,7 @@ u16* shared_input(struct ptc* p){
 			output[out_index++] = inkey;
 		}
 	} while (inkey != '\r'
-			&& p->panel.key_pressed != 60
+			&& keyboard != 60
 			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
 	return output;
 }
@@ -414,20 +426,4 @@ void sys_csry(struct ptc* p){
 void sys_tabstep(struct ptc* p){
 	// TODO:IMPL:HIGH figure out how to validate assignments here?
 	ERROR(ERR_UNIMPLEMENTED);
-}
-
-inline u16 con_text_getc(struct console* c, u32 x, u32 y){
-	return c->text[y][x];
-}
-
-inline void con_text_setc(struct console* c, u32 x, u32 y, u16 w){
-	c->text[y][x] = w;
-}
-
-inline u8 con_col_get(struct console* c, u32 x, u32 y){
-	return c->color[y][x];
-}
-
-inline void con_col_set(struct console* c, u32 x, u32 y, u8 col){
-	c->color[y][x] = col;
 }

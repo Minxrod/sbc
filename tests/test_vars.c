@@ -1,6 +1,7 @@
 #include "test_util.h"
 
 #include "interpreter/vars.h"
+#include "system.h"
 
 #include <stdio.h>
 

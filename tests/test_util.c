@@ -1,6 +1,8 @@
 #include "test_util.h"
 
 #include "error.h"
+#include "system.h"
+#include "program.h"
 
 #include <assert.h>
 #include <string.h>
@@ -21,7 +23,6 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit);
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
-	// TODO:ERR:MED Add a check for bytecode size?
 	struct program p = { strlen(code), code };
 	struct program o = { 0, outcode };
 	ptc->exec.error = tokenize(&p, &o);

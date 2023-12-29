@@ -24,6 +24,13 @@
 // To read an argument on the stack
 #define ARG(index) (stack_get(&p->stack, index))
 
+#ifndef ARM9
+// ignored for non-arm9 platforms
+#define ITCM_CODE
+#define DTCM_DATA
+#define DTCM_BSS
+#endif
+
 #ifdef ARM9
 #include <nds/ndstypes.h>
 #include <nds.h>

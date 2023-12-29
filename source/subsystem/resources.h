@@ -78,6 +78,8 @@ struct resources {
 	u16* col[COL_BANKS*2]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
 	bool regen_col[COL_BANKS*2];
 	
+	u8* key_chr[12]; // 8K*12 -> 96K (RAM)
+	
 	// 512K of VRAM in use total + 192K~256K RAM (via GRP~SCR)
 	// All banks: CHR_SIZE*CHR_BANKS*2 -> 44*8 352K (VRAM)
 	u8* all_banks;

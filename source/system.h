@@ -54,7 +54,7 @@ struct ptc {
 	
 	struct value_stack stack;
 	
-	struct call_stack calls; 
+	struct call_stack calls;
 	
 	struct variables vars;
 	

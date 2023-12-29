@@ -63,10 +63,7 @@ void init_resource(struct resources* r){
 			r->col[i + COL_BANKS * lower] = calloc(COL_SIZE, 1);
 		}
 	}
-	for (int i = 0; i < 4; ++i){
-		iprintf("GRP%d calloc: %d\n", i, GRP_SIZE);
-		r->grp[i] = calloc(GRP_SIZE, 1);
-	}
+
 #endif //ARM9
 #ifdef PC
 	// allocate memory for resources (needs ~512K)
@@ -85,10 +82,25 @@ void init_resource(struct resources* r){
 			r->col[i + COL_BANKS * lower] = &r->col_banks[(i + lower * 3) * COL_SIZE / 2];
 		}
 	}
+#endif //PC
+	// Shared code
 	for (int i = 0; i < 4; ++i){
+		iprintf("GRP%d calloc: %d\n", i, GRP_SIZE);
 		r->grp[i] = calloc(GRP_SIZE, 1);
 	}
-#endif //PC
+	// Store these in memory for faster load times on keyboard switching
+	for (int i = 0; i < 12; ++i){
+		r->key_chr[i] = calloc(CHR_SIZE, 1);
+	}
+	const char* key_files[12] = {
+		"resources/SPD6.PTC", "resources/SPD7.PTC",
+		"resources/makeALPHA_SHIFT.NCGR","resources/makeALPHA_SHIFT.NCGR",
+		"resources/makeKIGOU.NCGR","resources/makeKIGOU.NCGR",
+		"resources/makeKIGOU_SHIFT.NCGR","resources/makeKIGOU_SHIFT.NCGR",
+		"resources/makeKANA.NCGR","resources/makeKANA.NCGR",
+		"resources/makeKANA_SHIFT.NCGR","resources/makeKANA_SHIFT.NCGR",
+	};
+	
 	// Load default resource files
 	const char* chr_files = 
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
@@ -111,6 +123,10 @@ void init_resource(struct resources* r){
 			name[10+j] = col_files[4*i+j];
 		}
 		load_col((u8*)r->col[i], name);
+	}
+	// Load keyboard sprites in-memory for fast access
+	for (int i = 0; i < 12; ++i){
+		load_file(r->key_chr[i], key_files[i], 48 + (i >= 2 && i % 2 ? CHR_SIZE : 0), CHR_SIZE);
 	}
 }
 

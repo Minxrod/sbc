@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+#include <assert.h>
+
 struct ptc;
 
 struct background {
@@ -30,7 +32,12 @@ struct background {
 struct background* init_background(void);
 void free_background(struct background* b);
 
-u16 to_tiledata(u16 chr, u8 pal, bool h, bool v);
+static inline u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
+	assert((chr & 0x3ff) == chr);
+	assert((pal & 0xf) == pal);
+	
+	return (chr & 0x3ff) | ((h & 0x1) << 10) | ((v & 0x1) << 11) | ((pal & 0xf) << 12);	
+}
 
 //u16* bg_page(struct ptc* p, u8 page, u8 layer);
 u16 bg_index(uint_fast8_t x, uint_fast8_t y);
