@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common.h"
+
 struct ptc;
 
 void cmd_for(struct ptc* p);
@@ -15,7 +17,7 @@ void cmd_step(struct ptc* p);
 /// * variable - Optional variable for iteration
 /// 
 /// @param a Arguments
-void cmd_next(struct ptc* p);
+void cmd_next(struct ptc* p) ITCM_CODE;
 
 // IF uses the value on the stack to determine where to jump to next, either the
 // THEN/GOTO block or the ELSE block.

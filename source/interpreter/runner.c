@@ -37,7 +37,7 @@ void ptc_stub(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-const ptc_call ptc_commands[] = {
+DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_print, cmd_locate, cmd_color, NULL, // dim
 	cmd_for, cmd_to, cmd_step, cmd_next,
 	cmd_if, cmd_then, cmd_else, cmd_endif,
@@ -61,14 +61,14 @@ const ptc_call ptc_commands[] = {
 	NULL //TMREAD,
 };
 
-const ptc_call ptc_operators[] = {
+DTCM_DATA const ptc_call ptc_operators[] = {
 	op_add, op_comma, op_sub, op_mult, op_div, op_semi, op_assign, op_negate,
 	op_equal, op_inequal, op_less, op_greater, op_less_equal, op_greater_equal,
 	op_modulo,
 	op_and, op_or, op_xor, op_not, op_logical_not
 };
 
-const ptc_call ptc_functions[] = {
+DTCM_DATA const ptc_call ptc_functions[] = {
 	NULL, func_asc, NULL, NULL, NULL, NULL, func_btrig, func_button,
 	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, func_iconchk, //FUNC_ICONCHK
 	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, func_pow, NULL, //FUNC_RAD
@@ -76,7 +76,7 @@ const ptc_call ptc_functions[] = {
 	NULL, NULL, func_str, func_subst, NULL, func_val, //FUNC_VAL
 };
 
-const ptc_call ptc_sysvars[] = {
+DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
 	NULL, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
 	NULL, NULL, NULL, NULL, NULL, //RESULT
@@ -102,7 +102,7 @@ void print_name(const char* names, int data){
 /// @param code Program bytecode struct.
 /// @param p PTC struct containing entire state of interpreter + system
 /// 
-void run(struct program* code, struct ptc* p) {
+void run(struct bytecode code, struct ptc* p) {
 	struct runner* r = &p->exec;
 	r->index = 0;
 	r->data_index = 0;
@@ -110,11 +110,11 @@ void run(struct program* code, struct ptc* p) {
 	r->code = code;
 	p->stack.stack_i = 0;
 	
-	while (r->index < code->size && !p->exec.error){
+	while (r->index < code.size && !p->exec.error){
 		// get one instruction and execute it
 		start_time(&p->time);
-		char instr = code->data[r->index++];
-		char data = code->data[r->index++];
+		char instr = code.data[r->index++];
+		char data = code.data[r->index++];
 		
 		iprintf("%c ", instr);
 		
@@ -133,9 +133,9 @@ void run(struct program* code, struct ptc* p) {
 			case BC_LABEL_STRING:
 			case BC_STRING:
 				iprintf("len=%d ", data);
-				iprintf("%.*s", data, &code->data[r->index]);
+				iprintf("%.*s", data, &code.data[r->index]);
 				// push string pointer to the stack
-				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_STRING, {.ptr = (void*)&code->data[r->index-2]}};
+				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_STRING, {.ptr = (void*)&code.data[r->index-2]}};
 				r->index += data + (data & 1); // to next instruction
 				check_time(&p->time, 1);
 				break;
@@ -152,6 +152,7 @@ void run(struct program* code, struct ptc* p) {
 					ptc_commands[(u32)data](p);
 				} else {
 					r->error = ERR_UNIMPLEMENTED;
+					break;
 				}
 				// FOR,TO,STEP use stack for BC_BEGIN_LOOP so don't clear
 				// ON ignores value to pass it to GOTO/GOSUB, so don't clear
@@ -208,10 +209,10 @@ void run(struct program* code, struct ptc* p) {
 				{
 				fixp number = 0;
 				
-				number |= (char)code->data[r->index++] << 24;
-				number |= (unsigned char)code->data[r->index++] << 16;
-				number |= (unsigned char)code->data[r->index++] << 8;
-				number |= (unsigned char)code->data[r->index++];
+				number |= (char)code.data[r->index++] << 24;
+				number |= (unsigned char)code.data[r->index++] << 16;
+				number |= (unsigned char)code.data[r->index++] << 8;
+				number |= (unsigned char)code.data[r->index++];
 				
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {number}};
 				iprintf("num=%.12f", number / 4096.0);
@@ -234,9 +235,9 @@ void run(struct program* code, struct ptc* p) {
 				// length of variable name
 				u8 len;
 				if (data < 'A'){
-					name = &code->data[r->index];
-					len = code->data[r->index+(u8)data-1] == '$' ? data-1 : data;
-					t = code->data[r->index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER; 
+					name = (char*)&code.data[r->index];
+					len = code.data[r->index+(u8)data-1] == '$' ? data-1 : data;
+					t = code.data[r->index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER; 
 				} else {
 					name = &data;
 					len = 1;
@@ -270,10 +271,10 @@ void run(struct program* code, struct ptc* p) {
 				
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
 				if (data < 'A'){
-					iprintf("%.*s", data, &code->data[r->index]);
+					iprintf("%.*s", data, &code.data[r->index]);
 					r->index += data + (data & 1); // to next instruction
 				} else {
-					iprintf("%c", code->data[r->index-1]);
+					iprintf("%c", code.data[r->index-1]);
 				}
 				//debug
 	//			stack_print(&p->stack);
@@ -297,7 +298,7 @@ void run(struct program* code, struct ptc* p) {
 					get_new_arr_var(&p->vars, &data, 1, VAR_NUMBER | VAR_ARRAY, a, b);
 					r->error = p->vars.error;
 				} else {
-					char* x = &code->data[r->index];
+					char* x = (char*)&code.data[r->index];
 					iprintf("%.*s", data, x);
 					r->index += data + (data & 1); // to next instruction
 					
@@ -357,8 +358,8 @@ void run(struct program* code, struct ptc* p) {
 							break;
 						}
 						// Found BC_COMMAND; check if NEXT or FOR
-//						instr = p->exec.code->data[index];
-						data = p->exec.code->data[index+1];
+//						instr = p->exec.code.data[index];
+						data = p->exec.code.data[index+1];
 						if (data == CMD_NEXT){
 							// TODO:IMPL:HIGH Check variable for a given NEXT to see if it counts or not
 							// find NEXT, go back one instruction, execute statement if it is VAR?

@@ -30,14 +30,11 @@ int test_tokens(void){
 	// Tokenization of array declaration
 	{
 		char* code = "DIM A[16]\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\020A\001DA";
 		// compile program
@@ -47,19 +44,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of 2D array declaration
 	{
 		char* code = "DIM A[3,5]\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\003n\005A\002DA";
 		// compile program
@@ -69,19 +65,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM 2");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of multiple array declaration
 	{
 		char* code = "DIM A[6],B[3,2]\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\006A\001DAn\003n\002A\002DB";
 		// compile program
@@ -91,19 +86,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM 1,2");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of complex array declaration
 	{
 		char* code = "DIM A[6+B[5]]\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\006n\005A\001VBO\000A\001DA";
 		// compile program
@@ -113,19 +107,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Tokenize DIM with enclosed array access");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of function call with variable lengths
 	{
 		char* code = "?PI()\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "A\000F\027c\000";
 		// compile program
@@ -135,19 +128,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Call function with no arguments");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of function call with variable lengths
 	{
 		char* code = "?ATAN(2,4)\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\002n\004A\002F\002c\000";
 		// compile program
@@ -157,19 +149,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Call function with two simple arguments");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of function call with variable lengths
 	{
 		char* code = "?ATAN(ABS(2),ABS(6))\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\002A\001F\000n\006A\001F\000A\002F\002c\000";
 		// compile program
@@ -179,19 +170,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Call function with two expression arguments");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// Tokenization of array access with assignment
 	{
 		char* code = "A[0]=7\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\000A\001VAn\007O\006";
 		// compile program
@@ -201,19 +191,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Array access assignment");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// DIM of string array
 	{
 		char* code = "DIM A$[1]\rA$[0]=\"A\"\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "n\001A\001D\002A$n\000A\001V\002A$S\001A\0O\06";
 		// compile program
@@ -223,19 +212,19 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Array access assignment");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == 8, "[tokens] Correct line length");
+		ASSERT(o.line_length[1] == 14, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// PRINT special eval rules
 	{
 		char* code = "PRINT A,B,,C;D,E,;F G\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "VAO\1VBO\1O\1VCO\5VDO\1VEO\1O\5VFVGc\0";
 		// compile program
@@ -245,19 +234,18 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] PRINT implicit and explicit commas/semis");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length"); // Check line length correct
+		free_bytecode(o);
 	}
 	
 	// FOR tokenization
 	{
 		char* code = "FOR I=0 TO 9:?I:NEXT\r";
-		char code2[64];
 		// run program
 		struct program p = {
-			strlen(code), code,
+			strlen(code), code
 		};
-		struct program o = {
-			0, code2,
-		};
+		struct bytecode o = init_bytecode(p.size);
 		
 		char* bytecode = "VIc\4n\0O\6n\11C\5B\0VIc\0c\7";
 		// compile program
@@ -267,6 +255,8 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[tokens] Test FOR tokenization");
 		}
 		iprintf("\n");
+		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
+		free_bytecode(o);
 	}
 	
 	// IF tokenization
@@ -361,6 +351,25 @@ int test_tokens(void){
 	// MAINCNTL
 	{
 		ASSERT(token_code("?MAINCNTL\r", "Y\6c\0", 4), "[tokens] Sysvar with eight character name");
+	}
+	
+	// Line lengths checking
+	{
+		char* code = "?I\r?I,\r?PI()+43\r?PI()+123456\r";
+		// run program
+		struct program p = {
+			strlen(code), code
+		};
+		struct bytecode o = init_bytecode(p.size);
+		
+		// compile program
+		tokenize(&p, &o);
+		ASSERT(o.line_length[0] == 4, "[tokens] Correct line length");
+		ASSERT(o.line_length[1] == 6, "[tokens] Correct line length");
+		ASSERT(o.line_length[2] == 10, "[tokens] Correct line length");
+		ASSERT(o.line_length[3] == 14, "[tokens] Correct line length");
+		free_bytecode(o);
+
 	}
 	
 	SUCCESS("test_tokens success");

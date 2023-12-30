@@ -15,40 +15,39 @@ int test_int_code(){
 	// Code searching
 	{
 		char* code = "FOR I=0 TO 9\r\rNEXT\r";
-		char buf[64];
 		struct program p = {
-			strlen(code),
-			code,
+			strlen(code), code
 		};
-		struct program o = {0, buf};
+		struct bytecode o = init_bytecode(p.size);
 		
 		tokenize(&p, &o);
 		
-		u32 i = bc_scan(&o, 0, BC_OPERATOR);
+		u32 i = bc_scan(o, 0, BC_OPERATOR);
 		ASSERT(i == 6, "[bc_scan] Find index of operator");
+		free_bytecode(o);
 	}
 	
 	// Code searching (not faked)
 	{
 		char* code = "?\"O=\"+\"O=\"\r";
-		char buf[64];
 		struct program p = {
-			strlen(code),
-			code,
+			strlen(code), code,
 		};
-		struct program o = {0, buf};
+		struct bytecode o = init_bytecode(p.size);
 		
 		tokenize(&p, &o);
 		
-		u32 i = bc_scan(&o, 0, BC_OPERATOR);
+		u32 i = bc_scan(o, 0, BC_OPERATOR);
 		ASSERT(i == 8, "[bc_scan] Find index of operator without being in string");
+		free_bytecode(o);
 	}
 	
 	// Code searching (Variable name)
 	{
 		char* code = "V\3ABC\0L\1A\0";
-		struct program o = {8, code};
-		u32 i = bc_scan(&o, 0, BC_LABEL);
+		u8 lines[4];
+		struct bytecode o = {8, (u8*)code, lines};
+		u32 i = bc_scan(o, 0, BC_LABEL);
 		ASSERT(i == 6, "[bc_scan] Find index of label past variable name");
 	}
 	

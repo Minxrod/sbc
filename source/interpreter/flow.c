@@ -21,7 +21,7 @@ void cmd_for(struct ptc* p){
 	u32 index = p->exec.index;
 	do {
 		index = bc_scan(p->exec.code, index + 2, BC_OPERATOR);
-	} while (index != BC_SCAN_NOT_FOUND && p->exec.code->data[index+1] != OP_ASSIGN);
+	} while (index != BC_SCAN_NOT_FOUND && p->exec.code.data[index+1] != OP_ASSIGN);
 //	iprintf("\nIndex of OP_ASSIGN: %ld", index);
 	if (index == BC_SCAN_NOT_FOUND){
 		p->exec.error = ERR_MISSING_OP_ASSIGN_FOR;
@@ -53,8 +53,6 @@ void cmd_step(struct ptc* p){
 /// 
 /// @param a Arguments
 void cmd_next(struct ptc* p){
-	struct program for_condition;
-	
 	// get NEXT variable if needed
 	struct stack_entry* e = NULL;
 	if (p->stack.stack_i){
@@ -86,14 +84,16 @@ void cmd_next(struct ptc* p){
 	struct call_entry* c = &p->calls.entry[stack_i];
 	u32 addr = c->address; //points to just after FOR
 	// march address forward until hitting B command
+	// TODO:PERF:LOW Execute to BC_BEGIN_LOOP instead of searching to it first
 	addr = bc_scan(p->exec.code, addr, BC_BEGIN_LOOP);
-	struct program* code = p->exec.code;
+	struct bytecode code = p->exec.code;
 	struct runner temp = p->exec; // copy code state (not stack)
 	
 	// addr points to loop condition setup
+	struct bytecode for_condition;
 	for_condition.size = addr - c->address;
-	for_condition.data = &code->data[c->address];
-	run(&for_condition, p);
+	for_condition.data = &code.data[c->address];
+	run(for_condition, p);
 	p->exec = temp; //restore program state
 	
 	// now stack should contain (END, [STEP])
@@ -127,22 +127,25 @@ void cmd_next(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-idx search_label(struct ptc* p, const char* label){
+idx search_label(struct ptc* p, void* label){
+	// Use the lengths of lines to calculate line beginnings.
+	// Labels must always be located at the beginning of a line.
 	idx index = 0;
-	while ((index = bc_scan(p->exec.code, index, BC_LABEL)) != BC_SCAN_NOT_FOUND){
-		// found index: check correctness
-		// TODO:PERF:LOW fast search/cache label locations?
-		// iprintf("%c,%s", p->exec.code->data[index], label);
-		if (str_comp(&p->exec.code->data[index], label)){
-			// this is the index, jump to here
-			break;
+	int line = 0; (void)line;
+	// Start searching from current line (TODO go backwards)
+//	while (index < p->exec.index){
+//		index += p->exec.code.line_length[line++];
+//	}
+//	index -= p->exec.code.line_length[--line];
+	// Check for labels
+	while (index < p->exec.code.size){
+		if (p->exec.code.data[index] == BC_LABEL){
+			if (str_comp(&p->exec.code.data[index], label)){
+				// this is the index, jump to label
+				return index;
+			}
 		}
-		u8 len = p->exec.code->data[index+1];
-		index += 2 + len + (len & 1);
-	}
-	if (index == BC_SCAN_NOT_FOUND){
-		p->exec.error = ERR_LABEL_NOT_FOUND;
-		return p->exec.code->size;
+		index += p->exec.code.line_length[line++];
 	}
 	return index;
 }
@@ -159,7 +162,7 @@ void cmd_if(struct ptc* p){
 	} else {
 		// false: proceed to ELSE or ENDIF
 		while ((index = bc_scan(p->exec.code, index, BC_COMMAND)) != BC_SCAN_NOT_FOUND){
-			if (p->exec.code->data[index+1] == CMD_ELSE || p->exec.code->data[index+1] == CMD_ENDIF){
+			if (p->exec.code.data[index+1] == CMD_ELSE || p->exec.code.data[index+1] == CMD_ENDIF){
 				break; // found ELSE or ENDIF
 			}
 			// continue search past this instruction
@@ -173,7 +176,7 @@ void cmd_if(struct ptc* p){
 			index += 2; // move to instruction past ELSE or ENDIF
 		}
 	}
-	char* label = &p->exec.code->data[index];
+	char* label = (char*)&p->exec.code.data[index];
 	if (label[0] == BC_LABEL_STRING){
 		// GOTO label
 		index = search_label(p, label);
@@ -195,7 +198,7 @@ void cmd_else(struct ptc* p){
 	do {
 		index = bc_scan(p->exec.code, index, BC_COMMAND);
 	} while (index != BC_SCAN_NOT_FOUND &&
-	p->exec.code->data[index+1] != CMD_ENDIF);
+	p->exec.code.data[index+1] != CMD_ENDIF);
 	
 	if (index == BC_SCAN_NOT_FOUND){
 		p->exec.error = ERR_MISSING_ELSE_AND_ENDIF;
@@ -214,7 +217,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
 	// TODO:ERR:LOW Check that stack has entries
 	struct stack_entry* e = ARG(0);
-	char* label;
+	void* label;
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
 		s32 label_index = VALUE_INT(e);
@@ -223,15 +226,15 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 			p->stack.stack_i = 0;
 			return; // No jump: number is out of range
 		}
-		label = (char*)p->stack.entry[label_index+1].value.ptr;
+		label = p->stack.entry[label_index+1].value.ptr;
 	} else if (e->type & VAR_STRING){
-		label = (char*)e->value.ptr;
+		label = e->value.ptr;
 	} else {
 		// Typeless variable? something went wrong
 		p->stack.stack_i = 0;
 		ERROR(ERR_UNKNOWN_TYPE);
 	}
-	if (label[0] == BC_LABEL_STRING){
+	if (label){
 		// Search code for label
 		u32 index = search_label(p, label);
 		
@@ -242,9 +245,6 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 		}
 		
 		p->exec.index = index;
-	} else {
-		// TODO:IMPL:HIGH Implement actual strings as arguments (should be similar)
-		p->exec.error = ERR_UNIMPLEMENTED;
 	}
 	// GOTO needs to clear stack of labels
 	p->stack.stack_i = 0;
@@ -285,7 +285,7 @@ void cmd_return(struct ptc* p){
 }
 
 void cmd_end(struct ptc* p){
-	p->exec.index = p->exec.code->size;
+	p->exec.index = p->exec.code.size;
 }
 
 void cmd_stop(struct ptc* p){

@@ -10,21 +10,22 @@
 int check_fail;
 
 // This is a global so as to use less stack space for very limited systems
-char outcode[2048];
+//char outcode[2048];
+//u8 outcode_lines[128];
 
 /// Fully paramtereized execution function. Intended to be used for executing test code.
 /// Can be supplied with memory limits and input sequences.
 /// keys is not null-terminated - length must be provided.
 /// This is because \0 can be typed and is distinct from typing nothing.
 struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int var_limit, int str_limit, int arr_limit){
-	assert(strlen(code) < 1024); // prevents exceeding outcode buffer
-	memset(outcode, 0x0f, 2048); // identify errors of failing to write
+//	assert(strlen(code) < 1024); // prevents exceeding outcode buffer
+//	memset(outcode, 0x0f, 2048); // identify errors of failing to write
 	// init system
 	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit);
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
 	struct program p = { strlen(code), code };
-	struct program o = { 0, outcode };
+	struct bytecode o = init_bytecode(p.size);
 	ptc->exec.error = tokenize(&p, &o);
 	
 	// buffer inkeys
@@ -33,12 +34,12 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 			set_inkey(&ptc->input, to_wide(keys[i]));
 	}
 	// run code
-	run(&o, ptc);
+	run(o, ptc);
 	
 	if (ptc->exec.error){
 		iprintf("Error: %s\n", error_messages[ptc->exec.error]);
 	}
-	
+//	free_bytecode(o); // Note: Doing this here causes reads of strings to be invalid during test cases
 	return ptc;
 }
 
@@ -57,6 +58,7 @@ struct ptc* run_code(char* code){
 }
 
 void free_code(struct ptc* ptc){
+	free_bytecode(ptc->exec.code);
 	free_system(ptc);
 }
 
@@ -76,7 +78,7 @@ bool check_code_error(char* code, enum err_code expected){
 
 int token_code(char* code, char* expected, int size){
 	struct program p = { strlen(code), code };
-	struct program o = { 0, outcode };
+	struct bytecode o = init_bytecode(p.size);
 	
 	bool error = 0;
 	// compile program
@@ -90,5 +92,6 @@ int token_code(char* code, char* expected, int size){
 		}
 	}
 	iprintf("\n");
+	free_bytecode(o);
 	return !error;
 }

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
 
 void op_add(struct ptc* p){
 	struct value_stack* s = &p->stack;

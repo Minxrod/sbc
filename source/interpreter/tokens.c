@@ -60,53 +60,6 @@ const char* labels = "LABEL   ";
 
 const char* comments = "REM     ";
 
-// Scans for a specific instruction. Special purpose function to handle the
-// various instruction lengths.
-idx bc_scan(struct program* code, idx index, u8 find){
-	// search for find in code->data
-	while (index < code->size){ 
-		u8 cur = code->data[index];
-//		iprintf("%d: %c,%d", (int)index, cur >= 32 ? cur : '?', code->data[index+1]);
-		if (cur == find){
-			return index;
-		}
-		//debug! 
-		u8 len = code->data[++index];
-//		iprintf("/%.*s\n", len, &code->data[index+1]);
-		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING || cur == BC_DATA){
-			index++;
-			index += len + (len & 1);
-		} else if (cur == BC_WIDE_STRING){
-			index++;
-			index += sizeof(u16) * len;
-		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME){
-			cur = len;
-			++index;
-			if (cur >= 'A'){
-			} else {
-				index += len + (len & 1);
-			}
-		} else if (cur == BC_NUMBER){
-			index += 6-1; // change if number syntax gets modified?
-		} else {
-			index += 2-1;
-		}
-	}
-	return BC_SCAN_NOT_FOUND;
-}
-
-/// @warning Only capable of finding instructions that have size of two bytes.
-/// Such as BC_COMMAND, BC_FUNCTION, etc.
-idx bc_scan_2(struct program* code, idx index, u8 instr, u8 data){
-	while (index < code->size){
-		index = bc_scan(code, index, instr);
-		if (index == BC_SCAN_NOT_FOUND) return index; // not found
-		else if (code->data[index+1] == data) return index; // found exact match
-		else index += 2; // found instruction but not data; continue search
-	}
-	return BC_SCAN_NOT_FOUND;
-}
-
 // Note: Expects null-terminated string
 int tok_in_str_index(const char* str, const char* data, struct token* tok){
 	int index;
@@ -174,13 +127,14 @@ void print_token(struct tokenizer* state, struct token t){
 	iprintf("\n");
 }
 
-int tokenize(struct program* src, struct program* out){
+int tokenize(struct program* src, struct bytecode* out){
 	struct tokenizer state = {0};
 	state.source = src;
 	state.output = out;
 	state.cursor = 0;
 	state.is_comment = 0;
 	state.state = TKR_NONE;
+	state.lines_processed = 0;
 	int error = ERR_NONE;
 	
 	while (state.cursor < state.source->size){
@@ -223,8 +177,12 @@ int tok_convert(struct tokenizer* state){
 	int test_res = tok_test(state);
 	if (test_res != ERR_NONE) return test_res;
 	
+	int line_begin = state->output->size;
 	int code_res = tok_code(state);
 	if (code_res != ERR_NONE) return code_res;
+	int line_end = state->output->size;
+	int line_length = line_end - line_begin;
+	state->output->line_length[state->lines_processed++] = line_length;
 	
 	return ERR_NONE;
 }
@@ -586,7 +544,7 @@ fixp tok_to_num(struct tokenizer* state, struct token* t){
 
 int tok_code(struct tokenizer* state){
 	// assume the order is fixed
-	char* data = state->output->data;
+	char* data = (char*)state->output->data;
 	idx* size = &state->output->size;
 	
 	for (size_t i = 0; i < state->token_i; ++i){

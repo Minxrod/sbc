@@ -73,13 +73,12 @@ int main(void){
 	// set this after creating system to ensure resources are loaded
 	
 	prg_load(&program, "programs/PERFTS2.PTC");
-	iprintf("program malloc: %d\n", 2*program.size);
-	struct program bc = {0, malloc(2*program.size)};
+	struct bytecode bc = init_bytecode(program.size);
 	tokenize(&program, &bc);
 //	free(program.data);
 	irqSet(IRQ_VBLANK, frame_update);
 	// only needs BC, not source
-	run(&bc, ptc);
+	run(bc, ptc);
 	
 	return 0;
 }
@@ -116,11 +115,11 @@ int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
 	
 	// TODO:IMPL:MED Check for escapes, pauses, etc.
-	struct program bc = {0, malloc(2*info->prg->size)};
+	struct bytecode bc = init_bytecode(info->prg->size);
 	info->p->exec.error = tokenize(info->prg, &bc);
 	free(info->prg->data);
 	// only needs BC, not source
-	run(&bc, info->p);
+	run(bc, info->p);
 	
 	if (info->p->exec.error){
 		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
@@ -131,6 +130,7 @@ int system_launch(void* launch_info){
 		con_newline(&info->p->console, true);
 	}
 	
+	free_bytecode(bc);
 	return info->p->exec.error;
 }
 
@@ -145,7 +145,7 @@ int main(int argc, char** argv){
 		prg_load(&program, argv[1]);
 	} else {
 		// Load default program: TODO:IMPL:LOW load an actual launcher program
-		prg_load(&program, "programs/SAMPLE2.PTC");
+		prg_load(&program, "programs/SAMPLE7.PTC");
 	}
 	// Auto-inputs
 	FILE* inputs = NULL;

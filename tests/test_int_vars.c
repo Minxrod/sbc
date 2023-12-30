@@ -65,7 +65,6 @@ int test_int_vars(){
 		ASSERT(str_comp(s, str2), "[assign] Assign string");
 		
 		free_code(p);
-
 	}
 	
 	{

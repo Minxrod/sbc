@@ -78,13 +78,13 @@ void cmd_read(struct ptc* p){
 	// Get variables from stack and call read() into each of them (using DATA string as source)
 	// Get pointer, offset for data
 	// TODO:CODE:LOW Constant for 2
-	u8* data_block = (u8*)&p->exec.code->data[p->exec.data_index]; //points to BC_DATA
+	u8* data_block = (u8*)&p->exec.code.data[p->exec.data_index]; //points to BC_DATA
 	u8 block_size = data_block[1];
 	u8* data_src;
 	
 	if (data_block[0] != BC_DATA){
 		find_data(p);
-		data_block = (u8*)&p->exec.code->data[p->exec.data_index];
+		data_block = (u8*)&p->exec.code.data[p->exec.data_index];
 		if (p->exec.error) return; // ran out of DATA
 	}
 	
@@ -104,7 +104,7 @@ void cmd_read(struct ptc* p){
 		if (p->exec.data_offset >= block_size){
 			// search for next data block
 			find_data(p);
-			data_block = (u8*)&p->exec.code->data[p->exec.data_index];
+			data_block = (u8*)&p->exec.code.data[p->exec.data_index];
 			if (p->exec.error) return; // ran out of DATA
 		}
 	}

@@ -58,15 +58,17 @@ struct tokenizer {
 	// Tokens for a line
 	struct token tokens[TOKENS_LINE_MAX]; //max possible per line
 	// Current token index
-	u8 token_i;
+	uint_fast8_t token_i;
 	
 	bool is_comment;
 	// Values obtained while parsing
 	
-	struct program* output;
+	struct bytecode* output;
+	
+	uint_fast16_t lines_processed;
 };
 
-int tokenize(struct program* src, struct program* output);
+int tokenize(struct program* src, struct bytecode* output);
 
 int tok_none(struct tokenizer* state);
 
@@ -89,11 +91,3 @@ bool check_cmd(const char* stack, int stack_len, const char* valid);
 
 /// Returns error code
 int tok_test(struct tokenizer* state);
-
-// Scans for location of some instruction starting from index
-// Returns the index of found string
-idx bc_scan(struct program* code, idx index, u8 find);
-idx bc_scan_2(struct program* code, idx index, u8 instr, u8 data);
-
-#include <limits.h>
-#define BC_SCAN_NOT_FOUND UINT_MAX

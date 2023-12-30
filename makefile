@@ -41,9 +41,11 @@ $(BUILD)%.o: %.c
 .phony: main test
 
 main: main_build
+profile: CFLAGS+=--coverage
+profile: LFLAGS+=-lgcov
+profile: main_build
 test: CFLAGS+=--coverage
 test: LFLAGS+=-lgcov
-
 test: test_build
 
 main_build: $(main_objs)
@@ -61,6 +63,8 @@ clean:
 	rm -f $(main_objs) $(test_objs)
 	rm -f test
 	rm -f $(build:%.o=%.d)
+	rm -f $(build:%.o=%.gcda)
+	rm -f $(build:%.o=%.gcno)
 	
 # https://stackoverflow.com/questions/313778/generate-dependencies-for-a-makefile-for-a-project-in-c-c	
 # https://stackoverflow.com/a/10168396

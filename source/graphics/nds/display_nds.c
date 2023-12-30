@@ -22,6 +22,7 @@ void display_draw_all(struct ptc* p){
 	for (int i = 0; i < PROFILER_TIMERS; ++i){
 		con_putn_at(&p->console, 23, i, i << FIXPOINT);
 		con_putn_at(&p->console, 26, i, timerTicks2usec(p->time.profile[i]) << FIXPOINT);
+		con_put(&p->console, to_wide(' '));
 	}
 	p->console.x = x;
 	p->console.y = y;
