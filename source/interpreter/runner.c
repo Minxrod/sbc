@@ -37,28 +37,34 @@ void ptc_stub(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+void ptc_err(struct ptc* p){
+	// The "I haven't done this yet" function
+	ERROR(ERR_UNIMPLEMENTED);
+}
+
+
 DTCM_DATA const ptc_call ptc_commands[] = {
-	cmd_print, cmd_locate, cmd_color, NULL, // dim
+	cmd_print, cmd_locate, cmd_color, ptc_err, // dim
 	cmd_for, cmd_to, cmd_step, cmd_next,
 	cmd_if, cmd_then, cmd_else, cmd_endif,
 	cmd_goto, cmd_gosub, cmd_on, cmd_return,
 	cmd_end, cmd_stop,
 	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
 	cmd_input, cmd_linput,
-	NULL, ptc_stub, //BEEP
-	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, NULL, //BGMCLEAR 
-	NULL, NULL, NULL, NULL, NULL, ptc_stub, NULL, //BGMVOL
-	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, NULL, //CHRREAD
-	NULL, cmd_clear, NULL, NULL, NULL, NULL, //CONT
-	ptc_stub, NULL, cmd_dtread, NULL, cmd_gbox, //GBOX
-	NULL, cmd_gcls, cmd_gcolor, NULL, NULL, cmd_gfill, cmd_gline, // GLINE, 
-	cmd_gpage, NULL, cmd_gpset, NULL, NULL, cmd_iconclr, cmd_iconset, //ICONSET, 
-	NULL, NULL, NULL, NULL, //NEW, 
-	cmd_pnlstr, cmd_pnltype, cmd_read, NULL, NULL, NULL, //RENAME, 
-	cmd_restore, NULL, NULL, NULL, NULL, NULL, NULL, //SPANGLE, 
-	NULL, NULL, cmd_spclr, NULL, NULL, NULL, cmd_spofs, cmd_sppage, //SPPAGE,
-	NULL, NULL, cmd_spset, NULL, NULL, //SWAP, 
-	NULL //TMREAD,
+	ptc_err, ptc_stub, //BEEP
+	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_err, //BGMCLEAR 
+	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_stub, ptc_err, //BGMVOL
+	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, ptc_err, //CHRREAD
+	ptc_err, cmd_clear, ptc_err, ptc_err, ptc_err, ptc_err, //CONT
+	ptc_stub, ptc_err, cmd_dtread, ptc_err, cmd_gbox, //GBOX
+	ptc_err, cmd_gcls, cmd_gcolor, ptc_err, ptc_err, cmd_gfill, cmd_gline, // GLINE, 
+	cmd_gpage, ptc_err, cmd_gpset, ptc_err, ptc_err, cmd_iconclr, cmd_iconset, //ICONSET, 
+	ptc_err, ptc_err, ptc_err, ptc_err, //NEW, 
+	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
+	cmd_restore, ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, //SPANGLE, 
+	ptc_err, ptc_err, cmd_spclr, ptc_err, ptc_err, ptc_err, cmd_spofs, cmd_sppage, //SPPAGE,
+	ptc_err, ptc_err, cmd_spset, ptc_err, ptc_err, //SWAP, 
+	ptc_err //TMREAD,
 };
 
 DTCM_DATA const ptc_call ptc_operators[] = {
@@ -69,23 +75,23 @@ DTCM_DATA const ptc_call ptc_operators[] = {
 };
 
 DTCM_DATA const ptc_call ptc_functions[] = {
-	NULL, func_asc, NULL, NULL, NULL, NULL, func_btrig, func_button,
-	NULL, func_chr, NULL, NULL, NULL, func_floor, NULL, NULL, func_iconchk, //FUNC_ICONCHK
-	func_inkey, func_instr, NULL, func_len, func_log, func_mid, func_pi, func_pow, NULL, //FUNC_RAD
-	NULL, func_rnd, NULL, func_sin, NULL, NULL, NULL, NULL, //FUNC_SPHITRC
-	NULL, NULL, func_str, func_subst, NULL, func_val, //FUNC_VAL
+	ptc_err, func_asc, ptc_err, ptc_err, ptc_err, ptc_err, func_btrig, func_button,
+	ptc_err, func_chr, ptc_err, ptc_err, ptc_err, func_floor, ptc_err, ptc_err, func_iconchk, //FUNC_ICONCHK
+	func_inkey, func_instr, ptc_err, func_len, func_log, func_mid, func_pi, func_pow, ptc_err, //FUNC_RAD
+	ptc_err, func_rnd, ptc_err, func_sin, ptc_err, ptc_err, ptc_err, ptc_err, //FUNC_SPHITRC
+	ptc_err, ptc_err, func_str, func_subst, ptc_err, func_val, //FUNC_VAL
 };
 
 DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
-	NULL, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
-	NULL, NULL, NULL, NULL, NULL, //RESULT
+	ptc_err, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
+	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, //RESULT
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
 };
 
 /// Debug function for checking command/function names from IDs
-void print_name(const char* names, int data){
+static inline void print_name(const char* names, int data){
 	char name[9] = {0};
 	for (size_t i = 0; i < 8; ++i){
 		name[i] = names[8*data + i];

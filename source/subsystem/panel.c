@@ -166,6 +166,7 @@ void init_panel(struct ptc* p){
 
 void free_panel(struct ptc* p){
 	free_console(p->panel.text);
+	free_console(p->panel.keys_text);
 }
 
 void cmd_pnltype(struct ptc* p){

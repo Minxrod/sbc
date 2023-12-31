@@ -4,6 +4,7 @@
 #include "program.h"
 #include "strs.h" // for character id functions
 #include "error.h"
+#include "interpreter/label.h" // for adding label entry
 
 #include <stdio.h>
 #include <stdint.h>
@@ -169,6 +170,15 @@ int tokenize(struct program* src, struct bytecode* out){
 int tok_convert(struct tokenizer* state){
 	// convert the tokens into bytecode
 	// this can be done per-line
+	
+	assert(state->token_i);
+	if (state->tokens[0].type == label){
+		// Add a label pointing to current index
+		if (!add_label(state->output->labels, &state->source->data[state->tokens[0].ofs], state->tokens[0].len, state->output->size)){
+			return ERR_LABEL_ADD_FAILURE;
+		}
+		// TODO:PERF:LOW Don't tokenize labels into code; rely only on table entries?
+	}
 	
 	tok_prio(state);
 	

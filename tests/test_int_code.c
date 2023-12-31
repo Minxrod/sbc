@@ -45,8 +45,7 @@ int test_int_code(){
 	// Code searching (Variable name)
 	{
 		char* code = "V\3ABC\0L\1A\0";
-		u8 lines[4];
-		struct bytecode o = {8, (u8*)code, lines};
+		struct bytecode o = {8, (u8*)code, NULL, NULL};
 		u32 i = bc_scan(o, 0, BC_LABEL);
 		ASSERT(i == 6, "[bc_scan] Find index of label past variable name");
 	}

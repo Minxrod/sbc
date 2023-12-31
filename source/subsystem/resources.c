@@ -143,6 +143,10 @@ void free_resource(struct resources* r){
 	for (int i = 0; i < 4; ++i){
 		free(r->grp[i]);
 	}
+	for (int i = 0; i < 12; ++i){
+		free(r->key_chr[i]);
+	}
+
 }
 
 

@@ -74,7 +74,7 @@ union value {
 };
 
 struct named_var {
-	u8 type;
+	uint_fast8_t type;
 	char name[16];
 	union value value;
 };
@@ -94,9 +94,6 @@ struct variables {
 	/// Error status for variable accesses
 	enum err_code error;
 };
-
-int var_name_hash(char*, u32, u32);
-bool namecmp(char* a, u32 len, char b[16]);
 
 // allocate var table for `var_count` variables
 void init_mem_var(struct variables* v, uint_fast16_t var_count);

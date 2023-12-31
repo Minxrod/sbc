@@ -61,6 +61,30 @@ bool is_varname(const char c){
 	return is_name(c) || c == '$';
 }
 
+// Used as index into var table directly.
+u32 name_hash(char* name, u32 len, u32 hmax){
+	assert((hmax & (hmax - 1)) == 0);
+	u32 hash = name[0]; // prevents single-char conflicts
+	for (u32 i=1; i<len; ++i){
+		hash += (name[i]-'A')*i*179;
+	}
+	return hash % hmax;
+}
+
+bool namecmp(char* a, u32 len, char b[16]){
+	assert(len <= 16);
+	for (u32 i = 0; i < len; ++i){
+		if (a[i] != b[i]){
+			return false;
+		}
+	}
+	if (len == 16)
+		return true;
+	else {
+		return b[len] == '\0';
+	}
+}
+
 /// Allocate memory for strs
 void init_mem_str(struct strings* s, uint_fast16_t str_count, enum string_type str_type){
 	s->strs_max = str_count;

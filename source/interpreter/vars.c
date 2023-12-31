@@ -23,28 +23,6 @@ void* value_str(struct stack_entry* e){
 	return value;
 }
 
-// Used as index into var table directly.
-int var_name_hash(char* name, u32 len, u32 hmax){
-	int hash = 0;
-	for (u32 i=0; i<len; ++i){
-		hash += (name[i]-'A')*i*179;
-	}
-	return hash % hmax;
-}
-
-bool namecmp(char* a, u32 len, char b[16]){
-	for (u32 i = 0; i < len; ++i){
-		if (a[i] != b[i]){
-			return false;
-		}
-	}
-	if (len == 16)
-		return true;
-	else {
-		return b[len] == '\0';
-	}
-}
-
 /// Allocate memory for vars.
 void init_mem_var(struct variables* v, uint_fast16_t var_count){
 	// Check for power of two
@@ -81,7 +59,7 @@ struct named_var* test_var(struct variables* v, char* name, enum types type){
 
 struct named_var* search_name_type(struct variables* v, char* name, u32 len, enum types type){
 	struct named_var* var = NULL;
-	int hash = var_name_hash(name, len, v->vars_max);
+	int hash = name_hash(name, len, v->vars_max);
 	u32 step = 0;
 	
 	do {

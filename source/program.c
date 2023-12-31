@@ -3,6 +3,7 @@
 #include "system.h"
 #include "header.h"
 #include "ptc.h"
+#include "interpreter/label.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,10 +26,12 @@ void init_mem_prg(struct program* p, int prg_size){
 
 struct bytecode init_bytecode(int bc_max_size){
 	iprintf("init_bytecode calloc: %d\n", bc_max_size*2);
+	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
 	struct bytecode bc = {
-		0, calloc(2, bc_max_size), calloc(1, MAX_LINES)
+		0, calloc(2, bc_max_size), calloc(1, MAX_LINES), calloc(1, sizeof(struct labels))
 	};
 	assert(bc.data);
+	assert(bc.labels);
 	assert(bc.line_length);
 	return bc;
 }
@@ -36,6 +39,7 @@ struct bytecode init_bytecode(int bc_max_size){
 void free_bytecode(struct bytecode bc){
 	free(bc.data);
 	free(bc.line_length);
+	free(bc.labels);
 }
 
 // Scans for a specific instruction. Special purpose function to handle the

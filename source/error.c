@@ -53,4 +53,5 @@ const char * error_messages[] = {
 	"Unknown token type in tok_test!",
 	"Stack not empty after tok_test!",
 	"Unknown token type in tok_code!",
+	"Failed to generate label entry",
 };

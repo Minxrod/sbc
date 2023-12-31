@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+struct labels;
+
 #define MAX_LINES 10000
 
 // Program source loaded from ex. PTC file?
@@ -18,8 +20,10 @@ struct bytecode {
 	idx size;
 	// Program data (pairs of instructions and data)
 	u8* data;
-	// Can be used to traverse line-by-line
+//	// Can be used to traverse line-by-line
 	u8* line_length;
+	// 
+	struct labels* labels;
 };
 
 void init_mem_prg(struct program* p, int prg_size);

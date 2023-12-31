@@ -131,7 +131,7 @@ idx search_label(struct ptc* p, void* label){
 	// Use the lengths of lines to calculate line beginnings.
 	// Labels must always be located at the beginning of a line.
 	idx index = 0;
-	int line = 0; (void)line;
+/*	int line = 0; (void)line;
 	// Start searching from current line (TODO go backwards)
 //	while (index < p->exec.index){
 //		index += p->exec.code.line_length[line++];
@@ -146,6 +146,14 @@ idx search_label(struct ptc* p, void* label){
 			}
 		}
 		index += p->exec.code.line_length[line++];
+	}*/
+	u8 buf[16];
+	assert(str_len(label) <= 16);
+	str_char_copy(label, buf);
+	index = label_index(p->exec.code.labels, (char*)buf, str_len(label));
+	if (index == LABEL_NOT_FOUND){
+		p->exec.error = ERR_LABEL_NOT_FOUND;
+		return p->exec.code.size; // error'd anyways, skip to end
 	}
 	return index;
 }

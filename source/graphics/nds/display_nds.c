@@ -28,7 +28,7 @@ void display_draw_all(struct ptc* p){
 	p->console.y = y;
 #endif
 	
-//	start_time(NULL);
+	start_time(NULL);
 	// Copy color palettes
 	u16* destinations[6] = {
 		(u16*)BG_PALETTE,
@@ -49,26 +49,25 @@ void display_draw_all(struct ptc* p){
 	
 	vramSetBankG(VRAM_G_SPRITE_EXT_PALETTE);
 	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
-//	check_time(&p->time, 13); //~91
+	check_time(&p->time, 13); //~91
 	
 	// Set screen
 	for (int screen = 0; screen <= 1; ++screen){
 #ifndef NDEBUG
 			if (screen) return; // Allows lower screen to be used for debugging
 #endif
-//		for (int prio = 3; prio >= 0; --prio){
-//		start_time(NULL);
+		start_time(NULL);
 		display_draw_graphics(p, screen, 0);
-//		check_time(&p->time, 14); // 1368
-//		start_time(NULL);
+		check_time(&p->time, 14); // 1368
+		start_time(NULL);
 		display_draw_background(p, screen, 0);
-//		check_time(&p->time, 15);
-//		start_time(NULL);
+		check_time(&p->time, 15);
+		start_time(NULL);
 		display_draw_sprite(p, screen, 0);
-//		check_time(&p->time, 16); //168
-//		start_time(NULL);
+		check_time(&p->time, 16); //168
+		start_time(NULL);
 		display_draw_text(p, screen, 0);
-//		check_time(&p->time, 17); //529
+		check_time(&p->time, 17); //529
 	}
 	
 }
@@ -219,7 +218,7 @@ void display_draw_graphics(struct ptc* p, int screen, int prio){
 	// Note that VRAM can only be read in 16bit or higher units (but libnds memcpy is fine if aligned)
 	u8* src = p->res.grp[p->graphics.info[screen].displaypage];
 	u8* dest = (u8*)(screen ? VRAM_GRP_CHR + VRAM_LOWER_OFS : VRAM_GRP_CHR);
-	
+//	(void)src; (void)dest;
 	DC_FlushRange(src, GRP_SIZE); // Flush cache https://libnds.devkitpro.org/dma_8h.html
 	dmaCopyWords(3, src, dest, GRP_SIZE); // DMA W 1368
 //	dmaCopy(src, dest, GRP_SIZE); // DMA HW 1730

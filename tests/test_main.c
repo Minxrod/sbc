@@ -12,6 +12,7 @@ int test_vars();
 int test_strs();
 int test_arrs();
 int test_tokens();
+int test_label();
 
 int test_math();
 
@@ -37,6 +38,7 @@ int run_tests(){
 	FAST(test_strs());
 	FAST(test_arrs());
 	FAST(test_tokens());
+	FAST(test_label());
 	
 	FAST(test_math());
 	

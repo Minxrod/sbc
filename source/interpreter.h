@@ -20,4 +20,5 @@
 #include "interpreter/runner.h"
 #include "interpreter/flow.h"
 #include "interpreter/stack.h"
+#include "interpreter/label.h"
 

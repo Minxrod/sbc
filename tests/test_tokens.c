@@ -4,6 +4,7 @@
 #include "interpreter/tokens.h"
 #include "program.h"
 #include "ptc.h"
+#include "interpreter/label.h" // for label generation verification
 
 #include <string.h>
 
@@ -369,7 +370,23 @@ int test_tokens(void){
 		ASSERT(o.line_length[2] == 10, "[tokens] Correct line length");
 		ASSERT(o.line_length[3] == 14, "[tokens] Correct line length");
 		free_bytecode(o);
-
+	}
+	
+	// Label checking
+	{
+		char* code = "@0\rI=I+1\r@1\rI=I+1\r@2\r";
+		// run program
+		struct program p = {
+			strlen(code), code
+		};
+		struct bytecode o = init_bytecode(p.size);
+		
+		// compile program
+		tokenize(&p, &o);
+		ASSERT(label_index(o.labels, "0", 1) == 0, "[tokens] Label @0 generated successfully");
+		ASSERT(label_index(o.labels, "1", 1) == 14, "[tokens] Label @1 generated successfully");
+		ASSERT(label_index(o.labels, "2", 1) == 28, "[tokens] Label @2 generated successfully");
+		free_bytecode(o);
 	}
 	
 	SUCCESS("test_tokens success");

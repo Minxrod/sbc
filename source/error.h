@@ -53,6 +53,7 @@ enum err_code {
 	ERR_TEST_UNKNOWN,
 	ERR_TEST_STACK,
 	ERR_UNKNOWN_TOKEN_TYPE,
+	ERR_LABEL_ADD_FAILURE,
 };
 
 extern const char * error_messages[];
