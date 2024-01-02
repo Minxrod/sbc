@@ -42,7 +42,7 @@ void sys_date(struct ptc* p){
 	struct tm* tm = localtime(&t);
 	
 	int day = tm->tm_mday;
-	int month = tm->tm_mon;
+	int month = tm->tm_mon + 1;
 	int year = tm->tm_year + 1900;
 	
 	struct string* str = get_new_str(&p->strs);

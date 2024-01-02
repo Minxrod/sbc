@@ -74,13 +74,4 @@ void cmd_visible(struct ptc*);
 void cmd_vsync(struct ptc*);
 void cmd_wait(struct ptc*);
 void cmd_clear(struct ptc*);
-
-#ifdef ARM9
-void system_draw(struct ptc* p);
-#endif
-#ifdef PC
-struct sfRenderWindow;
-
-void system_draw(struct sfRenderWindow*, struct ptc*);
-#endif
-
+void cmd_swap(struct ptc*);

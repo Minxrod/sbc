@@ -5,6 +5,7 @@
 #include "strs.h" // for character id functions
 #include "error.h"
 #include "interpreter/label.h" // for adding label entry
+#include "data.h" // for BC_DATA_DELIM (TODO:CODE:LOW Move this somewhere else...?)
 
 #include <stdio.h>
 #include <stdint.h>
@@ -137,6 +138,9 @@ int tokenize(struct program* src, struct bytecode* out){
 	state.state = TKR_NONE;
 	state.lines_processed = 0;
 	int error = ERR_NONE;
+	// Re-initialize bc
+	out->size = 0;
+	reset_label(out->labels);
 	
 	while (state.cursor < state.source->size){
 		error = tok_none(&state);
@@ -203,6 +207,7 @@ int tok_convert(struct tokenizer* state){
 // S = string
 // s = string var
 // a = array [only SORT,RSORT should use this?]
+// v = variable list
 // E = both
 // L = label (includes string)
 // l = label list
@@ -221,25 +226,25 @@ const char* cmd_format[] = {
 	"v,S;v","s,S;s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
 	"NNNN","","","NNNNNN","", //BGMCLEAR
-	"","","","","","","", //BGMVOL
+	"","","","","","0,N,NN","", //BGMVOL
 	"NNN,NNNN","N","NNNN,NNNNNNN","","NNN","S","", //CHRREAD
 	"","0","","","","0", //CONT
-	"","","Snnn","","NNNN,NNNNN", //GBOX
+	"","","Snnn","S","NNNN,NNNNN", //GBOX
 	"","0,N","N","","","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","","NN,NNN","","","","NN",//ICONSET
 	"","","","",//NEW
 	"NNS","S","*","","","",//RENAME
-	"L","","0","","","","",//SPANGLE
+	"L","NNv","0","","","NNv","",//SPANGLE
 	"","","0,N","","","","NNN,NNNN","N",//SPPAGE
-	"","","NNNNNN,NNNNNNNN","","",//SWAP
+	"","","NNNNNN,NNNNNNNN","","nn,ss",//SWAP
 	"",//TMREAD
 };
 
 const char* func_format[] = {
 	"N","S","N,NN","","","","0","0,N",//BUTTON
-	"NN","N","N","N","","N","NN,NNN","N,NN","",//ICONCHK
-	"0","SS,SSN","","S","N","SNN","0","NN","N",//RAD
-	"","N","N","N","","","","",//SPHITRC
+	"NN","N","N","N","","N","NN,NNN","N,NN","0",//ICONCHK
+	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
+	"SN","N","N","N","","","","",//SPHITRC
 	"","N","N","SNNS","","S",//VAL
 };
 
@@ -339,6 +344,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 				return true;
 				
 			default:
+				// TODO:CODE:MED Change this to invalid to make errors clearer
 				iprintf("Invalid format string is always valid.\n");
 				return true;
 		}
@@ -368,6 +374,7 @@ int tok_test(struct tokenizer* state){
 		print_token(state, state->tokens[i]);
 		switch (state->tokens[i].type){
 			case number:
+			case base_number:
 				stack[stack_i++] = 'N';
 				break;
 			
@@ -583,11 +590,14 @@ int tok_code(struct tokenizer* state){
 								const char* names = t.type == command ? commands : t.type == function ? functions : t.type == sysvar ? sysvars : bc_conv_operations;
 								for (size_t j = 0; j < 8; ++j){
 									char c = names[8*t.ofs+j];
-									if (c != ' '){
-										data[(*size)++] = c;
+									if (c == ' '){
+										break;
+									} else if (c == ','){
+										data[(*size)++] = BC_DATA_DELIM;
 										(*data_size)++;
 									} else {
-										break;
+										data[(*size)++] = c;
+										(*data_size)++;
 									}
 								}
 								}
@@ -599,10 +609,19 @@ int tok_code(struct tokenizer* state){
 								// (this is handled by the outer FOR loop)
 								break;
 							
-							default:
+							case string:
+								// Don't convert commas
 								*data_size += t.len;
 								for (size_t j = 0; j < t.len; ++j){
 									data[(*size)++] = state->source->data[t.ofs + j];
+								}
+								break;
+							
+							default:
+								*data_size += t.len;
+								for (size_t j = 0; j < t.len; ++j){
+									u8 c = state->source->data[t.ofs + j];
+									data[(*size)++] = c == ',' ? BC_DATA_DELIM : c;
 								}
 						}
 						++i;
@@ -620,24 +639,29 @@ int tok_code(struct tokenizer* state){
 				}
 				break;
 			
+			case base_number:
+				;
+				int base = state->source->data[state->tokens[i].ofs+1] == 'H' ? 16 : 2;
+				
+				fixp n = u8_to_number((u8*)&state->source->data[state->tokens[i].ofs+2], state->tokens[i].len-2, base, false);
+				goto number_common;
+				
 			case number:
-				// oops i need to convert strings to numbers - do that later...
-				if (state->tokens[i].len == 1){
+				n = tok_to_num(state, &state->tokens[i]);
+				
+			number_common:
+				if (n < INT_TO_FP(100) && n == (n & (fixp)0xfffff000)){
 					data[(*size)++] = BC_SMALL_NUMBER;
-					data[(*size)++] = state->source->data[state->tokens[i].ofs] - '0';
-				} else if (state->tokens[i].len == 2){ 
-					data[(*size)++] = BC_SMALL_NUMBER;
-					data[(*size)++] = 10*(state->source->data[state->tokens[i].ofs] - '0') + (state->source->data[state->tokens[i].ofs+1] - '0');
+					data[(*size)++] = FP_TO_INT(n);
 				} else {
-					s32 fp = tok_to_num(state, &state->tokens[i]);
-					
+					// TODO:PERF:LOW Store some numbers in less space
 					// large number
 					data[(*size)++] = BC_NUMBER;
 					data[(*size)++] = 0x0; //ignored
-					data[(*size)++] = (fp >> 24) & 0xff;
-					data[(*size)++] = (fp >> 16) & 0xff;
-					data[(*size)++] = (fp >> 8) & 0xff;
-					data[(*size)++] = (fp >> 0) & 0xff;
+					data[(*size)++] = (n >> 24) & 0xff;
+					data[(*size)++] = (n >> 16) & 0xff;
+					data[(*size)++] = (n >> 8) & 0xff;
+					data[(*size)++] = (n >> 0) & 0xff;
 				}
 				break;
 			
@@ -1069,6 +1093,8 @@ int tok_none(struct tokenizer* state){
 		state->cursor++;
 	} else if (c == '"'){
 		tok_string(state);
+	} else if (c == '&') {
+		tok_base_number(state);
 	} else if (is_number(c) || c == '.') {
 		tok_number(state);
 	} else if (c == ',' || c == ';' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
@@ -1145,6 +1171,18 @@ void tok_string(struct tokenizer* state){
 	}
 	state->token_i++;
 //	iprintf("Exited string %d\n", state->token_i);
+}
+
+void tok_base_number(struct tokenizer* state){
+	state->tokens[state->token_i].type = base_number;
+	state->tokens[state->token_i].len = 2;
+	state->tokens[state->token_i].ofs = state->cursor;
+	state->cursor += 2;
+	do {
+		state->tokens[state->token_i].len++;
+		state->cursor++;
+	} while (is_number(state->source->data[state->cursor]));
+	state->token_i++;
 }
 
 void tok_number(struct tokenizer* state){

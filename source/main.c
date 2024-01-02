@@ -97,6 +97,7 @@ void v__(void); //prevent empty translation unit
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <threads.h>
 
 #include "interpreter.h"
@@ -111,24 +112,73 @@ struct launch_info {
 	struct program* prg;
 };
 
+// TODO:CODE:MED Make program contain const char*
+char* launcher_code = "INPUT \"Program to load\";NAME$\r";
+struct program launcher = {
+	13, "LINPUT CODE$\r"
+};
+
 int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
+	struct bytecode bc = init_bytecode(524288); // TODO:TEST:NONE verify value maybe
 	
-	// TODO:IMPL:MED Check for escapes, pauses, etc.
-	struct bytecode bc = init_bytecode(info->prg->size);
-	info->p->exec.error = tokenize(info->prg, &bc);
-	free(info->prg->data);
-	// only needs BC, not source
-	run(bc, info->p);
-	
-	if (info->p->exec.error){
+	if (info->prg->size){
+		info->p->exec.error = tokenize(info->prg, &bc);
+		if (info->p->exec.error == ERR_NONE){
+			run(bc, info->p);
+		}
+		
+		// Display error status
 		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
-		con_puts(&info->p->console, "S\5Error");
+		// TODO:CODE:HIGH This includes a const cast away. What's a good way to avoid this?
+		struct string err_status = {
+			STRING_CHAR, strlen(error_messages[info->p->exec.error]), 0,
+			{.s = (u8*)error_messages[info->p->exec.error]}
+		};
+		con_puts(&info->p->console, &err_status);
 		con_newline(&info->p->console, true);
-	} else {
-		con_puts(&info->p->console, "S\2OK");
+		return info->p->exec.error;
+	}
+	
+	u8 direct_cmd[32+1] = {0};
+	struct program prog = {0, (char*)direct_cmd};
+	con_puts(&info->p->console, "S\45Small BASIC Computer            READY");
+	con_newline(&info->p->console, true);
+	bool running = true;
+	while (running){
+		// Prompt for command
+		// TODO:IMPL:LOW Redesign to remove prompt symbol
+		info->p->exec.error = ERR_NONE;
+		tokenize(&launcher, &bc);
+		run(bc, info->p);
+		
+		// Get program name from output
+		void* cmd = get_var(&info->p->vars, "CODE", 4, VAR_STRING)->value.ptr;
+		str_char_copy(cmd, direct_cmd);
+		prog.size = str_len(cmd);
+		direct_cmd[prog.size++] = '\r';
+		
+		// Execute small program
+		info->p->exec.error = ERR_NONE;
+		info->p->exec.error = tokenize(&prog, &bc);
+		if (info->p->exec.error == ERR_NONE){
+			run(bc, info->p);
+		}
+		
+		// Display error status
+		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
+		// TODO:CODE:HIGH This includes a const cast away. What's a good way to avoid this?
+		struct string err_status = {
+			STRING_CHAR, strlen(error_messages[info->p->exec.error]), 0,
+			{.s = (u8*)error_messages[info->p->exec.error]}
+		};
+		con_puts(&info->p->console, &err_status);
 		con_newline(&info->p->console, true);
 	}
+	
+//	info->p->exec.error = tokenize(info->prg, &bc);
+//	free(info->prg->data);
+	// only needs BC, not source
 	
 	free_bytecode(bc);
 	return info->p->exec.error;
@@ -136,7 +186,7 @@ int system_launch(void* launch_info){
 
 int main(int argc, char** argv){
 //	srand(time(NULL));
-	struct program program;
+	struct program program = {0};
 	
 	char* window_name = "SBC";
 	if (argc >= 2){
@@ -145,7 +195,7 @@ int main(int argc, char** argv){
 		prg_load(&program, argv[1]);
 	} else {
 		// Load default program: TODO:IMPL:LOW load an actual launcher program
-		prg_load(&program, "programs/SAMPLE7.PTC");
+//		prg_load(&program, "programs/SAMPLE7.PTC");
 	}
 	// Auto-inputs
 	FILE* inputs = NULL;
@@ -196,6 +246,7 @@ int main(int argc, char** argv){
 	
 	sfEvent event;
 	while (sfRenderWindow_isOpen(window)){
+		int b = 0; // Button codes (can be modified by some typed sequences)
 		while (sfRenderWindow_pollEvent(window, &event)){
 			if (event.type == sfEvtClosed){
 				sfRenderWindow_close(window);
@@ -203,7 +254,15 @@ int main(int argc, char** argv){
 			
 			if (event.type == sfEvtTextEntered){
 				if (event.text.unicode <= 128){
-					set_inkey(&ptc->input, to_wide(event.text.unicode));
+					// TODO:CODE:LOW Check these as additional button presses instead?
+					// TODO:IMPL:LOW Add shift, left/right?
+					if (event.text.unicode == '\b'){
+						b |= BUTTON_Y;
+					} else if (event.text.unicode == '\r'){
+						b |= BUTTON_A;
+					} else {
+						set_inkey(&ptc->input, to_wide(event.text.unicode));
+					}
 				} else if (event.text.unicode >= 12289 && event.text.unicode <= 12540){
 					if (to_char(event.text.unicode) >= 0xa1){
 						set_inkey(&ptc->input, event.text.unicode - 12289);
@@ -231,11 +290,15 @@ int main(int argc, char** argv){
 			}
 		}
 		
-		int b = 0;
 		for (int i = 0; i < 12; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
 		}
 		set_input(&ptc->input, b);
+		if (check_pressed(&ptc->input, BUTTON_ID_SELECT)){
+			// TODO:CODE:MED Move this somewhere else...?
+			// TODO:CODE:MED Thread-safety??
+			ptc->exec.error = ERR_BREAK;
+		}
 		
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
 		if (pos.x >= 0 && pos.x < 256 && pos.y >= 192 && pos.y < 192+192){

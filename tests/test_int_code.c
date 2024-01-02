@@ -171,8 +171,13 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// READ string containing comma
 	{
-		//TODO:TEST Create READ string containing comma
+		struct ptc* p = run_code("READ X$\rDATA \"Hello, world!\"\r");
+		
+		ASSERT(str_comp(test_var(&p->vars, "X", VAR_STRING)->value.ptr, "S\15Hello, world!"), "[data] Read string containing comma");
+		
+		free_code(p);
 	}
 	
 	// INKEY$ test
@@ -354,6 +359,7 @@ int test_int_code(){
 //		ASSERT(check_code_error("ELSE \x0aWeirdly, this behaves like a comment\x0a\r", ERR_NONE), "[comment] No errors");
 //	}
 	
+	// Tokenization errors integrate correctly
 	{
 		ASSERT(check_code_error("?I+\r", ERR_TEST_OPERATION), "[syntax] Check missing operator argument")
 		ASSERT(check_code_error("?PI(6)\r", ERR_TEST_FUNCTION), "[syntax] Check extra function argument")
@@ -361,6 +367,131 @@ int test_int_code(){
 		ASSERT(check_code_error("Among Us\r", ERR_TEST_STACK), "[syntax] Check extra stack values")
 		ASSERT(check_code_error("PI()\r", ERR_TEST_STACK), "[syntax] Check extra stack values")
 		ASSERT(check_code_error("\x0a\r", ERR_SYNTAX), "[syntax] Check extra stack values")
+	}
+	
+	// Simple IF ELSE check (which broke??)
+	{
+		struct ptc* p = run_code("ST = 1\rTY=69\rIF ST<21 THEN TY=13 ELSE TY=15\r?TY\r");
+		
+		ASSERT(p->exec.error == ERR_NONE, "[for] No error involving IF test");
+		CHECK_VAR_INT("ST",1);
+		CHECK_VAR_INT("TY",13);
+		
+		free_code(p);
+	}
+	
+	// EXEC simple test
+	{
+		ASSERT(check_code_error("EXEC \"file_does_not_exist.PTC\"\r", ERR_FILE_LOAD_FAILED), "[exec] Check if file load fails correctly");
+		struct ptc* p = run_code("EXEC \"tests/data/IFELSE.PTC\"\r"); // TODO:IMPL:MED How to handle search paths?
+		ASSERT(p->exec.error == ERR_NONE, "[exec] Program ran with no errors");
+		CHECK_VAR_INT("TY",13);
+		
+		free_code(p);
+	}
+	
+	// DATA multiple lines
+	{
+		char* code = "DATA 523\rDATA 46\rDATA \"389\"\rREAD D,C,B$\r";
+		// run program
+		struct ptc* p = run_code(code);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(523), "[data] D=523");
+		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(46), "[data] C=46");
+		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\003389"), "[data] B$=\"389\"");
+		free_code(p);
+	}
+	
+	// DATA no fake bytecode
+	{
+		ASSERT(check_code_error("DATA ddddddddddddd,ddddddddddd,dddddd\rREAD A$,B$,C$\r", ERR_NONE), "[data] Don't run out of data");
+	}
+	
+	// GOSUB after THEN/ELSE
+	{
+		struct ptc* p = run_code(
+			"IF TRUE THEN GOSUB @L1\r"
+			"IF FALSE THEN GOSUB @LT ELSE GOSUB @LF\r"
+			"END\r"
+			"@L1\rS=13\rRETURN\r"
+			"@LT\rD=7\rRETURN\r"
+			"@LF\rE=21\rRETURN\r"
+		);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "S", VAR_NUMBER)->value.number == INT_TO_FP(13), "[gosub] Execute branch L1");
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(0), "[gosub] Don't execute branch LT");
+		ASSERT(test_var(&p->vars, "E", VAR_NUMBER)->value.number == INT_TO_FP(21), "[gosub] Execute branch LF");
+		
+		free_code(p);
+		
+		p = run_code(
+			"IF TRUE THEN GOSUB @L1\r"
+			"IF TRUE THEN GOSUB @LT ELSE GOSUB @LF\r"
+			"END\r"
+			"@L1\rS=13\rRETURN\r"
+			"@LT\rD=7\rRETURN\r"
+			"@LF\rE=21\rRETURN\r"
+		);
+		// check output for correctness
+		ASSERT(test_var(&p->vars, "S", VAR_NUMBER)->value.number == INT_TO_FP(13), "[gosub] Execute branch L1");
+		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(7), "[gosub] Execute branch LT");
+		ASSERT(test_var(&p->vars, "E", VAR_NUMBER)->value.number == INT_TO_FP(0), "[gosub] Don't execute branch LF");
+		
+		free_code(p);
+	}
+	
+	// More GOSUB testing
+	{
+		struct ptc* p = run_code(
+			"IF 1 THEN GOSUB @L1\r"
+			"GOSUB @L1\r"
+			"END\r"
+			"@L1\rGOSUB @L2\rRETURN\r"
+			"@L2\rGOSUB @L3\rRETURN\r"
+			"@L3\rE=E+1\rRETURN\r"
+		);
+		// check output for correctness
+		ASSERT(p->exec.error == ERR_NONE, "[gosub] Nested GOSUB no error");
+		ASSERT(test_var(&p->vars, "E", VAR_NUMBER)->value.number == INT_TO_FP(2), "[gosub] Nested GOSUB E=E+1 -> 2");
+		
+		free_code(p);
+	}
+	
+	// GOSUB-IF interaction test
+	{
+		struct ptc* p = run_code(
+			"IF 0 THEN GOSUB @L\r"
+			"GOSUB @L2\r"
+			"END\r"
+//			"@L\rI=I+1\r"
+//			"IF I<10 THEN @L\r"
+//			"RETURN\r"
+			"@L2\r"
+//			"I=I-1\r"
+			"RETURN\r"
+//			"GOTO @L2\r"
+		);
+		// check output for correctness
+		ASSERT(p->exec.error == ERR_NONE, "[gosub] GOSUB-IF no error");
+//		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(4), "[gosub] Correct loop value");
+		
+		free_code(p);
+	}
+	
+	// SWAP
+	{
+		struct ptc* p = run_code(
+			"A=2990\rB=123\rSWAP A,B\r"
+			"A$=\"Hi\"\rB$=\"Bye\"\rSWAP A$,B$\r"
+		);
+		
+		ASSERT(p->exec.error == ERR_NONE, "[swap] SWAP no error");
+		CHECK_VAR_INT("A",123);
+		CHECK_VAR_INT("B",2990);
+		CHECK_VAR_STR("A","S\3Bye");
+		CHECK_VAR_STR("B","S\2Hi");
+		
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_code success");

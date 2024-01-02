@@ -56,14 +56,14 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_stub, ptc_err, //BGMVOL
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, ptc_err, //CHRREAD
 	ptc_err, cmd_clear, ptc_err, ptc_err, ptc_err, ptc_err, //CONT
-	ptc_stub, ptc_err, cmd_dtread, ptc_err, cmd_gbox, //GBOX
+	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
 	ptc_err, cmd_gcls, cmd_gcolor, ptc_err, ptc_err, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, ptc_err, ptc_err, cmd_iconclr, cmd_iconset, //ICONSET, 
 	ptc_err, ptc_err, ptc_err, ptc_err, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
 	cmd_restore, ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, //SPANGLE, 
 	ptc_err, ptc_err, cmd_spclr, ptc_err, ptc_err, ptc_err, cmd_spofs, cmd_sppage, //SPPAGE,
-	ptc_err, ptc_err, cmd_spset, ptc_err, ptc_err, //SWAP, 
+	ptc_err, ptc_err, cmd_spset, ptc_err, cmd_swap, //SWAP, 
 	ptc_err //TMREAD,
 };
 
@@ -77,8 +77,8 @@ DTCM_DATA const ptc_call ptc_operators[] = {
 DTCM_DATA const ptc_call ptc_functions[] = {
 	ptc_err, func_asc, ptc_err, ptc_err, ptc_err, ptc_err, func_btrig, func_button,
 	ptc_err, func_chr, ptc_err, ptc_err, ptc_err, func_floor, ptc_err, ptc_err, func_iconchk, //FUNC_ICONCHK
-	func_inkey, func_instr, ptc_err, func_len, func_log, func_mid, func_pi, func_pow, ptc_err, //FUNC_RAD
-	ptc_err, func_rnd, ptc_err, func_sin, ptc_err, ptc_err, ptc_err, ptc_err, //FUNC_SPHITRC
+	func_inkey, func_instr, func_left, func_len, func_log, func_mid, func_pi, func_pow, ptc_err, //FUNC_RAD
+	func_right, func_rnd, ptc_err, func_sin, ptc_err, ptc_err, ptc_err, ptc_err, //FUNC_SPHITRC
 	ptc_err, ptc_err, func_str, func_subst, ptc_err, func_val, //FUNC_VAL
 };
 
@@ -113,10 +113,10 @@ void run(struct bytecode code, struct ptc* p) {
 	r->index = 0;
 	r->data_index = 0;
 	r->data_offset = 0;
-	r->code = code;
+	r->code = code; // TODO:CODE:MED Since this is a value copy, don't use code anymore for consistency
 	p->stack.stack_i = 0;
 	
-	while (r->index < code.size && !p->exec.error){
+	while (r->index < r->code.size && !p->exec.error){
 		// get one instruction and execute it
 		start_time(&p->time);
 		char instr = code.data[r->index++];
@@ -156,6 +156,8 @@ void run(struct bytecode code, struct ptc* p) {
 				}
 				if (ptc_commands[(u32)data]){
 					ptc_commands[(u32)data](p);
+//					iprintf("End command; %d?<%d %d ", r->index, r->code.size, (int)r->error);
+					print_name(commands, data);
 				} else {
 					r->error = ERR_UNIMPLEMENTED;
 					break;
@@ -409,9 +411,41 @@ void run(struct bytecode code, struct ptc* p) {
 		iprintf("\n");
 	}
 	
+//	iprintf("%d\n", r->index);
 	/*
 	for (u32 i = 0; i < p->stack.stack_i; ++i){
 		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);
 	}
 	*/
+}
+
+void cmd_exec(struct ptc* p){
+	// EXEC filename
+	char filename_buf[257];
+	void* filename = value_str(ARG(0));
+	str_char_copy(filename, (u8*)filename_buf);
+	filename_buf[str_len(filename)] = '\0';
+	
+	// Load program into memory and tokenize into bc
+	// TODO:CODE:LOW This doesn't /look/ safe, but it should be.
+	// The bytecode is designed to always compile smaller or equal than the program
+	// source code in UCS2 (u16 chars). This shouldn't ever destroy the code
+	// being currently tokenized.
+	// TODO:TEST:MED This absolutely needs some test cases
+	iprintf("\nold=%d ", p->exec.code.size);
+	struct program prog = { 0, (char*)&p->exec.code.data[524288]};
+	if (!load_prg(&prog, filename_buf)){
+		// Failed to load, potentially destroyed code
+		ERROR(ERR_FILE_LOAD_FAILED);
+	}
+	
+	// tokenize updates all relevant exec.code values
+	p->exec.error = tokenize(&prog, &p->exec.code);
+	iprintf("new=%d\n", p->exec.code.size);
+	// error set if needed; otherwise, execute
+	// EXEC is called from run, so running happens naturally. Just reset the necessary values.
+	p->exec.index = 0; // beginning of program
+	p->exec.data_index = 0;
+	p->exec.data_offset = 0;
+	p->exec.argcount = 0;
 }

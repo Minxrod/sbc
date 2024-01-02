@@ -20,13 +20,16 @@ u16* bg_page(struct ptc* p, u8 page, u8 layer){
 	return p->res.scr[SCR_BANKS*page+2+layer];
 }
 
+#define BG_CHUNK_WIDTH 32
+#define BG_CHUNK_HEIGHT 32
+#define BG_CHUNK_SIZE (BG_CHUNK_WIDTH * BG_CHUNK_HEIGHT)
+
 u16 bg_index(uint_fast8_t x, uint_fast8_t y){
-	// TODO: Replace these with named constants?
-	int_fast8_t cx = x / 32;
-	int_fast8_t cy = y / 32;
-	int_fast8_t tx = x % 32;
-	int_fast8_t ty = y % 32;
-	return tx + ty * 32 + cx * 1024 + cy * 2048;
+	int_fast8_t cx = x / BG_CHUNK_WIDTH;
+	int_fast8_t cy = y / BG_CHUNK_HEIGHT;
+	int_fast8_t tx = x % BG_CHUNK_WIDTH;
+	int_fast8_t ty = y % BG_CHUNK_HEIGHT;
+	return tx + ty * BG_CHUNK_WIDTH + cx * BG_CHUNK_SIZE + cy * BG_CHUNK_SIZE * (BG_WIDTH / BG_CHUNK_WIDTH);
 }
 
 u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y){
@@ -34,8 +37,7 @@ u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, ui
 }
 
 void cmd_bgpage(struct ptc* p){
-	// TODO:ERR:MED bounds checking
-	p->background.page = STACK_INT(0);
+	STACK_INT_RANGE(0,0,1,p->background.page);
 }
 
 void cmd_bgclr(struct ptc* p){
@@ -90,19 +92,18 @@ void cmd_bgput(struct ptc* p){
 //BGFILL layer, x1, y1, x2, y2, tile
 //BGFILL layer, x1, y1, x2, y2, tile$
 void cmd_bgfill(struct ptc* p){
-	// TODO:ERR:MED bounds checking layer
 	// TODO:IMPL:HIGH other forms
 	uint_fast8_t layer;
 	int x1, x2, y1, y2, temp;
 	u16 tiledata;
-	layer = STACK_INT(0);
+	STACK_INT_RANGE(0,0,1,layer);
 	x1 = STACK_INT(1);
 	y1 = STACK_INT(2);
 	x2 = STACK_INT(3);
 	y2 = STACK_INT(4);
 	if (p->stack.stack_i == 6){
 		if (ARG(5)->type & VAR_NUMBER){
-			tiledata = STACK_INT(5);
+			tiledata = STACK_INT(5) & 0xffff;
 		} else {
 			ERROR(ERR_UNIMPLEMENTED);
 		}

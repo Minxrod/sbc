@@ -30,7 +30,7 @@ Untested for several versions currently.
 ## Computers
 
 There is also a makefile for regular computer platforms. (i.e. Windows, Linux)
-This targets `gcc -std=c99`, but may work with other compilers as well. If it
+This targets `gcc -std=c11`, but may work with other compilers as well. If it
 doesn't, create an issue and I'll see if I can fix it.
 
 To build the main program for the computer target, use `make -f makefile`.

@@ -161,7 +161,7 @@ int test_strs(){
 	{
 		s32 num = 0;
 		struct stack_entry s = {VAR_NUMBER | VAR_VARIABLE, {.ptr = &num}};
-		u8 input[] = "46,5";
+		u8 input[] = {'4','6',BC_DATA_DELIM,'5'};
 		int count = read_one_u8(NULL, input, 4, &s);
 		
 		ASSERT(count == 2, "[read_one] Read two characters");

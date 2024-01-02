@@ -41,7 +41,7 @@ struct console* init_console(void);
 void free_console(struct console*);
 
 void con_put(struct console* c, u16 w);
-void con_puts(struct console* c, void* s);
+void con_puts(struct console* c, const void* s);
 void con_putn(struct console* c, fixp n);
 void con_putn_at(struct console* c, int x, int y, fixp n);
 

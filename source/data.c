@@ -27,7 +27,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 		}
 		
 		// create destination and copy characters
-		for (; i < len && src[i] != ','; ++i){
+		for (; i < len && src[i] != BC_DATA_DELIM; ++i){
 			s->ptr.s[i - start] = src[i];
 		}
 		s->len = i - start;
@@ -48,7 +48,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 			u8 c = src[i];
 			if (is_number(c) || c == '-'){
 				conversion[i - start] = c;
-			} else if (c == ','){ 
+			} else if (c == BC_DATA_DELIM){ 
 				break; // stop reading here
 			} else {
 				return READ_ONE_ERR;
@@ -66,31 +66,38 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 
 // Finds and sets the data index to the next available slot
 void find_data(struct ptc* p){
-	p->exec.data_index = bc_scan(p->exec.code, p->exec.data_index, BC_DATA);
-	if (p->exec.data_index == BC_SCAN_NOT_FOUND){
-		ERROR(ERR_OUT_OF_DATA);
-	} else {
-		p->exec.data_offset = 0;
-	}
+	int ofs = p->exec.data_offset;
+	// Note: Instruction is of form BC_DATA [length] [`length` characters] [null if length % 2 is odd]
+	// To skip past this
+	p->exec.data_index = bc_scan(p->exec.code, p->exec.data_index + 2 + ofs + (ofs & 1), BC_DATA);
+	p->exec.data_offset = 0;
 }
 
 void cmd_read(struct ptc* p){
 	// Get variables from stack and call read() into each of them (using DATA string as source)
 	// Get pointer, offset for data
 	// TODO:CODE:LOW Constant for 2
-	u8* data_block = (u8*)&p->exec.code.data[p->exec.data_index]; //points to BC_DATA
-	u8 block_size = data_block[1];
+	if (p->exec.data_index == BC_SCAN_NOT_FOUND){
+		ERROR(ERR_OUT_OF_DATA);
+	}
+	u8* data_block = (u8*)&p->exec.code.data[p->exec.data_index]; //points to instruct that can be BC_DATA
+//	u8 block_size = data_block[1];
 	u8* data_src;
+	u8 block_size;
 	
 	if (data_block[0] != BC_DATA){
 		find_data(p);
+//		if (p->exec.data_index == BC_SCAN_NOT_FOUND){
+//			ERROR(ERR_OUT_OF_DATA);
+//		}
 		data_block = (u8*)&p->exec.code.data[p->exec.data_index];
-		if (p->exec.error) return; // ran out of DATA
 	}
 	
-	iprintf("READ from: src=%d size=%d\n", p->exec.data_index, block_size);
+	iprintf("READ from: ");
 	// Iterate over variables on stack
 	for (int i = 0; i < p->stack.stack_i; ++i){
+		iprintf("src=%d size=%d", p->exec.data_index, block_size);
+		block_size = data_block[1];
 		data_src = &data_block[2 + p->exec.data_offset];
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));
@@ -98,16 +105,18 @@ void cmd_read(struct ptc* p){
 			ERROR(ERR_READ_FAILURE); //TODO:ERR:LOW Return better error if the type was not assignable
 		}
 		p->exec.data_offset += read;
-		if (data_block[2 + p->exec.data_offset] == ','){
+		iprintf(" read:%d", p->exec.data_offset);
+		if (data_block[2 + p->exec.data_offset] == BC_DATA_DELIM){
 			p->exec.data_offset++;
 		}
+		iprintf(" pos:%d\n", p->exec.data_offset);
 		if (p->exec.data_offset >= block_size){
 			// search for next data block
 			find_data(p);
 			data_block = (u8*)&p->exec.code.data[p->exec.data_index];
-			if (p->exec.error) return; // ran out of DATA
 		}
 	}
+	iprintf("\n");
 }
 
 void cmd_restore(struct ptc* p){

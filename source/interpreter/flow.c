@@ -165,6 +165,7 @@ void cmd_if(struct ptc* p){
 	fixp value = STACK_NUM(0);
 //	struct stack_entry* e = stack_pop(&p->stack);
 	u32 index = p->exec.index;
+	bool jump_ok = true;
 	if (value){
 		// true: proceed to next instruction as normal
 	} else {
@@ -181,17 +182,24 @@ void cmd_if(struct ptc* p){
 			p->exec.error = ERR_MISSING_ELSE_AND_ENDIF;
 			return;
 		} else {
+			jump_ok = p->exec.code.data[index+1] == CMD_ELSE;
 			index += 2; // move to instruction past ELSE or ENDIF
 		}
 	}
+	// If there's a label AND it's not followed by a GOSUB
 	char* label = (char*)&p->exec.code.data[index];
-	if (label[0] == BC_LABEL_STRING){
-		// GOTO label
-		index = search_label(p, label);
+	if (jump_ok && label[0] == BC_LABEL_STRING){
+		int len = label[1];
+		int instr = label[2+len+(len & 1)];
+		int cmd = label[2+len+(len & 1)+1];
+		if (instr == BC_COMMAND && (cmd == CMD_GOSUB || cmd == CMD_GOTO)){
+			// Don't jump because it is handled by next instruction
+		} else {
+			// GOTO label
+			index = search_label(p, label);
+		}
 	}
 	p->exec.index = index;
-	// IF should clear stack [only contains condition]
-	p->stack.stack_i = 0;
 }
 
 void cmd_then(struct ptc* p){
@@ -202,9 +210,9 @@ void cmd_then(struct ptc* p){
 // jump to the next ENDIF.
 // TODO:IMPL:LOW Comment style ELSE should not break...
 void cmd_else(struct ptc* p){
-	u32 index = p->exec.index;
+	u32 index = p->exec.index - 2; // start from immediately after the else
 	do {
-		index = bc_scan(p->exec.code, index, BC_COMMAND);
+		index = bc_scan(p->exec.code, index + 2, BC_COMMAND);
 	} while (index != BC_SCAN_NOT_FOUND &&
 	p->exec.code.data[index+1] != CMD_ENDIF);
 	

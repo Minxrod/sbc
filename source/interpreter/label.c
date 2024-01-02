@@ -38,6 +38,12 @@ bool add_label(struct labels* l, char* name, uint_fast8_t len, idx index){
 	return true;
 }
 
+void reset_label(struct labels* l){
+	for (int i = 0; i < MAX_LABELS; ++i){
+		l->entry[i].name[0] = '\0'; // this indicates unused slot
+	}
+}
+
 // TODO:CODE:LOW Merge with find_label_slot?
 // Finds the location of a previously defined label
 int find_label(struct labels* l, char* name, uint_fast8_t len){

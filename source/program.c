@@ -25,10 +25,11 @@ void init_mem_prg(struct program* p, int prg_size){
 }
 
 struct bytecode init_bytecode(int bc_max_size){
-	iprintf("init_bytecode calloc: %d\n", bc_max_size*2);
+	iprintf("init_bytecode /intended/ calloc: %d\n", bc_max_size*2);
 	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
+	// TODO:CODE:HIGH remove bc_max_size
 	struct bytecode bc = {
-		0, calloc(2, bc_max_size), calloc(1, MAX_LINES), calloc(1, sizeof(struct labels))
+		0, calloc(2, 524288), calloc(1, MAX_LINES), calloc(1, sizeof(struct labels))
 	};
 	assert(bc.data);
 	assert(bc.labels);
@@ -91,11 +92,14 @@ idx bc_scan(struct bytecode code, idx index, u8 find){
 
 
 /// Allocates memory equivalent to the program size!
-void prg_load(struct program* p, const char* filename){
+/// Returns true on success, and false on failure
+// TODO:CODE:LOW Rename to match other load functions
+// TODO:CODE:MED Rename to indicate memory allocation
+bool prg_load(struct program* p, const char* filename){
 	FILE* f = fopen(filename, "r");
 	if (!f){
 		iprintf("File %s load failed!\n", filename);
-		abort();
+		return false;
 	}
 	struct ptc_header h;
 	size_t r;
@@ -106,7 +110,7 @@ void prg_load(struct program* p, const char* filename){
 	if (r < PRG_HEADER_SIZE || ferror(f)){
 		iprintf("Could not read header correctly!\n");
 		fclose(f);
-		abort();
+		return false;
 	}
 	// load success: read file to buffer
 	
@@ -117,8 +121,44 @@ void prg_load(struct program* p, const char* filename){
 	if (r < h.prg_size || ferror(f)){
 		iprintf("Could not read file corrcetly!\n");
 		fclose(f);
-		abort();
+		free(p->data);
+		return false;
 	}
 	// file read success: close file
 	fclose(f);
+	return true;
 }
+
+// TODO:CODE:MED Deduplicate with prg_load
+// Expects pre-allocated buffer of enough size.
+bool load_prg(struct program* p, const char* filename){
+	FILE* f = fopen(filename, "r");
+	if (!f){
+		iprintf("File %s load failed!\n", filename);
+		return false;
+	}
+	struct ptc_header h;
+	size_t r;
+	
+	/// TODO:CODE:MED I think this only works on little-endian devices...
+	/// (reading into header memory directly)
+	r = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
+	if (r < PRG_HEADER_SIZE || ferror(f)){
+		iprintf("Could not read header correctly!\n");
+		fclose(f);
+		return false;
+	}
+	// load success: read file to buffer
+	
+	p->size = h.prg_size;
+	r = fread(p->data, sizeof(char), h.prg_size, f);
+	if (r < h.prg_size || ferror(f)){
+		iprintf("Could not read file corrcetly!\n");
+		fclose(f);
+		return false;
+	}
+	// file read success: close file
+	fclose(f);
+	return true;
+}
+

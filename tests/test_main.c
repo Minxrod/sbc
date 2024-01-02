@@ -8,24 +8,24 @@
 
 #include "test_util.h"
 
-int test_vars();
-int test_strs();
-int test_arrs();
-int test_tokens();
-int test_label();
+int test_vars(void);
+int test_strs(void);
+int test_arrs(void);
+int test_tokens(void);
+int test_label(void);
 
-int test_math();
+int test_math(void);
 
-int test_int_vars();
-int test_int_code();
-int test_int_math();
-int test_int_func();
+int test_int_vars(void);
+int test_int_code(void);
+int test_int_math(void);
+int test_int_func(void);
 
-int test_input();
-int test_console();
-int test_background();
-int test_sprite();
-int test_graphics();
+int test_input(void);
+int test_console(void);
+int test_background(void);
+int test_sprite(void);
+int test_graphics(void);
 
 int run_tests(){
 #ifdef ARM9

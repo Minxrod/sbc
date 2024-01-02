@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interpreter/vars.h"
 #include "common.h"
@@ -124,5 +125,17 @@ void cmd_clear(struct ptc* p){
 	reset_var(&p->vars);
 	reset_str(&p->strs);
 	reset_arr(&p->arrs);
+}
+
+// TODO:CODE:LOW Move the variable functions (CLEAR, etc. to elsewhere?)
+void cmd_swap(struct ptc* p){
+	// Note: Both are variables and types are already the same via tok_test check
+	// Note that swap is swapping values, but those values depend on types
+	struct stack_entry* a = ARG(0);
+	struct stack_entry* b = ARG(1);
+	union value c;
+	memcpy(&c, a->value.ptr, sizeof(union value)); // copies from pointed-to number or string
+	memcpy(a->value.ptr, b->value.ptr, sizeof(union value));
+	memcpy(b->value.ptr, &c, sizeof(union value));
 }
 

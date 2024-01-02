@@ -44,11 +44,7 @@ void cmd_gcolor(struct ptc* p){
 void cmd_gcls(struct ptc* p){
 	u8 color;
 	if (p->stack.stack_i == 1){
-		int c = STACK_INT(0);
-		if (c > 255 || c < 0){
-			ERROR(ERR_OUT_OF_RANGE);
-		}
-		color = c;
+		STACK_INT_RANGE(0,0,255,color);
 	} else {
 		color = p->graphics.color;
 	}
@@ -62,7 +58,6 @@ void cmd_gcls(struct ptc* p){
 
 void cmd_gfill(struct ptc* p){
 	//GFILL x1 y1 x2 y2 [c]
-	//TODO:CODE:NONE Determine what type is appropriate here?
 	//TODO:ERR:LOW Check argument clamping accuracy
 	int x1 = STACK_INT(0);
 	int y1 = STACK_INT(1);
@@ -76,15 +71,9 @@ void cmd_gfill(struct ptc* p){
 	y2 = y2 < 0 ? 0 : y2 > GRP_HEIGHT ? GRP_HEIGHT : y2;
 	
 	if (p->stack.stack_i == 5){
-		int c = STACK_INT(4);
-		if (c > 255 || c < 0){
-			ERROR(ERR_OUT_OF_RANGE);
-		}
-		color = c;
-	} else if (p->stack.stack_i == 4){
-		color = p->graphics.color;
+		STACK_INT_RANGE(4,0,255,color);
 	} else {
-		ERROR(ERR_WRONG_ARG_COUNT);
+		color = p->graphics.color;
 	}
 	
 	u8* page = grp_drawpage(p);

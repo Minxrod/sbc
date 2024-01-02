@@ -21,10 +21,12 @@ void init_graphics(struct graphics* g);
 
 u16 grp_index(uint_fast8_t x, uint_fast8_t y);
 
-//TODO:TEST:LOW Need VERY complete tests for these
-// GLINE, GCIRCLE
+// Need VERY complete tests for these
+// TODO:TEST:MED GLINE
+// TODO:TEST:MED GCIRCLE
 // Need tests in general for edge cases of
-// GFILL, GBOX, GPSET
+// TODO:TEST:MED GBOX
+// TODO:TEST:MED GFILL
 void cmd_gpage(struct ptc* p);
 void cmd_gcolor(struct ptc* p);
 void cmd_gcls(struct ptc* p);

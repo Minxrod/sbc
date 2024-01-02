@@ -329,7 +329,7 @@ int test_tokens(void){
 	
 	// DATA tokenization
 	{
-		char bc[] = "d\0120,AA,BCdefd\5 G H \0";
+		char bc[] = "d\0120\000AA\000BCdefd\5 G H \0";
 		ASSERT(
 			token_code(
 				"DATA 0,AA , BCdef   \rDATA \" G H \"\r",
@@ -387,6 +387,37 @@ int test_tokens(void){
 		ASSERT(label_index(o.labels, "1", 1) == 14, "[tokens] Label @1 generated successfully");
 		ASSERT(label_index(o.labels, "2", 1) == 28, "[tokens] Label @2 generated successfully");
 		free_bytecode(o);
+	}
+	
+	// Numbers in other bases
+	{
+		ASSERT(
+			token_code(
+				"A=&H4+&H1234+&B00101+&B101010\r",
+				"VAn\4N\0\x01\x23\x40\x00O\0n\5O\0n\x2aO\0O\6",
+				22
+			), "[tokens] Test hex, binary tokenization"
+		);
+	}
+	
+	// DATA tokenization of odd length
+	{
+		// Test with shortcut strings
+		ASSERT(
+			token_code(
+				"DATA A\rDATA AA\rDATA AAA\r DATA AAAA\r",
+				"d\1A\0d\2AAd\3AAA\0d\4AAAA",
+				20
+			), "[tokens] DATA tokenization of odd length"
+		);
+		// Test with full strings
+		ASSERT(
+			token_code(
+				"DATA \"A\"\rDATA \"AA\"\rDATA \"AAA\"\r DATA \"AAAA\"\r",
+				"d\1A\0d\2AAd\3AAA\0d\4AAAA",
+				20
+			), "[tokens] DATA tokenization of odd length"
+		);
 	}
 	
 	SUCCESS("test_tokens success");

@@ -114,5 +114,49 @@ int test_int_func(){
 	}
 #endif // TEST_FULL
 	
+	// RIGHT$
+	{
+		struct ptc* p = run_code(
+			"A$=\"ABCDEFGHIJKLMNOP\"\r"
+			"B$=RIGHT$(A$,8)\r" // within range
+			"C$=RIGHT$(A$,0)\r" // nothing
+			"D$=RIGHT$(A$,26)\r" //larger than string
+			"E$=RIGHT$(A$,257)\r" //larger than possible
+			"F$=RIGHT$(A$,1)\r" //simple
+		);
+		
+		ASSERT(p->exec.error == ERR_NONE, "[right$] No errors");
+		CHECK_VAR_STR("A", "S\20ABCDEFGHIJKLMNOP");
+		CHECK_VAR_STR("B", "S\10IJKLMNOP");
+		CHECK_VAR_STR("C", "S\0");
+		CHECK_VAR_STR("D", "S\20ABCDEFGHIJKLMNOP");
+		CHECK_VAR_STR("E", "S\20ABCDEFGHIJKLMNOP");
+		CHECK_VAR_STR("F", "S\1P");
+		
+		free_code(p);
+	}
+	
+	// LEFT$
+	{
+		struct ptc* p = run_code(
+			"A$=\"ABCDEFGHIJKLMNOP\"\r"
+			"B$=LEFT$(A$,8)\r" // within range
+			"C$=LEFT$(A$,0)\r" // nothing
+			"D$=LEFT$(A$,26)\r" //larger than string
+			"E$=LEFT$(A$,257)\r" //larger than possible
+			"F$=LEFT$(A$,1)\r" //simple
+		);
+		
+		ASSERT(p->exec.error == ERR_NONE, "[left$] No errors");
+		CHECK_VAR_STR("A", "S\20ABCDEFGHIJKLMNOP");
+		CHECK_VAR_STR("B", "S\10ABCDEFGH");
+		CHECK_VAR_STR("C", "S\0");
+		CHECK_VAR_STR("D", "S\20ABCDEFGHIJKLMNOP");
+		CHECK_VAR_STR("E", "S\20ABCDEFGHIJKLMNOP");
+		CHECK_VAR_STR("F", "S\1A");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_func success");
 }

@@ -68,7 +68,7 @@ void con_put(struct console* c, u16 w){
 //TODO:PERF:LOW con_puts write directly to console via str_wide_copy?
 //(color still separate here)
 
-void con_puts(struct console* c, void* s){
+void con_puts(struct console* c, const void* s){
 	u32 len = str_len(s);
 	for (size_t i = 0; i < len; ++i){
 		con_put(c, str_at_wide(s, i));
@@ -209,7 +209,6 @@ u16* shared_input(struct ptc* p){
 	// TODO:IMPL:MED Delete, insert functionality
 	// TODO:IMPL:MED Left/right movement of cursor
 	// TODO:TEST:MED Write tests for these
-	// TODO:IMPL:MED Entering multiple characters at once with funckeys or kana should be instant
 	struct console* con = &p->console;
 	uint_fast16_t inkey;
 	uint_fast8_t keyboard;
@@ -222,7 +221,7 @@ u16* shared_input(struct ptc* p){
 		int t = get_time(&p->time);
 		// This test_mode check isn't ideal, but it allows test
 		// cases to run without waiting for an update from another thread
-		while (!con->test_mode && t == get_time(&p->time)){
+		while (!inkey && !con->test_mode && t == get_time(&p->time)){
 			// sleep for user input
 			struct timespec tspec = {.tv_nsec=1000000000/600};
 			thrd_sleep(&tspec, NULL);
@@ -237,7 +236,7 @@ u16* shared_input(struct ptc* p){
 		} else if (inkey && out_index < CONSOLE_WIDTH){
 			output[out_index++] = inkey;
 		}
-	} while (inkey != '\r'
+	} while (p->exec.error == ERR_NONE && inkey != '\r'
 			&& keyboard != 60
 			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
 	return output;
@@ -409,6 +408,7 @@ void cmd_linput(struct ptc* p){
 		s->ptr.s[j] = c;
 		s->len++;
 	}
+	con_newline(con, true); // from user entering the line successfully.
 }
 
 void sys_csrx(struct ptc* p){

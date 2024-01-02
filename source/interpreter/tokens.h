@@ -39,6 +39,7 @@ struct token {
 		sysvar,
 		label_string,
 		first_of_line_command,
+		base_number,
 	} type;
 	idx ofs;
 	u8 len;
@@ -91,3 +92,5 @@ bool check_cmd(const char* stack, int stack_len, const char* valid);
 
 /// Returns error code
 int tok_test(struct tokenizer* state);
+
+void tok_base_number(struct tokenizer* state);

@@ -169,6 +169,7 @@ void cmd_spset(struct ptc* p){
 }
 
 void cmd_spofs(struct ptc* p){
+	// TODO:ERR:MED bounds checking
 	fixp id = STACK_INT(0);
 	fixp x = STACK_NUM(1);
 	fixp y = STACK_NUM(2);

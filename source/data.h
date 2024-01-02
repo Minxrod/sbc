@@ -1,6 +1,7 @@
 #pragma once
 
 #define READ_ONE_ERR -1
+#define BC_DATA_DELIM '\0'
 
 #include "common.h"
 

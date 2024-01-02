@@ -201,6 +201,65 @@ void func_asc(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {chr}});
 }
 
+void func_right(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	// Must be done first to ensure uses are kept correctly
+	struct string* dest = get_new_str(&p->strs);
+	
+	int count;
+	
+	void* str = STACK_REL_STR(-2);
+	STACK_REL_INT_MIN(-1,0,count);
+	s->stack_i -= 2;
+	
+	int max_len = str_len(str);
+	if (!count){
+		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = empty_str}});
+		return;
+	} else if (count > max_len){
+		count = max_len;
+	}
+	
+	dest->uses = 1;
+	dest->len = count;
+	// TODO:IMPL:LOW Determine type for destination string
+	uint_fast8_t type = str_type(str); //< source type
+	str_copy_buf(str_at(str, max_len - count), str_at(dest, 0), type, dest->len);
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
+}
+
+// TODO:CODE:NONE Consider combining right and left?
+void func_left(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	// Must be done first to ensure uses are kept correctly
+	struct string* dest = get_new_str(&p->strs);
+	
+	int count;
+	
+	void* str = STACK_REL_STR(-2);
+	STACK_REL_INT_MIN(-1,0,count);
+	s->stack_i -= 2;
+	
+	int max_len = str_len(str);
+	if (!count){
+		stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = empty_str}});
+		return;
+	} else if (count > max_len){
+		count = max_len;
+	}
+	
+	dest->uses = 1;
+	dest->len = count;
+	// TODO:IMPL:LOW Determine type for destination string
+	uint_fast8_t type = str_type(str); //< source type
+	str_copy_buf(str_at(str, 0), str_at(dest, 0), type, count);
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
+}
+
 void cmd_dtread(struct ptc* p){
 	//TODO:ERR:MED Syntax error on invalid characters, wrong length
 	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.

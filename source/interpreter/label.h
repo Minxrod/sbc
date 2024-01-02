@@ -19,6 +19,8 @@ struct labels {
 
 bool add_label(struct labels* l, char* name, uint_fast8_t len, idx index);
 
+void reset_label(struct labels* l);
+
 /// Finds a label already defined and returns the index of the entry
 int find_label(struct labels* l, char* name, uint_fast8_t len);
 /// Finds an empty label slot and returns the index of the entry

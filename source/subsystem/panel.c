@@ -342,10 +342,14 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 		}
 	}
 	
-	// TODO:IMPL:HIGH Check panel enabled before allowing keys to be pressed
+	// TODO:IMPL:HIGH Allow icons even if panel is off or no keys
+	if (p->type == PNL_OFF || p->type == PNL_PNL) return;
+		
 	int pressed_key = get_pressed_key(ptc);
 	if (pressed_key){
-		if (pressed_key <= 60 || pressed_key == 65){
+		if (pressed_key == 1){
+			ptc->exec.error = ERR_BREAK;
+		} else if (pressed_key <= 60 || pressed_key == 65){
 			int source_key_map = 2 * (p->type - 2) + (p->shift != 0);
 			int source_key = pressed_key;
 			if (source_key_map == 5) source_key *= 2;

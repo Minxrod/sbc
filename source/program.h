@@ -32,7 +32,8 @@ void free_bytecode(struct bytecode);
 
 struct program init_ptr_prg(char* c);
 
-void prg_load(struct program* p, const char* filename);
+bool prg_load(struct program* p, const char* filename);
+bool load_prg(struct program* p, const char* filename);
 
 // Scans for location of some instruction starting from index
 // Returns the index of found string
