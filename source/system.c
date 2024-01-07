@@ -58,7 +58,7 @@ void free_system(struct ptc* p){
 
 //https://smilebasicsource.com/forum/thread/docs-ptc-acls
 char acls_code[] = 
-"VISIBLE 1,1,1,1,1,1:ICONCLR\r"
+"VISIBLE 1,1,1,1,1,1:'ICONCLR\r"
 "COLOR 0,0:CLS:'GDRAWMD FALSE\r"
 "FOR P=1 TO 0 STEP -1\r"
 " GPAGE P,P,P:GCOLOR 0:GCLS:'GPRIO 3\r"
@@ -71,8 +71,9 @@ char acls_code[] =
 " 'COLINIT \"GRP\",I\r"
 "NEXT\r";
 
-char acls_bytecode[2*sizeof acls_code];
+u8 acls_bytecode[2*sizeof(acls_code)];
 u8 acls_bc_lines[12];
+struct labels acls_labels = {0};
 
 void cmd_acls(struct ptc* p){
 	// copy vars and use a temp variables for this snippet
@@ -82,12 +83,14 @@ void cmd_acls(struct ptc* p){
 	struct variables vars = p->vars;
 	p->vars = temp_vars;
 	
-	struct program acls_program = { sizeof(acls_code), acls_code };
-	struct bytecode acls_bc = init_bytecode(sizeof(acls_code));
+	struct program acls_program = { sizeof(acls_code)-1, acls_code };
+	struct bytecode acls_bc = {
+		0, acls_bytecode, acls_bc_lines, &acls_labels
+	};
 	
-	tokenize(&acls_program, &acls_bc);
-	
+	p->exec.error = tokenize(&acls_program, &acls_bc);
 	run(acls_bc, p);
+	if (p->exec.error) return;
 	p->exec = cur_exec;
 	
 	// Restore proper program variable state

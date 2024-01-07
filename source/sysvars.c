@@ -130,3 +130,6 @@ void sys_maincnth(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((get_time(&p->time) & 0xfffff00000) >> 20)}});
 }
 
+void sys_sphitno(struct ptc* p){
+	STACK_RETURN_INT(p->sprites.sphitno);
+}

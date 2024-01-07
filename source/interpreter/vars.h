@@ -58,6 +58,10 @@ void* value_str(struct stack_entry* e);
 #define STACK_REL_INT_MIN(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
 #define STACK_REL_INT_MIN_SILENT(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { return; } dest = _v; }
 
+#define STACK_RETURN_INT(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((val))}}); }
+#define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); }
+#define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {(val)}}); }
+
 // This file defines the data structures used to store variable information.
 
 // Notes on vars:

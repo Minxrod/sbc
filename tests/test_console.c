@@ -263,5 +263,41 @@ int test_console(void){
 		free_code(p);
 	}
 	
+	// Scrolling out of the stupid corner
+	{
+		struct ptc* p = run_code("LOCATE 28,23\r?0,\r?1;\r");
+		
+		for (int y = 20; y < CONSOLE_HEIGHT; ++y){
+			iprintf("%d: ",y);
+			for (int x = 0; x < CONSOLE_WIDTH; ++x){
+				char c = to_char(con_text_getc(&p->console, x, y));
+				iprintf("%c", c ? c : ' ');
+			}
+			iprintf("\n");
+		}
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 28, 22), "[print] Console scrolled up (0)");
+		ASSERT(to_wide('1') == con_text_getc(&p->console, 0, 23), "[print] Console scrolled up (1)");
+		
+		free_code(p);
+	}
+	
+	// Scrolling out of the stupid corner II
+	{
+		struct ptc* p = run_code("LOCATE 28,23\r?0,\r?1\r");
+		
+		for (int y = 20; y < CONSOLE_HEIGHT; ++y){
+			iprintf("%d: ",y);
+			for (int x = 0; x < CONSOLE_WIDTH; ++x){
+				char c = to_char(con_text_getc(&p->console, x, y));
+				iprintf("%c", c ? c : ' ');
+			}
+			iprintf("\n");
+		}
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 28, 21), "[print] Console scrolled up II (0)");
+		ASSERT(to_wide('1') == con_text_getc(&p->console, 0, 22), "[print] Console scrolled up II (1)");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_console success");
 }

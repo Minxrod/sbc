@@ -108,6 +108,11 @@ struct sprites {
 		/// Sprite variables (used by `SPSETV`, `SPGETV`)
 		fixp vars[8];
 	} info[2][MAX_SPRITES];
+	
+	fixp sphitno;
+	fixp sphitx;
+	fixp sphity;
+	fixp sphitt;
 };
 
 void init_sprites(struct sprites* s);
@@ -115,6 +120,7 @@ void free_sprites(struct sprites* s);
 
 struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,int prio,int w, int h);
 
+void step_sprites(struct sprites* s);
 bool is_hit(struct sprite_info* a, struct sprite_info* b);
 
 struct ptc;
@@ -130,13 +136,13 @@ void cmd_spanim(struct ptc* p);
 void cmd_spangle(struct ptc* p);
 void cmd_spscale(struct ptc* p);
 
-void cmd_spchk(struct ptc* p);
 void cmd_spread(struct ptc* p);
 void cmd_spsetv(struct ptc* p);
-void cmd_spgetv(struct ptc* p);
+void func_spgetv(struct ptc* p);
+void func_spchk(struct ptc* p);
 
 void cmd_spcol(struct ptc* p);
 void cmd_spcolvec(struct ptc* p);
-void cmd_sphit(struct ptc* p);
-void cmd_sphitsp(struct ptc* p);
-void cmd_sphitrc(struct ptc* p);
+void func_sphit(struct ptc* p);
+void func_sphitsp(struct ptc* p);
+void func_sphitrc(struct ptc* p);

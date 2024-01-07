@@ -351,13 +351,14 @@ int test_int_code(){
 		char code[] = "' \x0aThis is a comment\x0a\rREM \x0aThis is also a comment\x0a\r";
 		
 		ASSERT(check_code_error(code, ERR_NONE), "[comment] No errors");
+		ASSERT(check_code_error(" ' T%!Y!N%:3ym;;35L:QVY:5;3q;;v5Uwb];[[\\k.;\r", ERR_NONE), "[comment] No errors");
 	}
 	
 	// ELSE comment
-	// TODO:IMPL:LOW I don't think real programs use this anyways
-//	{
+	{
+		// TODO:IMPL:LOW Doesn't really matter
 //		ASSERT(check_code_error("ELSE \x0aWeirdly, this behaves like a comment\x0a\r", ERR_NONE), "[comment] No errors");
-//	}
+	}
 	
 	// Tokenization errors integrate correctly
 	{

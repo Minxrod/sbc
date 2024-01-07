@@ -56,4 +56,5 @@ const char * error_messages[] = {
 	"Failed to generate label entry",
 	"File load failed!",
 	"Program manually stopped",
+	"Illegal function call",
 };

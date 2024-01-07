@@ -1,111 +1,13 @@
 #include "common.h"
 
-#ifdef ARM9_BUILD
-#include <nds.h>
-#include <fat.h>
-
-#include "system.h"
-#include "program.h"
-#include "interpreter/tokens.h"
-
-#include <stdio.h>
-
-void init(void){
-	//regular bank setup
-	videoSetMode(MODE_0_2D);
-	videoSetModeSub(MODE_0_2D);
-	
-	vramSetPrimaryBanks(VRAM_A_MAIN_BG, VRAM_B_MAIN_SPRITE, VRAM_C_SUB_BG, VRAM_D_SUB_SPRITE);
-	
-	// https://mtheall.com/vram.html#T0=2&NT0=1024&MB0=0&TB0=2&S0=3&T1=2&NT1=1024&MB1=4&TB1=4&S1=3&T2=2&NT2=1024&MB2=8&TB2=6&S2=3&T3=2&NT3=1024&MB3=12&TB3=6&S3=3
-	bgInit(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
-	bgInit(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
-	bgInit(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
-	bgInit(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
-	
-	bgInitSub(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
-	bgInitSub(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
-	bgInitSub(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
-	bgInitSub(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
-	
-	oamInit(&oamMain, SpriteMapping_1D_128, true);
-	oamInit(&oamSub, SpriteMapping_1D_128, true);
-	
-	// extended palette mode
-//	vramSetBankF(VRAM_F_BG_EXT_PALETTE);
-//	vramSetBankG(VRAM_G_SPRITE_EXT_PALETTE);
-//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
-//	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
-}
-
-// Global so that it can be used during interrupt
-struct ptc* ptc;
-
-void frame_update(){
-	// scan buttons
-	scanKeys();
-	// set touch here
-	touchPosition touch;
-	touchRead(&touch);
-	
-	// apply inputs
-	int b = keysCurrent();
-	set_input(&ptc->input, b);
-	
-	set_touch(&ptc->input, b & KEY_TOUCH, touch.px, touch.py);
-	press_key(ptc, b & KEY_TOUCH, touch.px, touch.py);
-	// increment frame count
-	inc_time(&ptc->time);
-	
-	// draw
-	display_draw_all(ptc);
-}
-
-int main(void){
-	init();
-	fatInitDefault();
-#ifndef NDEBUG
-	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
-#endif
-	
-	struct program program;
-	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
-	// set this after creating system to ensure resources are loaded
-	
-	prg_load(&program, "programs/PERFTS2.PTC");
-	struct bytecode bc = init_bytecode(program.size);
-	tokenize(&program, &bc);
-//	free(program.data);
-	irqSet(IRQ_VBLANK, frame_update);
-	// only needs BC, not source
-	run(bc, ptc);
-	
-	return 0;
-}
-
-#endif
-#ifdef ARM9
-void v__(void); //prevent empty translation unit
-#endif
-
-#ifdef PC
-//this is the computer-only file
-
-#include <SFML/System.h>
-#include <SFML/Graphics.h>
-#include <SFML/Window.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <threads.h>
-
 #include "interpreter.h"
 
 #include "program.h"
 #include "resources.h"
 #include "system.h"
 #include "error.h"
+
+// Common main stuff
 
 struct launch_info {
 	struct ptc* p;
@@ -184,6 +86,119 @@ int system_launch(void* launch_info){
 	return info->p->exec.error;
 }
 
+
+#ifdef ARM9_BUILD
+#include <nds.h>
+#include <fat.h>
+
+#include "system.h"
+#include "program.h"
+#include "interpreter/tokens.h"
+
+#include <stdio.h>
+
+void init(void){
+	//regular bank setup
+	videoSetMode(MODE_0_2D);
+	videoSetModeSub(MODE_0_2D);
+	
+	vramSetPrimaryBanks(VRAM_A_MAIN_BG, VRAM_B_MAIN_SPRITE, VRAM_C_SUB_BG, VRAM_D_SUB_SPRITE);
+	
+	// https://mtheall.com/vram.html#T0=2&NT0=1024&MB0=0&TB0=2&S0=3&T1=2&NT1=1024&MB1=4&TB1=4&S1=3&T2=2&NT2=1024&MB2=8&TB2=6&S2=3&T3=2&NT3=1024&MB3=12&TB3=6&S3=3
+	bgInit(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
+	bgInit(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
+	bgInit(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
+	bgInit(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	
+	bgInitSub(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
+	bgInitSub(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
+	bgInitSub(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
+	bgInitSub(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	
+	oamInit(&oamMain, SpriteMapping_1D_128, true);
+	oamInit(&oamSub, SpriteMapping_1D_128, true);
+	
+	// extended palette mode
+//	vramSetBankF(VRAM_F_BG_EXT_PALETTE);
+//	vramSetBankG(VRAM_G_SPRITE_EXT_PALETTE);
+//	vramSetBankH(VRAM_H_SUB_BG_EXT_PALETTE);
+//	vramSetBankI(VRAM_I_SUB_SPRITE_EXT_PALETTE);
+}
+
+// Global so that it can be used during interrupt
+struct ptc* ptc;
+
+void frame_update(){
+	// scan buttons
+	scanKeys();
+	// set touch here
+	touchPosition touch;
+	touchRead(&touch);
+	
+	// apply inputs
+	int b = keysCurrent();
+	set_input(&ptc->input, b);
+	
+	set_touch(&ptc->input, b & KEY_TOUCH, touch.px, touch.py);
+	press_key(ptc, b & KEY_TOUCH, touch.px, touch.py);
+	// increment frame count
+	inc_time(&ptc->time);
+	
+	// draw
+	display_draw_all(ptc);
+}
+
+int main(void){
+	init();
+	fatInitDefault();
+#ifndef NDEBUG
+	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
+#endif
+	
+	struct program program = {0};
+	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
+	
+	struct launch_info info = {ptc, &program};
+	
+	// set this after creating system to ensure resources are loaded
+	
+//	prg_load(&program, "programs/PERFTS2.PTC");
+//	struct bytecode bc = init_bytecode(program.size);
+//	tokenize(&program, &bc);
+//	free(program.data);
+	irqSet(IRQ_VBLANK, frame_update);
+	// only needs BC, not source
+	system_launch(&info);
+//	run(bc, ptc);
+	
+	return 0;
+}
+
+#endif
+#ifdef ARM9
+void v__(void); //prevent empty translation unit
+#endif
+
+#ifdef PC
+//this is the computer-only file
+
+#include <SFML/System.h>
+#include <SFML/Graphics.h>
+#include <SFML/Window.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <threads.h>
+
+#include "interpreter.h"
+
+#include "program.h"
+#include "resources.h"
+#include "system.h"
+#include "error.h"
+
+
 int main(int argc, char** argv){
 //	srand(time(NULL));
 	struct program program = {0};
@@ -210,6 +225,7 @@ int main(int argc, char** argv){
 	sfRenderWindow* window;
 	
 	window = sfRenderWindow_create((sfVideoMode){256,384,32}, window_name, sfResize | sfClose, NULL);
+	sfRenderWindow_setFramerateLimit(window, 60);
 	if (!window){
 		printf("Failed to create the render window!\n");
 		abort();
@@ -290,6 +306,7 @@ int main(int argc, char** argv){
 			}
 		}
 		
+		// various frame updates
 		for (int i = 0; i < 12; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
 		}
@@ -305,6 +322,8 @@ int main(int argc, char** argv){
 			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
 			press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
 		}
+		step_sprites(&ptc->sprites);
+		step_background(&ptc->background);
 		inc_time(&ptc->time);
 		
 		display_draw_all(ptc);

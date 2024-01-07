@@ -26,6 +26,7 @@ int test_console(void);
 int test_background(void);
 int test_sprite(void);
 int test_graphics(void);
+int test_resources(void);
 
 int run_tests(){
 #ifdef ARM9
@@ -53,6 +54,7 @@ int run_tests(){
 	FAST(test_background());
 	FAST(test_sprite());
 	FAST(test_graphics());
+	FAST(test_resources());
 	
 	return 0;
 }

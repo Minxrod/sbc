@@ -54,7 +54,8 @@ void free_console(struct console* c){
 }
 
 void con_put(struct console* c, u16 w){
-	if (c->y == 24) { con_scroll(c); }
+	assert(c->x >= 0 && c->x < CONSOLE_WIDTH);
+	assert(c->y >= 0 && c->y < CONSOLE_HEIGHT);
 	c->text[c->y][c->x] = w;
 	c->color[c->y][c->x] = c->col;
 	
@@ -69,6 +70,9 @@ void con_put(struct console* c, u16 w){
 //(color still separate here)
 
 void con_puts(struct console* c, const void* s){
+	if (c->y >= CONSOLE_HEIGHT){
+		con_scroll(c);
+	}
 	u32 len = str_len(s);
 	for (size_t i = 0; i < len; ++i){
 		con_put(c, str_at_wide(s, i));
@@ -90,10 +94,7 @@ void con_putn_at(struct console* c, int x, int y, fixp n){
 }
 
 void cmd_print(struct ptc* p){
-//	struct stack* s = &p->stack;
 	struct console* c = &p->console;
-//	u8 buf[16]; 
-//	buf[0]=STRING_INLINE_CHAR;
 	
 	u32 i = 0;
 	while (i < p->stack.stack_i){
@@ -109,20 +110,13 @@ void cmd_print(struct ptc* p){
 				do {
 					con_put(c, to_wide(' '));
 				} while (c->x % c->tabstep != 0);
-				if (c->y == CONSOLE_HEIGHT){
-					con_newline(c, false);
-				}
 			} else if (e->value.number == OP_SEMICOLON){
 				// do nothing lol
 			} else {
-				// error
-				p->exec.error = ERR_PRINT_INVALID_OP;
-				return;
+				ERROR(ERR_PRINT_INVALID_OP); // should never happen
 			}
 		} else {
-			// what
-			p->exec.error = ERR_PRINT_INVALID_STACK;
-			return;
+			ERROR(ERR_PRINT_INVALID_STACK); // should probably never happen
 		}
 		i++;
 	}
@@ -207,13 +201,13 @@ u16* shared_input(struct ptc* p){
 	// TODO:IMPL:LOW Remove color when backspacing
 	// TODO:IMPL:MED Blinking text cursor
 	// TODO:IMPL:MED Delete, insert functionality
-	// TODO:IMPL:MED Left/right movement of cursor
 	// TODO:TEST:MED Write tests for these
 	struct console* con = &p->console;
 	uint_fast16_t inkey;
 	uint_fast8_t keyboard;
 	u16* output = con->text[con->y]; // start of current line
 	uint_fast8_t out_index = 0;
+	uint_fast8_t out_index_max = 0;
 	do {
 		inkey = get_inkey(&p->input);
 		keyboard = get_pressed_key(p);
@@ -227,14 +221,42 @@ u16* shared_input(struct ptc* p){
 			thrd_sleep(&tspec, NULL);
 		}
 		// Check for special keys
-		if ((keyboard == 15 || check_pressed_manual(&p->input, BUTTON_ID_Y, 15 ,4))){
+		if ((keyboard == 15 || check_pressed(&p->input, BUTTON_ID_Y))){
+			// Copy characters back
 			if (out_index > 0){
-				output[--out_index] = 0;
+				for (int i = out_index-1; i < (int)out_index_max; ++i){
+					output[i] = output[i+1];
+				}
+				output[--out_index_max] = 0;
+				--out_index;
+			}
+		} else if (keyboard == 67){
+			// Copy characters back
+			if (out_index < out_index_max){
+				for (int i = out_index; i < (int)out_index_max; ++i){
+					output[i] = output[i+1];
+				}
+				output[--out_index_max] = 0;
 			}
 		} else if (inkey == '\r'){
 			// don't add this one
-		} else if (inkey && out_index < CONSOLE_WIDTH){
-			output[out_index++] = inkey;
+		} else if (inkey && out_index_max < CONSOLE_WIDTH){
+			if ((p->panel.cursor & ~PNL_INSERT)){ // REPLACE mode
+				output[out_index++] = inkey;
+				if (out_index > out_index_max)
+					++out_index_max;
+			} else { // INSERT mode
+				// Copy characters past insertion point forward
+				for (int i = out_index_max-1; i >= (int)out_index; --i){
+					output[i+1] = output[i];
+				}
+				output[out_index++] = inkey;
+				++out_index_max;
+			}
+		} else if (check_pressed(&p->input, BUTTON_ID_LEFT)){
+			out_index -= out_index > 0;
+		} else if (check_pressed(&p->input, BUTTON_ID_RIGHT)){
+			out_index += out_index < out_index_max;
 		}
 	} while (p->exec.error == ERR_NONE && inkey != '\r'
 			&& keyboard != 60

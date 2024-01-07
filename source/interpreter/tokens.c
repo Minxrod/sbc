@@ -225,26 +225,26 @@ const char* cmd_format[] = {
 	"0","NNNNNN","0","N","N", //WAIT
 	"v,S;v","s,S;s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
-	"NNNN","","","NNNNNN","", //BGMCLEAR
+	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNNNNN","", //BGMCLEAR
 	"","","","","","0,N,NN","", //BGMVOL
-	"NNN,NNNN","N","NNNN,NNNNNNN","","NNN","S","", //CHRREAD
+	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","", //CHRREAD
 	"","0","","","","0", //CONT
 	"","","Snnn","S","NNNN,NNNNN", //GBOX
-	"","0,N","N","","","NNNN,NNNNN","NNNN,NNNNN",//GLINE
-	"N,NNN","","NN,NNN","","","","NN",//ICONSET
-	"","","","",//NEW
+	"","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
+	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
+	"","","S,SN","",//NEW
 	"NNS","S","*","","","",//RENAME
-	"L","NNv","0","","","NNv","",//SPANGLE
-	"","","0,N","","","","NNN,NNNN","N",//SPPAGE
-	"","","NNNNNN,NNNNNNNN","","nn,ss",//SWAP
+	"L","NNv","0","","","NNv","NN,NNN,NNNN",//SPANGLE
+	"","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
+	"NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
 	"",//TMREAD
 };
 
 const char* func_format[] = {
-	"N","S","N,NN","","","","0","0,N",//BUTTON
+	"N","S","N,NN","N","","","0","0,N",//BUTTON
 	"NN","N","N","N","","N","NN,NNN","N,NN","0",//ICONCHK
 	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
-	"SN","N","N","N","","","","",//SPHITRC
+	"SN","N","N","N","N","NN","N,NN","",//SPHITRC
 	"","N","N","SNNS","","S",//VAL
 };
 
@@ -282,7 +282,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 	for (int valid_i = 0; valid_i < valid_len;){
 		char s = stack[stack_i++];
 		char v = valid[valid_i++];
-		iprintf(" %d s=%c ?= v=%c valid=%d\n", valid_i, s, v, is_valid);
+		iprintf(" %d:%d s=%c ?= v=%c valid=%d\n", stack_i, valid_i, s, v, is_valid);
 		if (v == ',') {
 			if (is_valid && stack_i > stack_len) return true;
 			stack_i = 0;
@@ -350,7 +350,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 		}
 	}
 	if (stack_i != stack_len) return false;
-	return true;
+	return is_valid;
 }
 
 int tok_test(struct tokenizer* state){

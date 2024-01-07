@@ -56,6 +56,7 @@ enum err_code {
 	ERR_LABEL_ADD_FAILURE,
 	ERR_FAILED_FILE_LOAD,
 	ERR_BREAK,
+	ERR_ILLEGAL_FUNCTION_CALL,
 };
 // TODO:CODE:NONE Dedup file fail load errors
 

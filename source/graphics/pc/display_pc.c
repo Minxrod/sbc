@@ -37,29 +37,6 @@ void init_display(struct ptc* p){
 		}
 	}
 	
-	// TODO:CODE:LOW
-	const char* chr_files = 
-	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
-	"SPU0SPU1SPU2SPU3SPU4SPU5SPU6SPU7SPS0SPS1"
-	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
-	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
-	const char* col_files = "COL0COL1COL2COL0COL1COL2";
-	char name[] = "resources/XXXX.PTC";
-
-	for (int i = 0; i < CHR_BANKS * 2; ++i){
-		for (int j = 0; j < 4; ++j){
-			name[10+j] = chr_files[4*i+j];
-		}
-		load_chr(r->chr[i], name);
-	}
-	
-	for (int i = 0; i < 6; ++i){
-		for (int j = 0; j < 4; ++j){
-			name[10+j] = col_files[4*i+j];
-		}
-		load_col((u8*)r->col[i], name);
-	}
-	
 	// Generate PC textures here
 	for (int page = 0; page <= 1; ++page){
 		d->chr_tex[0+5*page] = gen_chr_texture(r->chr[0+CHR_BANKS*page], 512); //BGF
@@ -158,33 +135,43 @@ void display_draw_all(struct ptc* p){
 	d->rs = sfRenderStates_default();
 	sfShader* shader = p->display.shader;
 
-	sfShader_setTextureUniform(shader, "colors", d->col_tex);
-	sfShader_setCurrentTextureUniform(shader, "texture");
 	d->rs.shader = shader;
 	
-	sfShader_setTextureUniform(shader, "colors", d->col_tex);
-	sfShader_setCurrentTextureUniform(shader, "texture");
 	sfShader_setFloatUniform(shader, "colbank", 0);
 	
 	sfRenderWindow_clear(d->rw, sfBlack);
 	
+	// TODO:PERF:MED Reuse texture memory instead of destroying and regenerating
 	for (int page = 0; page <= 1; ++page){
 		if (r->regen_chr[0 + CHR_BANKS * page] || r->regen_chr[1 + CHR_BANKS * page]){
+			sfTexture_destroy(d->chr_tex[0+5*page]);
 			d->chr_tex[0+5*page] = gen_chr_texture(r->chr[0+CHR_BANKS*page], 512); //BGF
+			r->regen_chr[0 + CHR_BANKS * page] = false;
+			r->regen_chr[1 + CHR_BANKS * page] = false;
 		}
 		if (r->regen_chr[4 + CHR_BANKS * page] ||
 			r->regen_chr[5 + CHR_BANKS * page] ||
 			r->regen_chr[6 + CHR_BANKS * page] ||
 			r->regen_chr[7 + CHR_BANKS * page])
 		{
+			sfTexture_destroy(d->chr_tex[1+5*page]);
 			d->chr_tex[1+5*page] = gen_chr_texture(r->chr[4+CHR_BANKS*page], 1024); //BGD
+			r->regen_chr[4 + CHR_BANKS * page] = false;
+			r->regen_chr[5 + CHR_BANKS * page] = false;
+			r->regen_chr[6 + CHR_BANKS * page] = false;
+			r->regen_chr[7 + CHR_BANKS * page] = false;
 		}
 		if (r->regen_chr[8 + CHR_BANKS * page] ||
 			r->regen_chr[9 + CHR_BANKS * page] ||
 			r->regen_chr[10 + CHR_BANKS * page] ||
 			r->regen_chr[11 + CHR_BANKS * page])
 		{
+			sfTexture_destroy(d->chr_tex[2+5*page]);
 			d->chr_tex[2+5*page] = gen_chr_texture(r->chr[8+CHR_BANKS*page], 1024); //BGU
+			r->regen_chr[8 + CHR_BANKS * page] = false;
+			r->regen_chr[9 + CHR_BANKS * page] = false;
+			r->regen_chr[10 + CHR_BANKS * page] = false;
+			r->regen_chr[11 + CHR_BANKS * page] = false;
 		}
 		if (r->regen_chr[12 + CHR_BANKS * page] ||
 			r->regen_chr[13 + CHR_BANKS * page] ||
@@ -195,14 +182,35 @@ void display_draw_all(struct ptc* p){
 			r->regen_chr[18 + CHR_BANKS * page] ||
 			r->regen_chr[19 + CHR_BANKS * page])
 		{
+			sfTexture_destroy(d->chr_tex[3+5*page]);
 			d->chr_tex[3+5*page] = gen_chr_texture(r->chr[12+CHR_BANKS*page], 2048); // SPU or SPD
+			r->regen_chr[12 + CHR_BANKS * page] = false;
+			r->regen_chr[13 + CHR_BANKS * page] = false;
+			r->regen_chr[14 + CHR_BANKS * page] = false;
+			r->regen_chr[15 + CHR_BANKS * page] = false;
+			r->regen_chr[16 + CHR_BANKS * page] = false;
+			r->regen_chr[17 + CHR_BANKS * page] = false;
+			r->regen_chr[18 + CHR_BANKS * page] = false;
+			r->regen_chr[19 + CHR_BANKS * page] = false;
 		}
 		if (r->regen_chr[20 + CHR_BANKS * page] ||
 			r->regen_chr[21 + CHR_BANKS * page])
 		{
+			sfTexture_destroy(d->chr_tex[4+5*page]);
 			d->chr_tex[4+5*page] = gen_chr_texture(r->chr[20+CHR_BANKS*page], 512); //SPS
+			r->regen_chr[20 + CHR_BANKS * page] = false;
+			r->regen_chr[21 + CHR_BANKS * page] = false;
 		}
 	}
+	
+	if (r->regen_col){
+		sfTexture_destroy(d->col_tex);
+		d->col_tex = gen_col_texture(r->col_banks);
+		r->regen_col = false;
+	}
+	
+	sfShader_setTextureUniform(shader, "colors", d->col_tex);
+	sfShader_setCurrentTextureUniform(shader, "texture");
 	
 	// Set screen
 	for (int screen = 0; screen <= 1; ++screen){
@@ -248,8 +256,12 @@ void display_draw_text(struct ptc* p, int screen, int prio){
 				palette(&d->console_bg_map, x, y, c);
 			} else {
 				// panel
-				tile(&d->panel_text_map, x, y, to_char(con_text_getc(p->panel.text, x, y)), 0, 0);
-				palette(&d->panel_text_map, x, y, con_col_get(p->panel.text, x, y) & COL_FG_MASK);
+				struct console* c = p->panel.keys_text;
+				if (p->panel.type == PNL_OFF || p->panel.type == PNL_PNL){
+					c = p->panel.text;
+				}
+				tile(&d->panel_text_map, x, y, to_char(con_text_getc(c, x, y)), 0, 0);
+				palette(&d->panel_text_map, x, y, con_col_get(c, x, y) & COL_FG_MASK);
 				
 				/*if (p->panel.type != PNL_OFF && p->panel.type != PNL_PNL){
 					u16 td = bg_tile(p,1,2,x,y);

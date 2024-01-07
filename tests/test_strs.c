@@ -97,7 +97,6 @@ int test_strs(){
 	
 	// Number to string conversion
 	{
-		//TODO: Turn these cases into macros because this is stupid
 		// setup
 		u8 buf[32];
 		buf[0] = STRING_INLINE_CHAR;

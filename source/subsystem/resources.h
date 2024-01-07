@@ -3,12 +3,16 @@
 #include "common.h"
 #include "header.h"
 
+#include <string.h>
+
 //PRG: already defined
 //MEM: this is a string
 //CHR: working on it
 //GRP: working on it
 //SCR: working on it (copy)
 //COL: working on it (copy)
+
+extern const char* resource_path;
 
 #define GRP_WIDTH 256
 #define GRP_HEIGHT 192
@@ -22,8 +26,6 @@
 #define GRP_SIZE (GRP_WIDTH*GRP_HEIGHT*1)
 #define SCR_SIZE ( 64* 64*2)
 #define COL_SIZE ( 16* 16*2)
-
-struct ptc;
 
 #define CHR_BANKS (4+4+4+8+2)
 #define SCR_BANKS 4
@@ -69,6 +71,7 @@ struct resources {
 	//BGU,D,F,[SPU,S or SPD,K,S]
 	
 	u8* chr[CHR_BANKS*2];
+	// TODO:CODE:LOW Maybe move regen_chr to display?
 	bool regen_chr[CHR_BANKS*2];
 	
 	u16* scr[4*2]; //8K*4*2 -> 64K (VRAM)
@@ -76,7 +79,7 @@ struct resources {
 	u8* grp[4]; //48K*4 -> 192K (RAM) 96K VRAM
 	
 	u16* col[COL_BANKS*2]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
-	bool regen_col[COL_BANKS*2];
+	bool regen_col;
 	
 	u8* key_chr[12]; // 8K*12 -> 96K (RAM)
 	
@@ -92,16 +95,24 @@ struct resources {
 };
 
 bool load_file(u8* dest, const char* name, int skip, int len);
-bool load_chr(u8* dest, const char* name);
-bool load_col(u8* dest, const char* name);
-bool load_scr(u16* dest, const char* name);
+bool load_chr(u8* dest, const char* path, const char* name);
+bool load_col(u8* dest, const char* path, const char* name);
+bool load_scr(u16* dest, const char* path, const char* name);
 
 void init_resource(struct resources* r);
 void free_resource(struct resources* r);
 
+struct ptc;
+
+int get_chr_index(struct ptc* p, char* res);
+
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid
 void* get_resource(struct ptc* p, char* name, int len);
+
+/// Returns a data pointer for the resource
+/// Returns NULL, if the resource name was invalid
+void* str_to_resource(struct ptc* p, void* name_str);
 
 // Character
 void cmd_chrinit(struct ptc* p);

@@ -28,10 +28,10 @@ void op_add(struct ptc* p){
 	} else if (a->type & b->type & VAR_STRING){
 		struct string* x, * y, * z;
 		
-		// The value_str function checks if 
+		// The value_str function checks uses to get the next string
+		z = get_new_str(&p->strs);
 		x = value_str(a);
 		y = value_str(b);
-		z = get_new_str(&p->strs);
 		z->uses = 1;
 		
 		str_concat(x, y, z);
@@ -75,9 +75,10 @@ void op_mult(struct ptc* p){
 		if (count < 0) count = 0;
 		struct string* x, * y;
 		
+		// must be done first to keep uses correct
+		y = get_new_str(&p->strs);
 		x = value_str(a);
 		
-		y = get_new_str(&p->strs);
 		y->uses = 1;
 		if (count * str_len(x) > MAX_STRLEN){
 			p->exec.error = ERR_STRING_TOO_LONG;

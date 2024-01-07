@@ -12,17 +12,7 @@ void init_graphics(struct graphics* g){
 	g->info[1].drawpage = 1;
 	g->info[1].displaypage = 1;
 	g->info[1].prio = 3;
-}
-
-/// Convert screen coordinates to GRP coordinates
-u16 grp_index(uint_fast8_t x, uint_fast8_t y){
-	int_fast8_t cx = x / 64;
-	int_fast8_t cy = y / 64;
-	int_fast8_t tx = (x / 8) % 8;
-	int_fast8_t ty = (y / 8) % 8;
-	int_fast8_t px = x % 8;
-	int_fast8_t py = y % 8;
-	return px + py * 8 + tx * 64 + ty * 512 + cx * 4096 + cy * 16384;
+	g->drawmode = 0;
 }
 
 u8* grp_drawpage(struct ptc* p){
@@ -33,7 +23,9 @@ void cmd_gpage(struct ptc* p){
 	if (p->stack.stack_i == 1){
 		STACK_INT_RANGE(0,0,1,p->graphics.screen);
 	} else {
-		ERROR(ERR_UNIMPLEMENTED);
+		STACK_INT_RANGE(0,0,1,p->graphics.screen);
+		STACK_INT_RANGE(1,0,3,p->graphics.info[p->graphics.screen].drawpage);
+		STACK_INT_RANGE(2,0,3,p->graphics.info[p->graphics.screen].displaypage);
 	}
 }
 
@@ -80,7 +72,7 @@ void cmd_gfill(struct ptc* p){
 	
 	for (int_fast16_t x = x1; x <= x2; ++x){
 		for (int_fast16_t y = y1; y <= y2; ++y){
-			page[grp_index(x, y)] = color;
+			grp_pixel(page,x,y,color,p->graphics.drawmode);
 		}
 	}
 	p->stack.stack_i = 0;
@@ -104,10 +96,8 @@ void cmd_gbox(struct ptc* p){
 			ERROR(ERR_OUT_OF_RANGE);
 		}
 		color = c;
-	} else if (p->stack.stack_i == 4){
-		color = p->graphics.color;
 	} else {
-		ERROR(ERR_WRONG_ARG_COUNT);
+		color = p->graphics.color;
 	}
 	
 	u8* page = grp_drawpage(p);
@@ -115,18 +105,18 @@ void cmd_gbox(struct ptc* p){
 	int x = x1;
 	int y = y1;
 	for (int_fast16_t x = x1; x <= x2; ++x){
-		page[grp_index(x, y)] = color;
+		grp_pixel(page,x,y,color,p->graphics.drawmode);
 	}
 	for (int_fast16_t y = y1; y <= y2; ++y){
-		page[grp_index(x, y)] = color;
+		grp_pixel(page,x,y,color,p->graphics.drawmode);
 	}
 	x = x2;
 	y = y2;
 	for (int_fast16_t x = x1; x <= x2; ++x){
-		page[grp_index(x, y)] = color;
+		grp_pixel(page,x,y,color,p->graphics.drawmode);
 	}
 	for (int_fast16_t y = y1; y <= y2; ++y){
-		page[grp_index(x, y)] = color;
+		grp_pixel(page,x,y,color,p->graphics.drawmode);
 	}
 	p->stack.stack_i = 0;
 }
@@ -169,7 +159,7 @@ void cmd_gline(struct ptc* p){
 		for (int x = x1; x <= x2; ++x){
 			int y = FP_TO_INT(y_slope*(x-x1) + (1<<(FIXPOINT-1))) + y1;
 			
-			page[grp_index(x,y)] = color;
+			grp_pixel(page,x,y,color,p->graphics.drawmode);
 		}
 	} else {
 		// X-range <= Y-range
@@ -186,7 +176,7 @@ void cmd_gline(struct ptc* p){
 		for (int y = y1; y <= y2; ++y){
 			int x = FP_TO_INT(x_slope*(y-y1) + (1<<(FIXPOINT-1))) + x1;
 			
-			page[grp_index(x,y)] = color;
+			grp_pixel(page,x,y,color,p->graphics.drawmode);
 		}
 	}
 	
@@ -208,7 +198,67 @@ void cmd_gpset(struct ptc* p){
 	
 	u8* page = grp_drawpage(p);
 	
-	page[grp_index(x,y)] = color;
+	grp_pixel(page,x,y,color,p->graphics.drawmode);
 	
 	p->stack.stack_i = 0;
+}
+
+void cmd_gdrawmd(struct ptc* p){
+	STACK_INT_RANGE(0,0,1,p->graphics.drawmode);
+}
+
+void cmd_gprio(struct ptc* p){
+	STACK_INT_RANGE(0,0,3,p->graphics.info[p->graphics.screen].prio);
+}
+
+void cmd_gputchr(struct ptc* p){
+	// GPUTCHR x,y,resource,chr,pal,size
+	// TODO:PERF:LOW Check performance of this and see if it can be optimized
+	int x_start, y_start, chr, pal, size;
+	void* resource;
+	x_start = STACK_INT(0);
+	y_start = STACK_INT(1);
+	resource = value_str(ARG(2));
+	STACK_INT_RANGE(3,0,255,chr);
+	STACK_INT_RANGE(4,0,15,pal);
+	size = STACK_INT(5);
+	if (size == 1 || size == 2 || size == 4 || size == 8){
+		// TODO:IMPL:MED GPUTCHR copies palette to COL2 memory
+		// pointer to base resource
+		u8* src = str_to_resource(p, resource);
+		// pointer to relevant character
+		src = &src[32*chr]; // TODO:CODE:NONE constant for size of one character
+		
+		// pointer to destination page
+		u8* dest = grp_drawpage(p);
+		// copy to destination
+		// TODO:CODE:NONE constants for character size
+		for (int y = 0; y < 8; ++y){
+			for (int x = 0; x < 8; x+=2){
+				uint_fast8_t col1 = src[x/2+4*y] & 0x0f;
+				uint_fast8_t col2 = src[x/2+4*y] >> 4;
+				for (int i = 0; i < size; ++i){
+					for (int j = 0; j < size; ++j){
+						int xp = x_start + x*size + j;
+						int yp = y_start + y*size + i;
+						if (col1 && xp >= 0 && xp < GRP_WIDTH && yp && yp < GRP_HEIGHT){
+							grp_pixel(dest, xp, yp, 16*pal+col1, p->graphics.drawmode);
+						}
+					}
+				}
+				for (int i = 0; i < size; ++i){
+					for (int j = 0; j < size; ++j){
+						int xp = x_start + x*size + j + size;
+						int yp = y_start + y*size + i;
+						if (col2 && xp >= 0 && xp < GRP_WIDTH && yp && yp < GRP_HEIGHT){
+							grp_pixel(dest, xp, yp, 16*pal+col2, p->graphics.drawmode);
+						}
+					}
+				}
+			}
+		}
+		
+	} else {
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
 }

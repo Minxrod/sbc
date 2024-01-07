@@ -14,8 +14,11 @@ struct console;
 #define ICON_START (KEYBOARD_KEYS + 2)
 #define PANEL_KEYS (KEYBOARD_KEYS + ICON_KEYS)
 
+// shift
 #define PNL_SHIFT 1
 #define PNL_CAPS_LOCK 2
+// cursor
+#define PNL_INSERT 1
 
 struct panel {
 	/// Current panel type
@@ -43,6 +46,7 @@ struct panel {
 	
 	int mode;
 	int shift;
+	int cursor;
 };
 
 void init_panel(struct ptc*);

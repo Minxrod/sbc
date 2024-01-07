@@ -5,6 +5,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+const char* resource_path = "resources/";
 
 /// Load from a file, skipping past part of it if needed and reading only a certain length
 bool load_file(u8* dest, const char* name, int skip, int len){
@@ -28,22 +31,105 @@ bool load_file(u8* dest, const char* name, int skip, int len){
 	return true;
 }
 
+// Checks the file type and loads the correct data from the file.
+// Note: path, name must be null-terminated
+bool check_load_file(u8* dest, const char* search_path, const char* name, int size){
+	// TODO:IMPL:MED Ability to specify search path of program
+	if (strlen(search_path) + strlen(name) >= 252){
+		iprintf("Name too long: %s\n", name);
+		return false;
+	}
+	char path[256] = {0};
+	for (int i = 0; i <= (int)strlen(search_path); ++i){ // <= to include null terminator
+		path[i] = search_path[i];
+	}
+	for (int i = 0; i <= (int)strlen(name); ++i){ // <= to include null terminator
+		path[i+strlen(search_path)] = name[i];
+	}
+	FILE* f = fopen(path, "rb");
+	if (!f){
+		iprintf("Failed to load file: %s\n", path);
+		int i = strlen(search_path)+strlen(name);
+		// Try with file extension
+		path[i] = '.';
+		path[i+1] = 'P';
+		path[i+2] = 'T';
+		path[i+3] = 'C';
+		f = fopen(path, "rb");
+		if (!f){
+			iprintf("Failed to load file: %s\n", path);
+			return false;
+		} else {
+			iprintf("Loaded with extension: %s\n", path);
+		}
+	}
+	char check_type[4] = {0};
+	fread(check_type, sizeof(u8), 4, f);
+	if (ferror(f)){
+		fclose(f);
+		iprintf("Failed to check file type: %s\n", path);
+		return false;
+	}
+	// Note: strncmp returns 0 if equal
+	if (!strncmp(check_type, "PX01", 4)){
+		// Petit Computer SD format file, header: skip header info
+		if (fseek(f, HEADER_SIZE, SEEK_SET)){
+			fclose(f);
+			iprintf("Failed to fseek to %d within %s\n", HEADER_SIZE, path);
+			return false;
+		}
+		fread(dest, sizeof(u8), size, f);
+		if (ferror(f)){
+			fclose(f);
+			iprintf("Failed to read file %s\n", path);
+			return false;
+		}
+		fclose(f);
+		return true;
+	} else if (!strncmp(check_type, "PETC", 4)){
+		// Petit Computer internal file format: skip type
+		if (fseek(f, 12, SEEK_SET)){
+			fclose(f);
+			iprintf("Failed to fseek to %d within %s\n", 4, path);
+			return false;
+		}
+		fread(dest, sizeof(u8), size, f);
+		if (ferror(f)){
+			fclose(f);
+			iprintf("Failed to read file %s\n", path);
+			return false;
+		}
+		fclose(f);
+		return true;
+	} else {
+		// Unknown format, file load fails 
+		iprintf("Failed to load file (Unknown format): %s\n", path);
+		fclose(f);
+		return false;
+	}
+
+}
+
 // Load from file `name` into dest
 // returns false on failure
-bool load_chr(u8* dest, const char* name){
-	return load_file(dest, name, HEADER_SIZE, CHR_SIZE);
+bool load_chr(u8* dest, const char* path, const char* name){
+	return check_load_file(dest, path, name, CHR_SIZE);
 }
 
 // load from file `name` into dest
 // returns false on failure
-bool load_col(u8* dest, const char* name){
-	return load_file(dest, name, HEADER_SIZE, COL_SIZE);
+bool load_col(u8* dest, const char* path, const char* name){
+	return check_load_file(dest, path, name, COL_SIZE);
 }
 
 // load from file `name` into dest
 // returns false on failure
-bool load_scr(u16* dest, const char* name){
-	return load_file((u8*)dest, name, HEADER_SIZE, SCR_SIZE);
+bool load_scr(u16* dest, const char* path, const char* name){
+	return check_load_file((u8*)dest, path, name, SCR_SIZE);
+}
+
+bool load_grp(u8* dest, const char* path, const char* name){
+	return check_load_file(dest, path, name, GRP_SIZE);
 }
 
 void init_resource(struct resources* r){
@@ -79,7 +165,8 @@ void init_resource(struct resources* r){
 			r->scr[i + SCR_BANKS * lower] = calloc(1, SCR_SIZE);
 		}
 		for (int i = 0; i < COL_BANKS; ++i){
-			r->col[i + COL_BANKS * lower] = &r->col_banks[(i + lower * 3) * COL_SIZE / 2];
+			r->col[i + COL_BANKS * lower] = &r->col_banks[(i + COL_BANKS * lower) * COL_SIZE / sizeof(u16)];
+//			iprintf("COL%d %p\n", i + COL_BANKS * lower, (void*)r->col[i + COL_BANKS * lower]);
 		}
 	}
 #endif //PC
@@ -109,20 +196,20 @@ void init_resource(struct resources* r){
 	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
 	const char* col_files = "COL0COL1COL2COL0COL1COL2";
 	
-	char name[] = "resources/XXXX.PTC";
+	char name[] = "XXXX.PTC";
 	
 	for (int i = 0; i < CHR_BANKS * 2; ++i){
 		for (int j = 0; j < 4; ++j){
-			name[10+j] = chr_files[4*i+j];
+			name[j] = chr_files[4*i+j];
 		}
-		load_chr(r->chr[i], name);
+		load_chr(r->chr[i], resource_path, name);
 	}
 	
 	for (int i = 0; i < 6; ++i){
 		for (int j = 0; j < 4; ++j){
-			name[10+j] = col_files[4*i+j];
+			name[j] = col_files[4*i+j];
 		}
-		load_col((u8*)r->col[i], name);
+		load_col((u8*)r->col[i], resource_path, name);
 	}
 	// Load keyboard sprites in-memory for fast access
 	for (int i = 0; i < 12; ++i){
@@ -146,31 +233,86 @@ void free_resource(struct resources* r){
 	for (int i = 0; i < 12; ++i){
 		free(r->key_chr[i]);
 	}
-
 }
 
+void* str_to_resource(struct ptc* p, void* name_str){
+	assert(name_str);
+	assert(str_len(name_str) <= 5);
+	char name_char[5];
+	str_char_copy(name_str, (u8*)name_char);
+	return get_resource(p, name_char, str_len(name_str));
+}
+
+enum resource_type {
+	TYPE_PRG,
+	TYPE_CHR,
+	TYPE_SCR,
+	TYPE_GRP,
+	TYPE_MEM,
+	TYPE_COL,
+	TYPE_INVALID
+};
+
+static inline int get_resource_type(void* res){
+	if (str_len(res) < 3) return TYPE_INVALID;
+	u16 c1 = to_char(str_at_wide(res, 0));
+	u16 c2 = to_char(str_at_wide(res, 1));
+	if (c1 == 'G'){
+		return TYPE_GRP;
+	} else if (c1 == 'P'){
+		return TYPE_PRG;
+	} else if (c1 == 'S'){
+		if (c2 == 'C') return TYPE_SCR;
+		if (c2 == 'P') return TYPE_CHR;
+		return TYPE_INVALID;
+	} else if (c1 == 'B'){
+		return TYPE_CHR;
+	} else if (c1 == 'C'){
+		return TYPE_COL;
+	} else if (c1 == 'M'){
+		return TYPE_MEM;
+	} else {
+		return TYPE_INVALID;
+	}
+}
+
+int get_chr_index(struct ptc* p, char* res){
+	int res_len = strlen(res);
+	assert(res_len >= 3 && res_len <= 5);
+	
+	int index = (res_len <= 3) ? 0 : (res[3] - '0');
+	if (res[0] == 'S'){
+		index += 12;
+		index += CHR_BANKS * ((res_len <= 4) ? p->sprites.page : (res[4] == 'L'));
+		index += (res[2] == 'S') ? 8 : 0;
+	} else { // B
+		index += 0;
+		index += CHR_BANKS * ((res_len <= 4) ? p->background.page : (res[4] == 'L'));
+		index += (res[2] == 'D') ? 4 : 0;
+		index += (res[2] == 'U') ? 8 : 0;
+	}
+	
+	iprintf("%s has index %d\n", res, index);
+	return index;
+}
 
 // Returns a data pointer for the resource
 // Returns NULL, if the resource name was invalid
 void* get_resource(struct ptc* p, char* name, int len){
+	assert(name);
+	assert(len <= 5);
 	char c = name[0]; //category
 	char id = name[1]; //id help for SCU/SPU
 	char t = name[2]; //type (within category)
 	
-	char bank, upper;
+	int bank = 0, upper = 0;
 	if (len == 5){
 		bank = name[3] - '0';
-		upper = name[4] == 'U';
+		upper = name[4] == 'L';
 	} else if (len == 4){
-		if (name[3] >= '0' && name[3] < '7'){
+		if (name[3] >= '0' && name[3] <= '7'){
 			bank = name[3] - '0';
 			upper = 0; //TODO:IMPL:MED depends on BG,SP,GRP page
-		} else if (name[3] == 'U'){
-			bank = 0;
-			upper = 1;
-		} else if (name[3] == 'L'){
-			bank = 0;
-			upper = 0;
 		} else {
 			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 			return NULL;
@@ -182,6 +324,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 		return NULL;
 	}
+//	iprintf("get_resource %c %c %c %d %d\n", c, id, t, bank, upper);
 	if (c == 'B'){ //BGU, BGF, BGD
 		if (t == 'U'){
 			return p->res.chr[8+CHR_BANKS*upper+bank];
@@ -198,14 +341,15 @@ void* get_resource(struct ptc* p, char* name, int len){
 				if (!upper)
 					return p->res.chr[12+bank];
 			}
-		} else if (id == 'S'){
+		} else if (t == 'S'){
 			return p->res.chr[20+bank+CHR_BANKS*upper];
-		} else if (id == 'D'){
+		} else if (t == 'D'){
 			return p->res.chr[12+bank+CHR_BANKS*upper];
-		} else if (id == 'K'){ // yeah, this one normally isn't accessible
+		} else if (t == 'K'){ // yeah, this one normally isn't accessible
 			return p->res.chr[16+bank+CHR_BANKS*upper];
 		}
 	} else if (c == 'C'){ //COL
+		iprintf("COLn %d:%p\n", 3*upper + bank, (void*)p->res.col[3*upper+bank]);
 		return p->res.col[3*upper+bank];
 	} else if (c == 'G'){ //GRP
 		// TODO:IMPL:LOW Does page matter here?
@@ -215,12 +359,74 @@ void* get_resource(struct ptc* p, char* name, int len){
 	return NULL;
 }
 
+void cmd_load(struct ptc* p){
+	void* res = value_str(ARG(0));
+	// TODO:IMPL:LOW Dialog popups
+	// TODO:ERR:MED Check errors are correct
+	// longest name:
+	// RRRNP:ABCDEFGH
+	char res_str[14+1] = {0}; // null terminated
+	if (str_len(res) > 14){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	str_char_copy(res, (u8*)res_str);
+	int index = -1;
+	for (int i = 0; i <= (int)str_len(res); ++i){
+		if (res_str[i] == ':'){
+			res_str[i] = '\0'; // null-terminated for strlen later on
+			index = i;
+			break;
+		}
+	}
+	if (index == -1 && str_len(res) >= 8) {
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	
+	char* res_type = (index == -1) ? "PRG" : res_str;
+	char* res_name = (index == -1) ? res_str : &res_str[index+1];
+	void* res_data = get_resource(p, res_type, strlen(res_type));
+	iprintf("Attempting load of type=%s (%d) name=%s at ptr=%p\n", res_type, (int)strlen(res_type), res_name, res_data);
+	if (!res_data) return; // Note: error set in get_resource
+	
+	switch (get_resource_type(res)){
+		case TYPE_CHR:
+			// TODO:IMPL:MED Select path for searching
+			if (!load_chr(res_data, "programs/", res_name)){
+				ERROR(ERR_FILE_LOAD_FAILED);
+			}
+			
+			p->res.regen_chr[get_chr_index(p, res_type)] = true;
+			break;
+			
+		case TYPE_COL:
+			if (!load_col(res_data, "programs/", res_name)){
+				ERROR(ERR_FILE_LOAD_FAILED);
+			}
+			
+			p->res.regen_col = true;
+			break;
+			
+		case TYPE_GRP:
+			if (!load_grp(res_data, "programs/", res_name)){
+				ERROR(ERR_FILE_LOAD_FAILED);
+			}
+			break;
+			
+		// TODO:IMPL:HIGH Other file types
+		default:
+			iprintf("Error: Unimplemented/invalid resource type\n %s:%s\n", res_type, res_name);
+			ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+}
+
 void cmd_chrinit(struct ptc* p){
 	// CHRINIT resource
 	void* res_str = value_str(ARG(0));
 	int res_str_len = str_len(res_str);
 	u8 res[5];
-	if (res_str_len > 5) { ERROR(ERR_INVALID_RESOURCE_TYPE); }
+	if (res_str_len > 5) {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
 	str_char_copy(res_str, res);
 	// res contains at most 5 characters
 	// check that this is a CHR type resource:
@@ -228,14 +434,15 @@ void cmd_chrinit(struct ptc* p){
 	if (res[1] == 'G' || res[1] == 'P'){
 		// resource is valid
 		u8* res_data = get_resource(p, (char*)res, res_str_len);
-		char res_name[] = "resources/XXXX.PTC";
+		char res_name[] = "XXXX.PTC";
 		for (int i = 0; i < 4; ++i){
-			res_name[10+i] = res[i];
+			res_name[i] = res[i];
 		}
 		if (res_str_len == 3){
-			res_name[13] = '0';
+			res_name[3] = '0';
 		}
-		if (!load_chr(res_data, res_name)){
+		// TODO:IMPL:HIGH Set regen_chr appropriately
+		if (!load_chr(res_data, resource_path, res_name)){
 			ERROR(ERR_FILE_LOAD_FAILED);
 		}
 	} else {

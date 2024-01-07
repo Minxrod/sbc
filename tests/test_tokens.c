@@ -26,6 +26,10 @@ int test_tokens(void){
 		ASSERT(check_cmd("nnnn", 4, "v,S;v"), "[args] Variable list 4");
 		
 		ASSERT(check_cmd("", 0, "0"), "[args] Empty args list");
+		
+		ASSERT(!check_cmd("S", 1, "N"), "[args] Wrong type");
+		ASSERT(!check_cmd("N", 1, "S"), "[args] Wrong type");
+
 	}
 	
 	// Tokenization of array declaration

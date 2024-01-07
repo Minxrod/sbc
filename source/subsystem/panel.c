@@ -99,31 +99,31 @@ s16 keyboard_pos[][6]={
 	{144, -1, 16, 16, 502, 104}, // Function Key 4 Left
 	{160, -1, 32, 16, 499, 104}, // Function Key Right
 	{192, -1, 16, 16, 501, 105}, // Function Key 5 Left
-	{208, -1, 32, 16, 499, 105}, // Function Key Right
-	{240, 0, 16, 16, 315, 106}, // Exit button
+	{208, -1, 32, 16, 499, 105}, // Function Key Right (sprite 82)
+	{240, 0, 16, 16, 315, 106}, // Exit button (sprite 83)
 // Bottom bar keys
 	{0, 168, 32, 32, 304, 70}, // Help key
 	{40, 168, 32, 32, 256, 71}, // RUN/STOP Key Left
 	{72, 168, 16, 32, 260, 71}, // RUN/STOP Key Right
 	{88, 168, 16, 32, 262, 72}, // EDIT Key Left
-	{104, 168, 32, 32, 264, 72}, // EDIT Key Right
+	{104, 168, 32, 32, 264, 72}, // EDIT Key Right (sprite 88)
 // Icon (index=90)
-	{144, 168, 16, 16, -1, 80}, // Icon page up (316)
+	{144, 168, 16, 16, -1, 80}, // Icon page up (316) (sprite 89)
 	{144, 180, 16, 16, -1, 81}, // Icon page down (317)
-	{160, 168, 32, 32, -1, 90}, // Icon page down
-	{184, 168, 32, 32, -1, 91}, // Icon page down
-	{208, 168, 32, 32, -1, 92}, // Icon page down
-	{232, 168, 32, 32, -1, 93}, // Icon page down
+	{160, 168, 32, 32, -1, 90}, // Icon 0 (sprite 91)
+	{184, 168, 32, 32, -1, 91}, // Icon 1
+	{208, 168, 32, 32, -1, 92}, // Icon 2
+	{232, 168, 32, 32, -1, 93}, // Icon 3 (sprite 94)
 };
 
 void init_panel(struct ptc* p){
 //	struct panel* panel = calloc(sizeof(struct panel), 1);
 	p->panel.type = PNL_KYA;
 	p->panel.text = init_console();
-	// TODO:PERF:NONE Check if making console dynamically sized saves space?
 	p->panel.keys_text = init_console();
 	p->panel.mode = 0;
 	p->panel.shift = 0;
+	p->panel.cursor = PNL_INSERT;
 	set_panel_bg(p, p->panel.type);
 	
 	set_function_key(p, 1, "S\5FILES");
@@ -145,18 +145,17 @@ void init_panel(struct ptc* p){
 		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,0,w,h);
 		p->panel.keys[i].pos.x = x;
 		p->panel.keys[i].pos.y = y;
-		p->panel.keys[i].hit.x = INT_TO_FP(1);
+		// Collisions handled by tiles, essentially
+/*		p->panel.keys[i].hit.x = INT_TO_FP(1);
 		p->panel.keys[i].hit.y = INT_TO_FP(1);
 		if (k < 70){
-			// TODO:IMPL:HIGH Identify wide keys and change hitbox accordingly
 			p->panel.keys[i].hit.w = INT_TO_FP(14);
 			p->panel.keys[i].hit.h = INT_TO_FP(22);
 		} else if (k >= 70 && k <= 79){
-			// TODO:IMPL:MED Determine hitbox sizes for other keys
 		} else if (k >= 90 && k <= 99){
 			p->panel.keys[i].hit.w = INT_TO_FP(22);
 		}
-		p->panel.keys[i].hit.h = INT_TO_FP(22);
+		p->panel.keys[i].hit.h = INT_TO_FP(22);*/
 		p->panel.keys[i].vars[0] = k;
 		if (c == -1){
 			p->panel.keys[i].active = false;
@@ -222,13 +221,22 @@ void cmd_iconset(struct ptc* p){
 }
 
 void cmd_iconclr(struct ptc* p){
-	ERROR(ERR_UNIMPLEMENTED);
+	// ICONCLR [id]
+	if (p->stack.stack_i){
+		int id;
+		STACK_INT_RANGE(0,0,3,id);
+		p->panel.keys[ICON_START+id].active = false;
+	} else {
+		for (int i = ICON_START; i < PANEL_KEYS; ++i){
+			p->panel.keys[i].active = false;
+		}
+	}
 }
 
 void func_iconchk(struct ptc* p){
-	// TODO:IMPL:MED Icon repeat interval
-	if (p->panel.key_pressed > 90){
-		stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(p->panel.key_pressed - 90)}});
+	int icon = get_pressed_key(p);
+	if (icon >= 90 && p->panel.keys[p->panel.id_pressed].active){
+		stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(icon - 90)}});
 	} else {
 		stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {-INT_TO_FP(1)}});
 	}
@@ -283,7 +291,7 @@ void set_function_key(struct ptc* p, int key, const void* string){
 // This is used to calculate the sprite ID of the touched location.
 // This is a 32x24 grid of characters corresponding to sprite ID at that location.
 // \xff (-1) indicates no sprite currently is placed there.
-// TODO:CODE:MED Find a way to generate this from some sort of layout file instead
+// TODO:CODE:LOW Find a way to generate this from some sort of layout file instead
 // (then use this as a test case?)
 const char* key_map = 
 "\111\111\112\112\112\112\113\113\114\114\114\114\115\115\116\116\116\116\117\117\120\120\120\120\121\121\122\122\122\122\123\123"
@@ -307,9 +315,9 @@ const char* key_map =
 "\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
+"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
 ;
 
 void press_key(struct ptc* ptc, bool t, int x, int y){
@@ -342,9 +350,10 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 		}
 	}
 	
-	// TODO:IMPL:HIGH Allow icons even if panel is off or no keys
+	// TODO:IMPL:MED Icon pages (check here before panel check)
+	
 	if (p->type == PNL_OFF || p->type == PNL_PNL) return;
-		
+	
 	int pressed_key = get_pressed_key(ptc);
 	if (pressed_key){
 		if (pressed_key == 1){
@@ -376,18 +385,22 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 			
 			ptc->res.regen_chr[18+CHR_BANKS] |= true;
 			ptc->res.regen_chr[19+CHR_BANKS] |= true;
+		} else if (pressed_key == 66){
+			p->cursor ^= PNL_INSERT;
 		}
 	}
 }
 
 int get_pressed_key(struct ptc* ptc){
 	struct panel* p = &ptc->panel;
-	if (!p->key_pressed || !check_repeat(p->pressed_time, 15, 4)) // TODO:TEST:LOW Determine correct key repeat rate
+	if (!p->key_pressed || !check_repeat(p->pressed_time, 30, 4))
 		return 0;
 	int k = p->key_pressed;
 	if (k < 69)
 		return k;
-	return 0;
+	if (k >= 90)
+		return k;
+	return k;
 }
 
 void offset_key(struct ptc* p, int id, int d){
