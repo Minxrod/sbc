@@ -24,6 +24,11 @@ struct timers {
 void inc_time(struct timers* t);
 int64_t get_time(struct timers* t);
 
+#ifdef ARM9
+#include <nds/timers.h>
+#endif
+
+
 // Declare these as inlines so they get properly optimized out on NDS when profiler disabled
 static inline void start_time(struct timers* t);
 static inline void check_time(struct timers* t, int id);

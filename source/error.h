@@ -54,10 +54,8 @@ enum err_code {
 	ERR_TEST_STACK,
 	ERR_UNKNOWN_TOKEN_TYPE,
 	ERR_LABEL_ADD_FAILURE,
-	ERR_FAILED_FILE_LOAD,
 	ERR_BREAK,
 	ERR_ILLEGAL_FUNCTION_CALL,
 };
-// TODO:CODE:NONE Dedup file fail load errors
 
 extern const char * error_messages[];

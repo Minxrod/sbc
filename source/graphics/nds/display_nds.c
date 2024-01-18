@@ -6,11 +6,11 @@
 #include <nds/arm9/video.h> // For VRAM setup
 
 void init_display(struct ptc* p){
-	p->display.oam_buf = calloc(sizeof(OAMTable), 1);
+	p->display.oam_buf = calloc_log("init_display", sizeof(OAMTable), 1);
 }
 
 void free_display(struct display* d){
-	free(d->oam_buf);
+	free_log("free_display", d->oam_buf);
 }
 
 void display_draw_all(struct ptc* p){
@@ -208,12 +208,13 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 	
 	// TODO:IMPL:LOW Text cursor sprite
 	
+	DC_FlushRange(oam, sizeof(OAMTable)); // Flush cache
 	dmaCopyWords(3, oam, oam_dest, sizeof(OAMTable));
 }
 
 void display_draw_graphics(struct ptc* p, int screen, int prio){
 	// TODO:IMPL:LOW Set graphics priority of sprites
-	if (prio) return;
+//	if (prio) return;
 //	if (prio != 4) return;
 	// Note that VRAM can only be read in 16bit or higher units (but libnds memcpy is fine if aligned)
 	u8* src = p->res.grp[p->graphics.info[screen].displaypage];

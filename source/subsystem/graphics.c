@@ -262,3 +262,25 @@ void cmd_gputchr(struct ptc* p){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
 }
+
+void func_gspoit(struct ptc* p){
+	int page, x, y;
+	u8* dest;
+	if (p->stack.stack_i == 2){
+		dest = grp_drawpage(p);
+		x = STACK_REL_INT(-2);
+		y = STACK_REL_INT(-1);
+		p->stack.stack_i -= 2;
+	} else {
+		STACK_REL_INT_RANGE(-3,0,3,page);
+		x = STACK_REL_INT(-2);
+		y = STACK_REL_INT(-1);
+		p->stack.stack_i -= 3;
+		dest = p->res.grp[page];
+	}
+	
+	if (x >= GRP_WIDTH || x < 0 || y < 0 || y >= GRP_HEIGHT){
+		STACK_RETURN_NUM(-INT_TO_FP(1));
+	}
+	STACK_RETURN_INT(dest[grp_index(x,y)]);
+}

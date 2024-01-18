@@ -62,7 +62,7 @@ bool is_varname(const char c){
 }
 
 // Used as index into var table directly.
-u32 name_hash(char* name, u32 len, u32 hmax){
+u32 name_hash(const char* name, const u32 len, const u32 hmax){
 	assert((hmax & (hmax - 1)) == 0);
 	u32 hash = name[0]; // prevents single-char conflicts
 	for (u32 i=1; i<len; ++i){
@@ -71,7 +71,7 @@ u32 name_hash(char* name, u32 len, u32 hmax){
 	return hash % hmax;
 }
 
-bool namecmp(char* a, u32 len, char b[16]){
+bool namecmp(const char* a, const u32 len, const char b[16]){
 	assert(len <= 16);
 	for (u32 i = 0; i < len; ++i){
 		if (a[i] != b[i]){
@@ -86,18 +86,15 @@ bool namecmp(char* a, u32 len, char b[16]){
 }
 
 /// Allocate memory for strs
-void init_mem_str(struct strings* s, uint_fast16_t str_count, enum string_type str_type){
+void init_mem_str(struct strings* s, const uint_fast16_t str_count, const enum string_type str_type){
 	s->strs_max = str_count;
-	iprintf("init_mem_str strs calloc=%d\n", (int)str_count * (int)sizeof(struct string));
-	s->strs = calloc(str_count, sizeof(struct string));
+	s->strs = calloc_log("init_mem_str", str_count, sizeof(struct string));
 	s->type = str_type;
 	
-	s->empty = (struct string){STRING_EMPTY, 0, 0, {NULL}};
 	if (str_type == STRING_CHAR){
-		iprintf("init_mem_str str_data calloc=%d\n", (int)sizeof(u8) * MAX_STRLEN * (int) str_count);
-		s->str_data = malloc(str_count * sizeof(u8) * MAX_STRLEN);
+		s->str_data = malloc_log("init_mem_str data", str_count * sizeof(u8) * MAX_STRLEN);
 	} else if (str_type == STRING_WIDE) {
-		s->str_data = calloc(str_count, sizeof(u16) * MAX_STRLEN);
+		s->str_data = calloc_log("init_mem_str data", str_count, sizeof(u16) * MAX_STRLEN);
 	} else {
 		iprintf("Invalid string type!\n");
 		abort();
@@ -112,8 +109,8 @@ void reset_str(struct strings* s){
 
 /// Free memory for strs
 void free_mem_str(struct strings* s){
-	free(s->strs);
-	free(s->str_data);
+	free_log("free_mem_str", s->strs);
+	free_log("free_mem_str data", s->str_data);
 }
 
 /// Finds a usable string slot.
@@ -142,7 +139,7 @@ struct string* get_new_str(struct strings* s){
 	return &strs[i];
 }
 
-int digit_value(u16 c){
+int digit_value(const u16 c){
 	if (c >= to_wide('0') && c <= to_wide('9')){
 		return c - to_wide('0');
 	} else if (c >= to_wide('A') && c <= to_wide('F')){
@@ -151,15 +148,18 @@ int digit_value(u16 c){
 	return -1;
 }
 
-fixp u8_to_number(u8* data, int len, int base, bool allow_decimal){
-	struct string str = {
-		.type = STRING_CHAR, .len = len, .ptr.s = data
+fixp u8_to_number(const u8* data, const int len, const int base, const bool allow_decimal){
+	// TODO:CODE:HIGH There is a const removed by the case here.
+	// Nothing in str_to_number should modify data, so it's "fine," but
+	// rewriting to make this cleaner would be an improvement.
+	const struct string str = {
+		.type = STRING_CHAR, .len = len, .ptr.s = (u8*)data
 	};
 	return str_to_number(&str, base, allow_decimal);
 }
 
 // More general number parsing
-fixp str_to_number(const void* str, int base, bool allow_decimal){
+fixp str_to_number(const void* str, const int base, const bool allow_decimal){
 	size_t len = str_len(str);
 	
 	unsigned int number = 0;
@@ -202,7 +202,7 @@ fixp str_to_number(const void* str, int base, bool allow_decimal){
 }
 
 //NOTE: Doesn't handle negatives
-fixp u8_to_num(u8* data, idx len){
+fixp u8_to_num(const u8* data, const idx len){
 	return u8_to_number(data, len, 10, true);
 }
 
@@ -212,7 +212,6 @@ int str_type(const void* src){
 	assert(src);
 	
 	switch (*(char*)src){
-		case STRING_EMPTY: // this one doesn't really matter
 		case STRING_CHAR:
 		case BC_LABEL_STRING:
 		case BC_LABEL:
@@ -229,7 +228,7 @@ int str_type(const void* src){
 	}
 }
 
-void fixp_to_str(fixp num, void* dest){
+void fixp_to_str(const fixp num, void* dest){
 	if (str_type(dest) == STR_COPY_SRC_16){
 		iprintf("Unimplemented: fixp_to_str wide destination");
 		abort();
@@ -242,12 +241,13 @@ void fixp_to_str(fixp num, void* dest){
 // Convert 20.12 fixed point number to string
 // Using PTC rounding rules
 // Note: This function null-terminates the string instead of storing the length.
-void fixp_to_char(fixp num, u8* str){
+void fixp_to_char(const fixp n, u8* str){
 //	u16* begin = str;
-	if (num < 0){
+	if (n < 0){
 		(*str++) = '-';
-		num = -num;
 	}
+	fixp num = n < 0 ? -n : n;
+	
 	u32 integer = num >> FIXPOINT;
 	const u32 decimal_mask = (INT_TO_FP(1) - 1); //default: 0x00000fff
 	u32 decimal = ((((num & decimal_mask) + 2) * 1000) >> FIXPOINT);
@@ -301,8 +301,6 @@ void fixp_to_char(fixp num, u8* str){
 	}
 	// Null-terminate
 	*str = '\0';
-	// TODO:CODE:LOW String length?
-	// (str - begin)/ sizeof u8?;
 }
 
 /// Converts PTC's extended ASCII to UTF16/UCS2 
@@ -419,8 +417,6 @@ void str_wide_copy(const void* src, u16* dest){
 	if (!src) return; // nothing to copy
 	
 	switch (*(char*)src){
-		case STRING_EMPTY:
-			return;
 		case STRING_CHAR:
 			str_copy_buf(s->ptr.s, dest, STR_COPY_DEST_16, s->len);
 			return;
@@ -447,8 +443,6 @@ void str_char_copy(const void* src, u8* dest){
 	if (!src) return; // nothing to copy
 	
 	switch (*(char*)src){
-		case STRING_EMPTY:
-			return;
 		case STRING_CHAR:
 			str_copy_buf(s->ptr.s, dest, STR_COPY_DEST_8, s->len);
 			return;
@@ -470,8 +464,6 @@ void* str_at(const void* src, const u16 index){
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
-		case STRING_EMPTY:
-			return NULL;
 		case STRING_CHAR:
 			return &s->ptr.s[index];
 		case BC_LABEL_STRING:
@@ -500,7 +492,6 @@ u16 str_at_wide(const void* src, const u16 index){
 		case BC_STRING:
 		case STRING_INLINE_CHAR:
 			return to_wide(((u8*)src)[2+index]);
-		case STRING_EMPTY:
 		case STRING_INLINE_WIDE:
 		case STRING_WIDE:
 		default:
@@ -515,8 +506,6 @@ u32 str_len(const void* src){
 	struct string* s = (struct string*)src;
 	
 	switch (*(char*)src){
-		case STRING_EMPTY:
-			return 0;
 		case STRING_CHAR:
 			return s->len;
 		case BC_STRING:
@@ -546,7 +535,6 @@ void str_set_len(void* src, int len){
 		case STRING_INLINE_WIDE:
 			((u8*)src)[1] = len;
 			break;
-		case STRING_EMPTY:
 		case BC_LABEL:
 		case BC_STRING:
 		case BC_LABEL_STRING:
@@ -586,14 +574,11 @@ bool str_comp(const void* str1, const void* str2){
 }
 
 // Copy str1 to str2
-void str_copy(void* src, void* src_dest){
+void str_copy(const void* src, void* src_dest){
 	assert(src);
 	assert(src_dest);
 	
 	switch (*(char*)src_dest){
-		case STRING_EMPTY:
-			iprintf("Error: Attempted to copy to empty string!\n");
-			abort();
 		case STRING_CHAR:;
 			u8* dest = ((struct string*)src_dest)->ptr.s;
 			str_char_copy(src, dest);
@@ -612,7 +597,7 @@ void str_copy(void* src, void* src_dest){
 }
 
 /// Returns true if copy occurs
-bool str_concat(void* src1, void* src2, void* dest){
+bool str_concat(const void* src1, const void* src2, void* dest){
 	assert(src1);
 	assert(src2);
 	assert(dest);

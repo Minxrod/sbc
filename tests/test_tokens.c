@@ -39,7 +39,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\020A\001DA";
 		// compile program
@@ -60,7 +60,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\003n\005A\002DA";
 		// compile program
@@ -81,7 +81,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\006A\001DAn\003n\002A\002DB";
 		// compile program
@@ -102,7 +102,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\006n\005A\001VBO\000A\001DA";
 		// compile program
@@ -123,7 +123,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "A\000F\027c\000";
 		// compile program
@@ -144,7 +144,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\002n\004A\002F\002c\000";
 		// compile program
@@ -165,7 +165,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\002A\001F\000n\006A\001F\000A\002F\002c\000";
 		// compile program
@@ -186,7 +186,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\000A\001VAn\007O\006";
 		// compile program
@@ -207,7 +207,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "n\001A\001D\002A$n\000A\001V\002A$S\001A\0O\06";
 		// compile program
@@ -229,7 +229,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "VAO\1VBO\1O\1VCO\5VDO\1VEO\1O\5VFVGc\0";
 		// compile program
@@ -250,7 +250,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		char* bytecode = "VIc\4n\0O\6n\11C\5B\0VIc\0c\7";
 		// compile program
@@ -365,7 +365,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		// compile program
 		tokenize(&p, &o);
@@ -383,7 +383,7 @@ int test_tokens(void){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		// compile program
 		tokenize(&p, &o);

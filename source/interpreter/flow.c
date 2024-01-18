@@ -231,39 +231,31 @@ void cmd_endif(struct ptc* p){
 
 void cmd_goto_gosub(struct ptc* p, bool push_return){
 	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
-	// TODO:ERR:LOW Check that stack has entries
+	assert(p->stack.stack_i);
 	struct stack_entry* e = ARG(0);
-	void* label;
+	void* label = NULL;
+	assert(e->type & (VAR_NUMBER | VAR_STRING));
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
 		s32 label_index = VALUE_INT(e);
 //		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
 		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
-			p->stack.stack_i = 0;
 			return; // No jump: number is out of range
 		}
 		label = p->stack.entry[label_index+1].value.ptr;
-	} else if (e->type & VAR_STRING){
-		label = e->value.ptr;
 	} else {
-		// Typeless variable? something went wrong
-		p->stack.stack_i = 0;
-		ERROR(ERR_UNKNOWN_TYPE);
+		label = e->value.ptr;
 	}
-	if (label){
-		// Search code for label
-		u32 index = search_label(p, label);
-		
-		if (push_return){
-			p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;
-			p->calls.entry[p->calls.stack_i].address = p->exec.index;
-			p->calls.stack_i++;
-		}
-		
-		p->exec.index = index;
+	// Search code for label
+	u32 index = search_label(p, label);
+	
+	if (push_return){
+		p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;
+		p->calls.entry[p->calls.stack_i].address = p->exec.index;
+		p->calls.stack_i++;
 	}
-	// GOTO needs to clear stack of labels
-	p->stack.stack_i = 0;
+	
+	p->exec.index = index;
 }
 
 void cmd_goto(struct ptc* p){

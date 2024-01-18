@@ -19,17 +19,14 @@
  * 
  */
 void init_mem_prg(struct program* p, int prg_size){
-	iprintf("init_mem_prg calloc: %d\n", prg_size*2);
 	p->size = 0;
-	p->data = calloc(2, prg_size);
+	p->data = calloc_log("init_mem_prg", 2, prg_size);
 }
 
-struct bytecode init_bytecode(int bc_max_size){
-	iprintf("init_bytecode /intended/ calloc: %d\n", bc_max_size*2);
+struct bytecode init_bytecode(void){
 	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
-	// TODO:CODE:HIGH remove bc_max_size
 	struct bytecode bc = {
-		0, calloc(2, 524288), calloc(1, MAX_LINES), calloc(1, sizeof(struct labels))
+		0, calloc_log("init_bytecode", 2, 524288), calloc_log("init_bytecode", 1, MAX_LINES), calloc_log("init_bytecode", 1, sizeof(struct labels))
 	};
 	assert(bc.data);
 	assert(bc.labels);
@@ -38,9 +35,9 @@ struct bytecode init_bytecode(int bc_max_size){
 }
 
 void free_bytecode(struct bytecode bc){
-	free(bc.data);
-	free(bc.line_length);
-	free(bc.labels);
+	free_log("free_bytecode", bc.data);
+	free_log("free_bytecode", bc.line_length);
+	free_log("free_bytecode", bc.labels);
 }
 
 // Scans for a specific instruction. Special purpose function to handle the
@@ -115,13 +112,12 @@ bool prg_load(struct program* p, const char* filename){
 	// load success: read file to buffer
 	
 	p->size = h.prg_size;
-	iprintf("prg_load malloc: %d\n", (int)h.prg_size);
-	p->data = malloc(h.prg_size);
+	p->data = malloc_log("prg_load", h.prg_size);
 	r = fread(p->data, sizeof(char), h.prg_size, f);
 	if (r < h.prg_size || ferror(f)){
 		iprintf("Could not read file corrcetly!\n");
 		fclose(f);
-		free(p->data);
+		free_log("prg_load", p->data);
 		return false;
 	}
 	// file read success: close file

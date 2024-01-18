@@ -36,7 +36,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 		(*(struct string**)dest->value.ptr) = s;
 		s->uses = 1;
 	} else if (dest->type == (VAR_VARIABLE | VAR_NUMBER)){
-		u8 conversion[16]; // this buffer size is very arbitrary
+		u8 conversion[16] = {0}; // this buffer size is very arbitrary
 		bool neg = false;
 		if (src[i] == '-'){
 			neg = true;
@@ -96,13 +96,13 @@ void cmd_read(struct ptc* p){
 	iprintf("READ from: ");
 	// Iterate over variables on stack
 	for (int i = 0; i < p->stack.stack_i; ++i){
-		iprintf("src=%d size=%d", p->exec.data_index, block_size);
 		block_size = data_block[1];
+		iprintf("src=%d size=%d", p->exec.data_index, block_size);
 		data_src = &data_block[2 + p->exec.data_offset];
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));
 		if (read == READ_ONE_ERR){
-			ERROR(ERR_READ_FAILURE); //TODO:ERR:LOW Return better error if the type was not assignable
+			ERROR(ERR_READ_FAILURE);
 		}
 		p->exec.data_offset += read;
 		iprintf(" read:%d", p->exec.data_offset);

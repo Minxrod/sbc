@@ -32,36 +32,6 @@ enum types {
 	STACK_OP=16,
 };
 
-//TODO:CODE:LOW Should these be moved to stack.h?
-#define VALUE_NUM(v) (v->type & VAR_VARIABLE ? *(s32*)v->value.ptr : v->value.number)
-#define VALUE_INT(v) FP_TO_INT(VALUE_NUM(v))
-#define VALUE_STR(v) (v->type & VAR_VARIABLE ? *(void**)v->value.ptr : (void*)v->value.ptr)
-struct stack_entry;
-void* value_str(struct stack_entry* e);
-
-// Convenience definitions
-#define STACK_INT(i) VALUE_INT(ARG(i))
-#define STACK_NUM(i) VALUE_NUM(ARG(i))
-#define STACK_STR(i) VALUE_STR(ARG(i))
-
-#define STACK_REL_INT(i) STACK_INT(p->stack.stack_i + i)
-#define STACK_REL_NUM(i) STACK_NUM(p->stack.stack_i + i)
-#define STACK_REL_STR(i) STACK_STR(p->stack.stack_i + i)
-
-// Error checking definitions
-#define STACK_INT_RANGE(i,min,max,dest) { int _v = STACK_INT(i); if (_v < min || _v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
-#define STACK_INT_RANGE_SILENT(i,min,max,dest) { int _v = STACK_INT(i); if (_v < min || _v > max) { return; } dest = _v; }
-#define STACK_INT_MIN(i,min,dest) { int _v = STACK_INT(i); if (_v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
-#define STACK_REL_INT_RANGE(i,min,max,dest) { int _v = STACK_REL_INT(i); if (_v < min || _v > max) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
-#define STACK_REL_INT_RANGE_SILENT(i,min,max,dest) { int _v = STACK_REL_INT(i); if (_v < min || _v > max) { return; } dest = _v; }
-
-#define STACK_REL_INT_MIN(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
-#define STACK_REL_INT_MIN_SILENT(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { return; } dest = _v; }
-
-#define STACK_RETURN_INT(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((val))}}); }
-#define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); }
-#define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {(val)}}); }
-
 // This file defines the data structures used to store variable information.
 
 // Notes on vars:

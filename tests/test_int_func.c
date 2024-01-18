@@ -85,6 +85,35 @@ int test_int_func(){
 		free_code(p);
 	}
 	
+	// CHR$+ASC inverses
+	{
+		// ASC(CHR$())
+		struct ptc* p = run_code(
+			"S=0\r"
+			"FOR I=0 TO 255\r"
+			" IF ASC(CHR$(I))!=I THEN S=S+1\r"
+			"NEXT\r"
+		);
+		
+		CHECK_VAR_INT("S", 0); // No errors detected
+		
+		free_code(p);
+		
+		// CHR$(ASC())
+		p = run_code(
+			"DIM C$[256]\r"
+			"S=0\r"
+			"FOR I=0 TO 255\r"
+			" C$[I]=CHR$(I)"
+			" IF CHR$(ASC(C$[I]))!=C$[I] THEN S=S+1\r"
+			"NEXT\r"
+		);
+		
+		CHECK_VAR_INT("S", 0); // No errors detected
+		
+		free_code(p);
+	}
+	
 	// STR$
 	{
 		char* code = "A$=STR$(7)\rB$=STR$(42.3)\rC$=STR$(-6.9)\rD$=STR$(423786)\rE$=STR$(524287)\r";

@@ -11,7 +11,6 @@ extern char* empty_str;
 // string meta
 // type can be 'S' or 'W'
 enum string_type {
-	STRING_EMPTY = 'e',
 	STRING_CHAR = 's',
 	STRING_WIDE = 'w',
 	STRING_INLINE_CHAR = '8',
@@ -50,7 +49,7 @@ struct strings {
 };
 
 // allocate str table and memory for `str_count` max strings
-void init_mem_str(struct strings* s, uint_fast16_t str_count, enum string_type str_type);
+void init_mem_str(struct strings* s, const uint_fast16_t str_count, const enum string_type str_type);
 void reset_str(struct strings* s);
 void free_mem_str(struct strings* s);
 
@@ -65,32 +64,32 @@ bool is_name_start(const char c);
 bool is_name(const char c);
 bool is_varname(const char c);
 
-u32 name_hash(char*, u32, u32);
-bool namecmp(char* a, u32 len, char b[16]);
+u32 name_hash(const char*, const u32, const u32);
+bool namecmp(const char* a, const u32 len, const char b[16]);
 
 //Convert char to wide char
-u16 to_wide(u8 c);
+u16 to_wide(const u8 c);
 
 //Reverse char to wide char
-u8 to_char(u16 c);
+u8 to_char(const u16 c);
 
 // Checks if a given u16 can be converted to a u8 without loss
-bool is_char(u16 w);
+bool is_char(const u16 w);
 
-fixp u8_to_number(u8* data, int len, int base, bool allow_decimal);
+fixp u8_to_number(const u8* data, const int len, const int base, const bool allow_decimal);
 
 // Convert a string to a number, for any base in 2-16.
 // (Only 2,10,16 support is required for PTC)
-fixp str_to_number(const void*, int base, bool allow_decimal);
+fixp str_to_number(const void*, const int base, const bool allow_decimal);
 
 // Convert number to string PTC style + sets length
-void fixp_to_str(fixp num, void* str);
+void fixp_to_str(const fixp num, void* str);
 
 // Convert number to u8* PTC style
-void fixp_to_char(fixp num, u8* str);
+void fixp_to_char(const fixp num, u8* str);
 
 // Convert string to number PTC style
-fixp u8_to_num(u8* data, idx len);
+fixp u8_to_num(const u8* data, const idx len);
 
 // Constants for types mask
 // If set true, use u16, else u8 characters
@@ -127,7 +126,7 @@ void str_set_len(void* src, int len);
 bool str_comp(const void* str1, const void* str2);
 
 // Copy str1 to str2
-void str_copy(void* str1, void* str2);
+void str_copy(const void* str1, void* str2);
 
 // Concatenate two strings
-bool str_concat(void* str1, void* str2, void* dest);
+bool str_concat(const void* str1, const void* str2, void* dest);

@@ -8,21 +8,6 @@
 #include <string.h>
 #include <assert.h>
 
-// This function replaces the VALUE_STR macro in places where use count must be
-// decreased for temporary values living on the stack.
-void* value_str(struct stack_entry* e){
-	void* value = VALUE_STR(e);
-	// Check for only VAR_STRING, and we only care about alloc'd values.
-	// If the value is alloc'd and being read here, reduce usages as it was
-	// removed from the stack.
-	assert(value);
-	if (e->type == VAR_STRING && ((struct string*)value)->type == STRING_CHAR){
-		assert(((struct string*)value)->uses > 0);
-		((struct string*)value)->uses--;
-	}
-	return value;
-}
-
 /// Allocate memory for vars.
 void init_mem_var(struct variables* v, uint_fast16_t var_count){
 	// Check for power of two
@@ -30,8 +15,7 @@ void init_mem_var(struct variables* v, uint_fast16_t var_count){
 	// This is used for search_name_type quad walk to work correctly
 	assert((var_count & (var_count - 1)) == 0);
 	v->vars_max = var_count;
-	iprintf("init_mem_var calloc=%d\n", (int)var_count * (int)sizeof(struct named_var));
-	v->vars = calloc(var_count, sizeof(struct named_var));
+	v->vars = calloc_log("init_mem_var", var_count, sizeof(struct named_var));
 	for (uint_fast16_t i = 0; i < v->vars_max; ++i){
 		v->vars[i].type = VAR_EMPTY;
 	}
@@ -46,7 +30,7 @@ void reset_var(struct variables* v){
 
 /// Freee memory for vars
 void free_mem_var(struct variables* v){
-	free(v->vars);
+	free_log("free_mem_var", v->vars);
 }
 
 

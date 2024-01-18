@@ -65,3 +65,6 @@ void cmd_gdrawmd(struct ptc* p);
 void cmd_gcircle(struct ptc* p);
 void cmd_gprio(struct ptc* p);
 void cmd_gputchr(struct ptc* p);
+
+// TODO:TEST:MED gspoit
+void func_gspoit(struct ptc* p);

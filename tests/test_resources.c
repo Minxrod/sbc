@@ -2,6 +2,7 @@
 
 #include "subsystem/resources.h"
 #include "system.h"
+#include "extension/compress.h"
 
 int test_resources(void){
 	// Check character resource indexes are correct for valid strings
@@ -78,7 +79,27 @@ int test_resources(void){
 		ASSERT(get_chr_index(&p, "SPD3") == 37, "[resource] SPD3");
 		ASSERT(get_chr_index(&p, "SPS0") == 42, "[resource] SPS0 L");
 		ASSERT(get_chr_index(&p, "SPS1") == 43, "[resource] SPS1 L");
-		
 	}
+	
+	// extension:SBCC format
+	{
+		unsigned char* res = sbc_decompress((unsigned char*)"\xf8\x00", 8, 0);
+		unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,};
+		for (int i = 0; i < 8; ++i){
+			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
+		}
+		free_log("test decompress", res);
+	}
+	
+	// simple test 2
+	{
+		unsigned char* res = sbc_decompress((unsigned char*)"\xf8\x00", 4, 0);
+		unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,};
+		for (int i = 0; i < 4; ++i){
+			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
+		}
+		free_log("test decompress", res);
+	}
+	
 	SUCCESS("test_resources success");
 }

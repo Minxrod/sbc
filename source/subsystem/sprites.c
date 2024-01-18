@@ -30,7 +30,6 @@ struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,
 }
 
 void free_sprites(struct sprites* s){
-//	free(s);
 	(void)s;
 }
 

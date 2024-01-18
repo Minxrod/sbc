@@ -18,7 +18,7 @@ int test_int_code(){
 		struct program p = {
 			strlen(code), code
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		tokenize(&p, &o);
 		
@@ -33,7 +33,7 @@ int test_int_code(){
 		struct program p = {
 			strlen(code), code,
 		};
-		struct bytecode o = init_bytecode(p.size);
+		struct bytecode o = init_bytecode();
 		
 		tokenize(&p, &o);
 		

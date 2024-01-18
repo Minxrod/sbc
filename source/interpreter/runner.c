@@ -54,7 +54,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_err, //BGMCLEAR 
 	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_stub, ptc_err, //BGMVOL
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, ptc_err, //CHRREAD
-	ptc_err, cmd_clear, ptc_err, ptc_err, ptc_err, ptc_err, //CONT
+	ptc_err, cmd_clear, ptc_err, cmd_colread, ptc_err, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
 	ptc_err, cmd_gcls, cmd_gcolor, ptc_err, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
@@ -75,7 +75,7 @@ DTCM_DATA const ptc_call ptc_operators[] = {
 
 DTCM_DATA const ptc_call ptc_functions[] = {
 	ptc_err, func_asc, ptc_err, func_bgchk, ptc_err, ptc_err, func_btrig, func_button,
-	ptc_err, func_chr, func_cos, func_deg, ptc_err, func_floor, ptc_err, ptc_err, func_iconchk, //FUNC_ICONCHK
+	ptc_err, func_chr, func_cos, func_deg, ptc_err, func_floor, func_gspoit, ptc_err, func_iconchk, //FUNC_ICONCHK
 	func_inkey, func_instr, func_left, func_len, func_log, func_mid, func_pi, func_pow, func_rad, //FUNC_RAD
 	func_right, func_rnd, ptc_err, func_sin, func_spchk, func_spgetv, func_sphit, ptc_err, //FUNC_SPHITRC
 	ptc_err, ptc_err, func_str, func_subst, ptc_err, func_val, //FUNC_VAL
@@ -275,6 +275,9 @@ void run(struct bytecode code, struct ptc* p) {
 						break;
 					}
 					x = t & VAR_NUMBER ? (void*)&val->number : &val->ptr;
+					if (t & VAR_STRING && !val->ptr){
+						val->ptr = empty_str; // disallow NULL (happens due to array alloc)
+					}
 				}
 				
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
@@ -336,10 +339,10 @@ void run(struct bytecode code, struct ptc* p) {
 				// call_entry: Var ptr 
 				// stack: end, [step]
 				iprintf("\n");
-				if (!p->calls.stack_i){
-					p->exec.error = ERR_BEGIN_LOOP_FAIL;
-					break;
-				}
+//				if (!p->calls.stack_i){
+//					p->exec.error = ERR_BEGIN_LOOP_FAIL;
+//					break;
+//				}
 				fixp* current = (fixp*)p->calls.entry[p->calls.stack_i-1].var;
 				fixp end;
 				fixp step;

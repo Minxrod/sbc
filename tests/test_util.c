@@ -25,7 +25,7 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
 	struct program p = { strlen(code), code };
-	struct bytecode o = init_bytecode(p.size);
+	struct bytecode o = init_bytecode();
 	ptc->exec.error = tokenize(&p, &o);
 	
 	// buffer inkeys
@@ -78,7 +78,7 @@ bool check_code_error(char* code, enum err_code expected){
 
 int token_code(char* code, char* expected, int size){
 	struct program p = { strlen(code), code };
-	struct bytecode o = init_bytecode(p.size);
+	struct bytecode o = init_bytecode();
 	
 	bool error = 0;
 	// compile program

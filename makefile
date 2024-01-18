@@ -6,7 +6,7 @@
 # https://stackoverflow.com/questions/44754190/how-to-use-gccs-i-flag-to-include-multiple-folders
 
 # Source, build settings
-SOURCE = source source/graphics/pc source/graphics source/interpreter source/subsystem tests
+SOURCE = source source/graphics/pc source/graphics source/interpreter source/subsystem source/extension tests
 BUILD = build/
 CSFML = /home/minxrod/Documents/source/notmine/CSFML/
 CSFML_INCLUDE = $(CSFML)include/
@@ -17,7 +17,7 @@ CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
 # The -MMD is important. It generates the actual dependencies...
-CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD
+CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD -O2
 # https://stackoverflow.com/a/10168396
 LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 # All the libraries that need to be linked
@@ -47,6 +47,8 @@ profile: main_build
 test: CFLAGS+=--coverage
 test: LFLAGS+=-lgcov
 test: test_build
+test_full: CFLAGS+=-DTEST_FULL
+test_full: test_build
 
 main_build: $(main_objs)
 	# TODO: Better CSFML library location? (How do you install it?)

@@ -228,12 +228,12 @@ const char* cmd_format[] = {
 	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNNNNN","", //BGMCLEAR
 	"","","","","","0,N,NN","", //BGMVOL
 	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","", //CHRREAD
-	"","0","","","","0", //CONT
+	"","0","","SNnnn","","0", //CONT
 	"","","Snnn","S","NNNN,NNNNN", //GBOX
 	"","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
 	"","","S,SN","",//NEW
-	"NNS","S","*","","","",//RENAME
+	"NNSN","S","v","","","",//RENAME
 	"L","NNv","0","","","NNv","NN,NNN,NNNN",//SPANGLE
 	"","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
 	"NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
@@ -257,7 +257,7 @@ const char func_return[] = "NNNNNNNN"
 const char* op_format[] = {
 	"NN,SS","*","NN","NN,SN","NN","*", //;
 	"nN,sS","N", //(-)
-	"NN,SS","NN,SS","NN","NN","NN","NN", //<=
+	"NN,SS","NN,SS","NN","NN","NN","NN", //>=
 	"NN",//%
 	"NN","NN","N","NN","N",//!
 	"*","*","*","*"
@@ -418,9 +418,13 @@ int tok_test(struct tokenizer* state){
 						valid = op_format[state->tokens[i].ofs];
 						is_valid = check_cmd(&stack[stack_i-2], 2, valid);
 						stack_i -= 2; // +2 -1
-						// note: any binary op will have the type of the first argument
-						if (state->tokens[i].ofs != OP_ASSIGN)
+						// note: some binary ops will have the type of the first argument
+						if (state->tokens[i].ofs >= OP_EQUAL && state->tokens[i].ofs <= OP_GREATER_EQUAL){
+							// these ones don't
+							stack[stack_i++] = 'N';
+						} else if (state->tokens[i].ofs != OP_ASSIGN){
 							stack[stack_i++] &= 0x5f;  //binary op returns value type of first argument. unless it's =, that doesn't return anything.
+						}
 					}
 				} else {
 					// unary: all of these take numbers, so

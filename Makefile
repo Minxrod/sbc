@@ -16,7 +16,7 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	nds
-SOURCES		:=	gfx source data tests source/interpreter source/subsystem source/graphics/nds
+SOURCES		:=	gfx source data tests source/interpreter source/subsystem source/graphics/nds source/extension
 INCLUDES	:=	include build source source/interpreter source/subsystem
 
 #---------------------------------------------------------------------------------

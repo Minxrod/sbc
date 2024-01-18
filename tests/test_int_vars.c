@@ -343,5 +343,60 @@ int test_int_vars(){
 		}
 	}
 	
+	// Constant sysvars
+	{
+		struct ptc* p = run_code("A=TRUE\rB=FALSE\rC=CANCEL\rD=VERSION\r");
+		
+		CHECK_VAR_INT("A",1);
+		CHECK_VAR_INT("B",0);
+		CHECK_VAR_NUM("C",-INT_TO_FP(1));
+		CHECK_VAR_INT("D",0x2020);
+		
+		free_code(p);
+	}
+	
+	// 1D Array accesses (normal)
+	{
+		struct ptc* p = run_code(
+			"DIM NUM[20]\r"
+			"DIM ST$[20]\r"
+			"NUM[7]=36\r"
+			"ST$[6]=\"ABC\"\r"
+			"NUM=NUM[7]\r"
+			"ST$=ST$[6]\r"
+		);
+		
+		CHECK_VAR_INT("NUM",36);
+		CHECK_VAR_STR("ST","S\3ABC");
+		
+		free_code(p);
+	}
+	
+	// 1D array errors
+	{
+		// implicit definition
+		ASSERT(check_code_error("?A[0]\r", ERR_NONE), "[array] No error on implicit array");
+		ASSERT(check_code_error("?A(0)\r", ERR_NONE), "[array] No error on implicit array");
+		ASSERT(check_code_error("?A$[0]\r", ERR_NONE), "[array] No error on implicit string array");
+		ASSERT(check_code_error("?A$(0)\r", ERR_NONE), "[array] No error on implicit string array");
+		DENY(check_code_error("?A[10]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("?A$[10]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("?A[-1]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("?A$[-1]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("A$[5]=5\r", ERR_NONE), "[array] Check types correctly 1D I");
+		DENY(check_code_error("A[5]=\"5\"\r", ERR_NONE), "[array] Check types correctly 1D II");
+		// explicit definition
+		DENY(check_code_error("DIM A[100]\r?A[-1]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("DIM A$[100]\r?A$[-1]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("DIM A[100]\r?A[100]\r", ERR_NONE), "[array] Out of range error (1D)");
+		DENY(check_code_error("DIM A$[100]\r?A$[100]\r", ERR_NONE), "[array] Out of range error (1D)");
+		ASSERT(check_code_error("DIM A[100]\r?A[99]\r", ERR_NONE), "[array] Within range OK (1D)");
+		ASSERT(check_code_error("DIM A$[100]\r?A$[99]\r", ERR_NONE), "[array] Within range OK (1D)");
+		DENY(check_code_error("DIM A$[20]\rA$[15]=5\r", ERR_NONE), "[array] Check types correctly 1D III");
+		DENY(check_code_error("DIM A[20]\rA[15]=\"5\"\r", ERR_NONE), "[array] Check types correctly 1D IV");
+		// Allow definition with same name different types
+		ASSERT(check_code_error("DIM A$[100]\rDIM A[100]\rA=6\rA$=\"8\"", ERR_NONE), "[array] Same name different types OK");
+	}
+	
 	SUCCESS("test_int_vars success");
 }

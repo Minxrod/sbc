@@ -27,7 +27,7 @@ struct bytecode {
 };
 
 void init_mem_prg(struct program* p, int prg_size);
-struct bytecode init_bytecode(int bc_max_size);
+struct bytecode init_bytecode(void);
 void free_bytecode(struct bytecode);
 
 struct program init_ptr_prg(char* c);

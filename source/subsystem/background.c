@@ -7,13 +7,13 @@
 #include <string.h>
 
 struct background* init_background(void){
-	struct background* b = calloc(sizeof(struct background), 1);
+	struct background* b = calloc_log("init_background", sizeof(struct background), 1);
 	// everything defaults to zero for now
 	return b;
 }
 
 void free_background(struct background* b){
-	free(b);
+	free_log("free_background", b);
 }
 
 void step_background(struct background* b){
@@ -163,7 +163,6 @@ void cmd_bgfill(struct ptc* p){
 }
 
 void cmd_bgofs(struct ptc* p){
-	// TODO:IMPL:HIGH interpolation form
 	int layer, time;
 	fixp x, y;
 	layer = STACK_INT(0);
@@ -210,7 +209,6 @@ void cmd_bgread(struct ptc* p){
 
 void cmd_bgcopy(struct ptc* p){
 	// BGCOPY layer x1 y1 x2 y2 x3 y3
-	// TODO:IMPL:HIGH other forms
 	uint_fast8_t layer;
 	int x1, x2, y1, y2, x3, y3;
 	int temp;

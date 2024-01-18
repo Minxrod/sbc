@@ -2,6 +2,7 @@
 
 #include "system.h"
 #include "error.h"
+#include "extension/compress.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -64,7 +65,7 @@ bool check_load_file(u8* dest, const char* search_path, const char* name, int si
 		}
 	}
 	char check_type[4] = {0};
-	fread(check_type, sizeof(u8), 4, f);
+	fread(check_type, sizeof(char), 4, f);
 	if (ferror(f)){
 		fclose(f);
 		iprintf("Failed to check file type: %s\n", path);
@@ -90,7 +91,7 @@ bool check_load_file(u8* dest, const char* search_path, const char* name, int si
 		// Petit Computer internal file format: skip type
 		if (fseek(f, 12, SEEK_SET)){
 			fclose(f);
-			iprintf("Failed to fseek to %d within %s\n", 4, path);
+			iprintf("Failed to fseek to %d within %s\n", 12, path);
 			return false;
 		}
 		fread(dest, sizeof(u8), size, f);
@@ -101,6 +102,39 @@ bool check_load_file(u8* dest, const char* search_path, const char* name, int si
 		}
 		fclose(f);
 		return true;
+	} else if (!strncmp(check_type, "SBCC", 4)){
+		// SBC compressed format (something a bit more inventive)
+		if (fseek(f, 4, SEEK_SET)){
+			fclose(f);
+			iprintf("Failed to fseek to %d within %s\n", 4, path);
+			return false;
+		}
+		u8 header[4];
+		fread(header, sizeof(u8), 4, f);
+		if (ferror(f)){
+			fclose(f);
+			iprintf("Failed to read header %s\n", path);
+			return false;
+		}
+		// Used destinations as temporary storage - may lead to artifacting but reduces memory use
+		u8* compressed = dest;
+		fread(dest, sizeof(u8), size, f);
+		if (ferror(f)){
+			fclose(f);
+			iprintf("Failed to read file %s\n", path);
+			return false;
+		}
+		int bits = header[0];
+		int expected_size = header[1] | (header[2] << 8) | (header[3] << 16);
+		(void)expected_size; // for when assert fails
+		assert(expected_size == size); // request == expected
+		unsigned char* decompressed = sbc_decompress(compressed, size, bits);
+		memcpy(dest, decompressed, size);
+//		free_log("load_file", compressed); // TODO:PERF:MED Make only one alloc necessary
+		free_log("load_file", decompressed);
+		fclose(f);
+		return true;
+		
 	} else {
 		// Unknown format, file load fails 
 		iprintf("Failed to load file (Unknown format): %s\n", path);
@@ -146,23 +180,22 @@ void init_resource(struct resources* r){
 			r->scr[i + SCR_BANKS * lower] = (u16*)(VRAM_BG_SCR + SCR_SIZE * i + VRAM_LOWER_OFS * lower);
 		}
 		for (int i = 0; i < COL_BANKS; ++i){
-			r->col[i + COL_BANKS * lower] = calloc(COL_SIZE, 1);
+			r->col[i + COL_BANKS * lower] = calloc_log("init_resource col", COL_SIZE, 1);
 		}
 	}
-
 #endif //ARM9
 #ifdef PC
 	// allocate memory for resources (needs ~512K)
 	// this will serve as "emulated VRAM"
-	r->all_banks = calloc(CHR_SIZE, CHR_BANKS * 2);
-	r->col_banks = calloc(COL_SIZE, 6); //COL[0-2][U-L]
+	r->all_banks = calloc_log("init_resource all_banks", CHR_SIZE, CHR_BANKS * 2);
+	r->col_banks = calloc_log("init_resource col_banks", COL_SIZE, 6); //COL[0-2][U-L]
 	// guarantee contiguous regions (useful for generating textures)
 	for (int lower = 0; lower <= 1; ++lower){
 		for (int i = 0; i < CHR_BANKS; ++i){
 			r->chr[i + CHR_BANKS * lower] = &r->all_banks[(i + CHR_BANKS * lower) * CHR_SIZE];
 		}
 		for (int i = 0; i < SCR_BANKS; ++i){
-			r->scr[i + SCR_BANKS * lower] = calloc(1, SCR_SIZE);
+			r->scr[i + SCR_BANKS * lower] = calloc_log("init_resource scr", 1, SCR_SIZE);
 		}
 		for (int i = 0; i < COL_BANKS; ++i){
 			r->col[i + COL_BANKS * lower] = &r->col_banks[(i + COL_BANKS * lower) * COL_SIZE / sizeof(u16)];
@@ -172,12 +205,11 @@ void init_resource(struct resources* r){
 #endif //PC
 	// Shared code
 	for (int i = 0; i < 4; ++i){
-		iprintf("GRP%d calloc: %d\n", i, GRP_SIZE);
-		r->grp[i] = calloc(GRP_SIZE, 1);
+		r->grp[i] = calloc_log("init_resource grp", GRP_SIZE, 1);
 	}
 	// Store these in memory for faster load times on keyboard switching
 	for (int i = 0; i < 12; ++i){
-		r->key_chr[i] = calloc(CHR_SIZE, 1);
+		r->key_chr[i] = calloc_log("init_resource key_chr", CHR_SIZE, 1);
 	}
 	const char* key_files[12] = {
 		"resources/SPD6.PTC", "resources/SPD7.PTC",
@@ -220,18 +252,18 @@ void init_resource(struct resources* r){
 void free_resource(struct resources* r){
 #ifdef PC
 	// Free memory here
-	free(r->all_banks);
-	free(r->col_banks);
+	free_log("free_resource all_banks", r->all_banks);
+	free_log("free_resource col_banks", r->col_banks);
 	for (int i = 0; i < 2*SCR_BANKS; ++i){
-		free(r->scr[i]);
+		free_log("free_resource scr", r->scr[i]);
 	}
 #endif
 	// Shared code
 	for (int i = 0; i < 4; ++i){
-		free(r->grp[i]);
+		free_log("free_resource grp", r->grp[i]);
 	}
 	for (int i = 0; i < 12; ++i){
-		free(r->key_chr[i]);
+		free_log("free_resource key_chr", r->key_chr[i]);
 	}
 }
 
@@ -349,8 +381,8 @@ void* get_resource(struct ptc* p, char* name, int len){
 			return p->res.chr[16+bank+CHR_BANKS*upper];
 		}
 	} else if (c == 'C'){ //COL
-		iprintf("COLn %d:%p\n", 3*upper + bank, (void*)p->res.col[3*upper+bank]);
-		return p->res.col[3*upper+bank];
+//		iprintf("COLn %d:%p\n", 3*upper + bank, (void*)p->res.col[3*upper+bank]);
+		return p->res.col[bank+COL_BANKS*upper];
 	} else if (c == 'G'){ //GRP
 		// TODO:IMPL:LOW Does page matter here?
 		return p->res.grp[(int)bank];
@@ -362,7 +394,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 void cmd_load(struct ptc* p){
 	void* res = value_str(ARG(0));
 	// TODO:IMPL:LOW Dialog popups
-	// TODO:ERR:MED Check errors are correct
+	// TODO:ERR:LOW Check errors are correct
 	// longest name:
 	// RRRNP:ABCDEFGH
 	char res_str[14+1] = {0}; // null terminated
@@ -445,6 +477,34 @@ void cmd_chrinit(struct ptc* p){
 		if (!load_chr(res_data, resource_path, res_name)){
 			ERROR(ERR_FILE_LOAD_FAILED);
 		}
+	} else {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+}
+
+void cmd_colread(struct ptc* p){
+	// COLREAD resource color r g b
+	void* res_str = value_str(ARG(0));
+	int col;
+	STACK_INT_RANGE(1,0,255,col);
+	fixp* r, * g, * b;
+	r = ARG(2)->value.ptr;
+	g = ARG(3)->value.ptr;
+	b = ARG(4)->value.ptr;
+	int res_str_len = str_len(res_str);
+	u8 res[5];
+	if (res_str_len > 5) {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+	str_char_copy(res_str, res);
+	if (res[0] == 'C'){
+		u16* col_data = get_resource(p, (char*)res, res_str_len);
+		int c = col_data[col];
+		// GGGRRRRR GBBBBBGG
+		// Note: Loading as u16 only works on little endian device
+		*r = INT_TO_FP(c & 0x1f) << 3;
+		*g = INT_TO_FP(((c >> 5) & 0x1f)) << 3; // TODO:TEST:LOW Is lowest bit readable?
+		*b = INT_TO_FP(((c >> 10) & 0x1f)) << 3; // TODO:TEST:LOW Correct values as they scale?
 	} else {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}

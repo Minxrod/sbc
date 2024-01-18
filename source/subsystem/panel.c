@@ -117,7 +117,6 @@ s16 keyboard_pos[][6]={
 };
 
 void init_panel(struct ptc* p){
-//	struct panel* panel = calloc(sizeof(struct panel), 1);
 	p->panel.type = PNL_KYA;
 	p->panel.text = init_console();
 	p->panel.keys_text = init_console();
@@ -351,13 +350,17 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 	}
 	
 	// TODO:IMPL:MED Icon pages (check here before panel check)
-	
 	if (p->type == PNL_OFF || p->type == PNL_PNL) return;
 	
 	int pressed_key = get_pressed_key(ptc);
+	bool refresh = false;
 	if (pressed_key){
 		if (pressed_key == 1){
 			ptc->exec.error = ERR_BREAK;
+		} else if (pressed_key == 47){
+			// shift
+			p->shift ^= PNL_SHIFT;
+			refresh = true;
 		} else if (pressed_key <= 60 || pressed_key == 65){
 			int source_key_map = 2 * (p->type - 2) + (p->shift != 0);
 			int source_key = pressed_key;
@@ -372,6 +375,10 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 						set_inkey(&ptc->input, to_wide(c2));
 					}
 				}
+				if (p->shift & PNL_SHIFT){
+					p->shift &= ~PNL_SHIFT;
+					refresh = true;
+				}
 			}
 		} else if (pressed_key >= 61 && pressed_key <= 64){
 			if (pressed_key == 61) p->shift ^= PNL_CAPS_LOCK;
@@ -379,15 +386,18 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 			else if (pressed_key == 63) p->type = PNL_KYM;
 			else if (pressed_key == 64) p->type = PNL_KYK;
 			
-			int source_key_chr = (2 * (p->type - 2) + (p->shift != 0)) * 2;
-			memcpy(ptc->res.chr[18+CHR_BANKS], ptc->res.key_chr[source_key_chr], CHR_SIZE);
-			memcpy(ptc->res.chr[19+CHR_BANKS], ptc->res.key_chr[source_key_chr + 1], CHR_SIZE);
-			
-			ptc->res.regen_chr[18+CHR_BANKS] |= true;
-			ptc->res.regen_chr[19+CHR_BANKS] |= true;
+			refresh = true;
 		} else if (pressed_key == 66){
 			p->cursor ^= PNL_INSERT;
 		}
+	}
+	if (refresh){
+		int source_key_chr = (2 * (p->type - 2) + (p->shift != 0)) * 2;
+		memcpy(ptc->res.chr[18+CHR_BANKS], ptc->res.key_chr[source_key_chr], CHR_SIZE);
+		memcpy(ptc->res.chr[19+CHR_BANKS], ptc->res.key_chr[source_key_chr + 1], CHR_SIZE);
+		
+		ptc->res.regen_chr[18+CHR_BANKS] |= true;
+		ptc->res.regen_chr[19+CHR_BANKS] |= true;
 	}
 }
 

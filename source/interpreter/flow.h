@@ -31,7 +31,6 @@ void cmd_then(struct ptc* p);
 void cmd_else(struct ptc* p) ITCM_CODE;
 void cmd_endif(struct ptc* p);
 
-
 void cmd_goto(struct ptc* p);
 void cmd_gosub(struct ptc* p);
 void cmd_on(struct ptc* p);

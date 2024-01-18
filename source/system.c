@@ -13,13 +13,14 @@
 #include "graphics/display.h"
 
 struct ptc* init_system(int var, int str, int arr){
-	iprintf("init_system calloc: %d\n", (int)sizeof(struct ptc));
-	struct ptc* ptc = calloc(sizeof(struct ptc), 1);
+	struct ptc* ptc = calloc_log("init_mem_prg", sizeof(struct ptc), 1);
 	if (ptc == NULL){
 		iprintf("Error allocating memory!\n");
 		abort();
 	}
 //	*ptc = (const struct ptc){0}; // see if this reduces stack
+	init_resource(&ptc->res);
+	iprintf("%zd\n", sizeof(struct ptc));
 	
 	// init vars memory
 	init_mem_var(&ptc->vars, var);
@@ -37,7 +38,6 @@ struct ptc* init_system(int var, int str, int arr){
 	init_sprites(&ptc->sprites);
 	init_graphics(&ptc->graphics);
 	
-	init_resource(&ptc->res);
 	init_display(ptc); // needs resources as well
 	
 	// must occur after resources as it depend on SCR
@@ -53,7 +53,7 @@ void free_system(struct ptc* p){
 	free_mem_arr(&p->arrs);
 	free_mem_str(&p->strs);
 	free_mem_var(&p->vars);
-	free(p);
+	free_log("free_system", p);
 }
 
 //https://smilebasicsource.com/forum/thread/docs-ptc-acls
@@ -95,6 +95,7 @@ void cmd_acls(struct ptc* p){
 	
 	// Restore proper program variable state
 	p->vars = vars;
+	free_mem_var(&temp_vars);
 }
 
 void cmd_visible(struct ptc* p){

@@ -43,19 +43,18 @@ void con_newline(struct console* c, bool scroll){
 }
 
 struct console* init_console(void){
-	iprintf("console calloc: %d\n", (int)sizeof(struct console));
-	struct console* c = calloc(sizeof(struct console), 1);
+	struct console* c = calloc_log("init_console", sizeof(struct console), 1);
 	c->tabstep = 4;
 	return c;
 }
 
 void free_console(struct console* c){
-	free(c);
+	free_log("free_console", c);
 }
 
 void con_put(struct console* c, u16 w){
-	assert(c->x >= 0 && c->x < CONSOLE_WIDTH);
-	assert(c->y >= 0 && c->y < CONSOLE_HEIGHT);
+	assert(c->x < CONSOLE_WIDTH);
+	assert(c->y < CONSOLE_HEIGHT);
 	c->text[c->y][c->x] = w;
 	c->color[c->y][c->x] = c->col;
 	
@@ -76,6 +75,9 @@ void con_puts(struct console* c, const void* s){
 	u32 len = str_len(s);
 	for (size_t i = 0; i < len; ++i){
 		con_put(c, str_at_wide(s, i));
+		if (i < len-1 && c->y == CONSOLE_HEIGHT){
+			con_scroll(c);
+		}
 	}
 }
 
@@ -162,7 +164,9 @@ void cmd_cls(struct ptc* p){
 	for (int i = 0; i < CONSOLE_HEIGHT; ++i){
 		for (int j = 0; j < CONSOLE_WIDTH; ++j){
 			c->text[i][j] = 0;
-			c->color[i][j] = 0;
+			c->color[i][j] = c->col;
+			p->panel.text->text[i][j] = 0; // CLS also clears lower screen
+			p->panel.text->color[i][j] = 0; // CLS also clears lower screen
 		}
 	}
 	c->x = 0;
@@ -200,7 +204,6 @@ u16* shared_input(struct ptc* p){
 	// TODO:IMPL:LOW Set color when entering text
 	// TODO:IMPL:LOW Remove color when backspacing
 	// TODO:IMPL:MED Blinking text cursor
-	// TODO:IMPL:MED Delete, insert functionality
 	// TODO:TEST:MED Write tests for these
 	struct console* con = &p->console;
 	uint_fast16_t inkey;
@@ -208,6 +211,9 @@ u16* shared_input(struct ptc* p){
 	u16* output = con->text[con->y]; // start of current line
 	uint_fast8_t out_index = 0;
 	uint_fast8_t out_index_max = 0;
+	int old_panel = p->panel.type;
+	// enable typing during INPUT/LINPUT if not already active
+	p->panel.type = PNL_KYA;
 	do {
 		inkey = get_inkey(&p->input);
 		keyboard = get_pressed_key(p);
@@ -261,6 +267,7 @@ u16* shared_input(struct ptc* p){
 	} while (p->exec.error == ERR_NONE && inkey != '\r'
 			&& keyboard != 60
 			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
+	p->panel.type = old_panel;
 	return output;
 }
 

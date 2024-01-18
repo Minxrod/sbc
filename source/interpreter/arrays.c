@@ -11,8 +11,7 @@
 void init_mem_arr(struct arrays* a, int array_count, int element_count){
 	a->arr_data_size = element_count + 2 * array_count;
 	a->arr_data_next = 0;
-	iprintf("init_mem_arr calloc=%d\n", (int)a->arr_data_size * (int)sizeof(union value));
-	a->arr_data = calloc(a->arr_data_size, sizeof(union value));
+	a->arr_data = calloc_log("init_mem_arr", a->arr_data_size, sizeof(union value));
 }
 
 void reset_arr(struct arrays* a){
@@ -22,7 +21,7 @@ void reset_arr(struct arrays* a){
 }
 
 void free_mem_arr(struct arrays* a){
-	free(a->arr_data);
+	free_log("free_mem_arr", a->arr_data);
 }
 
 void* get_new_arr(struct arrays* a, u32 size1, u32 size2){

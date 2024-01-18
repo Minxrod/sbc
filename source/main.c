@@ -22,7 +22,11 @@ struct program launcher = {
 
 int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
-	struct bytecode bc = init_bytecode(524288); // TODO:TEST:NONE verify value maybe
+	struct bytecode bc = init_bytecode();
+	int i = 0;
+//	while (i < 2000000000){
+		i += 1;
+//	}
 	
 	if (info->prg->size){
 		info->p->exec.error = tokenize(info->prg, &bc);
@@ -33,7 +37,7 @@ int system_launch(void* launch_info){
 		// Display error status
 		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
 		// TODO:CODE:HIGH This includes a const cast away. What's a good way to avoid this?
-		struct string err_status = {
+		const struct string err_status = {
 			STRING_CHAR, strlen(error_messages[info->p->exec.error]), 0,
 			{.s = (u8*)error_messages[info->p->exec.error]}
 		};
@@ -70,7 +74,7 @@ int system_launch(void* launch_info){
 		// Display error status
 		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
 		// TODO:CODE:HIGH This includes a const cast away. What's a good way to avoid this?
-		struct string err_status = {
+		const struct string err_status = {
 			STRING_CHAR, strlen(error_messages[info->p->exec.error]), 0,
 			{.s = (u8*)error_messages[info->p->exec.error]}
 		};
@@ -79,7 +83,7 @@ int system_launch(void* launch_info){
 	}
 	
 //	info->p->exec.error = tokenize(info->prg, &bc);
-//	free(info->prg->data);
+//	free_log("system_launch", info->prg->data);
 	// only needs BC, not source
 	
 	free_bytecode(bc);
@@ -128,6 +132,8 @@ void init(void){
 // Global so that it can be used during interrupt
 struct ptc* ptc;
 
+#define KEY(T) if (b & KEY_##T){ conv_b |= BUTTON_##T; }
+
 void frame_update(){
 	// scan buttons
 	scanKeys();
@@ -137,7 +143,22 @@ void frame_update(){
 	
 	// apply inputs
 	int b = keysCurrent();
-	set_input(&ptc->input, b);
+	int conv_b = 0;
+	// somewhat silly way to map buttons correctly
+	KEY(A)
+	KEY(B)
+	KEY(X)
+	KEY(Y)
+	KEY(UP)
+	KEY(LEFT)
+	KEY(RIGHT)
+	KEY(DOWN)
+	KEY(SELECT)
+	KEY(START)
+	KEY(L)
+	KEY(R)
+	
+	set_input(&ptc->input, conv_b);
 	
 	set_touch(&ptc->input, b & KEY_TOUCH, touch.px, touch.py);
 	press_key(ptc, b & KEY_TOUCH, touch.px, touch.py);
@@ -165,7 +186,7 @@ int main(void){
 //	prg_load(&program, "programs/PERFTS2.PTC");
 //	struct bytecode bc = init_bytecode(program.size);
 //	tokenize(&program, &bc);
-//	free(program.data);
+//	free_log("main", program.data);
 	irqSet(IRQ_VBLANK, frame_update);
 	// only needs BC, not source
 	system_launch(&info);
@@ -271,7 +292,6 @@ int main(int argc, char** argv){
 			if (event.type == sfEvtTextEntered){
 				if (event.text.unicode <= 128){
 					// TODO:CODE:LOW Check these as additional button presses instead?
-					// TODO:IMPL:LOW Add shift, left/right?
 					if (event.text.unicode == '\b'){
 						b |= BUTTON_Y;
 					} else if (event.text.unicode == '\r'){

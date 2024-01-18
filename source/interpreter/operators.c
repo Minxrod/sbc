@@ -147,54 +147,46 @@ void op_assign(struct ptc* p){
 	// a = b
 	
 	if (a->type & b->type & VAR_NUMBER){
-		if (a->type & VAR_VARIABLE){
-			s32 x = VALUE_NUM(b);
-			
-			*(s32*)a->value.ptr = x;
-		} else {
-			p->exec.error = ERR_OP_ASSIGN_TO_LITERAL;
-		}
+		s32 x = VALUE_NUM(b);
+		
+		*(s32*)a->value.ptr = x;
 	} else if (a->type & b->type & VAR_STRING){
-		if (a->type & VAR_VARIABLE){
-			// A = variable containing pointer to struct string*
-			struct string** dest = (struct string**)a->value.ptr;
-			struct string* src = value_str(b);
-			
-			if (src == *dest)
-				return; // no change
-			if (*dest == NULL || **(char**)dest == BC_STRING){
-				// if dest is currently NOT writable string
-				if (src->type == STRING_CHAR){
-					// shallow copy alloc'd string, track use
-					(*dest) = src;
-					(*dest)->uses++;
-				} else if (src->type == BC_STRING){
-					(*dest) = src;
-					// no uses: read only
-				} else {
-					iprintf("Unknown source string type!\n");
-					abort();
-				}
-			} else if (**(char**)dest == STRING_CHAR){
-				// dest is writable: replace it here
-				(*dest)->uses--;
-				if (src->type == STRING_CHAR){
-					*dest = src;
-					if (src)
-						(*dest)->uses++;
-				} else if (src->type == BC_STRING){
-					// replace with string
-					(*dest) = src;
-				} else {
-					iprintf("Unknown source string type!\n");
-					abort();
-				}
+		// A = variable containing pointer to struct string*
+		struct string** dest = (struct string**)a->value.ptr;
+		struct string* src = value_str(b);
+		
+		if (src == *dest)
+			return; // no change
+		if (*dest == NULL || **(char**)dest == BC_STRING){
+			// if dest is currently NOT writable string
+			if (src->type == STRING_CHAR){
+				// shallow copy alloc'd string, track use
+				(*dest) = src;
+				(*dest)->uses++;
+			} else if (src->type == BC_STRING){
+				(*dest) = src;
+				// no uses: read only
 			} else {
-				iprintf("Unknown destination string type!\n");
+				iprintf("Unknown source string type!\n");
+				abort();
+			}
+		} else if (**(char**)dest == STRING_CHAR){
+			// dest is writable: replace it here
+			(*dest)->uses--;
+			if (src->type == STRING_CHAR){
+				*dest = src;
+				if (src)
+					(*dest)->uses++;
+			} else if (src->type == BC_STRING){
+				// replace with string
+				(*dest) = src;
+			} else {
+				iprintf("Unknown source string type!\n");
 				abort();
 			}
 		} else {
-			p->exec.error = ERR_OP_ASSIGN_TO_LITERAL;
+			iprintf("Unknown destination string type!\n");
+			abort();
 		}
 	} else {
 		p->exec.error = ERR_OP_ASSIGN_INVALID_TYPE;
