@@ -266,7 +266,7 @@ void cmd_gputchr(struct ptc* p){
 void func_gspoit(struct ptc* p){
 	int page, x, y;
 	u8* dest;
-	if (p->stack.stack_i == 2){
+	if (p->exec.argcount == 2){
 		dest = grp_drawpage(p);
 		x = STACK_REL_INT(-2);
 		y = STACK_REL_INT(-1);
@@ -281,6 +281,108 @@ void func_gspoit(struct ptc* p){
 	
 	if (x >= GRP_WIDTH || x < 0 || y < 0 || y >= GRP_HEIGHT){
 		STACK_RETURN_NUM(-INT_TO_FP(1));
+		return;
 	}
 	STACK_RETURN_INT(dest[grp_index(x,y)]);
+}
+
+void cmd_gcopy(struct ptc* p){
+	// GCOPY [srcpage] x1 y1 x2 y2 x3 y3 mode
+	int page;
+	u8* src, * dest;
+	int x1, x2, x3;
+	int y1, y2, y3;
+	int temp;
+	bool mode;
+	if (p->stack.stack_i == 8){
+		STACK_INT_RANGE(0,0,3,page);
+		x1 = STACK_INT(1);
+		y1 = STACK_INT(2);
+		x2 = STACK_INT(3);
+		y2 = STACK_INT(4);
+		x3 = STACK_INT(5);
+		y3 = STACK_INT(6);
+		mode = STACK_INT(7);
+	} else {
+		page = p->graphics.info[p->graphics.screen].drawpage;
+		x1 = STACK_INT(0);
+		y1 = STACK_INT(1);
+		x2 = STACK_INT(2);
+		y2 = STACK_INT(3);
+		x3 = STACK_INT(4);
+		y3 = STACK_INT(5);
+		mode = STACK_INT(6);
+	}
+	
+	src = p->res.grp[page];
+	dest = p->res.grp[p->graphics.info[p->graphics.screen].drawpage];
+	
+	// bounds checking!
+	// TODO:TEST:LOW bounds check behavior
+//	if (x1 < 0) { x1 = 0; }
+//	if (x2 < 0) { x2 = 0; }
+//	if (x3 < 0) { x3 = 0; }
+//	if (x1 > GRP_WIDTH-1) { x1 = GRP_WIDTH-1; }
+//	if (x2 > GRP_WIDTH-1) { x2 = GRP_WIDTH-1; }
+//	if (x3 > GRP_WIDTH-1) { x3 = GRP_WIDTH-1; }
+	
+//	if (y1 < 0) { y1 = 0; }
+//	if (y2 < 0) { y2 = 0; }
+//	if (y3 < 0) { y3 = 0; }
+//	if (y1 > GRP_HEIGHT-1) { y1 = GRP_HEIGHT-1; }
+//	if (y2 > GRP_HEIGHT-1) { y2 = GRP_HEIGHT-1; }
+//	if (y3 > GRP_HEIGHT-1) { y3 = GRP_HEIGHT-1; }
+	
+	if (x1 > x2){
+		temp = x1;
+		x1 = x2;
+		x2 = temp;
+	}
+	if (y1 > y2){
+		temp = y1;
+		y1 = y2;
+		y2 = temp;
+	}
+	
+	// TODO:TEST:HIGH Check that this works in each direction, overlaps, offscreen
+	iprintf("gcopy %d,%d,%d,%d,%d,%d\n", x1, y1, x2, y2, x3, y3);
+	if (y3 < y1 || x3 < x1){
+		for (int y = y1; y <= y2; ++y){
+			for (int x = x1; x <= x2; ++x){
+				u8 p;
+				if (x >= 0 && y >= 0 && x < GRP_WIDTH && y < GRP_HEIGHT){
+					p = src[grp_index(x,y)];
+				} else {
+					p = 0;
+				}
+				int dx, dy;
+				dx = x - x1 + x3;
+				dy = y - y1 + y3;
+				if (mode || p){
+					if (dx >= 0 && dy >= 0 && dx < GRP_WIDTH && dy < GRP_HEIGHT){
+						dest[grp_index(dx,dy)] = p;
+					}
+				}
+			}
+		}
+	} else {
+		for (int y = y2; y >= y1; --y){
+			for (int x = x2; x >= x1; --x){
+				u8 p;
+				if (x >= 0 && y >= 0 && x < GRP_WIDTH && y < GRP_HEIGHT){
+					p = src[grp_index(x,y)];
+				} else {
+					p = 0;
+				}
+				int dx, dy;
+				dx = x - x1 + x3;
+				dy = y - y1 + y3;
+				if (mode || p){
+					if (dx >= 0 && dy >= 0 && dx < GRP_WIDTH && dy < GRP_HEIGHT){
+						dest[grp_index(dx,dy)] = p;
+					}
+				}
+			}
+		}
+	}
 }

@@ -495,5 +495,45 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// DATA multiple lines with fast variables
+	{
+		char* code = "DATA 523\rDATA 46\rDATA \"389\"\rREAD D,C,B$\r";
+		// run program
+		struct ptc* p = run_code_opts(code, TOKOPT_VARIABLE_IDS);
+		// check output for correctness
+		CHECK_VAR_INT("D", 523);
+		CHECK_VAR_INT("C", 46);
+		CHECK_VAR_STR("B", "S\003389");
+		free_code(p);
+	}
+	
+	// DATA with array variables
+	{
+		char* code = "DATA 523\rDATA 46\rDATA \"389\"\rREAD D[0],C[0],B$[0]\rD=D[0]\rC=C[0]\rB$=B$[0]\r";
+		// run program
+		struct ptc* p = run_code_opts(code, TOKOPT_VARIABLE_IDS);
+		// check output for correctness
+		CHECK_VAR_INT("D", 523);
+		CHECK_VAR_INT("C", 46);
+		CHECK_VAR_STR("B", "S\003389");
+		free_code(p);
+	}
+	
+	// INPUT number tests
+	{
+		char* code = "DIM IN[10]\rFOR I=0 TO 9\rINPUT IN[I]\rNEXT\rA=IN[0]\rB=IN[1]\rC=IN[8]\rD=IN[9]\rE=IN[4]\rF=IN[5]\rG=IN[6]\r";
+		char* input = "12\r23\r34\r45\r524287\r524287.999994\r-524287.999994\r-89\r-90\r-123456\r";
+		
+		struct ptc* p = run_code_keys(code, input, strlen(input));
+		
+		CHECK_VAR_INT("A", 12);
+		CHECK_VAR_INT("B", 23);
+		CHECK_VAR_NUM("C", -INT_TO_FP(90));
+		CHECK_VAR_NUM("D", -INT_TO_FP(123456));
+		CHECK_VAR_INT("E", 524287);
+		CHECK_VAR_NUM("F", 0x7fffffff);
+		CHECK_VAR_NUM("G", (fixp)0x80000001);
+	}
+	
 	SUCCESS("test_int_code success");
 }

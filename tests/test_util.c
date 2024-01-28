@@ -17,7 +17,7 @@ int check_fail;
 /// Can be supplied with memory limits and input sequences.
 /// keys is not null-terminated - length must be provided.
 /// This is because \0 can be typed and is distinct from typing nothing.
-struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int var_limit, int str_limit, int arr_limit){
+struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int var_limit, int str_limit, int arr_limit, int opts){
 //	assert(strlen(code) < 1024); // prevents exceeding outcode buffer
 //	memset(outcode, 0x0f, 2048); // identify errors of failing to write
 	// init system
@@ -26,7 +26,7 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 	// compile program p into bytecode in o
 	struct program p = { strlen(code), code };
 	struct bytecode o = init_bytecode();
-	ptc->exec.error = tokenize(&p, &o);
+	ptc->exec.error = tokenize_full(&p, &o, ptc, opts);
 	
 	// buffer inkeys
 	if (keys){
@@ -45,11 +45,16 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 
 /// Creates a system with very low memory to test out-of-memory conditions.
 struct ptc* run_code_lowmem(char* code){
-	return run_code_conditions(code, NULL, 0, 4, 2, 4);
+	return run_code_conditions(code, NULL, 0, 4, 2, 4, TOKOPT_NONE);
 }
 
 struct ptc* run_code_keys(char* code, char* keys, int len){
-	return run_code_conditions(code, keys, len, VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
+	return run_code_conditions(code, keys, len, VAR_LIMIT, STR_LIMIT, ARR_LIMIT, TOKOPT_NONE);
+}
+
+// Run program with enabled opts
+struct ptc* run_code_opts(char* code, int opts){
+	return run_code_conditions(code, NULL, 0, VAR_LIMIT, STR_LIMIT, ARR_LIMIT, opts);
 }
 
 // reduces duplication to have this

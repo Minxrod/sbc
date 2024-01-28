@@ -13,6 +13,9 @@
 #include "graphics/display.h"
 
 struct ptc* init_system(int var, int str, int arr){
+	// TODO:CODE:LOW Where to put this?
+	srand(time(NULL));
+	
 	struct ptc* ptc = calloc_log("init_mem_prg", sizeof(struct ptc), 1);
 	if (ptc == NULL){
 		iprintf("Error allocating memory!\n");

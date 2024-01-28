@@ -67,6 +67,9 @@ struct variables {
 	struct named_var* vars;
 	/// Error status for variable accesses
 	enum err_code error;
+	/// Indicates to clear types (default) or clear values and keep type info
+	/// Type info is used with TOKOPT_VARIABLE_IDS
+	bool clear_values;
 };
 
 // allocate var table for `var_count` variables
@@ -85,6 +88,8 @@ struct named_var* test_var(struct variables* v, char*, enum types type);
 struct named_var* get_var(struct variables* v, char*, u32, enum types type);
 // Gets a pointer to a value within an array
 union value* get_arr_entry(struct variables* v, char*, u32, enum types type, u32 ix, u32 iy);
+// Gets a pointer to a value within an array, but the array is passed via value pointer
+union value* get_arr_entry_via_ptr(struct variables* v, union value* arr, u32 ix, u32 iy, int type);
 
 struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum types type, u32 dim1, u32 dim2);
 

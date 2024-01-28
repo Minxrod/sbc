@@ -398,5 +398,52 @@ int test_int_vars(){
 		ASSERT(check_code_error("DIM A$[100]\rDIM A[100]\rA=6\rA$=\"8\"", ERR_NONE), "[array] Same name different types OK");
 	}
 	
+	// Variable optimization test (simple; numbers, strings)
+	{
+		struct ptc* p = run_code_opts("A=3\rB=6\rC=A+B\rA$=\"ABC\"\rB$=\"DEF\"\rC$=A$+B$\r", TOKOPT_VARIABLE_IDS);
+		
+		// Name access should still work
+		CHECK_VAR_INT("A",3);
+		CHECK_VAR_INT("B",6);
+		CHECK_VAR_INT("C",9);
+		// Duplicate names different types should work as expected
+		CHECK_VAR_STR("A","S\3ABC");
+		CHECK_VAR_STR("B","S\3DEF");
+		CHECK_VAR_STR("C","S\6ABCDEF");
+		
+		free_code(p);
+	}
+	
+	// Variable optimization test (works with CLEAR)
+	{
+		struct ptc* p = run_code_opts("CLEAR\rA=3\rCLEAR\rB=6\rC=A+B\rA$=\"ABC\"\rB$=\"DEF\"\rC$=A$+B$\r", TOKOPT_VARIABLE_IDS);
+		
+		// Name access should still work
+		CHECK_VAR_INT("A",0);
+		CHECK_VAR_INT("B",6);
+		CHECK_VAR_INT("C",6);
+		// Duplicate names different types should work as expected
+		CHECK_VAR_STR("A","S\3ABC");
+		CHECK_VAR_STR("B","S\3DEF");
+		CHECK_VAR_STR("C","S\6ABCDEF");
+		
+		free_code(p);
+	}
+	
+	// Variable optimization test (array support)
+	{
+		struct ptc* p = run_code_opts(
+			"CLEAR\rDIM A[20]\r"
+			"FOR I=0 TO 19\r"
+			" A[I]=I*4\r"
+			" A=A+A[I]\r"
+			"NEXT\r",
+			TOKOPT_VARIABLE_IDS
+		);
+		
+		CHECK_VAR_INT("A",760);
+		
+		free_code(p);
+	}
 	SUCCESS("test_int_vars success");
 }

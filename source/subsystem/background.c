@@ -221,7 +221,7 @@ void cmd_bgcopy(struct ptc* p){
 	y3 = STACK_INT(6);
 	
 	// bounds checking!
-	// TODO:TEST:LOw bounds check behavior
+	// TODO:TEST:LOW bounds check behavior
 	if (x1 < 0) { x1 = 0; }
 	if (x2 < 0) { x2 = 0; }
 	if (x3 < 0) { x3 = 0; }

@@ -22,7 +22,7 @@ struct bytecode {
 	u8* data;
 //	// Can be used to traverse line-by-line
 	u8* line_length;
-	// 
+	// Labels structure
 	struct labels* labels;
 };
 

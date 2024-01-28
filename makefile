@@ -44,8 +44,8 @@ main: main_build
 profile: CFLAGS+=--coverage
 profile: LFLAGS+=-lgcov
 profile: main_build
-test: CFLAGS+=--coverage
-test: LFLAGS+=-lgcov
+#test: CFLAGS+=--coverage
+#test: LFLAGS+=-lgcov
 test: test_build
 test_full: CFLAGS+=-DTEST_FULL
 test_full: test_build

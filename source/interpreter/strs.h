@@ -64,7 +64,7 @@ bool is_name_start(const char c);
 bool is_name(const char c);
 bool is_varname(const char c);
 
-u32 name_hash(const char*, const u32, const u32);
+u32 name_hash(const char* name, const u32 len, const u32 hmax);
 bool namecmp(const char* a, const u32 len, const char b[16]);
 
 //Convert char to wide char

@@ -51,8 +51,11 @@ fixp func_log_internal(fixp value){
 void func_log(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
-	//TODO:ERR:LOW Bounds.
+	
 	fixp log_a = VALUE_NUM(a);
+	if (log_a <= 0){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
 	iprintf("%d\n", log_a);
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_log_internal(log_a)}});
@@ -76,9 +79,10 @@ void func_pow(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* e = stack_pop(s);
 	struct stack_entry* b = stack_pop(s);
-	//TODO:ERR:LOW Bounds.
+	
 	fixp pow_b = VALUE_NUM(b);
 	fixp pow_e = VALUE_NUM(e);
+	// TODO:ERR:MED Check for int overflow and float overflow = ERR_ILLEGAL_FUNCTION_CALL
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_pow_internal(pow_b, pow_e)}});
 }

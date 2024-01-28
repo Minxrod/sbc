@@ -1,5 +1,6 @@
 #include "arrays.h"
 #include "vars.h"
+#include "strs.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -24,16 +25,29 @@ void free_mem_arr(struct arrays* a){
 	free_log("free_mem_arr", a->arr_data);
 }
 
-void* get_new_arr(struct arrays* a, u32 size1, u32 size2){
+void* get_init_new_arr(struct arrays* a, u32 size1, u32 size2, int type){
 	u32* new_arr = (u32*)&((union value*)a->arr_data)[a->arr_data_next];
-	if (size2 == ARR_DIM2_UNUSED){
-		a->arr_data_next += size1;
-	} else {
-		a->arr_data_next += size1 * size2;
+	int size = size1;
+	if (size2 != ARR_DIM2_UNUSED){
+		size *= size2;
 	}
-	a->arr_data_next += 2;
+	if (a->arr_data_next + size + 2 >= a->arr_data_size){
+		return NULL; // not enough memory for this
+	}
+	a->arr_data_next += size + 2;
 	new_arr[0] = size1;
 	new_arr[1] = size2;
+	
+	// fill with empty elements
+	// Note: Treats every array as 1D - this is safe because memory is contiguous
+	union value* new_arr_dat = &((union value*)new_arr)[2];
+	for (int i = 0; i < size; ++i){
+		if (type & VAR_NUMBER){
+			new_arr_dat[i].number = 0;
+		} else if (type & VAR_STRING){
+			new_arr_dat[i].ptr = empty_str;
+		}
+	}
 	
 	return new_arr;
 }

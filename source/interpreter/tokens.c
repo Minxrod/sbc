@@ -5,7 +5,9 @@
 #include "strs.h" // for character id functions
 #include "error.h"
 #include "interpreter/label.h" // for adding label entry
-#include "data.h" // for BC_DATA_DELIM (TODO:CODE:LOW Move this somewhere else...?)
+#include "data.h" // for BC_DATA_DELIM
+
+#include "system.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -130,12 +132,29 @@ void print_token(struct tokenizer* state, struct token t){
 }
 
 int tokenize(struct program* src, struct bytecode* out){
+	return tokenize_full(src, out, NULL, 0);
+}
+
+int tokenize_full(struct program* src, struct bytecode* out, void* system, int opts){
 	struct tokenizer state = {0};
 	state.source = src;
 	state.output = out;
+	state.state = TKR_NONE;
+	state.opts = opts;
+	state.system = system;
+	if (!system){
+		// Validate that system pointer is not used
+		if ((opts & TOKOPT_SYSTEMLESS) != opts){
+			return ERR_INVALID_OPTS;
+		}
+	} else {
+		if (opts & TOKOPT_VARIABLE_IDS){
+			state.system->vars.clear_values = true;
+		}
+	}
+	iprintf("Selected opts: %x\n", state.opts);
 	state.cursor = 0;
 	state.is_comment = 0;
-	state.state = TKR_NONE;
 	state.lines_processed = 0;
 	int error = ERR_NONE;
 	// Re-initialize bc
@@ -172,6 +191,8 @@ int tokenize(struct program* src, struct bytecode* out){
 }
 
 int tok_convert(struct tokenizer* state){
+	// conversion of line returns to reading characters when done
+	state->state = TKR_NONE;
 	// convert the tokens into bytecode
 	// this can be done per-line
 	
@@ -181,7 +202,13 @@ int tok_convert(struct tokenizer* state){
 		if (!add_label(state->output->labels, &state->source->data[state->tokens[0].ofs], state->tokens[0].len, state->output->size)){
 			return ERR_LABEL_ADD_FAILURE;
 		}
-		// TODO:PERF:LOW Don't tokenize labels into code; rely only on table entries?
+		// option: Don't tokenize labels into code; rely only on table entries?
+		if (state->opts & TOKOPT_NO_LABELS){
+			// don't compile label into an actual statement
+			// This also breaks the line_length calculation, but that doesn't actually do anything useful right now?
+			state->token_i = 0; // mark tokens as used
+			return ERR_NONE;
+		}
 	}
 	
 	tok_prio(state);
@@ -464,6 +491,7 @@ int tok_test(struct tokenizer* state){
 				argc = 0;
 				break;
 				
+			case array_name:
 			case name:
 				if (argc){
 					// process argc counts first
@@ -700,23 +728,58 @@ int tok_code(struct tokenizer* state){
 				break;
 				
 			case name:
+			case array_name:
 			case dim_arr:
-				//TODO:PERF:NONE actual ID calculation
-				//Find variable if it exists in table
-				//Create variable if it does not exist
-				//Get ID based on this index
-				//Note: Small name becomes 
-				data[(*size)++] = state->tokens[i].type == name ? BC_VARIABLE_NAME : BC_DIM;
-				if (state->tokens[i].len == 1){
-					// Name is a single char: replace length (always less than 'A')
-					data[(*size)++] = state->source->data[state->tokens[i].ofs];
-				} else {
-					data[(*size)++] = state->tokens[i].len;
-					for (int j = 0; j < state->tokens[i].len; ++j){
-						data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
+				;
+				// Note: This optimization relies on the assumption that single-char names map to IDs < 256.
+				// This is because instructions are ALWAYS expected to compile smaller than the wide-char source
+				// A [wide] -> (VA [regular var-name access] || iA [id-based access])
+				// This can be broken if hash collisions lead to IDs greater than 256.
+				bool is_array_type = state->tokens[i].type == array_name;
+				if ((state->opts & TOKOPT_VARIABLE_IDS) && state->tokens[i].type != dim_arr){
+					// Get variable index in table
+					int len = state->tokens[i].len;
+					int t = state->source->data[state->tokens[i].ofs + len - 1] == '$' ? VAR_STRING : VAR_NUMBER;
+					len -= t == VAR_STRING;
+					if (is_array_type) t |= VAR_ARRAY;
+					
+					struct named_var* v = get_var(&state->system->vars, &state->source->data[state->tokens[i].ofs], len, t);
+					if (state->system->vars.error != ERR_NONE){
+						return state->system->vars.error;
 					}
-					if (*size % 2){
-						data[(*size)++] = 0; // pad one null to keep instructions aligned
+//					iprintf("var %p: type=%d name=%s data=%d\n", (void*)v, v->type, v->name, v->value.number);
+					ptrdiff_t var_id = v - &state->system->vars.vars[0];
+					// note: turns out pointer arithmetic essentially performs the index conversion for you
+					// var_id contains the index into vars[] of this variable
+					iprintf("%zd, %.*s\n", var_id, state->tokens[i].len, &state->source->data[state->tokens[i].ofs]);
+					if (var_id < 256){
+						data[(*size)++] = BC_VARIABLE_ID_SMALL;
+						data[(*size)++] = (var_id & 0xff);
+					} else {
+						if (len == 1){
+							// Length invariant failed. 
+							return ERR_LENGTH_INVARIANT_BROKEN;
+							// TODO:ERR:NONE Fallback to regular variable name structure instead?
+							// (potential issues: CLEAR)
+						}
+						data[(*size)++] = BC_VARIABLE_ID;
+						data[(*size)++] = (var_id & 0x0000ff);
+						data[(*size)++] = (var_id & 0x00ff00) >> 8;
+						data[(*size)++] = (var_id & 0xff0000) >> 16;
+					}
+				} else {
+					data[(*size)++] = state->tokens[i].type != dim_arr ? BC_VARIABLE_NAME : BC_DIM;
+					if (state->tokens[i].len == 1){
+						// Name is a single char: replace length (always less than 'A')
+						data[(*size)++] = state->source->data[state->tokens[i].ofs];
+					} else {
+						data[(*size)++] = state->tokens[i].len;
+						for (int j = 0; j < state->tokens[i].len; ++j){
+							data[(*size)++] = state->source->data[state->tokens[i].ofs + j];
+						}
+						if (*size % 2){
+							data[(*size)++] = 0; // pad one null to keep instructions aligned
+						}
 					}
 				}
 				break;
@@ -814,7 +877,9 @@ void tok_eval(struct tokenizer* state){
 				e.argc_stack[e.argc_i] = 1;
 				if (i){
 					u8 prev_type = state->tokens[i-1].type;
-					if (i && prev_type != name && prev_type != function && prev_type != dim_arr){
+					if (prev_type == name){
+						state->tokens[i-1].type = array_name;
+					} else if (prev_type != function && prev_type != dim_arr){
 						e.argc_stack[e.argc_i] |= 0x80; // special indicator for "doesn't NEED argcount"
 					}
 				}
@@ -965,7 +1030,6 @@ void tok_eval(struct tokenizer* state){
 		state->tokens[i] = e.result[i];
 	}
 	state->token_i = e.result_i;
-	state->state = TKR_NONE;
 }
 
 // take one line (to /r) and calculate priorities of tokens

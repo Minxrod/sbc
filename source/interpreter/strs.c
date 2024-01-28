@@ -63,12 +63,12 @@ bool is_varname(const char c){
 
 // Used as index into var table directly.
 u32 name_hash(const char* name, const u32 len, const u32 hmax){
-	assert((hmax & (hmax - 1)) == 0);
+	assert((hmax & (hmax - 1)) == 0); // check hmax is power of 2
 	u32 hash = name[0]; // prevents single-char conflicts
 	for (u32 i=1; i<len; ++i){
-		hash += (name[i]-'A')*i*179;
+		hash += name[i]*i*179;
 	}
-	return hash % hmax;
+	return hash % hmax; // TODO:PERF:LOW See if replacing modulo with & is faster
 }
 
 bool namecmp(const char* a, const u32 len, const char b[16]){
@@ -166,6 +166,8 @@ fixp str_to_number(const void* str, const int base, const bool allow_decimal){
 	unsigned int fraction = 0;
 	unsigned int maximum = 1;
 	
+	bool is_negative = false;
+	
 	for (size_t i = 0; i < len; ++i){
 		u16 c = str_at_wide(str, i);
 		int digit = digit_value(c);
@@ -187,6 +189,8 @@ fixp str_to_number(const void* str, const int base, const bool allow_decimal){
 				}
 			}
 			break;
+		} else if (!i && c == to_wide('-')){
+			is_negative = true;
 		} else {
 			// Stop reading on invalid character (useful for VAL)
 			break;
@@ -195,13 +199,12 @@ fixp str_to_number(const void* str, const int base, const bool allow_decimal){
 	//TODO:ERR:MED Check overflow
 	
 	fixp combined = number * 4096 + 4096 * fraction / maximum;
+	if (is_negative) combined = -combined;
 	
 //	iprintf("Number := %f", (double)number);
 	return combined;
-
 }
 
-//NOTE: Doesn't handle negatives
 fixp u8_to_num(const u8* data, const idx len){
 	return u8_to_number(data, len, 10, true);
 }

@@ -120,9 +120,7 @@ int sbc_read_bits(unsigned char* source_data, int* bit_index, int bits){
 	//      1xx xxxxxx
 }
 
-// TODO unit size?
-// TODO Read version with header
-// TODO decompress into pre-alloc'd memory
+// TODO:IMPL:MED decompress into pre-alloc'd memory version
 unsigned char* sbc_decompress(unsigned char* source_data, int decompressed_size, int cache_bits){
 	// Cache info
 	unsigned char cache[128] = {0};

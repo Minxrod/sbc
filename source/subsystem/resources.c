@@ -35,7 +35,6 @@ bool load_file(u8* dest, const char* name, int skip, int len){
 // Checks the file type and loads the correct data from the file.
 // Note: path, name must be null-terminated
 bool check_load_file(u8* dest, const char* search_path, const char* name, int size){
-	// TODO:IMPL:MED Ability to specify search path of program
 	if (strlen(search_path) + strlen(name) >= 252){
 		iprintf("Name too long: %s\n", name);
 		return false;
@@ -130,7 +129,7 @@ bool check_load_file(u8* dest, const char* search_path, const char* name, int si
 		assert(expected_size == size); // request == expected
 		unsigned char* decompressed = sbc_decompress(compressed, size, bits);
 		memcpy(dest, decompressed, size);
-//		free_log("load_file", compressed); // TODO:PERF:MED Make only one alloc necessary
+//		free_log("load_file", compressed); // TODO:PERF:LOW See if zero-allocation version is feasible?
 		free_log("load_file", decompressed);
 		fclose(f);
 		return true;
@@ -455,7 +454,7 @@ void cmd_chrinit(struct ptc* p){
 	// CHRINIT resource
 	void* res_str = value_str(ARG(0));
 	int res_str_len = str_len(res_str);
-	u8 res[5];
+	u8 res[6] = {0};
 	if (res_str_len > 5) {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}
@@ -473,10 +472,10 @@ void cmd_chrinit(struct ptc* p){
 		if (res_str_len == 3){
 			res_name[3] = '0';
 		}
-		// TODO:IMPL:HIGH Set regen_chr appropriately
 		if (!load_chr(res_data, resource_path, res_name)){
 			ERROR(ERR_FILE_LOAD_FAILED);
 		}
+		p->res.regen_chr[get_chr_index(p, (char*)res)] = true;
 	} else {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}

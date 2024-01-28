@@ -2,7 +2,6 @@
 
 int sbc_cache_search(unsigned char value, unsigned char* cache, int cache_size);
 
-// TODO rename
 void sbc_write_bits(unsigned char* output_data, int* output_index, int value, int bits);
 
 void sbc_write_bit(unsigned char* output_data, int* output_index, int value);
@@ -20,6 +19,5 @@ struct sbc_compression_result sbc_optimal_compress(unsigned char* source_data, i
 
 int sbc_read_bits(unsigned char* source_data, int* bit_index, int bits);
 
-// TODO unit size?
-// TODO Read version with header
+// TODO:IMPL:LOW unit size?
 unsigned char* sbc_decompress(unsigned char* source_data, int decompressed_size, int cache_bits);

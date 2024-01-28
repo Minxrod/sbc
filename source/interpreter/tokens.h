@@ -20,6 +20,16 @@ enum tokenizer_state {
 	TKR_EXPR,
 };
 
+// optimization options ("opt"s)
+enum tokenizer_opts {
+	TOKOPT_NONE = 0, // for readability if passing none
+	TOKOPT_NO_LABELS = 1, // Doesn't generate L#... expressions for labels
+	TOKOPT_VARIABLE_IDS = 2, // Generates IDs instead of named variables
+};
+
+// Optimizations that are allowed without access to a system pointer
+#define TOKOPT_SYSTEMLESS (TOKOPT_NO_LABELS)
+
 #define LABEL_UNKNOWN ((u32)-1)
 
 struct token {
@@ -40,36 +50,45 @@ struct token {
 		label_string,
 		first_of_line_command,
 		base_number,
+		array_name,
 	} type;
 	idx ofs;
 	u8 len;
 	u16 prio;
 };
 
-struct program;
+//struct program;
+//struct ptc;
 
 struct tokenizer {
-	// Program info
-	struct program* source;
+	// Flags for the optimizer
+	enum tokenizer_opts opts;
 	// Current tokenizer state
 	enum tokenizer_state state;
-	// Current character
-	u32 cursor;
-	
 	// Tokens for a line
 	struct token tokens[TOKENS_LINE_MAX]; //max possible per line
 	// Current token index
 	uint_fast8_t token_i;
-	
+	// Flag to indicate a comment is being parsed
 	bool is_comment;
-	// Values obtained while parsing
 	
+	
+	// Program info
+	struct program* source;
+	// Current character within program source
+	u32 cursor;
+	
+	// Output bytecode data, labels, line info
 	struct bytecode* output;
-	
+	// Line count
 	uint_fast16_t lines_processed;
+	// System pointer
+	struct ptc* system;
 };
 
 int tokenize(struct program* src, struct bytecode* output);
+
+int tokenize_full(struct program* src, struct bytecode* output, void* system, int opts);
 
 int tok_none(struct tokenizer* state);
 

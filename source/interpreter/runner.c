@@ -56,7 +56,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, ptc_err, //CHRREAD
 	ptc_err, cmd_clear, ptc_err, cmd_colread, ptc_err, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
-	ptc_err, cmd_gcls, cmd_gcolor, ptc_err, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
+	ptc_err, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
 	ptc_err, ptc_err, cmd_load, ptc_err, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
@@ -228,6 +228,46 @@ void run(struct bytecode code, struct ptc* p) {
 				check_time(&p->time, 6);
 				break;
 				
+			case BC_VARIABLE_ID_SMALL:
+				;
+				int id; // Note: Can also be set via BC_VARIABLE_ID
+				id = (u8)data;
+			bc_variable_id_shared:
+				{
+				iprintf("id=%d ", (u8)id);
+				struct named_var* v = &p->vars.vars[id];
+				iprintf("dtype=%d", v->type);
+				if (!r->argcount){
+					// values
+					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | v->type, {.ptr = &v->value}};
+				} else {
+					// array element
+					idx a = (r->argcount == 2) ? STACK_REL_INT(-2) : STACK_REL_INT(-1);
+					idx b = (r->argcount == 2) ? (idx)STACK_REL_INT(-1) : ARR_DIM2_UNUSED;
+					p->stack.stack_i -= r->argcount;
+					
+					union value* entry = get_arr_entry_via_ptr(&p->vars, &v->value, a, b, v->type);
+					if (!entry){
+						r->error = p->vars.error;
+						break;
+					}
+					// Note: must clear array bit when given only an entry
+					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | (v->type & ~VAR_ARRAY), {.ptr = entry}};
+				}
+				}
+				break;
+				
+			case BC_VARIABLE_ID:
+				{
+				// TODO:TEST:MED Check that ID is calculated correctly
+				// Note: id variable declared in BC_VARIABLE_ID_SMALL
+				id = (u8)data;
+				id |= (u8)code.data[r->index++] << 8;
+				id |= (u8)code.data[r->index++] << 16;
+				goto bc_variable_id_shared;
+				}
+				break;
+				
 			case BC_VARIABLE_NAME:
 				// this is both array accesses and regular vars
 				// difference determined by whether or not ARGCOUNT was set
@@ -258,26 +298,18 @@ void run(struct bytecode code, struct ptc* p) {
 						r->error = p->vars.error;
 						break;
 					}
-					x = t & VAR_NUMBER ? (void*)&v->value.number : &v->value.ptr;
+					x = &v->value;
 				} else {
-					s32 a;
-					s32 b = ARR_DIM2_UNUSED;
-					if (r->argcount == 2){
-						struct stack_entry* y = stack_pop(&p->stack);
-						b = FP_TO_INT(VALUE_NUM(y));
-					}
-					struct stack_entry* z = stack_pop(&p->stack);
-					a = FP_TO_INT(VALUE_NUM(z));
+					idx a = (r->argcount == 2) ? STACK_REL_INT(-2) : STACK_REL_INT(-1);
+					idx b = (r->argcount == 2) ? (idx)STACK_REL_INT(-1) : ARR_DIM2_UNUSED;
+					p->stack.stack_i -= r->argcount;
 					
 					union value* val = get_arr_entry(&p->vars, name, len, t | VAR_ARRAY, a, b);
 					if (!val){
 						r->error = p->vars.error;
 						break;
 					}
-					x = t & VAR_NUMBER ? (void*)&val->number : &val->ptr;
-					if (t & VAR_STRING && !val->ptr){
-						val->ptr = empty_str; // disallow NULL (happens due to array alloc)
-					}
+					x = val;
 				}
 				
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
@@ -294,14 +326,9 @@ void run(struct bytecode code, struct ptc* p) {
 			
 			case BC_DIM:
 				{
-				u32 a;
-				u32 b = ARR_DIM2_UNUSED;
-				if (r->argcount == 2){
-					struct stack_entry* y = stack_pop(&p->stack);
-					b = FP_TO_INT(VALUE_NUM(y));
-				}
-				struct stack_entry* z = stack_pop(&p->stack);
-				a = FP_TO_INT(VALUE_NUM(z));
+				idx a = (r->argcount == 2) ? STACK_REL_INT(-2) : STACK_REL_INT(-1);
+				idx b = (r->argcount == 2) ? (idx)STACK_REL_INT(-1) : ARR_DIM2_UNUSED;
+				p->stack.stack_i -= r->argcount;
 				
 				iprintf("name=");
 				if (data >= 'A'){

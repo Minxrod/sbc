@@ -243,21 +243,26 @@ void cmd_spofs(struct ptc* p){
 
 void cmd_spsetv(struct ptc* p){
 	// SPSETV id,ix,val
-	// TODO:ERR:LOW Check sprite exists before storing
 	int id,ix;
 	fixp val;
 	STACK_INT_RANGE(0,0,99,id);
 	STACK_INT_RANGE(1,0,7,ix);
 	val = STACK_NUM(2);
+	if (!p->sprites.info[p->sprites.page][id].active){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
 	p->sprites.info[p->sprites.page][id].vars[ix] = val;
 }
 
 void func_spgetv(struct ptc* p){
 	// SPGETV id,ix
-	// TODO:ERR:LOW Check sprite exists before reading
 	int id,ix;
 	STACK_REL_INT_RANGE(-2,0,99,id);
 	STACK_REL_INT_RANGE(-1,0,7,ix);
+	
+	if (!p->sprites.info[p->sprites.page][id].active){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {p->sprites.info[p->sprites.page][id].vars[ix]}});
 }
 

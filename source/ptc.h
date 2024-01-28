@@ -9,8 +9,8 @@ enum bytecode_ops {
 	BC_DATA = 'd',
 	BC_FUNCTION = 'F',
 	BC_GOTO = 'G',
-	BC_INDEX = 'I',
-//	BC_VARIABLE_ID = 'v', //for ID based variable system
+	BC_VARIABLE_ID_SMALL = 'i', //for ID based variable system
+	BC_VARIABLE_ID = 'I', //for ID based variable system
 	BC_LABEL = 'L',
 	BC_LABEL_STRING = 'l',
 	BC_OPERATOR = 'O',

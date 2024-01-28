@@ -155,7 +155,6 @@ void func_button(struct ptc* p){
 		struct stack_entry* e = stack_pop(&p->stack);
 		mode = VALUE_INT(e);
 	}
-	//TODO:ERR:LOW Check arguments valid
 	int button;
 	
 	switch (mode){

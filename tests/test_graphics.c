@@ -100,5 +100,46 @@ int test_graphics(void){
 		free_code(p);
 	}
 	
+	// GSPOIT test
+	{
+		struct ptc* p = run_code(
+			"GPSET 0,0,3\rA=GSPOIT(0,0)\r"
+			"GPSET 46,72,81\rB=GSPOIT(46,72)\r"
+			"GPSET 0,0,4\rC=GSPOIT(0,0)\r"
+			"GPSET 256,192,72\rD=GSPOIT(256,192)\r"
+		);
+		
+		CHECK_VAR_INT("A",3);
+		CHECK_VAR_INT("B",81);
+		CHECK_VAR_INT("C",4);
+		CHECK_VAR_NUM("D",-INT_TO_FP(1));
+		
+		free_code(p);
+	}
+	
+	// GLINE tests
+/*	{
+		struct ptc* p = run_code(
+			"FOR I=0 TO 3\r"
+			" X1=I*46%256\r"
+			" X2=I*64%256\r"
+			" Y1=I*2%192\r"
+			" Y2=(I*7+85)%192\r"
+			" GLINE X1,Y1,X2,Y2,I\r"
+			"NEXT\r"
+			"A=0\r"
+			"FOR I=0 TO 255\r"
+			" FOR J=0 TO 191\r"
+			"  A=(A+(I+J)*GSPOIT(I,J))%65536\r"
+			" NEXT\r"
+			"NEXT\r"
+		);
+		
+		iprintf("A=%d\n", test_var(&p->vars, "A", VAR_NUMBER)->value.number >> FIXPOINT);
+		CHECK_VAR_INT("A",52475);
+		
+		free_code(p);
+	}*/
+	
 	SUCCESS("test_graphics success");
 }

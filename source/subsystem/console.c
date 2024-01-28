@@ -18,7 +18,6 @@ void con_advance(struct console* c){
 }
 
 void con_scroll(struct console* c){
-	// TODO:PERF:LOW optimize (scroll all at once?)
 	while (c->y >= CONSOLE_HEIGHT){
 		c->y--;
 		// newline: scroll console up
@@ -63,10 +62,6 @@ void con_put(struct console* c, u16 w){
 		con_newline(c, false);
 	}
 }
-
-//TODO:PERF:LOW optimize via copying multiple lines at once for large strings?
-//TODO:PERF:LOW con_puts write directly to console via str_wide_copy?
-//(color still separate here)
 
 void con_puts(struct console* c, const void* s){
 	if (c->y >= CONSOLE_HEIGHT){
@@ -331,7 +326,7 @@ void cmd_input(struct ptc* p){
 		if (len != commas + 1){
 			valid = false;
 			con_reprompt(con, prompt_str);
-			continue; //TODO:IMPL:MED ?Redo from start
+			continue;
 		}
 		u8 conversion_copy[CONSOLE_WIDTH];
 		int prev_i = 0;

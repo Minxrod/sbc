@@ -214,6 +214,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 
 void display_draw_graphics(struct ptc* p, int screen, int prio){
 	// TODO:IMPL:LOW Set graphics priority of sprites
+	(void)prio;
 //	if (prio) return;
 //	if (prio != 4) return;
 	// Note that VRAM can only be read in 16bit or higher units (but libnds memcpy is fine if aligned)

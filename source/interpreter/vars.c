@@ -20,11 +20,26 @@ void init_mem_var(struct variables* v, uint_fast16_t var_count){
 		v->vars[i].type = VAR_EMPTY;
 	}
 	v->error = ERR_NONE;
+	v->clear_values = false;
 }
 
 void reset_var(struct variables* v){
-	for (uint_fast16_t i = 0; i < v->vars_max; ++i){
-		v->vars[i].type = VAR_EMPTY;
+	if (v->clear_values){
+		// Clear variables by resetting values to default for next read
+		for (uint_fast16_t i = 0; i < v->vars_max; ++i){
+			if (v->vars[i].type == VAR_NUMBER){
+				v->vars[i].value.number = 0;
+			} else if (v->vars[i].type == VAR_STRING){
+				v->vars[i].value.ptr = empty_str;
+			} else { // array types
+				v->vars[i].value.ptr = NULL;
+			}
+		}
+	} else {
+		// Clear variables by indicating slot is open
+		for (uint_fast16_t i = 0; i < v->vars_max; ++i){
+			v->vars[i].type = VAR_EMPTY;
+		}
 	}
 }
 
@@ -68,7 +83,9 @@ struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum
 	
 	// make new array type
 	//if VAR_EMPTY then create it?
-	if (var->type == VAR_EMPTY){
+	// Or if value was CLEARed, so it is OK to re-generate array
+	if (var->type == VAR_EMPTY
+		|| (v->clear_values && var->value.ptr == NULL)){
 		// set var type
 		var->type = type;
 		
@@ -81,8 +98,7 @@ struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum
 		}
 		
 		// set var ptr
-		var->value.ptr = get_new_arr(v->arrs, dim1, dim2);
-		
+		var->value.ptr = get_init_new_arr(v->arrs, dim1, dim2, type);
 		return var;
 	} else {
 		// array already exists!
@@ -126,27 +142,26 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 	return var;
 }
 
-union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types type, u32 ix, u32 iy){
-	struct named_var* a = get_var(v, name, len, type);
-	if (!a) {
-		v->error = ERR_OUT_OF_MEMORY;
-		return NULL; // Out of memory
-	}
-	
-	if (a->value.ptr == NULL){
+union value* get_arr_entry_via_ptr(struct variables* v, union value* arr, u32 ix, u32 iy, int type){
+	if (!arr->ptr){
 		// array does not exist yet: must default initalize
 		if (iy == ARR_DIM2_UNUSED){
-			a->value.ptr = get_new_arr(v->arrs, 10, ARR_DIM2_UNUSED);
+			arr->ptr = get_init_new_arr(v->arrs, 10, ARR_DIM2_UNUSED, type);
 		} else {
-			a->value.ptr = get_new_arr(v->arrs, 10, 10);
+			arr->ptr = get_init_new_arr(v->arrs, 10, 10, type);
+		}
+		
+		if (!arr->ptr){
+			v->error = ERR_OUT_OF_MEMORY;
+			return NULL;
 		}
 	}
-	// array exists and is stored in a->ptr
-	if (ix < arr_size(a->value.ptr, ARR_DIM1)){
+	// array exists and is stored in ptr
+	if (ix < arr_size(arr->ptr, ARR_DIM1)){
 		if (iy == ARR_DIM2_UNUSED){
-			return arr_entry(a->value.ptr, ix, 0);
-		} else if (iy < arr_size(a->value.ptr, ARR_DIM2)){
-			return arr_entry(a->value.ptr, ix, iy);
+			return arr_entry(arr->ptr, ix, 0);
+		} else if (iy < arr_size(arr->ptr, ARR_DIM2)){
+			return arr_entry(arr->ptr, ix, iy);
 		} else {
 			v->error = ERR_SUBSCRIPT_OUT_OF_RANGE_Y;
 			return NULL;
@@ -155,4 +170,14 @@ union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types 
 		v->error = ERR_SUBSCRIPT_OUT_OF_RANGE_X;
 		return NULL;
 	}
+}
+
+union value* get_arr_entry(struct variables* v, char* name, u32 len, enum types type, u32 ix, u32 iy){
+	struct named_var* a = get_var(v, name, len, type);
+	if (!a) {
+		v->error = ERR_OUT_OF_MEMORY;
+		return NULL; // Out of memory
+	}
+	
+	return get_arr_entry_via_ptr(v, &a->value, ix, iy, type);
 }

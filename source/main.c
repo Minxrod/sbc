@@ -14,8 +14,6 @@ struct launch_info {
 	struct program* prg;
 };
 
-// TODO:CODE:MED Make program contain const char*
-char* launcher_code = "INPUT \"Program to load\";NAME$\r";
 struct program launcher = {
 	13, "LINPUT CODE$\r"
 };
@@ -29,7 +27,7 @@ int system_launch(void* launch_info){
 //	}
 	
 	if (info->prg->size){
-		info->p->exec.error = tokenize(info->prg, &bc);
+		info->p->exec.error = tokenize_full(info->prg, &bc, info->p, TOKOPT_VARIABLE_IDS);
 		if (info->p->exec.error == ERR_NONE){
 			run(bc, info->p);
 		}

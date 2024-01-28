@@ -5,6 +5,7 @@
 #include "program.h"
 #include "ptc.h"
 #include "interpreter/label.h" // for label generation verification
+#include "system.h" // for some optimizations
 
 #include <string.h>
 
@@ -422,6 +423,90 @@ int test_tokens(void){
 				20
 			), "[tokens] DATA tokenization of odd length"
 		);
+	}
+	
+	// Tokenization with basic optimization of removing label strings from bytecode
+	{
+		char* code = "@0\rI=I+1\r@1\rI=I+1\r@2\r";
+		// run program
+		struct program p = {
+			strlen(code), code
+		};
+		struct bytecode o = init_bytecode();
+		
+		tokenize_full(&p, &o, NULL, TOKOPT_NO_LABELS);
+		// Bytecode is as expected
+		char* bytecode = "VIVIn\1O\0O\6VIVIn\1O\0O\6";
+		for (int i = 0; i < 20; ++i){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[opts] Bytecode compiled with label optimization");
+		}
+		// Labels generate correctly and at expected locations
+		ASSERT(label_index(o.labels, "0", 1) == 0, "[opts] Label @0 generated successfully");
+		ASSERT(label_index(o.labels, "1", 1) == 10, "[opts] Label @1 generated successfully");
+		ASSERT(label_index(o.labels, "2", 1) == 20, "[opts] Label @2 generated successfully");
+		
+		free_bytecode(o);
+	}
+	
+	// Tokenization with optimization of pre-calc'd variable IDs
+	{
+		char* code = "A=B+C\rD=A+B+C\r";
+		// run program
+		struct program p = { strlen(code), code };
+		struct bytecode o = init_bytecode();
+		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16);
+		
+		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
+		// Bytecode is as expected
+		char* bytecode = "iAiBiCO\0O\6iDiAiBO\0iCO\0O\6";
+		for (int i = 0; i < 24; ++i){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[opts] Bytecode compiled with var id optimization");
+		}
+		
+		free_bytecode(o);
+		free_system(ptc);
+	}
+	
+	// Tokenization with optimization of pre-calc'd variable IDs (strings)
+	{
+		char* code = "A$=B$+C$\rD$=A$+B$+C$\r";
+		// run program
+		struct program p = { strlen(code), code };
+		struct bytecode o = init_bytecode();
+		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16);
+		
+		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
+		// Bytecode is as expected
+		char* bytecode = "iAiBiCO\0O\6iDiAiBO\0iCO\0O\6";
+		for (int i = 0; i < 24; ++i){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[opts] Bytecode compiled with var id optimization (strings)");
+		}
+		
+		free_bytecode(o);
+		free_system(ptc);
+	}
+	
+	// Tokenization with optimization of pre-calc'd variable IDs (arrays)
+	{
+		char* code = "DIM A[1],B[1]\rA[0]=B[0]\r";
+		// run program
+		struct program p = { strlen(code), code };
+		struct bytecode o = init_bytecode();
+		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16);
+		
+		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
+		// Bytecode is as expected
+		char* bytecode = "n\1A\1DAn\1A\1DBn\0A\1iAn\0A\1iBO\6";
+		for (int i = 0; i < 26; ++i){
+			iprintf("%c:%d,", o.data[i], o.data[i]);
+			ASSERT(o.data[i] == bytecode[i], "[opts] Bytecode compiled with var id optimization (arrays)");
+		}
+		
+		free_bytecode(o);
+		free_system(ptc);
 	}
 	
 	SUCCESS("test_tokens success");

@@ -56,4 +56,6 @@ const char * error_messages[] = {
 	"Failed to generate label entry",
 	"Program manually stopped",
 	"Illegal function call",
+	"Optimization option requires system pointer",
+	"BC length invariant failed",
 };

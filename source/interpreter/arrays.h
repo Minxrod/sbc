@@ -24,7 +24,8 @@ void init_mem_arr(struct arrays* a, int array_count, int element_count);
 void reset_arr(struct arrays* a);
 void free_mem_arr(struct arrays* a);
 
-void* get_new_arr(struct arrays* a, u32 size1, u32 size2);
+//void* get_new_arr(struct arrays* a, u32 size1, u32 size2);
+void* get_init_new_arr(struct arrays* a, u32 size1, u32 size2, int type);
 
 u32 arr_size(void* array, int dim);
 
