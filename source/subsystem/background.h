@@ -1,4 +1,8 @@
 #pragma once
+///
+/// @file
+/// @brief Defines the tilemap background subsystem of PTC. 
+///
 
 #include "common.h"
 

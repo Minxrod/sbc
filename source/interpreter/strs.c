@@ -29,6 +29,8 @@ char* single_char_strs =
 
 char* empty_str = "S\0";
 
+char* hex_digits = "0123456789ABCDEF";
+
 bool is_lower(const char c){
 	return 'a' <= c && c <= 'z';
 }
@@ -390,9 +392,10 @@ bool is_char(u16 w){
 /// 
 /// @note src and dest should be either u8* or u16*
 void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count){
+	// TODO:CODE:LOW See if src and dest can be limited to only u8*, u16* via union?
 	assert(src);
 	assert(dest);
-	///TODO:PERF:LOW profile this and see if swapping loop/condition order is better?
+	// TODO:PERF:LOW profile this and see if swapping loop/condition order is better?
 	for (size_t i = 0; i < count; ++i){
 		if (types == 0){
 			// u8 -> u8
@@ -499,6 +502,28 @@ u16 str_at_wide(const void* src, const u16 index){
 		case STRING_WIDE:
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at_wide)\n");
+			abort();
+	}
+}
+
+// Gets the small character value in the string at the given index.
+u16 str_at_char(const void* src, const u16 index){
+	assert(src);
+	
+	struct string* s = (struct string*)src;
+	
+	switch (*(char*)src){
+		case STRING_CHAR:
+			return s->ptr.s[index];
+		case BC_LABEL_STRING:
+		case BC_LABEL:
+		case BC_STRING:
+		case STRING_INLINE_CHAR:
+			return ((u8*)src)[2+index];
+		case STRING_INLINE_WIDE:
+		case STRING_WIDE:
+		default:
+			iprintf("Unimplemented/Not a valid string type! (str_at_char)\n");
 			abort();
 	}
 }

@@ -1,4 +1,8 @@
 #pragma once
+/// 
+/// @file
+/// @brief Contains the sprite data structures and PTC functions.
+/// 
 
 #include "common.h"
 

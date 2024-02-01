@@ -1,4 +1,21 @@
 #pragma once
+/// 
+/// @file
+/// @brief Some commonly used structures and definitions, as well as some 
+/// frequently used headers. Ensures various type definitions and
+/// macros are well-defined across platforms.
+/// 
+/// This file defines macros for fixed-point number usage, error handling,
+/// and argument access.
+/// 
+/// It also contains typedefs for short fixed-length types
+/// such as u8, u16, etc. for platforms that do not define these by default.
+/// (libnds provides these normally, but the PC build must re-define them.)
+/// Additionally, idx and fixp types are defined for clearer intention for some
+/// variables.
+/// 
+/// This file also contains wrapper functions for logging memory allocations,
+/// via `malloc_log`, `calloc_log`, and `free_log`.
 
 #include <stdint.h>
 #include <stdio.h> // debugging

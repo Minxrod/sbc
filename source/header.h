@@ -1,5 +1,8 @@
 #pragma once
-
+/// 
+/// @file
+/// @brief Defines the header format of a PTC SD-card file.
+///
 #include "common.h"
 
 #define HEADER_SIZE 48

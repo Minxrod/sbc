@@ -1,5 +1,8 @@
 #pragma once
-
+///
+/// @file
+/// @brief Defines label management struct and functions.
+///
 #include "common.h"
 
 // If a program ever actually exceeds this, increase value by 2x

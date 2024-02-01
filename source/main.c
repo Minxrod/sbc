@@ -18,13 +18,75 @@ struct program launcher = {
 	13, "LINPUT CODE$\r"
 };
 
+
+const char* bench_begin = "ACLS:CLEAR\r";
+const char* bench_mid = "FOR J=1 TO 5\r"
+"\r"
+"M=POW(10,J)\r"
+"\r"
+"T=MAINCNTL\r"
+"FOR I=1 TO M\r";
+const char* bench_end = "NEXT\r"
+"S=MAINCNTL-T\r"
+"\r"
+"?M,S\r"
+"IF S>=1000 THEN @END\r"
+"NEXT\r"
+"@END\r";
+
+int sbc_benchmark(struct launch_info* info){
+	char src[1024] = {0};
+	char pre[100];
+	char code[100];
+	char post[100];
+	struct program p = { 0, src };
+	struct bytecode bc = init_bytecode();
+	
+	FILE* f = fopen("resources/sbccompat.csv","r"); // Note: This is not a csv file actually
+	FILE* result = fopen("sbccompat_out", "w");
+	while (!feof(f)){
+		fgets(pre, 100, f);
+		fgets(code, 100, f);
+		fgets(post, 100, f);
+		for (int i = 0; i < 100; ++i){
+			if (pre[i] == '\\') pre[i] = '\r';
+			if (code[i] == '\\') code[i] = '\r';
+			if (post[i] == '\\') post[i] = '\r';
+			if (pre[i] == '\n') pre[i] = '\r';
+			if (code[i] == '\n') code[i] = '\r';
+			if (post[i] == '\n') post[i] = '\r';
+		}
+		sprintf(src, "%s%s%s%s%s%s%n", bench_begin, pre, bench_mid, code, bench_end, post, (int*)&p.size);
+//		fprintf(f2, "%s", src);
+		info->p->exec.error = ERR_NONE; // reset for next run
+		info->p->exec.error = tokenize_full(&p, &bc, info->p, TOKOPT_VARIABLE_IDS);
+		if (info->p->exec.error == ERR_NONE){
+			run(bc, info->p);
+		}
+		
+		if (info->p->exec.error == ERR_NONE){
+			fixp num = test_var(&info->p->vars, "S", VAR_NUMBER)->value.number;
+			fixp lev = test_var(&info->p->vars, "J", VAR_NUMBER)->value.number;
+			int perf = FP_TO_INT(num);
+			for (int i = FP_TO_INT(lev); i < 5; ++i){
+				perf *= 10;
+			}
+			fprintf(result, "%s %d\n", code, perf);
+		} else {
+			fprintf(result, "%s %s\n", code, error_messages[info->p->exec.error]);
+		}
+	}
+	fclose(f);
+	fclose(result);
+	free_bytecode(bc);
+	return 0;
+}
+
 int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
 	struct bytecode bc = init_bytecode();
-	int i = 0;
-//	while (i < 2000000000){
-		i += 1;
-//	}
+	
+//	sbc_benchmark(launch_info);
 	
 	if (info->prg->size){
 		info->p->exec.error = tokenize_full(info->prg, &bc, info->p, TOKOPT_VARIABLE_IDS);

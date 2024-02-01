@@ -1,4 +1,9 @@
 #pragma once
+/// 
+/// @file
+/// @brief Defines the system struct, which contains the state of all 
+/// interpreter (sub)systems.
+/// 
 
 #include "interpreter.h"
 

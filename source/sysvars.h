@@ -1,5 +1,8 @@
 #pragma once
-
+/// 
+/// @file
+/// @brief Various PTC system variables.
+/// 
 struct ptc;
 
 void sys_true(struct ptc* p);

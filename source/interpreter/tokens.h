@@ -1,4 +1,27 @@
 #pragma once
+/// 
+/// @file
+/// @brief The tokenizer/bytecode compiler system.
+/// 
+/// This contains the lexer/parser/compilation chain via the functions
+/// `tokenize()` and `tokenize_full`. These take source code as a char/u8 array
+/// and convert it to bytecode, to then be executed by the run() function.
+/// 
+/// The tokenization system relies on some assumptions that are carried over
+/// from PTC. The most notable of these are the expectation that source files
+/// have lines of length <= 100 characters, and that source files are not
+/// longer than 524288 characters.
+///
+/// In addition, the output bytecode design is based on the assumption that
+/// the bytecode will always be smaller than twice the source size, or
+/// equivalently that the bytecode will take up less memory than the program
+/// source would if stored in UCS2/UTF16 (which is PTC's in-memory format)
+/// This goal exists to guarantee a reduction in memory usage compared to PTC,
+/// though some specific programs can cause the reduction to be negligibile.
+/// Most programs should end up with memory usage of somewhere between the
+/// u8 source file and u16 in-memory versions.
+/// 
+
 
 #include "common.h"
 

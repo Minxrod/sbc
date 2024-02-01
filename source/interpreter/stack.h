@@ -1,4 +1,8 @@
 #pragma once
+///
+/// @file
+/// @brief Stack definitions and convenience macros.
+///
 
 #include "vars.h"
 #include "strs.h"

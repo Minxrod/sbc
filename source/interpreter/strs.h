@@ -1,4 +1,18 @@
 #pragma once
+///
+/// @file
+/// @brief The strings library.
+/// 
+/// This file defines the various string functions in use by SBC. This includes
+/// the string data structures, types, and several string functions.
+///
+/// This file also contains some utility functions for determining character
+/// type, as well as the name hash and comparison functions.
+/// 
+/// This strings library is designed to allow for several different
+/// types of strings to be used, in a variety of data formats. This allows
+/// the string that best fits a given scenario to be used easily.
+/// 
 
 #include "common.h"
 
@@ -6,7 +20,7 @@
 
 extern char* single_char_strs;
 extern char* empty_str;
-
+extern char* hex_digits;
 
 // string meta
 // type can be 'S' or 'W'
@@ -73,6 +87,9 @@ u16 to_wide(const u8 c);
 //Reverse char to wide char
 u8 to_char(const u16 c);
 
+//Convert a (hex) digit into an integer;
+int digit_value(const u16 c);
+
 // Checks if a given u16 can be converted to a u8 without loss
 bool is_char(const u16 w);
 
@@ -107,14 +124,22 @@ void* str_at(const void* src, const u16 index);
 // Get character (wide) at current location
 u16 str_at_wide(const void* src, const u16 index);
 
+// Get character (small) at current location
+u16 str_at_char(const void* src, const u16 index);
+
 // Copy to u8 str
 void str_char_copy(const void* src, u8* dest);
 
 // Copy to u16 str
 void str_wide_copy(const void* src, u16* dest);
 
-// Get string type
-int str_type(const void* src);
+/// Determines if the string uses 8-bit or 16-bit characters.
+/// Intended for use in determining types for `str_copy_buf()`.
+/// 
+/// @param str String to get type of
+/// @return STR_COPY_SRC_8 if string contains u8 characters.
+/// STR_COPY_SRC_16 if string contains u16 characters.
+int str_type(const void* str);
 
 // Get string length
 u32 str_len(const void* src);

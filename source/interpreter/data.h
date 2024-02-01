@@ -1,4 +1,8 @@
 #pragma once
+///
+/// @file
+/// @brief Defines PTC's data reading instructions.
+///
 
 #define READ_ONE_ERR -1
 #define BC_DATA_DELIM '\0'

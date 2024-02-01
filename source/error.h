@@ -1,4 +1,10 @@
 #pragma once
+/// 
+/// @file
+/// @brief Contains error codes and associated error messages.
+/// 
+/// Contains all error codes for SBC. Note that this includes a large variety 
+/// of implementation-specific internal errors.
 
 enum err_code {
 	ERR_NONE,

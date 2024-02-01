@@ -1,10 +1,8 @@
 #pragma once
-/**
- * @file vars.h
- * 
- * Variable management struct and functions.
- * 
- */
+/// 
+/// @file
+/// @brief Variable management struct and functions.
+/// 
 
 #include "common.h"
 #include "error.h"
@@ -19,7 +17,7 @@ enum types {
 	/// Indicates a numeric 20.12 fixed-point value.
 	/// @warn Only one of VAR_NUMBER and VAR_STRING should be selected.
 	VAR_NUMBER=1,
-	/// Indicates a string of maximum 256 characters.
+	/// Indicates a string of maximum MAX_STRLEN characters.
 	/// @warn Only one of VAR_NUMBER and VAR_STRING should be selected.
 	VAR_STRING=2,
 	/// Denotes that the value contained is a variable pointer.

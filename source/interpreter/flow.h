@@ -1,5 +1,8 @@
 #pragma once
-
+/// 
+/// @file
+/// @brief File contains the various commands that modfiy program control flow.
+/// 
 #include "common.h"
 
 struct ptc;

@@ -1,4 +1,8 @@
 #pragma once
+/// 
+/// @file
+/// @brief Various PTC string functions.
+/// 
 
 struct ptc;
 

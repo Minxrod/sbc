@@ -1,6 +1,7 @@
-/**
- * @file Combination header that inclues core interpreter functionality
- */
+///
+/// @file 
+/// @brief Combination header that inclues core interpreter functionality
+///
 
 // Used more or less everywhere
 #include "common.h"

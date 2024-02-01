@@ -1,5 +1,8 @@
 #pragma once
-
+///
+/// @file
+/// @brief Defines the 256-color graphics subsystem of PTC.
+///
 #include "common.h"
 #include "subsystem/resources.h"
 

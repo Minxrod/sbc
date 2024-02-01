@@ -1,15 +1,11 @@
 #pragma once
-/**
- * @file console.h
- * @brief This manages the console commands.
- * 
- * This file contains information and code for the operation of text console.
- * No rendering of any kind is done for the text console here.
- *
- * 
- * 
- */
-
+///
+/// @file console.h
+/// @brief This manages the console commands.
+/// 
+/// This file contains information and code for the operation of text console.
+/// No rendering of any kind is done for the text console here.
+///
 #include "common.h"
 
 #define CONSOLE_WIDTH 32

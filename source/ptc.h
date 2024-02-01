@@ -1,4 +1,8 @@
 #pragma once
+/// 
+/// @file
+/// @brief Defines enumerations for PTC functions and bytecode instructions.
+/// 
 
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',

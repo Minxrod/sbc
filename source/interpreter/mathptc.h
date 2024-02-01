@@ -1,5 +1,8 @@
 #pragma once
-
+/// 
+/// @file
+/// @brief Various PTC mathematical functions.
+/// 
 #include "common.h"
 
 struct ptc;

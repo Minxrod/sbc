@@ -1,4 +1,8 @@
 #pragma once
+///
+/// @file
+/// @brief Defines the resources struct, which contains all graphics resources.
+///
 
 #include "common.h"
 #include "header.h"

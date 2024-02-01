@@ -1,5 +1,8 @@
 #pragma once
-
+///
+/// @file
+/// @brief Defines the program code structures (source and compiled)
+///
 #include "common.h"
 
 struct labels;

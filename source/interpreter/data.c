@@ -87,9 +87,9 @@ void cmd_read(struct ptc* p){
 	
 	if (data_block[0] != BC_DATA){
 		find_data(p);
-//		if (p->exec.data_index == BC_SCAN_NOT_FOUND){
-//			ERROR(ERR_OUT_OF_DATA);
-//		}
+		if (p->exec.data_index == BC_SCAN_NOT_FOUND){
+			ERROR(ERR_OUT_OF_DATA);
+		}
 		data_block = (u8*)&p->exec.code.data[p->exec.data_index];
 	}
 	

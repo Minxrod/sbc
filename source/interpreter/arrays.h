@@ -1,4 +1,9 @@
 #pragma once
+/// 
+/// @file 
+/// @brief Structures and functions for managing and accessing arrays.
+/// 
+
 
 #include "common.h"
 
@@ -9,7 +14,7 @@
 // The format of an array as stored in array data is:
 // u32[2] sizes;
 // union value[size[0]*size[1]];
-// If 64-bit, there will be padding between the sizes and the 
+// If 64-bit, there will be padding between the sizes and the values
 
 struct arrays {
 	/// Size of allocated array data block

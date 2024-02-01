@@ -465,6 +465,7 @@ void cmd_chrinit(struct ptc* p){
 	if (res[1] == 'G' || res[1] == 'P'){
 		// resource is valid
 		u8* res_data = get_resource(p, (char*)res, res_str_len);
+		if (!res_data) return;
 		char res_name[] = "XXXX.PTC";
 		for (int i = 0; i < 4; ++i){
 			res_name[i] = res[i];
@@ -480,6 +481,99 @@ void cmd_chrinit(struct ptc* p){
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}
 }
+
+void cmd_chrread(struct ptc* p){
+	// CHRREAD resource$ id var$
+	struct string* dest = get_new_str(&p->strs);
+	// Note: If uses is never set to 1, then this string is available for taking again
+	// (no resource cleanup needed here)
+	void* res_str = value_str(ARG(0));
+	int id;
+	STACK_INT_RANGE(1,0,255,id);
+	void** out = ARG(2)->value.ptr; // pointer to string (which is itself a pointer)
+	
+	int res_str_len = str_len(res_str);
+	u8 res[6] = {0};
+	if (res_str_len > 5) {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+	str_char_copy(res_str, res);
+	// res contains at most 5 characters
+	// check that this is a CHR type resource:
+	// *G*, *P* inclues all valid CHR types.
+	if (res[1] == 'G' || res[1] == 'P'){
+		// resource is valid
+		u8* res_data = get_resource(p, (char*)res, res_str_len);
+		if (!res_data) {
+			ERROR(ERR_INVALID_RESOURCE_TYPE);
+		};
+		
+		u8* chr_data = &res_data[32*id];
+		// convert this to string
+		for (int i = 0; i < 32; ++i){
+			u8 unit = chr_data[i];
+			u8 ul, uh;
+			ul = unit & 0x0f;
+			uh = unit >> 4;
+			dest->ptr.s[2 * i + 0] = hex_digits[ul];
+			dest->ptr.s[2 * i + 1] = hex_digits[uh];
+		}
+		dest->len = 64;
+		dest->uses = 1;
+		*out = dest;
+	} else {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+}
+
+void cmd_chrset(struct ptc* p){
+	// CHRSET resource$ id var$
+	// Note: If uses is never set to 1, then this string is available for taking again
+	// (no resource cleanup needed here)
+	void* res_str = value_str(ARG(0));
+	int id;
+	STACK_INT_RANGE(1,0,255,id);
+	void* data = value_str(ARG(2)); // pointer to string (which is itself a pointer)
+	if (str_len(data) != 64){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	
+	int res_str_len = str_len(res_str);
+	u8 res[6] = {0};
+	if (res_str_len > 5) {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+	str_char_copy(res_str, res);
+	// res contains at most 5 characters
+	// check that this is a CHR type resource:
+	// *G*, *P* inclues all valid CHR types.
+	if (res[1] == 'G' || res[1] == 'P'){
+		// resource is valid
+		u8* res_data = get_resource(p, (char*)res, res_str_len);
+		if (!res_data) return;
+		
+		u8 chr_data[32];
+		
+		// convert string to data
+		for (int i = 0; i < 32; ++i){
+			u8 ul = digit_value(str_at_wide(data, 2*i));
+			u8 uh = digit_value(str_at_wide(data, 2*i+1));
+			if (ul > 16 || uh > 16){ // out of valid range
+				ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+			}
+			u8 unit = (uh << 4) | ul;
+			chr_data[i] = unit;
+		}
+		
+		// NDS: VRAM copy works here because memcpy uses bigger blocks
+		memcpy(&res_data[32*id], chr_data, 32);
+		
+		p->res.regen_chr[get_chr_index(p, (char*)res)] = true;
+	} else {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+}
+
 
 void cmd_colread(struct ptc* p){
 	// COLREAD resource color r g b

@@ -254,8 +254,8 @@ const char* cmd_format[] = {
 	"","0,N,NN,NNN,NNNN", //BEEP
 	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNNNNN","", //BGMCLEAR
 	"","","","","","0,N,NN","", //BGMVOL
-	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","", //CHRREAD
-	"","0","","SNnnn","","0", //CONT
+	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
+	"SNS","0","","SNnnn","","0", //CONT
 	"","","Snnn","S","NNNN,NNNNN", //GBOX
 	"","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET

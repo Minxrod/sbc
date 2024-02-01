@@ -1,4 +1,11 @@
 #pragma once
+/// 
+/// @file
+/// @brief Tracks the passage of time for the interpreter.
+///
+/// Tracks frame time for interpreter function and more precise time for 
+/// profiling, if enabled.
+/// 
 
 #ifdef PC
 #include <threads.h>
@@ -7,7 +14,7 @@
 
 #include <assert.h>
 #include <stdint.h>
-#define PROFILER_TIMERS 20
+#define PROFILER_TIMERS 24
 
 struct timers {
 #ifdef PC
@@ -18,7 +25,7 @@ struct timers {
 #endif
 	
 	// Store performance data
-	uint32_t profile[24];
+	uint32_t profile[PROFILER_TIMERS];
 };
 
 void inc_time(struct timers* t);

@@ -53,8 +53,8 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	ptc_err, ptc_stub, //BEEP
 	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_err, //BGMCLEAR 
 	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_stub, ptc_err, //BGMVOL
-	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, ptc_err, //CHRREAD
-	ptc_err, cmd_clear, ptc_err, cmd_colread, ptc_err, ptc_err, //CONT
+	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
+	cmd_chrset, cmd_clear, ptc_err, cmd_colread, ptc_err, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
 	ptc_err, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 

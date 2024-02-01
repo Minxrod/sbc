@@ -1,4 +1,8 @@
 #pragma once
+///
+/// @file
+/// @brief Defines the input subsystem for PTC - buttons, touch, and keyboard.
+/// 
 
 #include "common.h"
 

@@ -1,4 +1,9 @@
 #pragma once
+/// 
+/// @file
+/// @brief Defines the bytecode interpreter function, as well as a struct
+/// containing some basic execution information
+/// 
 
 #include "common.h"
 
@@ -7,7 +12,7 @@
 struct ptc;
 
 /**
- * Execution info: current instruction, stack, etc.
+ * Execution info: current instruction, error status, etc.
  */
 struct runner {
 	idx index;

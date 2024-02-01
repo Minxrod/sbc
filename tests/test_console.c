@@ -299,5 +299,33 @@ int test_console(void){
 		free_code(p);
 	}
 	
+	// Printing a large string + more
+	{
+		struct ptc* p = run_code("ACLS\rA$=\"0\"*64\r?A$,LEN(A$)\r");
+		
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 0, 0), "[print] Long string UL");
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 0), "[print] Long string UR");
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 0, 1), "[print] Long string LL");
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 1), "[print] Long string LR");
+		ASSERT(to_wide('6') == con_text_getc(&p->console, 4, 2), "[print] Long string 6");
+		ASSERT(to_wide('4') == con_text_getc(&p->console, 5, 2), "[print] Long string 4");
+		
+		free_code(p);
+	}
+	
+	// Scrolling while printing a large string
+	{
+		struct ptc* p = run_code("ACLS\rA$=\"0\"*64\rLOCATE 0,23\r?A$,LEN(A$)\r");
+		
+		ASSERT(to_wide('0') == con_text_getc(&p->console,  0, 20), "[print] Long string UL");
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 20), "[print] Long string UR");
+		ASSERT(to_wide('0') == con_text_getc(&p->console,  0, 21), "[print] Long string LL");
+		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 21), "[print] Long string LR");
+		ASSERT(to_wide('6') == con_text_getc(&p->console,  4, 22), "[print] Long string 6");
+		ASSERT(to_wide('4') == con_text_getc(&p->console,  5, 22), "[print] Long string 4");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_console success");
 }

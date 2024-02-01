@@ -104,6 +104,9 @@ void cmd_print(struct ptc* p){
 		} else if (e->type & STACK_OP) { 
 			if (e->value.number == OP_COMMA){
 				// tab
+				if (c->x == 0 && c->y == CONSOLE_HEIGHT){
+					con_scroll(c);
+				}
 				do {
 					con_put(c, to_wide(' '));
 				} while (c->x % c->tabstep != 0);

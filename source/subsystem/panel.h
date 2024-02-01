@@ -1,5 +1,9 @@
 #pragma once
-
+///
+/// @file
+/// @brief Defines the panel subsystem of PTC, including the virtual keyboard,
+/// icons, and lower screen text commands.
+///
 #include "sprites.h"
 
 struct ptc;

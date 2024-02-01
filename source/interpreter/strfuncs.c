@@ -113,7 +113,7 @@ void func_instr(struct ptc* p){
 	int len_string = str_len(str);
 	int len_substring = str_len(sub);
 	// empty string always matches
-	iprintf("%d,%s,%s\n", start, (char*)str_at(str,0), (char*)str_at(sub,0));
+//	iprintf("%d,%s,%s\n", start, (char*)str_at(str,0), (char*)str_at(sub,0));
 	if (len_substring == 0) {
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(0)}});
 		return;
@@ -135,7 +135,7 @@ void func_instr(struct ptc* p){
 			i -= j; // go back by number of matched chars
 			j = 0; // reset check index
 		}
-		iprintf("%d,%d\n",i,j);
+//		iprintf("%d,%d\n",i,j);
 	}
 	// if string has been entirely matched, return match position
 	if (j == len_substring){
