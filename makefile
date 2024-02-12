@@ -47,6 +47,7 @@ profile: main_build
 #test: CFLAGS+=--coverage
 #test: LFLAGS+=-lgcov
 test: test_build
+test: CFLAGS+=
 test_full: CFLAGS+=-DTEST_FULL
 test_full: test_build
 

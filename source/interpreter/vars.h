@@ -55,8 +55,10 @@ struct strings;
 struct arrays;
 
 struct variables {
-	/// Max variables in use
+	/// Maximum variables allowed
 	uint_fast16_t vars_max;
+	/// Current variable usage count
+	uint_fast16_t var_count;
 	/// Strings table
 	struct strings* strs;
 	/// Arrays table

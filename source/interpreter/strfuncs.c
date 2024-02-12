@@ -260,6 +260,38 @@ void func_left(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
+void func_hex(struct ptc* p){
+	// HEX$ num
+	// HEX$ num digits
+	
+	// Must be done first to ensure uses are kept correctly
+	struct string* dest = get_new_str(&p->strs);
+	
+	int num, digits = 0;
+	if (p->exec.argcount == 2){
+		num = STACK_REL_INT(-2);
+		STACK_REL_INT_RANGE(-1,1,5,digits);
+		p->stack.stack_i -= 2;
+	} else {
+		num = STACK_REL_INT(-1);
+		p->stack.stack_i -= 1;
+	}
+	if (digits && (num >= (1 << (4*digits)) || num < -(1 << (4*digits-1)))){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	num &= 0x0fffff;
+	if (digits){
+		num &= 0x0fffff >> 4*(5-digits);
+	}
+	int len;
+	sprintf((char*)dest->ptr.s, "%.*X%n", digits, num, &len);
+	
+	dest->len = len;
+	dest->uses = 1;
+	
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
+}
+
 void cmd_dtread(struct ptc* p){
 	//TODO:ERR:MED Syntax error on invalid characters, wrong length
 	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.

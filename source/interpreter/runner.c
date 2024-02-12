@@ -37,10 +37,18 @@ void ptc_stub(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+void ptc_func_stub(struct ptc* p){
+	// Stub function consumes arguments provided and returns zero
+	p->stack.stack_i -= p->exec.argcount;
+	STACK_RETURN_INT(0);
+}
+
 void ptc_err(struct ptc* p){
 	// The "I haven't done this yet" function
 	ERROR(ERR_UNIMPLEMENTED);
 }
+
+const ptc_call ptc_bgmstub = ptc_stub;
 
 DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_print, cmd_locate, cmd_color, ptc_err, // dim
@@ -51,10 +59,10 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
 	cmd_input, cmd_linput,
 	ptc_err, ptc_stub, //BEEP
-	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_err, //BGMCLEAR 
-	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, ptc_stub, ptc_err, //BGMVOL
+	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_bgmstub, //BGMCLEAR 
+	ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, //BGMVOL
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
-	cmd_chrset, cmd_clear, ptc_err, cmd_colread, ptc_err, ptc_err, //CONT
+	cmd_chrset, cmd_clear, ptc_err, cmd_colread, cmd_colset, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
 	ptc_err, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
@@ -74,20 +82,21 @@ DTCM_DATA const ptc_call ptc_operators[] = {
 };
 
 DTCM_DATA const ptc_call ptc_functions[] = {
-	ptc_err, func_asc, ptc_err, func_bgchk, ptc_err, ptc_err, func_btrig, func_button,
-	ptc_err, func_chr, func_cos, func_deg, ptc_err, func_floor, func_gspoit, ptc_err, func_iconchk, //FUNC_ICONCHK
+	func_abs, func_asc, ptc_err, func_bgchk, ptc_func_stub, ptc_err, func_btrig, func_button,
+	func_chkchr, func_chr, func_cos, func_deg, ptc_err, func_floor, func_gspoit, func_hex, func_iconchk, //FUNC_ICONCHK
 	func_inkey, func_instr, func_left, func_len, func_log, func_mid, func_pi, func_pow, func_rad, //FUNC_RAD
-	func_right, func_rnd, ptc_err, func_sin, func_spchk, func_spgetv, func_sphit, ptc_err, //FUNC_SPHITRC
+	func_right, func_rnd, func_sgn, func_sin, func_spchk, func_spgetv, func_sphit, ptc_err, //FUNC_SPHITRC
 	ptc_err, ptc_err, func_str, func_subst, ptc_err, func_val, //FUNC_VAL
 };
 
 DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
 	ptc_err, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
-	ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, //RESULT
+	sys_freevar, sys_freemem, ptc_err, ptc_err, ptc_err, //RESULT
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
 	sys_sphitno, ptc_err, ptc_err, ptc_err,
+	sys_keyboard, sys_funcno,
 };
 
 /// Debug function for checking command/function names from IDs
@@ -217,7 +226,7 @@ void run(struct bytecode code, struct ptc* p) {
 				{
 				fixp number = 0;
 				
-				number |= (char)code.data[r->index++] << 24;
+				number |= (fixp)((unsigned char)code.data[r->index++] << 24);
 				number |= (unsigned char)code.data[r->index++] << 16;
 				number |= (unsigned char)code.data[r->index++] << 8;
 				number |= (unsigned char)code.data[r->index++];
@@ -423,6 +432,16 @@ void run(struct bytecode code, struct ptc* p) {
 			case BC_DATA:
 			case BC_LABEL:
 				// ignore these!
+				iprintf("len=%d ", data);
+				for (int i = 0; i < (int)data; ++i){
+					char c = code.data[r->index + i];
+					if (c){
+						iprintf("%c", c);
+					} else {
+						iprintf("\\0");
+					}
+				}
+				
 				r->index += data + (data & 1); // to next instruction
 				check_time(&p->time, 11);
 				break;
@@ -464,8 +483,8 @@ void cmd_exec(struct ptc* p){
 	// which are loaded into the second half.
 	// TODO:TEST:MED This absolutely needs some test cases
 	iprintf("\nold=%d ", p->exec.code.size);
-	struct program prog = { 0, (char*)&p->exec.code.data[524288]};
-	if (!load_prg(&prog, filename_buf)){
+	struct program prog = { 0, (char*)&p->exec.code.data[524288] };
+	if (!(prog.size = check_load_res((u8*)prog.data, p->res.search_path, filename_buf, TYPE_PRG))){
 		// Failed to load, potentially destroyed code
 		ERROR(ERR_FILE_LOAD_FAILED);
 	}

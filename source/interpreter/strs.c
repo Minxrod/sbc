@@ -150,12 +150,9 @@ int digit_value(const u16 c){
 	return -1;
 }
 
-fixp u8_to_number(const u8* data, const int len, const int base, const bool allow_decimal){
-	// TODO:CODE:HIGH There is a const removed by the case here.
-	// Nothing in str_to_number should modify data, so it's "fine," but
-	// rewriting to make this cleaner would be an improvement.
+fixp u8_to_number(u8* data, const int len, const int base, const bool allow_decimal){
 	const struct string str = {
-		.type = STRING_CHAR, .len = len, .ptr.s = (u8*)data
+		.type = STRING_CHAR, .len = len, .ptr.s = data
 	};
 	return str_to_number(&str, base, allow_decimal);
 }
@@ -200,14 +197,19 @@ fixp str_to_number(const void* str, const int base, const bool allow_decimal){
 	}
 	//TODO:ERR:MED Check overflow
 	
-	fixp combined = number * 4096 + 4096 * fraction / maximum;
-	if (is_negative) combined = -combined;
+	fixp combined;
+	if (is_negative){
+		combined = INT_TO_FP(-number); // TODO:CODE:MED I think this is technically UB?
+		combined -= INT_TO_FP(1) * fraction / maximum;
+	} else {
+		combined = number * 4096 + 4096 * fraction / maximum;
+	}
 	
-//	iprintf("Number := %f", (double)number);
+//	printf("Number := %f Combined := %d\n", (double)number, combined);
 	return combined;
 }
 
-fixp u8_to_num(const u8* data, const idx len){
+fixp u8_to_num(u8* data, const idx len){
 	return u8_to_number(data, len, 10, true);
 }
 

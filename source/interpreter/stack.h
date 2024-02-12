@@ -33,9 +33,9 @@
 #define STACK_REL_INT_MIN(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { ERROR(ERR_OUT_OF_RANGE); } dest = _v; }
 #define STACK_REL_INT_MIN_SILENT(i,min,dest) { int _v = STACK_REL_INT(i); if (_v < min) { return; } dest = _v; }
 
-#define STACK_RETURN_INT(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((val))}}); }
-#define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); }
-#define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {(val)}}); }
+#define STACK_RETURN_INT(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((val))}}); return; }
+#define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); return; }
+#define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {(val)}}); return; }
 
 
 #define VALUE_STACK_MAX 100
@@ -97,12 +97,17 @@ enum call_type {
 	CALL_GOSUB,
 };
 
+/// Represents the call stack of the running BASIC program.
 struct call_stack {
 	u16 stack_i;
+	/// Represents an entry in the call stack.
+	/// Depending on the type of call, stores either...
+	/// * GOSUB - Return index
+	/// * FOR - Return index, variable pointer
 	struct call_entry {
 		enum call_type type; // FOR or GOSUB
 		idx address; // instruction index
-		uint_fast8_t var_type;
+//		uint_fast8_t var_type;
 		void* var; // fixp* or struct string**
 	} entry[CALL_STACK_MAX];
 };

@@ -74,9 +74,13 @@ struct token {
 		first_of_line_command,
 		base_number,
 		array_name,
+		array_actual
 	} type;
 	idx ofs;
-	u8 len;
+	union {
+		u8 len;
+		u8 cmd;
+	};
 	u16 prio;
 };
 

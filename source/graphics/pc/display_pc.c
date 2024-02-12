@@ -232,8 +232,8 @@ void display_draw_all(struct ptc* p){
 		for (int prio = 3; prio >= 0; --prio){
 			display_draw_graphics(p, screen, prio);
 			display_draw_background(p, screen, prio);
-			display_draw_sprite(p, screen, prio);
 			display_draw_text(p, screen, prio);
+			display_draw_sprite(p, screen, prio);
 		}
 	}
 	
@@ -331,6 +331,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 	// TODO:PERF:LOW Re-use sprite array to prevent frequent allocations?
 	struct sprite_array sprites = init_sprite_array();
 	
+	int resbank;
 	if (p->panel.key_pressed){
 		offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
 	}
@@ -340,6 +341,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 				add_sprite(sprites, &p->sprites.info[screen][i]);
 			}
 		}
+		resbank = 3 + screen;
 	} else {
 		if (p->panel.type != PNL_OFF && p->panel.type != PNL_PNL){
 			for (int i = 0; i < KEYBOARD_KEYS; ++i){
@@ -350,6 +352,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 				}
 			}
 		}
+		resbank = 3;
 	}
 	if (screen == 1){
 		// Icons are drawn on any panel setting
@@ -359,13 +362,14 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 			if (key->active){
 				add_sprite(sprites, key);
 			}
+			// TODO:IMPL:HIGH Sprites correct AND icons
 		}
 	}
 	if (p->panel.key_pressed){
 		offset_key(p, p->panel.id_pressed, -INT_TO_FP(1));
 	}
 	
-	d->rs.texture = d->chr_tex[3+5*screen];
+	d->rs.texture = d->chr_tex[resbank+5*screen];
 	sfShader_setFloatUniform(d->shader, "colbank", 1+3*screen);
 	sfShader_setBoolUniform(d->shader, "grp_mode", false);
 	sfRenderWindow_drawVertexArray(d->rw, sprites.va, &d->rs);

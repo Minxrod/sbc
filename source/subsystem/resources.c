@@ -10,6 +10,11 @@
 
 const char* resource_path = "resources/";
 
+int resource_size[6] = {
+	0, CHR_SIZE, SCR_SIZE, GRP_SIZE, 0, COL_SIZE,
+};
+
+
 /// Load from a file, skipping past part of it if needed and reading only a certain length
 bool load_file(u8* dest, const char* name, int skip, int len){
 	FILE* f = fopen(name, "rb");
@@ -32,97 +37,125 @@ bool load_file(u8* dest, const char* name, int skip, int len){
 	return true;
 }
 
+#define FILE_ERROR(msg) do {\
+	iprintf(msg " [path=%s]\n", path);\
+	return 0;\
+} while (0)
+
+#define FILE_OK() do {\
+	fclose(f);\
+	return size_read;\
+} while (0)
+
+/// Error indication and file cleanup
+#define FILE_CLOSE(msg) do {\
+	fclose(f);\
+	FILE_ERROR(msg);\
+} while (0)
+
+/// Error checking after file operation
+#define CHECK_FILE_ERROR(msg) do {\
+if (ferror(f)){\
+	FILE_CLOSE(msg);\
+} } while(0)
+
+int check_load_res(u8* dest, const char* search_path, const char* name, int type){
+	int size_read;
+	char path[256] = {0};
+	if (strlen(search_path) + strlen(name) >= 252){
+		FILE_ERROR("File name too long");
+	}
+	strcpy(path, search_path);
+	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
+	
+	if (type == TYPE_PRG){
+		FILE* f = fopen(path, "rb");
+		if (!f){
+			iprintf("Failed to load file (retrying with extension): %s\n", path);
+			// Try with file extension
+			strcpy(path + strlen(search_path) + strlen(name), ".PTC");
+			
+			f = fopen(path, "rb");
+			if (!f){
+				FILE_ERROR("Failed to load file");
+			}
+		}
+		struct ptc_header h;
+		
+		/// TODO:CODE:MED I think this only works on little-endian devices...
+		/// (reading into header memory directly)
+		size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
+		CHECK_FILE_ERROR("Could not read header correctly");
+		if (size_read < PRG_HEADER_SIZE){
+			FILE_CLOSE("Could not read full header");
+		}
+		// Assumed successful header read - now load file contents into dest
+		size_read = fread(dest, sizeof(char), h.prg_size, f);
+		return size_read;
+		
+	} else if (type >= TYPE_CHR && type <= TYPE_COL){
+		return check_load_file(dest, "", path, resource_size[type]);
+	}
+	FILE_ERROR("Unknown resource type");
+}
+
 // Checks the file type and loads the correct data from the file.
 // Note: path, name must be null-terminated
-bool check_load_file(u8* dest, const char* search_path, const char* name, int size){
-	if (strlen(search_path) + strlen(name) >= 252){
-		iprintf("Name too long: %s\n", name);
-		return false;
-	}
+int check_load_file(u8* dest, const char* search_path, const char* name, int size){
+	int size_read;
 	char path[256] = {0};
-	for (int i = 0; i <= (int)strlen(search_path); ++i){ // <= to include null terminator
-		path[i] = search_path[i];
+	if (strlen(search_path) + strlen(name) >= 252){
+		FILE_ERROR("File name too long");
 	}
-	for (int i = 0; i <= (int)strlen(name); ++i){ // <= to include null terminator
-		path[i+strlen(search_path)] = name[i];
-	}
+	strcpy(path, search_path);
+	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
+	
 	FILE* f = fopen(path, "rb");
 	if (!f){
-		iprintf("Failed to load file: %s\n", path);
-		int i = strlen(search_path)+strlen(name);
+		iprintf("Failed to load file (retrying with extension): %s\n", path);
 		// Try with file extension
-		path[i] = '.';
-		path[i+1] = 'P';
-		path[i+2] = 'T';
-		path[i+3] = 'C';
+		strcpy(path + strlen(search_path) + strlen(name), ".PTC");
+		
 		f = fopen(path, "rb");
 		if (!f){
-			iprintf("Failed to load file: %s\n", path);
-			return false;
-		} else {
-			iprintf("Loaded with extension: %s\n", path);
+			FILE_ERROR("Failed to load file");
 		}
 	}
 	char check_type[4] = {0};
 	fread(check_type, sizeof(char), 4, f);
-	if (ferror(f)){
-		fclose(f);
-		iprintf("Failed to check file type: %s\n", path);
-		return false;
-	}
+	CHECK_FILE_ERROR("Failed to check file type");
 	// Note: strncmp returns 0 if equal
 	if (!strncmp(check_type, "PX01", 4)){
 		// Petit Computer SD format file, header: skip header info
 		if (fseek(f, HEADER_SIZE, SEEK_SET)){
-			fclose(f);
-			iprintf("Failed to fseek to %d within %s\n", HEADER_SIZE, path);
-			return false;
+			FILE_CLOSE("Failed to seek past header");
 		}
-		fread(dest, sizeof(u8), size, f);
-		if (ferror(f)){
-			fclose(f);
-			iprintf("Failed to read file %s\n", path);
-			return false;
-		}
-		fclose(f);
-		return true;
+		
+		size_read = fread(dest, sizeof(u8), size, f);
+		CHECK_FILE_ERROR("Failed to read file");
+		FILE_OK();
 	} else if (!strncmp(check_type, "PETC", 4)){
 		// Petit Computer internal file format: skip type
 		if (fseek(f, 12, SEEK_SET)){
-			fclose(f);
-			iprintf("Failed to fseek to %d within %s\n", 12, path);
-			return false;
+			FILE_CLOSE("Failed to seek past type");
 		}
-		fread(dest, sizeof(u8), size, f);
-		if (ferror(f)){
-			fclose(f);
-			iprintf("Failed to read file %s\n", path);
-			return false;
-		}
-		fclose(f);
-		return true;
+		size_read = fread(dest, sizeof(u8), size, f);
+		CHECK_FILE_ERROR("Failed to read file");
+		FILE_OK();
 	} else if (!strncmp(check_type, "SBCC", 4)){
 		// SBC compressed format (something a bit more inventive)
 		if (fseek(f, 4, SEEK_SET)){
-			fclose(f);
-			iprintf("Failed to fseek to %d within %s\n", 4, path);
-			return false;
+			FILE_CLOSE("Failed to seek past file type id");
 		}
 		u8 header[4];
 		fread(header, sizeof(u8), 4, f);
-		if (ferror(f)){
-			fclose(f);
-			iprintf("Failed to read header %s\n", path);
-			return false;
-		}
+		CHECK_FILE_ERROR("Failed to read header");
+		
 		// Used destinations as temporary storage - may lead to artifacting but reduces memory use
 		u8* compressed = dest;
-		fread(dest, sizeof(u8), size, f);
-		if (ferror(f)){
-			fclose(f);
-			iprintf("Failed to read file %s\n", path);
-			return false;
-		}
+		size_read = fread(dest, sizeof(u8), size, f);
+		CHECK_FILE_ERROR("Failed to read file");
+		
 		int bits = header[0];
 		int expected_size = header[1] | (header[2] << 8) | (header[3] << 16);
 		(void)expected_size; // for when assert fails
@@ -131,16 +164,10 @@ bool check_load_file(u8* dest, const char* search_path, const char* name, int si
 		memcpy(dest, decompressed, size);
 //		free_log("load_file", compressed); // TODO:PERF:LOW See if zero-allocation version is feasible?
 		free_log("load_file", decompressed);
-		fclose(f);
-		return true;
-		
+		FILE_OK();
 	} else {
-		// Unknown format, file load fails 
-		iprintf("Failed to load file (Unknown format): %s\n", path);
-		fclose(f);
-		return false;
+		FILE_CLOSE("Failed to load file (Unknown format)");
 	}
-
 }
 
 // Load from file `name` into dest
@@ -166,6 +193,7 @@ bool load_grp(u8* dest, const char* path, const char* name){
 }
 
 void init_resource(struct resources* r){
+	r->search_path = "programs/"; // Program resource search path
 #ifdef ARM9
 	// Assign pointers into VRAM as needed
 	for (int lower = 0; lower <= 1; ++lower){
@@ -274,16 +302,6 @@ void* str_to_resource(struct ptc* p, void* name_str){
 	return get_resource(p, name_char, str_len(name_str));
 }
 
-enum resource_type {
-	TYPE_PRG,
-	TYPE_CHR,
-	TYPE_SCR,
-	TYPE_GRP,
-	TYPE_MEM,
-	TYPE_COL,
-	TYPE_INVALID
-};
-
 static inline int get_resource_type(void* res){
 	if (str_len(res) < 3) return TYPE_INVALID;
 	u16 c1 = to_char(str_at_wide(res, 0));
@@ -336,25 +354,42 @@ void* get_resource(struct ptc* p, char* name, int len){
 	char id = name[1]; //id help for SCU/SPU
 	char t = name[2]; //type (within category)
 	
-	int bank = 0, upper = 0;
+	int bank = 0, upper = -1; 
 	if (len == 5){
 		bank = name[3] - '0';
 		upper = name[4] == 'L';
 	} else if (len == 4){
 		if (name[3] >= '0' && name[3] <= '7'){
 			bank = name[3] - '0';
-			upper = 0; //TODO:IMPL:MED depends on BG,SP,GRP page
 		} else {
 			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 			return NULL;
 		}
 	} else if (len == 3){
 		bank = 0;
-		upper = 0; //TODO:IMPL:MED depends on BG,SP,GRP page
 	} else {
 		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 		return NULL;
 	}
+	
+	// upper depends on current BGPAGE, SPPAGE, or GPAGE
+	if (upper == -1){
+		if (c == 'B' || (c == 'S' && id == 'C') || (c == 'C' && bank == 0)){
+			// BG resource of some variety
+			// BGF BGU BGD SCU COL0
+			upper = p->background.page;
+		} else if ((c == 'S' && id == 'P') || (c == 'C' && bank == 1)){
+			// SPU SPS SPD COL1
+			upper = p->sprites.page;
+		} else if (c == 'G' || (c == 'C' && bank == 2)){
+			// GRP COL2
+			upper = p->graphics.screen;
+		} else {
+			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
+			return NULL;
+		}
+	}
+	
 //	iprintf("get_resource %c %c %c %d %d\n", c, id, t, bank, upper);
 	if (c == 'B'){ //BGU, BGF, BGD
 		if (t == 'U'){
@@ -574,7 +609,6 @@ void cmd_chrset(struct ptc* p){
 	}
 }
 
-
 void cmd_colread(struct ptc* p){
 	// COLREAD resource color r g b
 	void* res_str = value_str(ARG(0));
@@ -584,22 +618,65 @@ void cmd_colread(struct ptc* p){
 	r = ARG(2)->value.ptr;
 	g = ARG(3)->value.ptr;
 	b = ARG(4)->value.ptr;
-	int res_str_len = str_len(res_str);
-	u8 res[5];
-	if (res_str_len > 5) {
-		ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
-	str_char_copy(res_str, res);
-	if (res[0] == 'C'){
-		u16* col_data = get_resource(p, (char*)res, res_str_len);
-		int c = col_data[col];
-		// GGGRRRRR GBBBBBGG
-		// Note: Loading as u16 only works on little endian device
-		*r = INT_TO_FP(c & 0x1f) << 3;
-		*g = INT_TO_FP(((c >> 5) & 0x1f)) << 3; // TODO:TEST:LOW Is lowest bit readable?
-		*b = INT_TO_FP(((c >> 10) & 0x1f)) << 3; // TODO:TEST:LOW Correct values as they scale?
+	u16* col_data;
+	if (str_comp(res_str, "S\2BG")){
+		col_data = get_resource(p, "COL0", 4);
+	} else if (str_comp(res_str, "S\2SP")){
+		col_data = get_resource(p, "COL1", 4);
+	} else if (str_comp(res_str, "S\3GRP")){
+		col_data = get_resource(p, "COL2", 4);
 	} else {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}
+	
+	int c = col_data[col];
+	// GGGRRRRR GBBBBBGG
+	// Note: Loading as u16 only works on little endian device
+	*r = INT_TO_FP(c & 0x1f) << 3;
+	*g = INT_TO_FP(((c >> 5) & 0x1f)) << 3; // TODO:TEST:LOW Is lowest bit readable?
+	*b = INT_TO_FP(((c >> 10) & 0x1f)) << 3; // TODO:TEST:LOW Correct values as they scale?
 }
 
+void cmd_colset(struct ptc* p){
+	// COLSET resource$ color color$
+	void* res_str = value_str(ARG(0));
+	int col;
+	STACK_INT_RANGE(1,0,255,col);
+	void* col_str = value_str(ARG(2));
+	u16* col_data;
+	if (str_comp(res_str, "S\2BG")){
+		col_data = get_resource(p, "COL0", 4);
+	} else if (str_comp(res_str, "S\2SP")){
+		col_data = get_resource(p, "COL1", 4);
+	} else if (str_comp(res_str, "S\3GRP")){
+		col_data = get_resource(p, "COL2", 4);
+	} else {
+		ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+	// can't forget this one ;)
+	if (str_len(col_str) != 6){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	for (int i = 0; i < 6; ++i){
+		int c = str_at_char(col_str, i);
+		if (!is_number(c) && !(c >= 'A' && c <= 'F')){
+			ERROR(ERR_ILLEGAL_FUNCTION_CALL); // TODO:TEST:LOW Check error code
+		}
+	}
+	
+	int r, g, b;
+	r = digit_value(str_at_wide(col_str, 0)) << 1;
+	g = digit_value(str_at_wide(col_str, 2)) << 1;
+	b = digit_value(str_at_wide(col_str, 4)) << 1;
+	r |= digit_value(str_at_wide(col_str, 1)) >> 3;
+	g |= digit_value(str_at_wide(col_str, 3)) >> 3;
+	b |= digit_value(str_at_wide(col_str, 5)) >> 3;
+	
+	col_data = &col_data[col]; // pointer to specific color we will set
+	
+	// GGGRRRRR GBBBBBGG
+	// Note: Loading as u16 only works on little endian device
+	// TODO:TEST:MED This loses the lowest bit of green?
+	*col_data = r | (g << 5) | b << 10;
+	p->res.regen_col = true;
+}

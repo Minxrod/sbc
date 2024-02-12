@@ -68,11 +68,24 @@ struct sfTexture* gen_col_texture(u16* src);
 #define VRAM_LOWER_PAL_SP 0x05000600
 #endif
 
+enum resource_type {
+	TYPE_PRG,
+	TYPE_CHR,
+	TYPE_SCR,
+	TYPE_GRP,
+	TYPE_MEM,
+	TYPE_COL,
+	TYPE_INVALID
+};
+
+extern int resource_size[6];
+
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
 	// TODO:IMPL:MED MEM type?
 	//BGU,D,F,[SPU,S or SPD,K,S]
+	const char* search_path;
 	
 	u8* chr[CHR_BANKS*2];
 	// TODO:CODE:LOW Maybe move regen_chr to display?
@@ -97,6 +110,9 @@ struct resources {
 	
 	u8 visible;
 };
+
+int check_load_res(u8* dest, const char* search_path, const char* name, int type);
+int check_load_file(u8* dest, const char* search_path, const char* name, int size);
 
 bool load_file(u8* dest, const char* name, int skip, int len);
 bool load_chr(u8* dest, const char* path, const char* name);

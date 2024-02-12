@@ -146,7 +146,7 @@ int test_int_math(){
 #ifdef TEST_FULL
 		struct ptc* p = run_code("X=!0\rE=1/4096\rFOR I=-524287 TO 524287 STEP E\rS=S+!I\rNEXT\r");
 		
-		CHECK_VAR_NUM("S", 1); // only one instance of !I becoming 1
+		CHECK_VAR_INT("S", 1); // only one instance of !I becoming 1
 		CHECK_VAR_NUM("X", 1); // confirm correct instance
 		
 		free_code(p);
@@ -159,5 +159,69 @@ int test_int_math(){
 //		ASSERT(check_code_error("?567855788", ERR_OVERFLOW), "[number] Overflow on large number");
 	}
 	
-	SUCCESS();
+	// ABS works as expected
+	{
+		struct ptc* p = run_code("A=ABS(36)\rB=ABS(0)\rC=ABS(-36)\rD=ABS(-524287.999994)\rE=ABS(524287.999994)\rF=&H80000\rG=ABS(F)\r");
+		
+		CHECK_VAR_NUM("A", INT_TO_FP(36));
+		CHECK_VAR_NUM("B", 0);
+		CHECK_VAR_NUM("C", INT_TO_FP(36));
+		CHECK_VAR_NUM("D", 0x7fffffff);
+		CHECK_VAR_NUM("E", 0x7fffffff);
+		CHECK_VAR_NUM("F", -2147483648);
+		CHECK_VAR_NUM("G", -2147483648);
+		
+		free_code(p);
+	}
+	
+	// ABS Error checks
+	{
+		DENY(check_code_error("?ABS(\"\")\r", ERR_NONE), "[abs] Error on string value");
+		DENY(check_code_error("?ABS()\r", ERR_NONE), "[abs] Error on missing argument");
+		DENY(check_code_error("?ABS(2,3)\r", ERR_NONE), "[abs] Error on extra argument");
+	}
+	
+	// SGN works as expected
+	{
+		struct ptc* p = run_code("A=SGN(0)\rB=SGN(-1)\rC=SGN(1)\rD=SGN(524287.999994)\rE=SGN(&H80000)\r");
+		
+		CHECK_VAR_NUM("A", 0);
+		CHECK_VAR_NUM("B", -INT_TO_FP(1));
+		CHECK_VAR_NUM("C", INT_TO_FP(1));
+		CHECK_VAR_NUM("D", INT_TO_FP(1));
+		CHECK_VAR_NUM("E", -INT_TO_FP(1));
+		
+		free_code(p);
+	}
+	
+	// SGN Error checks
+	{
+		DENY(check_code_error("?SGN(\"\")\r", ERR_NONE), "[sgn] Error on string value");
+		DENY(check_code_error("?SGN()\r", ERR_NONE), "[sgn] Error on missing argument");
+		DENY(check_code_error("?SGN(2,3)\r", ERR_NONE), "[sgn] Error on extra argument");
+	}
+	
+	// Regular AND operation
+	{
+		struct ptc* p = run_code("A=0 AND 0\rB=2 AND 1\rC=&H7FF AND &H030\rD=-27 AND -1\r");
+		
+		CHECK_VAR_NUM("A", 0);
+		CHECK_VAR_NUM("B", 0);
+		CHECK_VAR_NUM("C", INT_TO_FP(0x030));
+		CHECK_VAR_NUM("D", -INT_TO_FP(27));
+		
+		free_code(p);
+	}
+	
+	// AND operator errors
+	{
+		DENY(check_code_error("?\"\" AND 0\r", ERR_NONE), "[and] Error on string value 1");
+		DENY(check_code_error("?0 AND \"\"\r", ERR_NONE), "[and] Error on string value 2");
+		DENY(check_code_error("?\"\" AND \"\"\r", ERR_NONE), "[and] Error on string value 1+2");
+		DENY(check_code_error("?AND 0\r", ERR_NONE), "[sgn] Error on missing argument 1");
+		DENY(check_code_error("?0 AND\r", ERR_NONE), "[sgn] Error on missing argument 2");
+		DENY(check_code_error("?AND\r", ERR_NONE), "[sgn] Error on missing argument 1+2");
+	}
+	
+	SUCCESS("test_int_math success");
 }

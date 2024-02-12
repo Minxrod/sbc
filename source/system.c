@@ -34,8 +34,9 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->vars.strs = &ptc->strs;
 	ptc->vars.arrs = &ptc->arrs;
 	// init various ptc items
-	// TODO:CODE:LOW use subsytem initialization functions?
+	// TODO:CODE:MED use subsytem initialization functions?
 	ptc->console.tabstep = 4;
+	ptc->console.sys_tabstep = INT_TO_FP(4);
 	ptc->res.visible = VISIBLE_ALL;
 	init_input(&ptc->input);
 	init_sprites(&ptc->sprites);
@@ -61,10 +62,10 @@ void free_system(struct ptc* p){
 
 //https://smilebasicsource.com/forum/thread/docs-ptc-acls
 char acls_code[] = 
-"VISIBLE 1,1,1,1,1,1:'ICONCLR\r"
-"COLOR 0,0:CLS:'GDRAWMD FALSE\r"
+"VISIBLE 1,1,1,1,1,1:ICONCLR\r"
+"COLOR 0,0:CLS:GDRAWMD FALSE\r"
 "FOR P=1 TO 0 STEP -1\r"
-" GPAGE P,P,P:GCOLOR 0:GCLS:'GPRIO 3\r"
+" GPAGE P,P,P:GCOLOR 0:GCLS:GPRIO 3\r"
 " BGPAGE P:BGOFS 0,0,0:BGOFS 1,0,0\r"
 " BGCLR:BGCLIP 0,0,31,23\r"
 " SPPAGE P:SPCLR\r"
@@ -117,15 +118,23 @@ void cmd_vsync(struct ptc* p){
 }
 
 void cmd_wait(struct ptc* p){
-	int delay = STACK_INT(0);
+//	int delay = STACK_INT(0);
 	
 	// wait for duration of delay
-	int big = delay / 60;
-	int small = delay % 60;
+//	int big = delay / 60;
+//	int small = delay % 60;
 	
-	int64_t nsec = 1e9l * small / 60l;
+//	int64_t nsec = 1e9l * small / 60l;
+
+	int delay = STACK_INT(0);
 	
-	thrd_sleep(&(struct timespec){.tv_sec = big, .tv_nsec=nsec}, NULL);
+	int64_t start_time = get_time(&p->time);
+	
+	//thrd_sleep(&(struct timespec){.tv_sec = big, .tv_nsec=nsec}, NULL);
+	while (get_time(&p->time) - start_time < delay){
+		// wait for 10ms before checking again
+		thrd_sleep(&(struct timespec){.tv_nsec=(1e7)}, NULL);
+	}
 }
 
 void cmd_clear(struct ptc* p){

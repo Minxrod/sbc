@@ -9,7 +9,12 @@ struct labels;
 
 #define MAX_LINES 10000
 
-// Program source loaded from ex. PTC file?
+/// Program source code.
+///
+/// This represents a program in human-readable form. Note that this struct
+/// does not contain the data itself, it only contains a pointer to the data.
+/// 
+/// @note Maximum size of 524288 characters. Maximum of 10000 lines.
 struct program {
 	// Size of program (characters/bytes)
 	idx size;
@@ -17,7 +22,9 @@ struct program {
 	char* data;
 };
 
-// Compiled program code
+/// Compiled program code.
+///
+/// Converted program bytecode, used by run() to execute the program.
 struct bytecode {
 	// Size of bytecode
 	idx size;

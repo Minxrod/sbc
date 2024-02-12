@@ -10,9 +10,18 @@
 
 struct ptc;
 
+///
+/// Background management struct.
+///
+/// Contains information about the state of the background layers.
+/// This includes the information for both screens.
+/// 
 struct background {
 	int_fast8_t page;
 	
+	/// BG offset information.
+	///
+	/// Stores the scroll state of the BG layer, including interpolation data.
 	struct bg_offset {
 		fixp x;
 		fixp y;
@@ -21,16 +30,18 @@ struct background {
 		fixp step_y;
 		
 		fixp time;
-	} ofs[2][2];
+	} ofs[2][2]; // index order: page layer
 	
+	/// BG clipping info.
+	/// 
+	/// Stores the per-screen visible region of the BG layer.
 	struct bg_clip {
 		uint_fast8_t x1;
 		uint_fast8_t y1;
 		uint_fast8_t x2;
 		uint_fast8_t y2;
-	} clip[2]; // only one per page
+	} clip[2];
 	
-	// index order: page layer
 };
 
 struct background* init_background(void);

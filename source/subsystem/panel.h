@@ -72,4 +72,14 @@ void set_panel_bg(struct ptc* p, enum pnltype type);
 void set_function_key(struct ptc* p, int key, const void* string);
 void press_key(struct ptc* p, bool t, int x, int y);
 void offset_key(struct ptc* p, int id, int d);
+
+/// Returns the currently pressed key's sprite ID.
+/// 
+/// The ranges of return values fall into these ranges:
+///  -   1- 69: Keyboard key, corresponding to the same value of KEYBOARD
+///  -  90- 93: Icon, where 90=icon 0 and so on.
+///  - 101-105: Function key, where 101 corresponds to FUNCNO=1 and so on.
+/// 
+/// @param p System struct
+/// @return Sprite ID of pressed key.
 int get_pressed_key(struct ptc* p);

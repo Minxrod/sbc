@@ -21,6 +21,7 @@ void init_mem_var(struct variables* v, uint_fast16_t var_count){
 	}
 	v->error = ERR_NONE;
 	v->clear_values = false;
+//	v->var_count = 0;
 }
 
 void reset_var(struct variables* v){
@@ -40,6 +41,7 @@ void reset_var(struct variables* v){
 		for (uint_fast16_t i = 0; i < v->vars_max; ++i){
 			v->vars[i].type = VAR_EMPTY;
 		}
+		v->var_count = 0; // all variables marked as unused
 	}
 }
 
@@ -86,6 +88,7 @@ struct named_var* get_new_arr_var(struct variables* v, char* name, u32 len, enum
 	// Or if value was CLEARed, so it is OK to re-generate array
 	if (var->type == VAR_EMPTY
 		|| (v->clear_values && var->value.ptr == NULL)){
+		++v->var_count;
 		// set var type
 		var->type = type;
 		
@@ -116,6 +119,7 @@ struct named_var* get_var(struct variables* v, char* name, u32 len, enum types t
 	
 	//if VAR_EMPTY then create it
 	if (var->type == VAR_EMPTY){
+		++v->var_count;
 		// set var type
 		var->type = type;
 		// set var name

@@ -16,6 +16,12 @@
 // union value[size[0]*size[1]];
 // If 64-bit, there will be padding between the sizes and the values
 
+/// 
+/// Struct to manage array allocations.
+/// 
+/// Stores the data block that all arrays point into,
+/// as well as a pointer to the remaining available memory.
+/// 
 struct arrays {
 	/// Size of allocated array data block
 	u32 arr_data_size;

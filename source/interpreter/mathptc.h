@@ -10,6 +10,8 @@ struct ptc;
 void func_rnd(struct ptc* p);
 
 void func_floor(struct ptc* p);
+void func_sgn(struct ptc* p);
+void func_abs(struct ptc* p);
 
 void func_pi(struct ptc* p);
 void func_sin(struct ptc* p);

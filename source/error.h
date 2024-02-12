@@ -64,6 +64,7 @@ enum err_code {
 	ERR_ILLEGAL_FUNCTION_CALL,
 	ERR_INVALID_OPTS,
 	ERR_LENGTH_INVARIANT_BROKEN,
+	ERR_LABEL_TOO_LONG,
 };
 
 extern const char * error_messages[];

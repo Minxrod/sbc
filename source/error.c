@@ -38,7 +38,7 @@ const char * error_messages[] = {
 	"Can't find a matching NEXT for this FOR",
 	"Entered BC_BEGIN_LOOP with no FOR call!",
 	"Failed to load file",
-	"Arugment out of range!",
+	"Argument out of range!",
 	"Division by zero!",
 	"Overflow!",
 	"Subscript out of range",
@@ -58,4 +58,5 @@ const char * error_messages[] = {
 	"Illegal function call",
 	"Optimization option requires system pointer",
 	"BC length invariant failed",
+	"Label name is too long"
 };

@@ -140,7 +140,7 @@ int test_int_code(){
 		free_code(p);
 	}
 	
-	// READ one number
+	// READ two numbers
 	{
 		char* code = "DATA 532,7\rREAD D,B\r";
 		// run program
@@ -151,7 +151,7 @@ int test_int_code(){
 		free_code(p);
 	}
 	
-	// READ one number
+	// READ one string (not quoted)
 	{
 		char* code = "DATA 532,7\rREAD D$\r";
 		// run program
@@ -161,7 +161,7 @@ int test_int_code(){
 		free_code(p);
 	}
 	
-	// READ one number
+	// READ one number (requires seeking)
 	{
 		char* code = "READ D\rDATA 532,7\r";
 		// run program
@@ -384,7 +384,7 @@ int test_int_code(){
 	// EXEC simple test
 	{
 		ASSERT(check_code_error("EXEC \"file_does_not_exist.PTC\"\r", ERR_FILE_LOAD_FAILED), "[exec] Check if file load fails correctly");
-		struct ptc* p = run_code("EXEC \"tests/data/IFELSE.PTC\"\r"); // TODO:IMPL:MED How to handle search paths?
+		struct ptc* p = run_code("EXEC \"IFELSE.PTC\"\r");
 		ASSERT(p->exec.error == ERR_NONE, "[exec] Program ran with no errors");
 		CHECK_VAR_INT("TY",13);
 		
@@ -533,6 +533,48 @@ int test_int_code(){
 		CHECK_VAR_INT("E", 524287);
 		CHECK_VAR_NUM("F", 0x7fffffff);
 		CHECK_VAR_NUM("G", (fixp)0x80000001);
+		
+		free_code(p);
+	}
+	
+	// Label error checks
+	{
+		DENY(check_code_error("@ABCDEFGHIJKLMNOPQ\r", ERR_NONE), "[label] Label too long");
+		DENY(check_code_error("@A\r@A\r", ERR_NONE), "[label] Duplicate label");
+	}
+	
+	// DATA tests (negative number + multiple types)
+	{
+		char* code = "DATA 523,-1,\"23\"\rDATA 523,-1,\"23\"\rDATA 523,-1,\"23\"\rFOR I=0 TO 2\rREAD D,C,B$\rNEXT\r";
+		
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_INT("D", 523);
+		CHECK_VAR_NUM("C", -INT_TO_FP(1));
+		CHECK_VAR_STR("B", "S\00223");
+		
+		free_code(p);
+	}
+	
+	// DATA + RESTORE
+	{
+		char* code = 
+			"@LABEL0\r"
+			"DATA 1\r"
+			"@LABEL1\r"
+			"DATA 2\r"
+			"DATA \"3\"\r"
+			"@LABEL2\r"
+			"DATA \"4\"\r"
+			"RESTORE @LABEL1\r"
+			"READ A,B$\r";
+		
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_INT("A", 2);
+		CHECK_VAR_STR("B", "S\0013");
+		
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_code success");

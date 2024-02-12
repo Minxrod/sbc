@@ -26,6 +26,7 @@ struct console {
 	uint_fast8_t x; // range [0,CONSOLE_WIDTH)
 	uint_fast8_t y; // range [0,CONSOLE_HEIGHT)
 	uint_fast8_t tabstep; //valid range is 1-16
+	fixp sys_tabstep; // used for actual assignment
 	u16 text[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	// low 4 bits: fg color; high 4: bg color
 	uint_fast8_t col;
@@ -53,7 +54,7 @@ void cmd_locate(struct ptc* p);
 void cmd_input(struct ptc* p);
 void cmd_linput(struct ptc* p);
 // PTC functions, etc.
-void cmd_chkchr(struct ptc* p);
+void func_chkchr(struct ptc* p);
 // PTC sysvars, etc.
 void sys_csrx(struct ptc* p);
 void sys_csry(struct ptc* p);

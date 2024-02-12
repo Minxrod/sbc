@@ -29,7 +29,7 @@ void cmd_for(struct ptc* p){
 	}
 	
 	p->calls.entry[p->calls.stack_i].address = index+2;
-	p->calls.entry[p->calls.stack_i].var_type = e->type;
+//	p->calls.entry[p->calls.stack_i].var_type = e->type;// this is never used
 	p->calls.entry[p->calls.stack_i].var = e->value.ptr;
 	
 	p->calls.stack_i++;
@@ -128,25 +128,9 @@ void cmd_next(struct ptc* p){
 }
 
 idx search_label(struct ptc* p, void* label){
-	// Use the lengths of lines to calculate line beginnings.
 	// Labels must always be located at the beginning of a line.
 	idx index = 0;
-/*	int line = 0; (void)line;
-	// Start searching from current line (TODO go backwards)
-//	while (index < p->exec.index){
-//		index += p->exec.code.line_length[line++];
-//	}
-//	index -= p->exec.code.line_length[--line];
-	// Check for labels
-	while (index < p->exec.code.size){
-		if (p->exec.code.data[index] == BC_LABEL){
-			if (str_comp(&p->exec.code.data[index], label)){
-				// this is the index, jump to label
-				return index;
-			}
-		}
-		index += p->exec.code.line_length[line++];
-	}*/
+	
 	u8 buf[16];
 	assert(str_len(label) <= 16);
 	str_char_copy(label, buf);

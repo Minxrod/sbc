@@ -22,9 +22,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 		// Create new string
 		struct string* s = get_new_str(&p->strs);
 		// Remove a use if variable had a string aleady
-		if (*(void**)dest->value.ptr != NULL && **(char**)dest->value.ptr == STRING_CHAR){
-			(*(struct string**)dest->value.ptr)->uses--;
-		}
+		value_str(dest);
 		
 		// create destination and copy characters
 		for (; i < len && src[i] != BC_DATA_DELIM; ++i){
@@ -37,11 +35,6 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 		s->uses = 1;
 	} else if (dest->type == (VAR_VARIABLE | VAR_NUMBER)){
 		u8 conversion[16] = {0}; // this buffer size is very arbitrary
-		bool neg = false;
-		if (src[i] == '-'){
-			neg = true;
-			i++;
-		}
 		
 		// Read number!
 		for (; i < len && i - start < 16; ++i){
@@ -53,11 +46,10 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 			} else {
 				return READ_ONE_ERR;
 			}
+			iprintf(":%c", conversion[i - start]);
 		}
 		// Convert!
-		// Note; This only works with the off-by-one error of '-' cases 
-		// because str_to_num ignores invalid characters entirely
-		*((fixp*)dest->value.ptr) = u8_to_num(conversion, i - start) * (neg ? -1 : 1);
+		*((fixp*)dest->value.ptr) = u8_to_num(conversion, i - start);
 	} else {
 		return READ_ONE_ERR;
 	}
@@ -66,6 +58,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 
 // Finds and sets the data index to the next available slot
 void find_data(struct ptc* p){
+	assert(p->exec.code.data[p->exec.data_index] == BC_DATA); // assumes index already points to valid data
 	int ofs = p->exec.data_offset;
 	// Note: Instruction is of form BC_DATA [length] [`length` characters] [null if length % 2 is odd]
 	// To skip past this
@@ -86,7 +79,8 @@ void cmd_read(struct ptc* p){
 	u8 block_size;
 	
 	if (data_block[0] != BC_DATA){
-		find_data(p);
+		p->exec.data_offset = 0;
+		p->exec.data_index = bc_scan(p->exec.code, p->exec.data_index, BC_DATA);
 		if (p->exec.data_index == BC_SCAN_NOT_FOUND){
 			ERROR(ERR_OUT_OF_DATA);
 		}
@@ -120,5 +114,9 @@ void cmd_read(struct ptc* p){
 }
 
 void cmd_restore(struct ptc* p){
-	(void)p;
+	void* label = value_str(ARG(0));
+	idx index = search_label(p, label); // sets error on failure
+	p->exec.data_index = bc_scan(p->exec.code, index, BC_DATA);
+	p->exec.data_offset = 0;
+	iprintf("Data at %d: %.*s", index, p->exec.code.data[index+1], &p->exec.code.data[index+2]);
 }

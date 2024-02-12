@@ -133,3 +133,24 @@ void sys_maincnth(struct ptc* p){
 void sys_sphitno(struct ptc* p){
 	STACK_RETURN_INT(p->sprites.sphitno);
 }
+
+void sys_freemem(struct ptc* p){
+	int freemem_kb = (p->arrs.arr_data_size - p->arrs.arr_data_next) * sizeof(union value) / 1024; // number of elements remaining * size of elements remaining
+	
+	STACK_RETURN_INT(freemem_kb);
+}
+
+void sys_freevar(struct ptc* p){
+	STACK_RETURN_INT(p->vars.vars_max - p->vars.var_count);
+}
+
+void sys_keyboard(struct ptc* p){
+	int k = get_pressed_key(p);
+	STACK_RETURN_INT(k <= 69 ? k : 0);
+}
+
+void sys_funcno(struct ptc* p){
+	int k = get_pressed_key(p);
+	
+	STACK_RETURN_INT(k >= 101 && k <= 105 ? k - 100 : 0);
+}

@@ -144,4 +144,25 @@ void func_tan(struct ptc* p){
 	STACK_RETURN_NUM(func_tan_internal(VALUE_NUM(rad)));
 }
 
+void func_abs(struct ptc* p){
+	struct stack_entry* num = stack_pop(&p->stack);
+	
+	fixp n = VALUE_NUM(num);
+	// Check added because signed integer overflow is undefined behavior
+	if ((u32)n == 0x80000000){
+		STACK_RETURN_NUM(n); // this is the same behavior as PTC
+	}
+	n = n < 0 ? -n : n;
+	STACK_RETURN_NUM(n);
+}
+
+void func_sgn(struct ptc* p){
+	struct stack_entry* num = stack_pop(&p->stack);
+	
+	fixp n = VALUE_NUM(num);
+	fixp r = n < 0 ? -INT_TO_FP(1) : n > 0 ? INT_TO_FP(1) : 0;
+	
+	STACK_RETURN_NUM(r);
+}
+
 

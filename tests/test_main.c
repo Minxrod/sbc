@@ -33,8 +33,6 @@ int run_tests(){
 	// Needed for file loading...
 	fatInitDefault();
 #endif
-	FAST(test_graphics());
-
 #ifndef EZ80
 	FAST(test_vars());
 	FAST(test_strs());

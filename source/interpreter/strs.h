@@ -93,7 +93,7 @@ int digit_value(const u16 c);
 // Checks if a given u16 can be converted to a u8 without loss
 bool is_char(const u16 w);
 
-fixp u8_to_number(const u8* data, const int len, const int base, const bool allow_decimal);
+fixp u8_to_number(u8* data, const int len, const int base, const bool allow_decimal);
 
 // Convert a string to a number, for any base in 2-16.
 // (Only 2,10,16 support is required for PTC)
@@ -106,7 +106,7 @@ void fixp_to_str(const fixp num, void* str);
 void fixp_to_char(const fixp num, u8* str);
 
 // Convert string to number PTC style
-fixp u8_to_num(const u8* data, const idx len);
+fixp u8_to_num(u8* data, const idx len);
 
 // Constants for types mask
 // If set true, use u16, else u8 characters

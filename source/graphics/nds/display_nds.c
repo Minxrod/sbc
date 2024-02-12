@@ -126,10 +126,13 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 	if (prio) return;
 	
 	SpriteEntry* oam;
+	SpriteRotation* oam_rot;
 	u32* oam_dest;
 	struct sprite_info* s;
+	int gfx_ofs = 0;
 	
 	oam = (SpriteEntry*)p->display.oam_buf;
+	oam_rot = (SpriteRotation*)p->display.oam_buf;
 	for (int i = 0; i < SPRITE_COUNT; ++i){
 		oam[i].isRotateScale = false;
 		oam[i].isHidden = true;
@@ -146,6 +149,8 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 //			if (p->panel.key_pressed){
 //				offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
 //			}
+		} else {
+			gfx_ofs = 512;
 		}
 		if (p->panel.key_pressed){
 			offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
@@ -155,19 +160,33 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 	for (int i = 0; i < MAX_SPRITES; ++i){
 		if (s[i].active){
 			oam[i].isHidden = false;
-			oam[i].gfxIndex = s[i].chr;
+			oam[i].gfxIndex = s[i].chr + gfx_ofs;
 			oam[i].palette = s[i].pal;
 			oam[i].priority = s[i].prio;
 			oam[i].colorMode = OBJCOLOR_16;
 			oam[i].hFlip = s[i].flip_x;
 			oam[i].vFlip = s[i].flip_y;
-			oam[i].x = FP_TO_INT(s[i].pos.x);
-			oam[i].y = FP_TO_INT(s[i].pos.y);
+			fixp sc = s[i].scale.s; // 0.0 to 2.0
+			oam[i].x = FP_TO_INT(s[i].pos.x - s[i].home_x);
+			oam[i].y = FP_TO_INT(s[i].pos.y - s[i].home_y);
 			
 			uint_fast8_t shape = (s[i].w > s[i].h) + 2 * (s[i].w < s[i].h);
 			uint_fast16_t size = spr_calc_size(shape, s[i].w, s[i].h);
 			oam[i].size = size;
 			oam[i].shape = shape;
+			
+			(void)sc;
+			(void)oam_rot;
+/*			if (i < 32){ // rotation groups
+				oam[i].isRotateScale = true;
+				oam[i].isSizeDouble = true;
+				oam[i].rotationIndex = i;
+				int sh1 = 8;
+				oam_rot[i].hdx = ((int)cosLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
+				oam_rot[i].vdx = ((int)sinLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
+				oam_rot[i].hdy = ((int)-sinLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
+				oam_rot[i].vdy = ((int)cosLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
+			}*/
 		}
 	}
 	

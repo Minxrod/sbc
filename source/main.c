@@ -40,10 +40,18 @@ int sbc_benchmark(struct launch_info* info){
 	char code[100];
 	char post[100];
 	struct program p = { 0, src };
-	struct bytecode bc = init_bytecode();
+	struct bytecode bc = info->p->exec.code;
 	
-	FILE* f = fopen("resources/sbccompat.csv","r"); // Note: This is not a csv file actually
+	FILE* f = fopen("resources/sbccompat.txt","r");
+	if (!f){
+		iprintf("Failed to open benchmark tests file!\n");
+		return 1;
+	}
 	FILE* result = fopen("sbccompat_out", "w");
+	if (!result){
+		iprintf("Failed to open benchmark results file!\n");
+		return 1;
+	}
 	while (!feof(f)){
 		fgets(pre, 100, f);
 		fgets(code, 100, f);
@@ -78,15 +86,13 @@ int sbc_benchmark(struct launch_info* info){
 	}
 	fclose(f);
 	fclose(result);
-	free_bytecode(bc);
+//	free_bytecode(bc);
 	return 0;
 }
 
 int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
 	struct bytecode bc = init_bytecode();
-	
-//	sbc_benchmark(launch_info);
 	
 	if (info->prg->size){
 		info->p->exec.error = tokenize_full(info->prg, &bc, info->p, TOKOPT_VARIABLE_IDS);
@@ -120,6 +126,9 @@ int system_launch(void* launch_info){
 		
 		// Get program name from output
 		void* cmd = get_var(&info->p->vars, "CODE", 4, VAR_STRING)->value.ptr;
+		if (str_comp(cmd, "S\011REM BENCH")){
+			sbc_benchmark(launch_info);
+		}
 		str_char_copy(cmd, direct_cmd);
 		prog.size = str_len(cmd);
 		direct_cmd[prog.size++] = '\r';
@@ -223,6 +232,9 @@ void frame_update(){
 	set_touch(&ptc->input, b & KEY_TOUCH, touch.px, touch.py);
 	press_key(ptc, b & KEY_TOUCH, touch.px, touch.py);
 	// increment frame count
+
+	step_background(&ptc->background);
+	step_sprites(&ptc->sprites);
 	inc_time(&ptc->time);
 	
 	// draw
@@ -279,7 +291,6 @@ void v__(void); //prevent empty translation unit
 #include "system.h"
 #include "error.h"
 
-
 int main(int argc, char** argv){
 //	srand(time(NULL));
 	struct program program = {0};
@@ -289,9 +300,6 @@ int main(int argc, char** argv){
 		// Load .PTC file as program
 		window_name = argv[1];
 		prg_load(&program, argv[1]);
-	} else {
-		// Load default program: TODO:IMPL:LOW load an actual launcher program
-//		prg_load(&program, "programs/SAMPLE7.PTC");
 	}
 	// Auto-inputs
 	FILE* inputs = NULL;
@@ -401,6 +409,8 @@ int main(int argc, char** argv){
 		if (pos.x >= 0 && pos.x < 256 && pos.y >= 192 && pos.y < 192+192){
 			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
 			press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+		} else {
+//			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
 		}
 		step_sprites(&ptc->sprites);
 		step_background(&ptc->background);

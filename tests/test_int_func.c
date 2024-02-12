@@ -187,5 +187,58 @@ int test_int_func(){
 		free_code(p);
 	}
 	
+	// HEX$
+	{
+		struct ptc* p = run_code(
+			"A$=HEX$(9)\r" // simple
+			"B$=HEX$(29.7)\r" // decimal
+			"C$=HEX$(89.6)\r"
+			"D$=HEX$(-5)\r" //negative
+			"E$=HEX$(-967)\r"
+			"F$=HEX$(-2585.6)\r" //negative decimal
+			"G$=HEX$(9,1)\r" //positive with digits
+			"H$=HEX$(9,2)\r"
+			"I$=HEX$(9,3)\r"
+			"J$=HEX$(9,4)\r"
+			"K$=HEX$(9,5)\r"
+			"L$=HEX$(-9,2)\r" //negative with digits
+			"M$=HEX$(-9,3)\r"
+			"N$=HEX$(-9,4)\r"
+			"O$=HEX$(-9,5)\r"
+			"P$=HEX$(-524287)\r" // edge cases
+			"Q$=HEX$(-524287.8)\r"
+			"R$=HEX$(524287)\r"
+			"S$=HEX$(524287.8)\r"
+			"T$=HEX$(-8,1)\r" // edge cases 2-arg
+			"U$=HEX$(15,1)\r"
+		);
+		
+		CHECK_VAR_STR("A","S\0019");
+		CHECK_VAR_STR("B","S\0021D");
+		CHECK_VAR_STR("C","S\00259");
+		CHECK_VAR_STR("D","S\005FFFFB");
+		CHECK_VAR_STR("E","S\005FFC39");
+		CHECK_VAR_STR("F","S\005FF5E6");
+		
+		CHECK_VAR_STR("G","S\0019");
+		CHECK_VAR_STR("H","S\00209");
+		CHECK_VAR_STR("I","S\003009");
+		CHECK_VAR_STR("J","S\0040009");
+		CHECK_VAR_STR("K","S\00500009");
+		
+		CHECK_VAR_STR("L","S\002F7");
+		CHECK_VAR_STR("M","S\003FF7");
+		CHECK_VAR_STR("N","S\004FFF7");
+		CHECK_VAR_STR("O","S\005FFFF7");
+		
+		CHECK_VAR_STR("P","S\00580001");
+		CHECK_VAR_STR("Q","S\00580000");
+		CHECK_VAR_STR("R","S\0057FFFF");
+		CHECK_VAR_STR("S","S\0057FFFF");
+		
+		CHECK_VAR_STR("T","S\0018");
+		CHECK_VAR_STR("U","S\001F");
+	}
+	
 	SUCCESS("test_int_func success");
 }

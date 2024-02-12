@@ -99,7 +99,7 @@ int tok_in_str_index(const char* str, const char* data, struct token* tok){
 }
 
 void print_token(struct tokenizer* state, struct token t){
-	if (t.type != command && t.type != function && t.type != operation && t.type != sysvar){
+	if (t.type != command && t.type != function && t.type != operation && t.type != sysvar && t.type != first_of_line_command){
 		iprintf("ofs:%d len:%d type:%d ", (int)t.ofs, t.len, t.type);
 		if (t.prio) {
 			iprintf("prio:%02d ", t.prio);
@@ -116,12 +116,15 @@ void print_token(struct tokenizer* state, struct token t){
 		}
 	} else {
 		// op, func, cmd, sysvar
-		const char* names = t.type == command ? commands : t.type == function ? functions : t.type == sysvar ? sysvars : bc_conv_operations;
+		const char* names = (t.type == command || t.type == first_of_line_command) ? commands : 
+		                     t.type == function ? functions :
+		                     t.type == sysvar ? sysvars :
+		                     bc_conv_operations;
 		char name[9] = {0};
 		for (size_t i = 0; i < 8; ++i){
-			name[i] = names[8*t.ofs + i];
+			name[i] = names[8*t.cmd + i];
 		}
-		iprintf("id:%d type:%d cmd:%s", (int)t.ofs, t.type, name);
+		iprintf("id:%d type:%d cmd:%s", (int)t.cmd, t.type, name);
 		if (t.prio) {
 			iprintf("prio:%02d ", t.prio);
 		} else {
@@ -233,7 +236,8 @@ int tok_convert(struct tokenizer* state){
 // n = number var
 // S = string
 // s = string var
-// a = array [only SORT,RSORT should use this?]
+// A = array
+// a = array list [only SORT,RSORT should use this?]
 // v = variable list
 // E = both
 // L = label (includes string)
@@ -252,23 +256,27 @@ const char* cmd_format[] = {
 	"0","NNNNNN","0","N","N", //WAIT
 	"v,S;v","s,S;s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
-	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNNNNN","", //BGMCLEAR
-	"","","","","","0,N,NN","", //BGMVOL
+	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNNNNN","0,N", //BGMCLEAR
+	//TODO:TEST:NONE Verify that BGM* functions max out at nine string arguments
+	//TODO:PERF:NONE Replace these expressions with a variable length list
+	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
+	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
+	"NL","NNN","0,N,NN","N,NN", //BGMVOL
 	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
-	"SNS","0","","SNnnn","","0", //CONT
+	"SNS","0","","SNnnn","SNS","0", //CONT
 	"","","Snnn","S","NNNN,NNNNN", //GBOX
-	"","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
+	"NNN,NNNN,NNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
 	"","","S,SN","",//NEW
 	"NNSN","S","v","","","",//RENAME
-	"L","NNv","0","","","NNv","NN,NNN,NNNN",//SPANGLE
+	"L","NNa","0","","","NNa","NN,NNN,NNNN",//SPANGLE
 	"","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
-	"NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
+	"NN,NNN,NNNN,NNNNN,NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
 	"",//TMREAD
 };
 
 const char* func_format[] = {
-	"N","S","N,NN","N","","","0","0,N",//BUTTON
+	"N","S","N,NN","N","0,N","NN","0","0,N",//BUTTON
 	"NN","N","N","N","","N","NN,NNN","N,NN","0",//ICONCHK
 	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
 	"SN","N","N","N","N","NN","N,NN","",//SPHITRC
@@ -318,7 +326,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 		}
 		
 		if (stack_i > stack_len){
-			if (v != '\0' && v != 'l' && v != 'v'){
+			if (v != '\0' && v != 'l' && v != 'v'  && v != 'a'){
 				return false; // sequence was incomplete
 			}
 			return is_valid;
@@ -367,6 +375,19 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 				is_valid = false;
 				break;
 				
+			case 'A':
+				if (s == 'A') break; 
+				is_valid = false;
+				break;
+				
+			case 'a':
+				if (s == 'A'){
+					valid_i--;
+					break;
+				}
+				is_valid = false;
+				break;
+				
 			case '*':
 				return true;
 				
@@ -390,7 +411,7 @@ int tok_test(struct tokenizer* state){
 	const char* valid; // Local used for some cases
 	bool is_valid; // Used by some cases
 	
-	if (state->token_i && state->tokens[0].type == command && state->tokens[0].ofs == CMD_DATA)
+	if (state->token_i && (state->tokens[0].type == command || state->tokens[0].type == first_of_line_command) && state->tokens[0].cmd == CMD_DATA)
 		return ERR_NONE; // assumed valid
 	// TODO:CODE:MED Move to tok_name/tok_data or something for validation instead of these special cases
 	
@@ -408,11 +429,16 @@ int tok_test(struct tokenizer* state){
 			case string:
 				stack[stack_i++] = 'S';
 				break;
-				
+			
+			case array_actual:
+				// only intended for SORT, RSORT currently
+				stack[stack_i++] = 'A';
+				break;
+			
 			case first_of_line_command:
 			case command:
 				{
-				u8 cmd = state->tokens[i].ofs;
+				u8 cmd = state->tokens[i].cmd;
 				const char* valid = cmd_format[cmd];
 				if (!check_cmd(stack, stack_i, valid)){
 					// Set error state on invalid command
@@ -433,23 +459,23 @@ int tok_test(struct tokenizer* state){
 				{
 				u8 prio = state->tokens[i].prio;
 				is_valid = true;
-				if (state->tokens[i].ofs == OP_COMMA){
+				if (state->tokens[i].cmd == OP_COMMA){
 					stack[stack_i++] = '<';
-				} else if (state->tokens[i].ofs == OP_SEMICOLON){
+				} else if (state->tokens[i].cmd == OP_SEMICOLON){
 					stack[stack_i++] = ';';
 				} else if (prio % 8 != 6){
 					// binary
 					if (stack_i < 2){
 						is_valid = false;
 					} else {
-						valid = op_format[state->tokens[i].ofs];
+						valid = op_format[state->tokens[i].cmd];
 						is_valid = check_cmd(&stack[stack_i-2], 2, valid);
 						stack_i -= 2; // +2 -1
 						// note: some binary ops will have the type of the first argument
-						if (state->tokens[i].ofs >= OP_EQUAL && state->tokens[i].ofs <= OP_GREATER_EQUAL){
+						if (state->tokens[i].cmd >= OP_EQUAL && state->tokens[i].cmd <= OP_GREATER_EQUAL){
 							// these ones don't
 							stack[stack_i++] = 'N';
-						} else if (state->tokens[i].ofs != OP_ASSIGN){
+						} else if (state->tokens[i].cmd != OP_ASSIGN){
 							stack[stack_i++] &= 0x5f;  //binary op returns value type of first argument. unless it's =, that doesn't return anything.
 						}
 					}
@@ -478,7 +504,7 @@ int tok_test(struct tokenizer* state){
 				if (argc){
 					stack_i -= argc;
 				}
-				u8 func = state->tokens[i].ofs;
+				u8 func = state->tokens[i].cmd;
 				valid = func_format[func];
 				is_valid = check_cmd(&stack[stack_i], argc, valid);
 				if (!is_valid){
@@ -532,7 +558,7 @@ int tok_test(struct tokenizer* state){
 				
 			case sysvar:
 				{
-				u8 id = state->tokens[i].ofs;
+				u8 id = state->tokens[i].cmd;
 				if (id == SYS_TIME || id == SYS_DATE || id == SYS_PRGNAME
 					|| id == SYS_PACKAGE || id == SYS_MEM){
 						stack[stack_i++] = 's';
@@ -571,19 +597,6 @@ int tok_test(struct tokenizer* state){
 }
 
 // none of these values will exceed 100[?]
-struct eval {
-	//value and op could be combined maybe
-	struct token* value_stack[100];
-	u8 value_i;
-	struct token* op_stack[100];
-	u8 op_i;
-	/// Arguments stack
-	u8 argc_stack[64];
-	u8 argc_i;
-	// reordered tokens for conversion
-	struct token result[100];
-	u8 result_i; // first unused entry
-};
 
 fixp tok_to_num(struct tokenizer* state, struct token* t){
 	fixp number = u8_to_num((u8*)&state->source->data[t->ofs], t->len);
@@ -602,72 +615,51 @@ int tok_code(struct tokenizer* state){
 			case first_of_line_command:
 				bool first_of_line = state->tokens[i].type == first_of_line_command;
 				state->tokens[i].type = command;
-				if (state->tokens[i].ofs == CMD_DATA){
+				if (state->tokens[i].cmd == CMD_DATA){
 					// Special rules for DATA: write token contents as string
-					// TODO:ERR:MED Don't allow whitespace within unquoted DATA strings.
-					iprintf("DATA tok_code %d\n", state->token_i);
+					int start = state->tokens[i].ofs+4;
+					while (state->source->data[start] == ' '){
+						++start;
+					} // skip to first non-whitespace
+					int end = state->cursor;
+					
 					data[(*size)++] = BC_DATA;
 					char* data_size = &data[(*size)++]; // write as copying characters
 					*data_size = 0;
-					i++;
-					while (i < state->token_i){
-						struct token t = state->tokens[i];
-						switch (t.type){
-							case command:
-							case function:
-							case operation:
-							case sysvar:
-								// need to "de-convert" these
-								{
-								const char* names = t.type == command ? commands : t.type == function ? functions : t.type == sysvar ? sysvars : bc_conv_operations;
-								for (size_t j = 0; j < 8; ++j){
-									char c = names[8*t.ofs+j];
-									if (c == ' '){
-										break;
-									} else if (c == ','){
-										data[(*size)++] = BC_DATA_DELIM;
-										(*data_size)++;
-									} else {
-										data[(*size)++] = c;
-										(*data_size)++;
-									}
-								}
-								}
-								break;
-							
-							case newline:
-								// Don't write these into the string
-								// Break the outer while to prevent moving past newline
-								// (this is handled by the outer FOR loop)
-								break;
-							
-							case string:
-								// Don't convert commas
-								*data_size += t.len;
-								for (size_t j = 0; j < t.len; ++j){
-									data[(*size)++] = state->source->data[t.ofs + j];
-								}
-								break;
-							
-							default:
-								*data_size += t.len;
-								for (size_t j = 0; j < t.len; ++j){
-									u8 c = state->source->data[t.ofs + j];
-									data[(*size)++] = c == ',' ? BC_DATA_DELIM : c;
-								}
+					
+					iprintf("Data [%d,%d)\n", start, end);
+					bool in_string = false;
+					for (int j = start; j < end; ++j){
+						char c = state->source->data[j];
+						
+						if (c == '"'){
+							in_string = !in_string;
+							continue; // don't write quotes, ever
+						} else if (c == ',' && !in_string){
+							c = BC_DATA_DELIM; // replace commas with delim
+						} else if (c == ' ' && !in_string){
+							continue; // don't write spaces
+						} else if (c == '\r'){
+							break; // don't add this: end here
 						}
-						++i;
+						// TODO:ERR:MED Don't allow whitespace within unquoted DATA strings.
+						// write character
+						data[(*size)++] = c;
+						(*data_size)++;
 					}
+					
 					if (*size % 2){
 						data[(*size)++] = 0; // pad one null to keep instructions aligned
 					}
 					
+					state->token_i = 0;
+					return ERR_NONE;
 					// End of DATA special rules
 				} else {
 					// convert token to command
-	//				iprintf("command: %d, %d\n", j, state->tokens[i].ofs);
+	//				iprintf("command: %d, %d\n", j, state->tokens[i].cmd);
 					data[(*size)++] = first_of_line ? BC_COMMAND_FIRST : BC_COMMAND;
-					data[(*size)++] = state->tokens[i].ofs;
+					data[(*size)++] = state->tokens[i].cmd;
 				}
 				break;
 			
@@ -682,7 +674,7 @@ int tok_code(struct tokenizer* state){
 				n = tok_to_num(state, &state->tokens[i]);
 				
 			number_common:
-				if (n < INT_TO_FP(100) && n == (n & (fixp)0xfffff000)){
+				if (n >= 0 && n < INT_TO_FP(100) && n == (n & (fixp)0xfffff000)){
 					data[(*size)++] = BC_SMALL_NUMBER;
 					data[(*size)++] = FP_TO_INT(n);
 				} else {
@@ -690,7 +682,7 @@ int tok_code(struct tokenizer* state){
 					// large number
 					data[(*size)++] = BC_NUMBER;
 					data[(*size)++] = 0x0; //ignored
-					data[(*size)++] = (n >> 24) & 0xff;
+					data[(*size)++] = ((u32)n >> 24) & 0xff;
 					data[(*size)++] = (n >> 16) & 0xff;
 					data[(*size)++] = (n >> 8) & 0xff;
 					data[(*size)++] = (n >> 0) & 0xff;
@@ -712,7 +704,7 @@ int tok_code(struct tokenizer* state){
 				data[(*size)++] = BC_OPERATOR;
 				
 //				int op = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[i]);
-				int op = state->tokens[i].ofs;
+				int op = state->tokens[i].cmd;
 				if (state->tokens[i].prio % 8 == 6 && op == OP_SUBTRACT){
 					op = OP_NEGATE;
 				}
@@ -724,12 +716,13 @@ int tok_code(struct tokenizer* state){
 			case function:
 				data[(*size)++] = BC_FUNCTION;
 				
-				data[(*size)++] = state->tokens[i].ofs;
+				data[(*size)++] = state->tokens[i].cmd;
 				break;
 				
 			case name:
 			case array_name:
 			case dim_arr:
+			case array_actual:
 				;
 				// Note: This optimization relies on the assumption that single-char names map to IDs < 256.
 				// This is because instructions are ALWAYS expected to compile smaller than the wide-char source
@@ -768,7 +761,10 @@ int tok_code(struct tokenizer* state){
 						data[(*size)++] = (var_id & 0xff0000) >> 16;
 					}
 				} else {
-					data[(*size)++] = state->tokens[i].type != dim_arr ? BC_VARIABLE_NAME : BC_DIM;
+					u8 type = state->tokens[i].type == dim_arr ? BC_DIM : 
+					          state->tokens[i].type == array_actual ? BC_ARRAY_NAME : 
+					          BC_VARIABLE_NAME;
+					data[(*size)++] = type;
 					if (state->tokens[i].len == 1){
 						// Name is a single char: replace length (always less than 'A')
 						data[(*size)++] = state->source->data[state->tokens[i].ofs];
@@ -796,7 +792,7 @@ int tok_code(struct tokenizer* state){
 				
 			case sysvar:
 				data[(*size)++] = BC_SYSVAR;
-				data[(*size)++] = state->tokens[i].ofs;
+				data[(*size)++] = state->tokens[i].cmd;
 				break;
 				
 			case label:
@@ -826,6 +822,24 @@ tok_code_exit:
 	return ERR_NONE;
 }
 
+/// Expression evaluation state.
+///
+/// Used for parsing expressions into executable order,
+/// exclusively within tok_eval.
+struct eval {
+	//value and op could be combined maybe
+	struct token* value_stack[100];
+	u8 value_i;
+	struct token* op_stack[100];
+	u8 op_i;
+	/// Arguments stack
+	u8 argc_stack[64];
+	u8 argc_i;
+	// reordered tokens for conversion
+	struct token result[100];
+	u8 result_i; // first unused entry
+};
+
 // Remove operators until priority reaches prio
 // eval state struct
 // prio to clean to
@@ -847,10 +861,11 @@ void tok_eval(struct tokenizer* state){
 	bool is_for = false;
 	bool is_dim = false;
 	bool is_if = false;
+	bool is_sort = false;
 	bool implicit_commas = true;
 	
 	iprintf("[tok_eval] Entry with %d unit(s)\n", state->token_i);
-	if (state->token_i && state->tokens[0].type == command && state->tokens[0].ofs == CMD_DATA){
+	if (state->token_i && state->tokens[0].type == command && state->tokens[0].cmd == CMD_DATA){
 		iprintf("DATA special case\n");
 		for (size_t j = 0; j < state->token_i; ++j){
 			print_token(state, state->tokens[j]);
@@ -860,9 +875,9 @@ void tok_eval(struct tokenizer* state){
 	}
 	
 	for (size_t i = 0; i < state->token_i; ++i){
-		u16 prio = state->tokens[i].prio;
+		int prio = state->tokens[i].prio;
 //		char first = state->source->data[state->tokens[i].ofs];
-		char op = state->tokens[i].ofs;
+		int op = state->tokens[i].cmd;
 		iprintf("[tok_eval]");
 		print_token(state, state->tokens[i]);
 		
@@ -885,7 +900,7 @@ void tok_eval(struct tokenizer* state){
 				}
 			} else { // assumed ) or ]
 				// handle 0-args PI(), BUTTON() case
-				if (state->tokens[i-1].type == operation && state->tokens[i-1].ofs == OP_OPEN_PAREN){
+				if (state->tokens[i-1].type == operation && state->tokens[i-1].cmd == OP_OPEN_PAREN){
 					e.argc_stack[e.argc_i] = 0;
 				}
 				// TODO:PERF:NONE Don't create argcount for DIM command
@@ -906,7 +921,7 @@ void tok_eval(struct tokenizer* state){
 			tok_eval_clean_stack(&e, prio);
 			if (implicit_commas){
 				// don't push commas unless they are prior to another comma or at the end of the line
-				if (state->tokens[i].ofs == OP_SEMICOLON){
+				if (state->tokens[i].cmd == OP_SEMICOLON){
 					e.result[e.result_i++] = state->tokens[i];
 				} else { // must be a comma here
 					if (state->tokens[i+1].type == newline || state->tokens[i+1].prio % 8 == 1){
@@ -922,43 +937,48 @@ void tok_eval(struct tokenizer* state){
 			if (state->tokens[i].type == command){
 				// These are all of the special cases
 				// (many are flow control commands with unique parsing needs)
-				if (state->tokens[i].ofs == CMD_DIM){
+				if (state->tokens[i].cmd == CMD_DIM){
 				// command is DIM: set array-creation-mode for following tokens
 					is_dim = true;
 					continue; // do not compile as instruction
-				} else if (state->tokens[i].ofs == CMD_PRINT){
+				} else if (state->tokens[i].cmd == CMD_PRINT){
 					// Command is PRINT: semicolons are implied if omitted;
 					// commas are always added
 					implicit_commas = false;
-				} else if (state->tokens[i].ofs == CMD_FOR){
+				} else if (state->tokens[i].cmd == CMD_FOR){
 					// Command is FOR: add instruction at end of FOR setup to
 					// properly execute the loop
 					is_for = true;
 					// TODO:PERF:NONE TO and STEP are unneeded instructions after a FOR
 					// Do not compile those
-				} else if (state->tokens[i].ofs == CMD_IF){
+				} else if (state->tokens[i].cmd == CMD_IF){
 					// Command is IF: add normally, but needs to indicate that
 					// ENDIF should be added once line end is hit
 					is_if = true;
-				} else if (state->tokens[i].ofs == CMD_THEN){
+				} else if (state->tokens[i].cmd == CMD_THEN){
 					// THEN should be discarded: default IF behavior will be to
 					// continue to next instruction, which can ignore THEN
 					tok_eval_clean_stack(&e, 0);
 					continue;
-				} else if (state->tokens[i].ofs == CMD_ELSE){
+				} else if (state->tokens[i].cmd == CMD_ELSE){
 					// ELSE should be placed immediately
 					// similar to commas within a command, it is used as a
 					// separator between TRUE/FALSE paths of the IF.
 					tok_eval_clean_stack(&e, 0);
 					e.result[e.result_i++] = state->tokens[i];
 					continue;
+				} else if (state->tokens[i].cmd == CMD_SORT || state->tokens[i].cmd == CMD_RSORT){
+					// SORT, RSORT need arrays for arguments >2, so mark these functions
+					// TODO:IMPL:NONE Determine a way to indicate arrays unambiguously (such as "A[]")
+					// and make it an option
+					is_sort = true;
 				} else {
 					// Any other "normal" command
 					is_dim = false;
 					// Note: is_for will not be always be reset because FOR
 					// needs to be kept to the newline, including through other
 					// commands TO and STEP
-					if (is_for && state->tokens[i].ofs != CMD_TO && state->tokens[i].ofs != CMD_STEP) {
+					if (is_for && state->tokens[i].cmd != CMD_TO && state->tokens[i].cmd != CMD_STEP) {
 						e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
 						is_for = false;
 					}
@@ -985,7 +1005,7 @@ void tok_eval(struct tokenizer* state){
 				tok_eval_clean_stack(&e, prio);
 			}
 			// DON'T push a comma, as this is implied from argument ordering/structure
-			if (state->tokens[i].type != operation || state->tokens[i].ofs != OP_COMMA)
+			if (state->tokens[i].type != operation || state->tokens[i].cmd != OP_COMMA)
 				e.op_stack[e.op_i++] = &state->tokens[i];
 			else
 				e.argc_stack[e.argc_i]++;
@@ -1006,6 +1026,11 @@ void tok_eval(struct tokenizer* state){
 				state->tokens[i].type = label_string;
 			}
 			e.result[e.result_i++] = state->tokens[i];
+		} else if (state->tokens[i].type == name && is_sort && e.argc_stack[0] >= 2){
+			// convert variables to array when listed at end of SORT or RSORT
+			// still need to treat them like other values though
+			state->tokens[i].type = array_actual;
+			e.result[e.result_i++] = state->tokens[i];
 		} else {
 			// values
 			e.result[e.result_i++] = state->tokens[i];
@@ -1015,7 +1040,7 @@ void tok_eval(struct tokenizer* state){
 	tok_eval_clean_stack(&e, 0);
 	
 	if (is_if){
-		e.result[e.result_i++] = (struct token){.type=command, .ofs=CMD_ENDIF, .len=1, .prio=0};
+		e.result[e.result_i++] = (struct token){.type=command, .cmd=CMD_ENDIF, .ofs=0, .prio=0};
 	}
 	
 //	if (state->tokens[0].ofs == CMD_DATA) iprintf("DATA special case WHAT?=%d\n", state->token_i);
@@ -1037,7 +1062,7 @@ void tok_prio(struct tokenizer* state){
 	int nest = 0;
 	for (size_t i = 0; i < state->token_i; i += 1){
 		if (state->tokens[i].type == operation){
-			u8 op_id = state->tokens[i].ofs;
+			u8 op_id = state->tokens[i].cmd;
 			switch (op_id){
 				case OP_ASSIGN:
 					state->tokens[i].prio = nest + 0;
@@ -1067,11 +1092,11 @@ void tok_prio(struct tokenizer* state){
 							state->tokens[i-1].type == name ||
 							state->tokens[i-1].type == sysvar || 
 							(state->tokens[i-1].type == operation && (
-								state->tokens[i-1].ofs > OP_OPEN_PAREN
+								state->tokens[i-1].cmd > OP_OPEN_PAREN
 							))){
 						state->tokens[i].prio = nest + 4;
 					} else {
-						state->tokens[i].ofs = OP_NEGATE;
+						state->tokens[i].cmd = OP_NEGATE;
 						state->tokens[i].prio = nest + 6;
 					}
 					break;
@@ -1151,7 +1176,7 @@ int tok_none(struct tokenizer* state){
 	} else if (c == '?'){
 //		tok_single(state, command);
 		state->tokens[state->token_i].type = command;
-		state->tokens[state->token_i].ofs = CMD_PRINT;
+		state->tokens[state->token_i].cmd = CMD_PRINT;
 		state->cursor++;
 		state->token_i++;
 	} else if (c == ':'){
@@ -1168,7 +1193,7 @@ int tok_none(struct tokenizer* state){
 	} else if (c == ',' || c == ';' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
 			c == '(' || c == ')' || c == '[' || c == ']'){
 		tok_single(state, operation);
-		state->tokens[state->token_i-1].ofs = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
+		state->tokens[state->token_i-1].cmd = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
 	} else if (c == '<' || c == '=' || c == '>' || c == '!'){
 		tok_single(state, operation);
 		// check for <= == >= !=
@@ -1176,10 +1201,13 @@ int tok_none(struct tokenizer* state){
 			state->tokens[state->token_i - 1].len++;
 			state->cursor++;
 		}
-		state->tokens[state->token_i-1].ofs = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
+		state->tokens[state->token_i-1].cmd = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
 	} else if (c == '@'){
 		state->cursor++;
 		tok_with_condition(state, is_name);
+		if (state->tokens[state->token_i].len > 16){
+			return ERR_LABEL_TOO_LONG;
+		}
 		state->tokens[state->token_i].type = label;
 		state->token_i++;
 	} else if (c == '\''){
@@ -1199,14 +1227,14 @@ void tok_name(struct tokenizer* state){
 	int index;
 	if (0 <= (index = tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = command;
-		state->tokens[state->token_i].ofs = index;
+		state->tokens[state->token_i].cmd = index; // overrides len
 	} else if (0 <= (index = tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = function;
-		state->tokens[state->token_i].ofs = index;
+		state->tokens[state->token_i].cmd = index; // overrides len
 	} else if (0 <= (index = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i]))){
 		// note that this is only the bitwise ops
 		state->tokens[state->token_i].type = operation;
-		state->tokens[state->token_i].ofs = index;
+		state->tokens[state->token_i].cmd = index; // overrides len
 	} else if (0 <= tok_in_str_index(labels, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = label;
 	} else if (0 <= tok_in_str_index(comments, state->source->data, &state->tokens[state->token_i])){
@@ -1214,7 +1242,7 @@ void tok_name(struct tokenizer* state){
 		state->is_comment = true;
 	} else if (0 <= (index = tok_in_str_index(sysvars, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = sysvar;
-		state->tokens[state->token_i].ofs = index;
+		state->tokens[state->token_i].cmd = index; // overrides len
 	}
 	
 	state->token_i++;
@@ -1249,7 +1277,8 @@ void tok_base_number(struct tokenizer* state){
 	do {
 		state->tokens[state->token_i].len++;
 		state->cursor++;
-	} while (is_number(state->source->data[state->cursor]));
+	} while (is_number(state->source->data[state->cursor])
+	         || (state->source->data[state->cursor] >= 'A' && state->source->data[state->cursor] <= 'F'));
 	state->token_i++;
 }
 

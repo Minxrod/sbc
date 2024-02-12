@@ -6,6 +6,7 @@
 
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
+	BC_ARRAY_NAME = 'a',
 	BC_BEGIN_LOOP = 'B',
 	BC_COMMAND_FIRST = 'c',
 	BC_COMMAND = 'C',

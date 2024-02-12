@@ -362,7 +362,8 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 			p->shift ^= PNL_SHIFT;
 			refresh = true;
 		} else if (pressed_key <= 60 || pressed_key == 65){
-			int source_key_map = 2 * (p->type - 2) + (p->shift != 0);
+			int shift = !!(p->shift & PNL_SHIFT) ^ !!(p->shift & PNL_CAPS_LOCK);
+			int source_key_map = 2 * (p->type - 2) + (shift);
 			int source_key = pressed_key;
 			if (source_key_map == 5) source_key *= 2;
 			char c = keyboard_chr[source_key_map][source_key];
@@ -392,7 +393,8 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 		}
 	}
 	if (refresh){
-		int source_key_chr = (2 * (p->type - 2) + (p->shift != 0)) * 2;
+			int shift = !!(p->shift & PNL_SHIFT) ^ !!(p->shift & PNL_CAPS_LOCK);
+		int source_key_chr = (2 * (p->type - 2) + shift) * 2;
 		memcpy(ptc->res.chr[18+CHR_BANKS], ptc->res.key_chr[source_key_chr], CHR_SIZE);
 		memcpy(ptc->res.chr[19+CHR_BANKS], ptc->res.key_chr[source_key_chr + 1], CHR_SIZE);
 		
@@ -405,12 +407,7 @@ int get_pressed_key(struct ptc* ptc){
 	struct panel* p = &ptc->panel;
 	if (!p->key_pressed || !check_repeat(p->pressed_time, 30, 4))
 		return 0;
-	int k = p->key_pressed;
-	if (k < 69)
-		return k;
-	if (k >= 90)
-		return k;
-	return k;
+	return p->key_pressed;
 }
 
 void offset_key(struct ptc* p, int id, int d){

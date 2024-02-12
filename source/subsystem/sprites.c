@@ -259,6 +259,7 @@ void func_spgetv(struct ptc* p){
 	int id,ix;
 	STACK_REL_INT_RANGE(-2,0,99,id);
 	STACK_REL_INT_RANGE(-1,0,7,ix);
+	p->stack.stack_i -= 2;
 	
 	if (!p->sprites.info[p->sprites.page][id].active){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
