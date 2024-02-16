@@ -17,9 +17,12 @@ void func_pi(struct ptc* p);
 void func_sin(struct ptc* p);
 void func_cos(struct ptc* p);
 void func_tan(struct ptc* p);
+void func_atan(struct ptc* p);
 
 void func_log(struct ptc* p);
 void func_pow(struct ptc* p);
+void func_sqr(struct ptc* p);
+void func_exp(struct ptc* p);
 
 void func_rad(struct ptc* p);
 void func_deg(struct ptc* p);

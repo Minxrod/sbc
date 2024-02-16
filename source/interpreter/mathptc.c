@@ -144,6 +144,21 @@ void func_tan(struct ptc* p){
 	STACK_RETURN_NUM(func_tan_internal(VALUE_NUM(rad)));
 }
 
+void func_atan(struct ptc* p){
+	if (p->exec.argcount == 1){
+		struct stack_entry* ratio = stack_pop(&p->stack);
+		
+		// TODO:ERR:MED Check error conditions
+		STACK_RETURN_NUM(func_atan_internal(VALUE_NUM(ratio)));
+	} else {
+		struct stack_entry* x = stack_pop(&p->stack);
+		struct stack_entry* y = stack_pop(&p->stack);
+		// TODO:ERR:MED Check for errors
+		
+		STACK_RETURN_NUM(func_atan2_internal(VALUE_NUM(y), VALUE_NUM(x)));
+	}
+}
+
 void func_abs(struct ptc* p){
 	struct stack_entry* num = stack_pop(&p->stack);
 	
@@ -163,6 +178,28 @@ void func_sgn(struct ptc* p){
 	fixp r = n < 0 ? -INT_TO_FP(1) : n > 0 ? INT_TO_FP(1) : 0;
 	
 	STACK_RETURN_NUM(r);
+}
+
+fixp func_sqr_internal(fixp value){
+	fixp res = floor(4096*(sqrt(value/4096.0)));
+	return res;
+}
+
+fixp func_exp_internal(fixp value){
+	fixp res = floor(4096*(exp(value/4096.0)));
+	return res;
+}
+
+void func_sqr(struct ptc* p){
+	struct stack_entry* val = stack_pop(&p->stack);
+	
+	STACK_RETURN_NUM(func_sqr_internal(VALUE_NUM(val)));
+}
+
+void func_exp(struct ptc* p){
+	struct stack_entry* val = stack_pop(&p->stack);
+	
+	STACK_RETURN_NUM(func_exp_internal(VALUE_NUM(val)));
 }
 
 

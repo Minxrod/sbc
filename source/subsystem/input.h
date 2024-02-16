@@ -13,6 +13,7 @@
 
 #include <stdbool.h>
 
+/// Number of supported buttons.
 #define BUTTON_COUNT 12
 // ^ v < > A B X Y L R START SELECT
 #define BUTTON_ID_UP 0
@@ -41,17 +42,26 @@
 #define BUTTON_START (1 << BUTTON_ID_START)
 #define BUTTON_SELECT (1 << BUTTON_ID_SELECT)
 
+/// Maximum number of text characters that can be stored in the input buffer.
 #define INKEY_BUF_SIZE 256
 
+/// Manages the state of various user input systems. This includes buttons,
+/// touch, and textual input.
 struct input {
 	/// Current button state
 	uint_fast16_t button;
 	/// Previous button state
 	uint_fast16_t old_button;
-	///
+	/// Button timer struct. Used to determine the time at which buttons
+	/// start repeating, and at what rate.
+	/// 
+	/// You can check the state of a given button using the BUTTON_ID defines.
 	struct button_time {
+		/// Start time for button repeat (frames)
 		int start;
+		/// Repeat interval for button repeat (frames)
 		int repeat;
+		/// How long this button has been held for.
 		int frame;
 	} times[12];
 	

@@ -9,15 +9,21 @@
 
 // Common main stuff
 
+/// Information struct containing program source and the system to run it on.
+///
+/// Used for launching the main thread on PC.
 struct launch_info {
+	/// Pointer to system struct
 	struct ptc* p;
+	/// Pointer to program source.
 	struct program* prg;
 };
 
+// This is the DIRECT mode prompt.
+// Pretty basic, but it works.
 struct program launcher = {
 	13, "LINPUT CODE$\r"
 };
-
 
 const char* bench_begin = "ACLS:CLEAR\r";
 const char* bench_mid = "FOR J=1 TO 5\r"
@@ -52,6 +58,7 @@ int sbc_benchmark(struct launch_info* info){
 		iprintf("Failed to open benchmark results file!\n");
 		return 1;
 	}
+	int index = 0;
 	while (!feof(f)){
 		fgets(pre, 100, f);
 		fgets(code, 100, f);
@@ -64,7 +71,7 @@ int sbc_benchmark(struct launch_info* info){
 			if (code[i] == '\n') code[i] = '\r';
 			if (post[i] == '\n') post[i] = '\r';
 		}
-		sprintf(src, "%s%s%s%s%s%s%n", bench_begin, pre, bench_mid, code, bench_end, post, (int*)&p.size);
+		sprintf(src, "%s?%d\r%s%s%s%s%s%n", bench_begin, index, pre, bench_mid, code, bench_end, post, (int*)&p.size);
 //		fprintf(f2, "%s", src);
 		info->p->exec.error = ERR_NONE; // reset for next run
 		info->p->exec.error = tokenize_full(&p, &bc, info->p, TOKOPT_VARIABLE_IDS);
@@ -79,10 +86,11 @@ int sbc_benchmark(struct launch_info* info){
 			for (int i = FP_TO_INT(lev); i < 5; ++i){
 				perf *= 10;
 			}
-			fprintf(result, "%s %d\n", code, perf);
+			fprintf(result, "%d\n", perf);
 		} else {
-			fprintf(result, "%s %s\n", code, error_messages[info->p->exec.error]);
+			fprintf(result, "%s\n", error_messages[info->p->exec.error]);
 		}
+		++index;
 	}
 	fclose(f);
 	fclose(result);

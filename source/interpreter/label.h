@@ -5,18 +5,25 @@
 ///
 #include "common.h"
 
-// If a program ever actually exceeds this, increase value by 2x
+/// The maximum number of labels allowed.
+///
+/// @note Value selected based on analysis of popular large programs.
+/// Can be increased if needed. Value should always be a power of two.
 #define MAX_LABELS 2048
+
 #define LABEL_NOT_FOUND ((idx)-1)
 
-// Pair mapping labels to BC indexes
+/// Pair mapping a label to a BC index
 struct label_line {
+	/// Label name
 	char name[16];
+	/// Index into program BC
 	idx index;
 };
 
+/// Label management struct. Used as a hash table mapping names to indexes.
 struct labels {
-	// List of label -> index
+	/// List of label -> index pairs.
 	struct label_line entry[MAX_LABELS];
 };
 

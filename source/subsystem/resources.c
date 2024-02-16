@@ -609,6 +609,58 @@ void cmd_chrset(struct ptc* p){
 	}
 }
 
+void cmd_colinit(struct ptc* p){
+	// COLINIT [resource [color]]
+	if (p->stack.stack_i == 0){
+		// reset all
+		const char* col_files = "COL0COL1COL2COL0COL1COL2";
+		
+		char name[] = "XXXX.PTC"; // TODO:PERF:NONE only set one character
+		// TODO:CODE:LOW dedup with init_resource
+		for (int i = 0; i < 6; ++i){
+			for (int j = 0; j < 4; ++j){
+				name[j] = col_files[4*i+j];
+			}
+			load_col((u8*)p->res.col[i], resource_path, name);
+		}
+	} else if (p->stack.stack_i == 1){
+		// COLINIT resource
+		void* res_str = value_str(ARG(0));
+		if (str_comp(res_str, "S\2BG")){
+			load_col(get_resource(p, "COL0", 4), resource_path, "COL0.PTC");
+		} else if (str_comp(res_str, "S\2SP")){
+			load_col(get_resource(p, "COL1", 4), resource_path, "COL1.PTC");
+		} else if (str_comp(res_str, "S\3GRP")){
+			load_col(get_resource(p, "COL2", 4), resource_path, "COL2.PTC");
+		} else {
+			ERROR(ERR_INVALID_RESOURCE_TYPE);
+		}
+	} else {
+		// COLINIT resource index
+		void* res_str = value_str(ARG(0));
+		u16 from_file[256]; // TODO:PERF:LOW loading entire file is slow, store it in-mem?
+		// TODO:CODE:MED this can be simplified
+		u16* col_data;
+		if (str_comp(res_str, "S\2BG")){
+			col_data = get_resource(p, "COL0", 4);
+			load_col((u8*)from_file, resource_path, "COL0.PTC");
+		} else if (str_comp(res_str, "S\2SP")){
+			col_data = get_resource(p, "COL1", 4);
+			load_col((u8*)from_file, resource_path, "COL1.PTC");
+		} else if (str_comp(res_str, "S\3GRP")){
+			col_data = get_resource(p, "COL2", 4);
+			load_col((u8*)from_file, resource_path, "COL2.PTC");
+		} else {
+			ERROR(ERR_INVALID_RESOURCE_TYPE);
+		}
+		int index;
+		STACK_INT_RANGE(1,0,255,index);
+		col_data[index] = from_file[index];
+	}
+	// needed for any combination
+	p->res.regen_col = true;
+}
+
 void cmd_colread(struct ptc* p){
 	// COLREAD resource color r g b
 	void* res_str = value_str(ARG(0));

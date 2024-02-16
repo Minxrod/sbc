@@ -130,6 +130,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 	u32* oam_dest;
 	struct sprite_info* s;
 	int gfx_ofs = 0;
+	int sprite_count = MAX_SPRITES;
 	
 	oam = (SpriteEntry*)p->display.oam_buf;
 	oam_rot = (SpriteRotation*)p->display.oam_buf;
@@ -149,6 +150,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 //			if (p->panel.key_pressed){
 //				offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
 //			}
+			sprite_count = KEYBOARD_KEYS; // only includes keys, not icons
 		} else {
 			gfx_ofs = 512;
 		}
@@ -157,7 +159,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 		}
 	}
 	
-	for (int i = 0; i < MAX_SPRITES; ++i){
+	for (int i = 0; i < sprite_count; ++i){
 		if (s[i].active){
 			oam[i].isHidden = false;
 			oam[i].gfxIndex = s[i].chr + gfx_ofs;

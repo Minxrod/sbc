@@ -45,6 +45,7 @@ void sys_date(struct ptc* p){
 	int month = tm->tm_mon + 1;
 	int year = tm->tm_year + 1900;
 	
+	// TODO:PERF:LOW Instead of allocating a string, use an inline string
 	struct string* str = get_new_str(&p->strs);
 	str->uses = 1;
 	str->len = 10;
@@ -62,6 +63,34 @@ void sys_date(struct ptc* p){
 	
 	stack_push(s, (struct stack_entry){VAR_STRING, .value.ptr = str});
 }
+
+void sys_time(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	time_t t = time(NULL);
+	struct tm* tm = localtime(&t);
+	
+	int hour = tm->tm_hour;
+	int min = tm->tm_min;
+	int sec = tm->tm_sec;
+	
+	// TODO:PERF:LOW Instead of allocating a string, use an inline string
+	struct string* str = get_new_str(&p->strs);
+	str->uses = 1;
+	str->len = 8;
+	
+	// HH:MM:SS
+	str->ptr.s[0] = hour / 10 + '0';
+	str->ptr.s[1] = hour % 10 + '0';
+	str->ptr.s[2] = ':';
+	str->ptr.s[3] = min / 10 + '0';
+	str->ptr.s[4] = min % 10 + '0';
+	str->ptr.s[5] = ':';
+	str->ptr.s[6] = sec / 10 + '0';
+	str->ptr.s[7] = sec % 10 + '0';
+	
+	stack_push(s, (struct stack_entry){VAR_STRING, .value.ptr = str});
+}
+
 
 #ifdef PC
 #define LOCK_TOUCH_MTX(msg) \

@@ -7,6 +7,7 @@
 #include "system.h"
 #include "resources.h"
 #include "stack.h"
+#include "ptc.h"
 
 #include "interpreter.h"
 #include "program.h"
@@ -69,10 +70,8 @@ char acls_code[] =
 " BGPAGE P:BGOFS 0,0,0:BGOFS 1,0,0\r"
 " BGCLR:BGCLIP 0,0,31,23\r"
 " SPPAGE P:SPCLR\r"
-"NEXT\r"
-"FOR I=0 TO 255\r"
-" 'COLINIT \"BG\", I:COLINIT \"SP\", I\r"
-" 'COLINIT \"GRP\",I\r"
+" COLINIT \"BG\":COLINIT \"SP\"\r"
+" COLINIT \"GRP\"\r"
 "NEXT\r";
 
 u8 acls_bytecode[2*sizeof(acls_code)];
@@ -103,8 +102,23 @@ void cmd_acls(struct ptc* p){
 }
 
 void cmd_visible(struct ptc* p){
-	// TODO:IMPL:MED
-	p->stack.stack_i = 0;
+	if (p->stack.stack_i != 6){
+		ERROR(ERR_SYNTAX); // TODO:ERR:LOW correct error
+	}
+	u8 visible_flags = 0;
+	for (int i = 0; i < 6; ++i){
+		struct stack_entry* e = stack_get(&p->stack, i);
+		if (e->type == VAR_NUMBER){
+			visible_flags |= 1 << i;
+		} else if (e->type == STACK_OP && e->value.number == OP_COMMA){
+			// keep previous value if 
+			visible_flags |= (p->res.visible & (1 << i));
+		} else {
+			// invalid argument
+			ERROR(ERR_ILLEGAL_FUNCTION_CALL); // TODO:ERR:LOW check correct errors?
+		}
+	}
+	p->res.visible = visible_flags;
 }
 
 void cmd_vsync(struct ptc* p){

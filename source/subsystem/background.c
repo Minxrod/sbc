@@ -74,7 +74,6 @@ void cmd_bgclr(struct ptc* p){
 // BGPUT l,x,y,td$
 // BGPUT l,x,y,c,p,h,v
 void cmd_bgput(struct ptc* p){
-	// TODO:IMPL:HIGH other argument forms
 	uint_fast8_t layer, x, y;
 	u16 tiledata;
 	STACK_INT_RANGE(0,0,1,layer);
@@ -84,7 +83,7 @@ void cmd_bgput(struct ptc* p){
 		if (ARG(3)->type & VAR_NUMBER){
 			tiledata = STACK_INT(3) & 0xffff;
 		} else {
-			ERROR(ERR_UNIMPLEMENTED);
+			tiledata = FP_TO_INT(str_to_number(value_str(ARG(3)), 16, false));
 		}
 	} else {
 		int chr, pal, h, v;
@@ -106,7 +105,6 @@ void cmd_bgput(struct ptc* p){
 //BGFILL layer, x1, y1, x2, y2, tile
 //BGFILL layer, x1, y1, x2, y2, tile$
 void cmd_bgfill(struct ptc* p){
-	// TODO:IMPL:HIGH other forms
 	uint_fast8_t layer;
 	int x1, x2, y1, y2, temp;
 	u16 tiledata;
@@ -119,7 +117,7 @@ void cmd_bgfill(struct ptc* p){
 		if (ARG(5)->type & VAR_NUMBER){
 			tiledata = STACK_INT(5) & 0xffff;
 		} else {
-			ERROR(ERR_UNIMPLEMENTED);
+			tiledata = FP_TO_INT(str_to_number(value_str(ARG(5)), 16, false));
 		}
 	} else {
 		int chr, pal, h, v;

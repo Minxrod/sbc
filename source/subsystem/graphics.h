@@ -11,17 +11,26 @@
 struct ptc;
 
 // TODO:CODE:NONE Determine whether 'screen' or 'page' should be used
+/// Graphics struct.
+/// 
+/// Manages metadata about the graphics subsystem. Note that the graphics page
+/// data is actually stored in `struct resources`.
 struct graphics {
-	u8 screen;
-	u8 color;
+	/// Current screen selected for writing.
+	uint_fast8_t screen;
+	/// Current graphics color. Used by commands without a specified color.
+	uint_fast8_t color;
+	/// Indicates whether the XOR drawing mode is enabled.
 	bool drawmode;
 	
-	// Information stored for two pages
+	/// Information stored that is unique to each screen.
 	struct {
-		u8 drawpage;
-		u8 displaypage;
-		
-		u8 prio;
+		/// Current graphics page for writing to
+		uint_fast8_t drawpage;
+		/// Current graphics page for displaying on the screen.
+		uint_fast8_t displaypage;
+		/// Display priority of the display page for this screen.
+		uint_fast8_t prio;
 	} info[2];
 };
 

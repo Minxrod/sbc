@@ -315,3 +315,24 @@ void cmd_dtread(struct ptc* p){
 	*day <<= FIXPOINT;
 	p->stack.stack_i = 0;
 }
+
+void cmd_tmread(struct ptc* p){
+	// TODO:ERR:MED Syntax error on invalid characters, wrong length
+	// TODO:TEST:LOW Are bad times OK? 99:99:99?.
+	void* time_str = value_str(ARG(0));
+	fixp* hour = ARG(1)->value.ptr;
+	fixp* min = ARG(2)->value.ptr;
+	fixp* sec = ARG(3)->value.ptr;
+	
+	*hour = 10 * (str_at_char(time_str,0) - '0');
+	*hour += 1 * (str_at_char(time_str,1) - '0');
+	*hour <<= FIXPOINT;
+	
+	*min = 10 * (str_at_char(time_str,3) - '0');
+	*min += 1 * (str_at_char(time_str,4) - '0');
+	*min <<= FIXPOINT;
+	
+	*sec = 10 * (str_at_char(time_str,6) - '0');
+	*sec += 1 * (str_at_char(time_str,7) - '0');
+	*sec <<= FIXPOINT;
+}

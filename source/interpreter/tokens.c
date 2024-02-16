@@ -253,17 +253,17 @@ const char* cmd_format[] = {
 	"N","","*","*", //ENDIF
 	"L,l","L,l","N","0", //RETURN
 	"0","0", //STOP
-	"0","NNNNNN","0","N","N", //WAIT
+	"0","*","0","N","N", //WAIT
 	"v,S;v","s,S;s", //LINPUT
 	"","0,N,NN,NNN,NNNN", //BEEP
-	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNNNNN","0,N", //BGMCLEAR
+	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNS,NNNNNNNNN","0,N", //BGMCLEAR
 	//TODO:TEST:NONE Verify that BGM* functions max out at nine string arguments
 	//TODO:PERF:NONE Replace these expressions with a variable length list
 	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
 	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
 	"NL","NNN","0,N,NN","N,NN", //BGMVOL
 	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
-	"SNS","0","","SNnnn","SNS","0", //CONT
+	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
 	"","","Snnn","S","NNNN,NNNNN", //GBOX
 	"NNN,NNNN,NNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET

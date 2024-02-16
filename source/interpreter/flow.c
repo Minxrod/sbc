@@ -128,13 +128,24 @@ void cmd_next(struct ptc* p){
 }
 
 idx search_label(struct ptc* p, void* label){
+	assert(label); // label must exist
 	// Labels must always be located at the beginning of a line.
 	idx index = 0;
 	
-	u8 buf[16];
-	assert(str_len(label) <= 16);
-	str_char_copy(label, buf);
-	index = label_index(p->exec.code.labels, (char*)buf, str_len(label));
+	u8 buf[20];
+	char* buf_ptr = (char*)buf;
+	int len = str_len(label);
+	if (*(char*)label == BC_LABEL || *(char*)label == BC_LABEL_STRING){
+		assert(len <= 16);
+		str_char_copy(label, buf);
+	} else { // assume regular string
+		assert(len <= 17);
+		str_char_copy(label, buf);
+		++buf_ptr; // pointer past '@'
+		--len; // remove '@'
+	}
+	assert(len <= 16);
+	index = label_index(p->exec.code.labels, buf_ptr, len);
 	if (index == LABEL_NOT_FOUND){
 		p->exec.error = ERR_LABEL_NOT_FOUND;
 		return p->exec.code.size; // error'd anyways, skip to end

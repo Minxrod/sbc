@@ -24,8 +24,10 @@ struct console;
 // cursor
 #define PNL_INSERT 1
 
+/// Manages the specialized lower screen 'panel' state. This includes the
+/// virtual keyboard, lower screen text printing, and the icon system.
 struct panel {
-	/// Current panel type
+	/// Current panel type.
 	enum pnltype {
 		PNL_OFF,
 		PNL_PNL,
@@ -34,22 +36,35 @@ struct panel {
 		PNL_KYK
 	} type;
 	
+	/// Stores the text data for strings stored in each function key.
 	u16 func_keys[5][256];
+	/// Stores the length of the strings stored in each function key.
 	u16 func_keys_len[5];
 	
+	/// User text console for the lower screen.
 	struct console* text;
 	
-	// Stores text for function keys and shortcut keys
+	/// Stores text for function keys
+	/// and shortcut keys (not implemented currently)
 	struct console* keys_text;
 	
+	/// Sprite data for the panel. This includes both keyboard and icon sprites.
 	struct sprite_info keys[PANEL_KEYS];
 	
+	/// The "key id" of the current key pressed.
+	///
+	/// See get_pressed_key() for details.
 	u8 key_pressed;
+	/// The sprite ID of the current key pressed.
+	/// This is an index into the keys array.
 	u8 id_pressed;
+	/// The time the key being pressed has been held, in frames.
 	int pressed_time;
 	
-	int mode;
+	/// Value indicating the status of the SHIFT key and the caps lock key
+	/// of the virtual keyboard.
 	int shift;
+	/// Value indicating whether text entry is in INSERT or REPLACE mode.
 	int cursor;
 };
 
@@ -73,7 +88,7 @@ void set_function_key(struct ptc* p, int key, const void* string);
 void press_key(struct ptc* p, bool t, int x, int y);
 void offset_key(struct ptc* p, int id, int d);
 
-/// Returns the currently pressed key's sprite ID.
+/// Returns the currently pressed key's key ID.
 /// 
 /// The ranges of return values fall into these ranges:
 ///  -   1- 69: Keyboard key, corresponding to the same value of KEYBOARD

@@ -62,7 +62,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_bgmstub, //BGMCLEAR 
 	ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, //BGMVOL
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
-	cmd_chrset, cmd_clear, ptc_err, cmd_colread, cmd_colset, ptc_err, //CONT
+	cmd_chrset, cmd_clear, cmd_colinit, cmd_colread, cmd_colset, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
 	ptc_err, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
@@ -71,7 +71,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_restore, ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, cmd_spangle, //SPANGLE, 
 	ptc_err, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
 	cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv, cmd_swap, //SWAP, 
-	ptc_err //TMREAD,
+	cmd_tmread //TMREAD,
 };
 
 DTCM_DATA const ptc_call ptc_operators[] = {
@@ -82,16 +82,16 @@ DTCM_DATA const ptc_call ptc_operators[] = {
 };
 
 DTCM_DATA const ptc_call ptc_functions[] = {
-	func_abs, func_asc, ptc_err, func_bgchk, ptc_func_stub, ptc_err, func_btrig, func_button,
-	func_chkchr, func_chr, func_cos, func_deg, ptc_err, func_floor, func_gspoit, func_hex, func_iconchk, //FUNC_ICONCHK
+	func_abs, func_asc, func_atan, func_bgchk, ptc_func_stub, ptc_err, func_btrig, func_button,
+	func_chkchr, func_chr, func_cos, func_deg, func_exp, func_floor, func_gspoit, func_hex, func_iconchk, //FUNC_ICONCHK
 	func_inkey, func_instr, func_left, func_len, func_log, func_mid, func_pi, func_pow, func_rad, //FUNC_RAD
 	func_right, func_rnd, func_sgn, func_sin, func_spchk, func_spgetv, func_sphit, ptc_err, //FUNC_SPHITRC
-	ptc_err, ptc_err, func_str, func_subst, ptc_err, func_val, //FUNC_VAL
+	ptc_err, func_sqr, func_str, func_subst, func_tan, func_val, //FUNC_VAL
 };
 
 DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
-	ptc_err, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
+	sys_time, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
 	sys_freevar, sys_freemem, ptc_err, ptc_err, ptc_err, //RESULT
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,

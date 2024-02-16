@@ -120,7 +120,6 @@ void init_panel(struct ptc* p){
 	p->panel.type = PNL_KYA;
 	p->panel.text = init_console();
 	p->panel.keys_text = init_console();
-	p->panel.mode = 0;
 	p->panel.shift = 0;
 	p->panel.cursor = PNL_INSERT;
 	set_panel_bg(p, p->panel.type);

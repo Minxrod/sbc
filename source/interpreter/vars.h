@@ -36,18 +36,24 @@ enum types {
 // There are 6 types of variables.
 // Number - 20.12 fixed point
 // String - 0-256 character sequence
-// Array - One of the above types, but an array.
+// Array - One of the above types, but an array. Either 1D or 2D.
 
-// Contains either a pointer to string/array data or a number
-// Or pointer to variable (this takes the form of a pointer to number or pointer to string/array)
+/// Contains either a number or a pointer to a number/string/array.
+/// Or pointer to variable (this takes the form of a pointer to number or pointer to string/array)
 union value {
 	fixp number;
 	void* ptr;
 };
 
+/// Variable table entry. Contains the value directly in the case of numbers,
+/// otherwise contains a pointer to the value. Contains the type to determine
+/// what type of value is contained.
 struct named_var {
+	/// Type of variable stored. See @sa types.
 	uint_fast8_t type;
+	/// The name of this variable. Maxmimum of 16 characters.
 	char name[16];
+	/// The value stored in this variable.
 	union value value;
 };
 
