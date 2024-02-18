@@ -143,6 +143,7 @@ void init_panel(struct ptc* p){
 		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,0,w,h);
 		p->panel.keys[i].pos.x = x;
 		p->panel.keys[i].pos.y = y;
+		p->panel.keys[i].prio = 1;
 		// Collisions handled by tiles, essentially
 /*		p->panel.keys[i].hit.x = INT_TO_FP(1);
 		p->panel.keys[i].hit.y = INT_TO_FP(1);
@@ -282,6 +283,8 @@ void set_function_key(struct ptc* p, int key, const void* string){
 			con_put(c, to_wide('.'));
 		} else if (i < str_len(string)){
 			con_put(c, str_at_wide(string, i));
+		} else {
+			con_put(c, to_wide(' '));
 		}
 	}
 }
@@ -353,6 +356,7 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 	
 	int pressed_key = get_pressed_key(ptc);
 	bool refresh = false;
+	
 	if (pressed_key){
 		if (pressed_key == 1){
 			ptc->exec.error = ERR_BREAK;
@@ -389,17 +393,28 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 			refresh = true;
 		} else if (pressed_key == 66){
 			p->cursor ^= PNL_INSERT;
+		} else if (pressed_key >= 101 && pressed_key <= 105){
+			int key = pressed_key - 101;
+			for (int i = 0; i < p->func_keys_len[key]; ++i){
+				set_inkey(&ptc->input, p->func_keys[key][i]);
+			}
 		}
 	}
+	
 	if (refresh){
-			int shift = !!(p->shift & PNL_SHIFT) ^ !!(p->shift & PNL_CAPS_LOCK);
-		int source_key_chr = (2 * (p->type - 2) + shift) * 2;
-		memcpy(ptc->res.chr[18+CHR_BANKS], ptc->res.key_chr[source_key_chr], CHR_SIZE);
-		memcpy(ptc->res.chr[19+CHR_BANKS], ptc->res.key_chr[source_key_chr + 1], CHR_SIZE);
-		
-		ptc->res.regen_chr[18+CHR_BANKS] |= true;
-		ptc->res.regen_chr[19+CHR_BANKS] |= true;
+		refresh_panel(ptc);
 	}
+}
+
+void refresh_panel(struct ptc* ptc){
+	struct panel* p = &ptc->panel;
+	int shift = !!(p->shift & PNL_SHIFT) ^ !!(p->shift & PNL_CAPS_LOCK);
+	int source_key_chr = (2 * (p->type - 2) + shift) * 2;
+	memcpy(ptc->res.chr[18+CHR_BANKS], ptc->res.key_chr[source_key_chr], CHR_SIZE);
+	memcpy(ptc->res.chr[19+CHR_BANKS], ptc->res.key_chr[source_key_chr + 1], CHR_SIZE);
+	
+	ptc->res.regen_chr[18+CHR_BANKS] |= true;
+	ptc->res.regen_chr[19+CHR_BANKS] |= true;
 }
 
 int get_pressed_key(struct ptc* ptc){

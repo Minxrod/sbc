@@ -202,7 +202,41 @@ void cmd_bgclip(struct ptc* p){
 }
 
 void cmd_bgread(struct ptc* p){
-	ERROR(ERR_UNIMPLEMENTED);
+	uint_fast8_t layer, x, y;
+	u16 tiledata;
+	STACK_INT_RANGE(0,0,1,layer);
+	x = STACK_INT(1) % BG_WIDTH; //TODO:TEST:MED check that this works for negatives
+	y = STACK_INT(2) % BG_HEIGHT;
+	
+	u16* bg = bg_page(p, p->background.page, layer);
+	tiledata = bg[bg_index(x,y)];
+	
+	if (p->stack.stack_i == 4){
+		if (ARG(3)->type & VAR_NUMBER){
+			fixp* tile = ARG(3)->value.ptr;
+			*tile = INT_TO_FP(tiledata);
+		} else {
+			struct string* dest = get_new_str(&p->strs);
+			void** tile = ARG(3)->value.ptr; // pointer to string (which is itself a pointer)
+//			fixp_to_str(INT_TO_FP(tiledata), dest);
+			dest->ptr.s[0] = hex_digits[(tiledata & 0xF000) >> 12];
+			dest->ptr.s[1] = hex_digits[(tiledata & 0x0F00) >> 8];
+			dest->ptr.s[2] = hex_digits[(tiledata & 0x00F0) >> 4];
+			dest->ptr.s[3] = hex_digits[(tiledata & 0x000F) >> 0];
+			dest->len = 4;
+			dest->uses = 1;
+			*tile = dest;
+		}
+	} else {
+		fixp* chr = ARG(3)->value.ptr;
+		fixp* pal = ARG(4)->value.ptr;
+		fixp* h = ARG(5)->value.ptr;
+		fixp* v = ARG(6)->value.ptr;
+		*chr = INT_TO_FP(tiledata & 0x03FF);
+		*pal = INT_TO_FP((tiledata & 0xF000) >> 12);
+		*h = INT_TO_FP((tiledata & 0x0400) >> 10);
+		*v = INT_TO_FP((tiledata & 0x0800) >> 11);
+	}
 }
 
 void cmd_bgcopy(struct ptc* p){

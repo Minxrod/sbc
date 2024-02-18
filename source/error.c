@@ -58,5 +58,8 @@ const char * error_messages[] = {
 	"Illegal function call",
 	"Optimization option requires system pointer",
 	"BC length invariant failed",
-	"Label name is too long"
+	"Label name is too long",
+	"Illegal pointer address",
+	"Null pointer address",
+	"Misaligned pointer address",
 };

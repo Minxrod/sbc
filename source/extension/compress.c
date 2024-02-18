@@ -12,7 +12,7 @@ char* bin[] = {
 	"1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111"
 };
 
-int sbc_cache_search(unsigned char value, unsigned char* cache, int cache_size){
+int sbc_cache_search(unsigned char value, const unsigned char* const cache, int cache_size){
 	for (int i = 0; i < cache_size; ++i){
 		if (value == cache[i]){
 			return i;
@@ -36,7 +36,7 @@ void sbc_write_bit(unsigned char* output_data, int* output_index, int value){
 
 // cache_size = number of bits for cache indexes
 // unit_size = size of units being compressed
-int sbc_compress(unsigned char* source_data, unsigned char* output_data, int source_size, int cache_size, int unit_size){
+int sbc_compress(const unsigned char* const source_data, unsigned char* output_data, int source_size, int cache_size, int unit_size){
 	if (cache_size == -1){
 		// Don't compress
 		memcpy(output_data, source_data, source_size);
@@ -79,7 +79,7 @@ int sbc_compress(unsigned char* source_data, unsigned char* output_data, int sou
 }
 
 // Allocates memory to char* output
-struct sbc_compression_result sbc_optimal_compress(unsigned char* source_data, int source_size, int unit_size){
+struct sbc_compression_result sbc_optimal_compress(const unsigned char* const source_data, int source_size, int unit_size){
 	struct sbc_compression_result result;
 	result.output = calloc_log("sbc_optimal_compress", 1, source_size); // only allow results smaller than size
 	result.size = source_size;
@@ -97,7 +97,7 @@ struct sbc_compression_result sbc_optimal_compress(unsigned char* source_data, i
 	return result;
 }
 
-int sbc_read_bits(unsigned char* source_data, int* bit_index, int bits){
+int sbc_read_bits(const unsigned char* const source_data, int* bit_index, int bits){
 	assert(bits <= 8);
 	int byte_index = *bit_index / 8;
 	int bit = *bit_index % 8;
@@ -121,7 +121,7 @@ int sbc_read_bits(unsigned char* source_data, int* bit_index, int bits){
 }
 
 // TODO:IMPL:MED decompress into pre-alloc'd memory version
-unsigned char* sbc_decompress(unsigned char* source_data, int decompressed_size, int cache_bits){
+unsigned char* sbc_decompress(const unsigned char* const source_data, int decompressed_size, int cache_bits){
 	// Cache info
 	unsigned char cache[128] = {0};
 	const int cache_maximum = 1 << cache_bits;

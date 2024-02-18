@@ -64,14 +64,15 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
 	cmd_chrset, cmd_clear, cmd_colinit, cmd_colread, cmd_colset, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
-	ptc_err, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
+	cmd_gcircle, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
 	ptc_err, ptc_err, cmd_load, ptc_err, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
 	cmd_restore, ptc_err, ptc_err, ptc_err, ptc_err, ptc_err, cmd_spangle, //SPANGLE, 
-	ptc_err, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
+	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
 	cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv, cmd_swap, //SWAP, 
-	cmd_tmread //TMREAD,
+	cmd_tmread, //TMREAD,
+	cmd_poke, cmd_pokeh, cmd_pokeb, cmd_memcopy, cmd_memfill
 };
 
 DTCM_DATA const ptc_call ptc_operators[] = {
@@ -86,7 +87,8 @@ DTCM_DATA const ptc_call ptc_functions[] = {
 	func_chkchr, func_chr, func_cos, func_deg, func_exp, func_floor, func_gspoit, func_hex, func_iconchk, //FUNC_ICONCHK
 	func_inkey, func_instr, func_left, func_len, func_log, func_mid, func_pi, func_pow, func_rad, //FUNC_RAD
 	func_right, func_rnd, func_sgn, func_sin, func_spchk, func_spgetv, func_sphit, ptc_err, //FUNC_SPHITRC
-	ptc_err, func_sqr, func_str, func_subst, func_tan, func_val, //FUNC_VAL
+	func_sphitsp, func_sqr, func_str, func_subst, func_tan, func_val, //FUNC_VAL
+	func_peek, func_peekh, func_peekb, func_addr, // FUNC_ADDR
 };
 
 DTCM_DATA const ptc_call ptc_sysvars[] = {

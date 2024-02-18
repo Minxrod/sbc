@@ -28,6 +28,9 @@ void cmd_for(struct ptc* p){
 		return;
 	}
 	
+	if (p->calls.stack_i == CALL_STACK_MAX-1){
+		ERROR(ERR_OUT_OF_MEMORY);
+	}
 	p->calls.entry[p->calls.stack_i].address = index+2;
 //	p->calls.entry[p->calls.stack_i].var_type = e->type;// this is never used
 	p->calls.entry[p->calls.stack_i].var = e->value.ptr;
@@ -245,6 +248,9 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	u32 index = search_label(p, label);
 	
 	if (push_return){
+		if (p->calls.stack_i == CALL_STACK_MAX-1){
+			ERROR(ERR_OUT_OF_MEMORY);
+		}
 		p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;
 		p->calls.entry[p->calls.stack_i].address = p->exec.index;
 		p->calls.stack_i++;

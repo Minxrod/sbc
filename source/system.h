@@ -13,6 +13,7 @@
 #include "subsystem/panel.h"
 #include "subsystem/background.h"
 #include "subsystem/sprites.h"
+#include "extension/sbc_memory.h"
 #include "input.h"
 #include "timers.h"
 
@@ -69,6 +70,8 @@ struct ptc {
 	
 	// rendering information (system-specific)
 	struct display display;
+	// memory access system (system-specific)
+	struct memory_api memapi;
 };
 
 struct ptc* init_system(int var, int str, int arr);

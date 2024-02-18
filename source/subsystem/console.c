@@ -216,8 +216,10 @@ u16* shared_input(struct ptc* p){
 	uint_fast8_t out_index = 0;
 	uint_fast8_t out_index_max = 0;
 	int old_panel = p->panel.type;
+	p->console.cursor_visible = true;
 	// enable typing during INPUT/LINPUT if not already active
 	p->panel.type = PNL_KYA;
+	set_panel_bg(p, PNL_KYA);
 	do {
 		inkey = get_inkey(&p->input);
 		keyboard = get_pressed_key(p);
@@ -231,7 +233,14 @@ u16* shared_input(struct ptc* p){
 			thrd_sleep(&tspec, NULL);
 		}
 		// Check for special keys
-		if ((keyboard == 15 || check_pressed(&p->input, BUTTON_ID_Y))){
+		// redraw on first frame of hold and first frame of release
+		// TODO:IMPL:LOW Pressing L+R inverts the selection again for the duration held.
+		// it should keep the shift state.
+		if (((p->input.button ^ p->input.old_button) & BUTTON_L) ||
+		    ((p->input.button ^ p->input.old_button) & BUTTON_R)){
+			p->panel.shift ^= PNL_SHIFT;
+			refresh_panel(p);
+		} else if ((keyboard == 15 || check_pressed(&p->input, BUTTON_ID_Y))){
 			// Copy characters back
 			if (out_index > 0){
 				for (int i = out_index-1; i < (int)out_index_max; ++i){
@@ -268,10 +277,12 @@ u16* shared_input(struct ptc* p){
 		} else if (check_pressed(&p->input, BUTTON_ID_RIGHT)){
 			out_index += out_index < out_index_max;
 		}
+		p->console.x = out_index;
 	} while (p->exec.error == ERR_NONE && inkey != '\r'
 			&& keyboard != 60
 			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
 	p->panel.type = old_panel;
+	p->console.cursor_visible = false;
 	return output;
 }
 

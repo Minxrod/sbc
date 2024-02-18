@@ -577,5 +577,11 @@ int test_int_code(){
 		free_code(p);
 	}
 	
+	// GOSUB, FOR recursion to Out of Memory
+	{
+		ASSERT(check_code_error("@L\rGOSUB @L\r", ERR_OUT_OF_MEMORY), "[gosub] Recursion maximum error");
+		ASSERT(check_code_error("@L\rFOR I=0 TO 1\rGOTO @L\r", ERR_OUT_OF_MEMORY), "[for] Recursion maximum error");
+	}
+	
 	SUCCESS("test_int_code success");
 }

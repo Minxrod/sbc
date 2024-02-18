@@ -83,6 +83,7 @@ void sys_iconpage(struct ptc* p);
 void sys_iconpmax(struct ptc* p);
 void sys_iconpuse(struct ptc* p);
 
+void refresh_panel(struct ptc*);
 void set_panel_bg(struct ptc* p, enum pnltype type);
 void set_function_key(struct ptc* p, int key, const void* string);
 void press_key(struct ptc* p, bool t, int x, int y);

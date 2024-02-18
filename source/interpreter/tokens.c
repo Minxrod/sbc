@@ -31,13 +31,17 @@ const char* commands =
 "KEY     LIST    LOAD    NEW     PNLSTR  PNLTYPE "
 "READ    REBOOT  RECVFILERENAME  RESTORE RSORT   RUN     SAVE    SENDFILESORT    "
 "SPANGLE SPANIM  SPCHR   SPCLR   SPCOL   SPCOLVECSPHOME  SPOFS   SPPAGE  SPREAD  SPSCALE "
-"SPSET   SPSETV  SWAP    TMREAD  ";
+"SPSET   SPSETV  SWAP    TMREAD  "
+// TODO:IMPL:MED Make these optional, in case of name conflicts with existing programs
+"POKE    POKEH   POKEB   MEMCOPY MEMFILL ";
 
 const char* functions =
 "ABS     ASC     ATAN    BGCHK   BGMCHK  BGMGETV BTRIG   BUTTON  CHKCHR  CHR$    COS     "
 "DEG     EXP     FLOOR   GSPOIT  HEX$    ICONCHK INKEY$  INSTR   LEFT$   LEN     LOG     "
 "MID$    PI      POW     RAD     RIGHT$  RND     SGN     SIN     SPCHK   SPGETV  SPHIT   "
-"SPHITRC SPHITSP SQR     STR$    SUBST$  TAN     VAL     ";
+"SPHITRC SPHITSP SQR     STR$    SUBST$  TAN     VAL     "
+// TODO:IMPL:MED Make these optional, in case of name conflicts with existing programs
+"PEEK    PEEKH   PEEKB   ADDR   ";
 
 const char* operations =
 "AND     NOT     OR      XOR     ";
@@ -265,14 +269,15 @@ const char* cmd_format[] = {
 	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
 	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
 	"","","Snnn","S","NNNN,NNNNN", //GBOX
-	"NNN,NNNN,NNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
+	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
 	"","","S,SN","",//NEW
 	"NNSN","S","v","","","",//RENAME
 	"L","NNa","0","","","NNa","NN,NNN,NNNN",//SPANGLE
-	"","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
+	"NNN,NNNN","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
 	"NN,NNN,NNNN,NNNNN,NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
-	"",//TMREAD
+	"Snnn",//TMREAD
+	"NN","NN","NN","NNN","NNN", //MEMFILL
 };
 
 const char* func_format[] = {
@@ -281,13 +286,15 @@ const char* func_format[] = {
 	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
 	"SN","N","N","N","N","NN","N,NN","",//SPHITRC
 	"","N","N","SNNS","","S",//VAL
+	"N","N","N","S,SN" // ADDR
 };
 
 const char func_return[] = "NNNNNNNN"
 "NSNNNNNSN"
 "SNSNNSNNN"
 "SNNNNNNN"
-"NNSSNN";
+"NNSSNN"
+"NNNNN";
 
 const char* op_format[] = {
 	"NN,SS","*","NN","NN,SN","NN","*", //;

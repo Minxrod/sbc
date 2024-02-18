@@ -9,6 +9,8 @@
 
 #include <string.h>
 
+#include "strs.h"
+
 //PRG: already defined
 //MEM: this is a string
 //CHR: working on it
@@ -42,13 +44,6 @@ extern const char* resource_path;
 #define VISIBLE_PANEL 16
 #define VISIBLE_GRAPHICS 32
 #define VISIBLE_ALL 0x3f
-
-#ifdef PC
-struct sfTexture;
-/// PC-only function to generate SFML textures.
-struct sfTexture* gen_chr_texture(u8* src, size_t size);
-struct sfTexture* gen_col_texture(u16* src);
-#endif
 
 #ifdef ARM9
 #define VRAM_BASE (0x06000000)
@@ -129,6 +124,29 @@ int get_chr_index(struct ptc* p, char* res);
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid
 void* get_resource(struct ptc* p, char* name, int len);
+
+static inline int get_resource_type(void* res){
+	if (str_len(res) < 3) return TYPE_INVALID;
+	u16 c1 = to_char(str_at_wide(res, 0));
+	u16 c2 = to_char(str_at_wide(res, 1));
+	if (c1 == 'G'){
+		return TYPE_GRP;
+	} else if (c1 == 'P'){
+		return TYPE_PRG;
+	} else if (c1 == 'S'){
+		if (c2 == 'C') return TYPE_SCR;
+		if (c2 == 'P') return TYPE_CHR;
+		return TYPE_INVALID;
+	} else if (c1 == 'B'){
+		return TYPE_CHR;
+	} else if (c1 == 'C'){
+		return TYPE_COL;
+	} else if (c1 == 'M'){
+		return TYPE_MEM;
+	} else {
+		return TYPE_INVALID;
+	}
+}
 
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid

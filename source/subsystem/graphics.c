@@ -121,6 +121,50 @@ void cmd_gbox(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+static inline void draw_line(int x1, int y1, int x2, int y2, u8* page, u8 color, bool drawmode){
+	// Draw a line :)
+	if (abs(x2 - x1) >= abs(y2 - y1)){
+		if (x1 == x2 && y1 == y2){
+			grp_pixel(page,x1,y1,color,drawmode);
+			return;
+		}
+		// Line has horizontal component
+		// x1 -> x2
+		fixp y_slope = ((((int64_t)(y2 - y1) << 32) / (x2 - x1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
+		// 8.12 FP I guess
+		if (x1 > x2){
+			int temp = y1;
+			y1 = y2;
+			y2 = temp;
+			temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}
+		for (int x = x1; x <= x2; ++x){
+			int y = FP_TO_INT(y_slope*(x-x1) + (1<<(FIXPOINT-1))) + y1;
+			
+			grp_pixel(page,x,y,color,drawmode);
+		}
+	} else {
+		// X-range <= Y-range
+		fixp x_slope = ((((int64_t)(x2 - x1) << 32) / (y2 - y1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
+		// 8.12 FP I guess
+		if (y1 > y2){
+			int temp = y1;
+			y1 = y2;
+			y2 = temp;
+			temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}
+		for (int y = y1; y <= y2; ++y){
+			int x = FP_TO_INT(x_slope*(y-y1) + (1<<(FIXPOINT-1))) + x1;
+			
+			grp_pixel(page,x,y,color,drawmode);
+		}
+	}
+}
+
 // Notes about GLINE:
 // oooo        <--this           ooooo
 //     oooo                          ooooo
@@ -143,44 +187,7 @@ void cmd_gline(struct ptc* p){
 	u8* page = grp_drawpage(p);
 	
 	// Draw a line :)
-	if (abs(x2 - x1) >= abs(y2 - y1)){
-		// Line has horizontal component
-		// x1 -> x2
-		fixp y_slope = ((((int64_t)(y2 - y1) << 32) / (x2 - x1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
-		// 8.12 FP I guess
-		if (x1 > x2){
-			int temp = y1;
-			y1 = y2;
-			y2 = temp;
-			temp = x1;
-			x1 = x2;
-			x2 = temp;
-		}
-		for (int x = x1; x <= x2; ++x){
-			int y = FP_TO_INT(y_slope*(x-x1) + (1<<(FIXPOINT-1))) + y1;
-			
-			grp_pixel(page,x,y,color,p->graphics.drawmode);
-		}
-	} else {
-		// X-range <= Y-range
-		fixp x_slope = ((((int64_t)(x2 - x1) << 32) / (y2 - y1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
-		// 8.12 FP I guess
-		if (y1 > y2){
-			int temp = y1;
-			y1 = y2;
-			y2 = temp;
-			temp = x1;
-			x1 = x2;
-			x2 = temp;
-		}
-		for (int y = y1; y <= y2; ++y){
-			int x = FP_TO_INT(x_slope*(y-y1) + (1<<(FIXPOINT-1))) + x1;
-			
-			grp_pixel(page,x,y,color,p->graphics.drawmode);
-		}
-	}
-	
-	p->stack.stack_i = 0;
+	draw_line(x1, y1, x2, y2, page, color, p->graphics.drawmode);
 }
 
 void cmd_gpset(struct ptc* p){
@@ -199,8 +206,6 @@ void cmd_gpset(struct ptc* p){
 	u8* page = grp_drawpage(p);
 	
 	grp_pixel(page,x,y,color,p->graphics.drawmode);
-	
-	p->stack.stack_i = 0;
 }
 
 void cmd_gdrawmd(struct ptc* p){
@@ -384,5 +389,32 @@ void cmd_gcopy(struct ptc* p){
 				}
 			}
 		}
+	}
+}
+
+void cmd_gcircle(struct ptc* p){
+	int x, y, r;
+	u8 color = p->graphics.color;
+	x = STACK_INT(0);
+	y = STACK_INT(1);
+	r = STACK_INT(2);
+	if (p->stack.stack_i == 4){
+		STACK_INT_RANGE(3,0,255,color);
+	}
+	u8* page = grp_drawpage(p);
+	int drawmode = p->graphics.drawmode;
+	// TODO:IMPL:LOW angle range version
+	int angle_units = r + 16;
+	// this implementation will be a bit slow it's just to have <something>
+	for (int i = 0; i < angle_units; ++i){
+		// TODO:CODE:NONE pi constant
+		double angle = 2.0 * 3.141592653589 * i / angle_units;
+		double angle2 = 2.0 * 3.141592653589 * (i + 1) / angle_units;
+		int x1 = x + r * cos(angle);
+		int y1 = y + r * sin(angle);
+		int x2 = x + r * cos(angle2);
+		int y2 = y + r * sin(angle2);
+		
+		draw_line(x1,y1,x2,y2,page,color,drawmode);
 	}
 }

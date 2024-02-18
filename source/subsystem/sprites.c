@@ -65,12 +65,14 @@ void step_sprites(struct sprites* s){
 					spr->anim.current_chr += chr_step;
 					
 					if ((spr->anim.current_chr - spr->chr) / chr_step == spr->anim.chrs){ //loop complete
-						spr->anim.current_chr = spr->chr;
 						if (!spr->anim.loop_forever)
 							spr->anim.loop--;
 						if (!spr->anim.loop_forever && spr->anim.loop == 0){ //all loops complete
+							spr->anim.current_chr -= chr_step;
 							spr->chr = spr->anim.current_chr; //no more animation; frame remains last frame
+							break;
 						}
+						spr->anim.current_chr = spr->chr;
 					}
 				}
 			}
@@ -372,6 +374,23 @@ void func_sphit(struct ptc* p){
 	STACK_RETURN_INT(hit != -1);
 }
 
+void func_sphitsp(struct ptc* p){
+	int id, other_id;
+	STACK_REL_INT_RANGE(-1,0,99,id);
+	STACK_REL_INT_RANGE(-2,0,99,other_id);
+	
+	struct sprite_info* this = &p->sprites.info[p->sprites.page][id];
+	struct sprite_info* other = &p->sprites.info[p->sprites.page][other_id];
+	
+	if (is_hit(this, other)){
+		STACK_RETURN_INT(1);
+	} else {
+		STACK_RETURN_INT(0);
+	}
+	
+	// TODO:TEST:MED SPHITX, SPHITY, SPHITT, SPHITNO affected by this?
+}
+
 void cmd_spangle(struct ptc* p){
 	int id, angle; //, time, direction;
 	STACK_INT_RANGE(0,0,99,id);
@@ -482,4 +501,29 @@ void cmd_spread(struct ptc* p){
 		*c = s->chr;
 	}
 }
+
+void cmd_spanim(struct ptc* p){
+	// SPANIM id chrs time [loop]
+	int id, chrs, time;
+	// TODO:ERR:LOW Determine errors
+	STACK_INT_RANGE(0,0,99,id);
+	STACK_INT_RANGE(1,0,511,chrs); // TODO:TEST:LOW check that this is the maximum
+	STACK_INT_MIN(2,0,time);
+	
+	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
+	s->anim.chrs = chrs;
+	s->anim.frames_per_chr = time;
+	s->anim.current_frame = 0;
+	
+	if (p->stack.stack_i == 3){
+		s->anim.loop = 0;
+		s->anim.loop_forever = true;
+	} else {
+		int loop;
+		STACK_INT_MIN(3,0,loop);
+		s->anim.loop = loop;
+		s->anim.loop_forever = loop == 0;
+	}
+}
+
 

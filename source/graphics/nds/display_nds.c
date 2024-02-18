@@ -179,7 +179,9 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 			
 			(void)sc;
 			(void)oam_rot;
-/*			if (i < 32){ // rotation groups
+			if (i < 32){ // rotation groups
+				oam[i].x -= s[i].w / 2;
+				oam[i].y -= s[i].h / 2;
 				oam[i].isRotateScale = true;
 				oam[i].isSizeDouble = true;
 				oam[i].rotationIndex = i;
@@ -188,8 +190,19 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 				oam_rot[i].vdx = ((int)sinLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
 				oam_rot[i].hdy = ((int)-sinLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
 				oam_rot[i].vdy = ((int)cosLerp(degreesToAngle(FP_TO_INT(s[i].angle.a))) << sh1) / sc;
-			}*/
+			}
 		}
+	}
+	
+	if (screen == 0 && p->console.cursor_visible){
+		oam[104].isHidden = false;
+		oam[104].gfxIndex = 512+108;
+//		oam[104].priority = 0;
+		oam[104].colorMode = OBJCOLOR_16;
+		oam[104].x = p->console.x * 8;
+		oam[104].y = p->console.y * 8;
+		oam[104].size = OBJSIZE_8;
+		oam[104].shape = OBJSHAPE_SQUARE;
 	}
 	
 	if (screen == 1){

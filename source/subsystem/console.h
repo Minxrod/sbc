@@ -52,6 +52,9 @@ struct console {
 	/// Enables "test mode," which is intended for automated testing.
 	/// This disables the delay on waiting for characters within `shared_input`.
 	bool test_mode;
+	/// Indicates if the cursor sprite is currently visible.
+	/// This is set to true during INPUT and LINPUT.
+	bool cursor_visible;
 };
 
 /// Allocates a new `struct console` and initializes it.

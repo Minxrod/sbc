@@ -302,29 +302,6 @@ void* str_to_resource(struct ptc* p, void* name_str){
 	return get_resource(p, name_char, str_len(name_str));
 }
 
-static inline int get_resource_type(void* res){
-	if (str_len(res) < 3) return TYPE_INVALID;
-	u16 c1 = to_char(str_at_wide(res, 0));
-	u16 c2 = to_char(str_at_wide(res, 1));
-	if (c1 == 'G'){
-		return TYPE_GRP;
-	} else if (c1 == 'P'){
-		return TYPE_PRG;
-	} else if (c1 == 'S'){
-		if (c2 == 'C') return TYPE_SCR;
-		if (c2 == 'P') return TYPE_CHR;
-		return TYPE_INVALID;
-	} else if (c1 == 'B'){
-		return TYPE_CHR;
-	} else if (c1 == 'C'){
-		return TYPE_COL;
-	} else if (c1 == 'M'){
-		return TYPE_MEM;
-	} else {
-		return TYPE_INVALID;
-	}
-}
-
 int get_chr_index(struct ptc* p, char* res){
 	int res_len = strlen(res);
 	assert(res_len >= 3 && res_len <= 5);
@@ -347,6 +324,7 @@ int get_chr_index(struct ptc* p, char* res){
 
 // Returns a data pointer for the resource
 // Returns NULL, if the resource name was invalid
+// TODO:ERR:MED Should ONLY work for exact names (currently allows some invalid strings)
 void* get_resource(struct ptc* p, char* name, int len){
 	assert(name);
 	assert(len <= 5);
@@ -391,7 +369,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 	}
 	
 //	iprintf("get_resource %c %c %c %d %d\n", c, id, t, bank, upper);
-	if (c == 'B'){ //BGU, BGF, BGD
+	if (c == 'B' && id == 'G'){ //BGU, BGF, BGD
 		if (t == 'U'){
 			return p->res.chr[8+CHR_BANKS*upper+bank];
 		} else if (t == 'F'){
@@ -407,17 +385,21 @@ void* get_resource(struct ptc* p, char* name, int len){
 				if (!upper)
 					return p->res.chr[12+bank];
 			}
-		} else if (t == 'S'){
+		}
+		if (id != 'P'){
+			return NULL; // name is invalid
+		}
+		if (t == 'S'){
 			return p->res.chr[20+bank+CHR_BANKS*upper];
 		} else if (t == 'D'){
 			return p->res.chr[12+bank+CHR_BANKS*upper];
 		} else if (t == 'K'){ // yeah, this one normally isn't accessible
 			return p->res.chr[16+bank+CHR_BANKS*upper];
 		}
-	} else if (c == 'C'){ //COL
+	} else if (c == 'C' && id == 'O' && t == 'L'){ //COL
 //		iprintf("COLn %d:%p\n", 3*upper + bank, (void*)p->res.col[3*upper+bank]);
 		return p->res.col[bank+COL_BANKS*upper];
-	} else if (c == 'G'){ //GRP
+	} else if (c == 'G' && id == 'R' && t == 'P'){ //GRP
 		// TODO:IMPL:LOW Does page matter here?
 		return p->res.grp[(int)bank];
 	}

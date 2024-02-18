@@ -56,6 +56,7 @@ int sbc_benchmark(struct launch_info* info){
 	FILE* result = fopen("sbccompat_out", "w");
 	if (!result){
 		iprintf("Failed to open benchmark results file!\n");
+		fclose(f);
 		return 1;
 	}
 	int index = 0;
@@ -129,6 +130,7 @@ int system_launch(void* launch_info){
 		// Prompt for command
 		// TODO:IMPL:LOW Redesign to remove prompt symbol
 		info->p->exec.error = ERR_NONE;
+		info->p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
 		tokenize(&launcher, &bc);
 		run(bc, info->p);
 		
@@ -186,15 +188,23 @@ void init(void){
 	vramSetPrimaryBanks(VRAM_A_MAIN_BG, VRAM_B_MAIN_SPRITE, VRAM_C_SUB_BG, VRAM_D_SUB_SPRITE);
 	
 	// https://mtheall.com/vram.html#T0=2&NT0=1024&MB0=0&TB0=2&S0=3&T1=2&NT1=1024&MB1=4&TB1=4&S1=3&T2=2&NT2=1024&MB2=8&TB2=6&S2=3&T3=2&NT3=1024&MB3=12&TB3=6&S3=3
-	bgInit(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
-	bgInit(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
-	bgInit(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
-	bgInit(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	int con_fg = bgInit(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
+	int con_bg = bgInit(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
+	int bg0 = bgInit(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
+	int bg1 = bgInit(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	bgSetPriority(con_fg, 0);
+	bgSetPriority(con_bg, 3);
+	bgSetPriority(bg0, 1);
+	bgSetPriority(bg1, 2);
 	
-	bgInitSub(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
-	bgInitSub(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
-	bgInitSub(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
-	bgInitSub(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	int con_fgl = bgInitSub(0, BgType_Text4bpp, BgSize_T_512x512, 0, 2);
+	int con_bgl = bgInitSub(1, BgType_Text4bpp, BgSize_T_512x512, 4, 4);
+	int bg0l = bgInitSub(2, BgType_Text4bpp, BgSize_T_512x512, 8, 6);
+	int bg1l = bgInitSub(3, BgType_Text4bpp, BgSize_T_512x512, 12, 6);
+	bgSetPriority(con_fgl, 0);
+	bgSetPriority(con_bgl, 1);
+	bgSetPriority(bg0l, 2);
+	bgSetPriority(bg1l, 3);
 	
 	oamInit(&oamMain, SpriteMapping_1D_128, true);
 	oamInit(&oamSub, SpriteMapping_1D_128, true);

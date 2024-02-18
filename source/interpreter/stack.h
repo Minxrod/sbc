@@ -17,7 +17,7 @@
 // Convenience definitions
 #define STACK_INT(i) VALUE_INT(ARG(i))
 #define STACK_NUM(i) VALUE_NUM(ARG(i))
-#define STACK_STR(i) VALUE_STR(ARG(i))
+#define STACK_STR(i) value_str(ARG(i))
 
 #define STACK_REL_INT(i) STACK_INT(p->stack.stack_i + i)
 #define STACK_REL_NUM(i) STACK_NUM(p->stack.stack_i + i)
@@ -99,7 +99,8 @@ enum call_type {
 
 /// Represents the call stack of the running BASIC program.
 struct call_stack {
-	u16 stack_i;
+	/// Index to the first unused stack entry.
+	uint_fast16_t stack_i;
 	/// Represents an entry in the call stack.
 	/// Depending on the type of call, stores either...
 	/// * GOSUB - Return index

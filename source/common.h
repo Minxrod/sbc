@@ -84,13 +84,13 @@ typedef signed int fixp;
 
 static inline void* malloc_log(char* msg, size_t size){
 	void* ptr = malloc(size);
-	iprintf("%s malloc'd %zd at %p\n", msg, size, ptr);
+	iprintf("%s malloc'd %zu at %p\n", msg, size, ptr);
 	return ptr;
 }
 
 static inline void* calloc_log(char* msg, size_t num, size_t size){
 	void* ptr = calloc(num, size);
-	iprintf("%s calloc'd %zd(%zd*%zd) at %p\n", msg, num*size, num, size, ptr);
+	iprintf("%s calloc'd %zu(%zu*%zu) at %p\n", msg, num*size, num, size, ptr);
 	return ptr;
 }
 
