@@ -25,9 +25,11 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 	ptc->res.search_path = "tests/data/"; // override standard search path with test path
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
-	struct program p = { strlen(code), code };
+	init_mem_prg(&ptc->exec.prg, 524288/2); // TODO:CODE:LOW
+    strcpy(ptc->exec.prg.data, code);
+	ptc->exec.prg.size = strlen(code);
 	struct bytecode o = init_bytecode();
-	ptc->exec.error = tokenize_full(&p, &o, ptc, opts);
+	ptc->exec.error = tokenize_full(&ptc->exec.prg, &o, ptc, opts);
 	
 	// buffer inkeys
 	if (keys){
@@ -65,6 +67,7 @@ struct ptc* run_code(char* code){
 
 void free_code(struct ptc* ptc){
 	free_bytecode(ptc->exec.code);
+	free_log("free_mem_prg", ptc->exec.prg.data);
 	free_system(ptc);
 }
 

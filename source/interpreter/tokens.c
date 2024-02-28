@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>
 
 const int MAX_SPECIAL_NAME_SIZE = 8;
 
@@ -32,6 +33,8 @@ const char* commands =
 "READ    REBOOT  RECVFILERENAME  RESTORE RSORT   RUN     SAVE    SENDFILESORT    "
 "SPANGLE SPANIM  SPCHR   SPCLR   SPCOL   SPCOLVECSPHOME  SPOFS   SPPAGE  SPREAD  SPSCALE "
 "SPSET   SPSETV  SWAP    TMREAD  "
+// not "supported" really, but some programs still used this to do things like detect region
+"TALK    TALKSTOP"
 // TODO:IMPL:MED Make these optional, in case of name conflicts with existing programs
 "POKE    POKEH   POKEB   MEMCOPY MEMFILL ";
 
@@ -40,17 +43,19 @@ const char* functions =
 "DEG     EXP     FLOOR   GSPOIT  HEX$    ICONCHK INKEY$  INSTR   LEFT$   LEN     LOG     "
 "MID$    PI      POW     RAD     RIGHT$  RND     SGN     SIN     SPCHK   SPGETV  SPHIT   "
 "SPHITRC SPHITSP SQR     STR$    SUBST$  TAN     VAL     "
+// not implemented but still useful
+"TALKCHK "
 // TODO:IMPL:MED Make these optional, in case of name conflicts with existing programs
-"PEEK    PEEKH   PEEKB   ADDR   ";
+"PEEK    PEEKH   PEEKB   ADDR    PTR$    ";
 
 const char* operations =
-"AND     NOT     OR      XOR     ";
+"AND     OR      XOR     NOT     ";
 
 const char* bc_conv_operations = 
 "+       ,       -       *       /       ;       =       (-)     "
 "==      !=      <       >       <=      >=      "
 "%       "
-"AND     OR      NOT     XOR     !       "
+"AND     OR      XOR     NOT     !       "
 "(       )       [       ]       ";
 
 const char* sysvars = 
@@ -62,11 +67,87 @@ const char* sysvars =
 "SPHITNO SPHITX  SPHITY  SPHITT  "
 "KEYBOARDFUNCNO  ICONPUSEICONPAGEICONPMAX"
 "ERL     ERR     "
-"MEM     ";
+"MEM     "
+// extension
+"MEMSAFE ";
 
 const char* labels = "LABEL   ";
 
 const char* comments = "REM     ";
+
+// * = any (don't check/special case)
+// N = number
+// n = number var
+// S = string
+// s = string var
+// A = array
+// a = array list [only SORT,RSORT should use this?]
+// v = variable list
+// E = both
+// L = label (includes string)
+// l = label list
+// 0 = Nothing (no argument) (must be first in list)
+// ; = semicolon
+// < = comma
+// , = separates valid formations
+// Note that everything is ordered from short to long.
+const char* cmd_format[] = {
+	"*","NN","N,NN","*", //DIM
+	"*","*","*","0,n", //NEXT
+	"N","","*","*", //ENDIF
+	"L,l","L,l","N","0", //RETURN
+	"0","0", //STOP
+	"0","*","0","N","N", //WAIT
+	"v,S;v","s,S;s", //LINPUT
+	"","0,N,NN,NNN,NNNN", //BEEP
+	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNS,NNNNNNNNN","0,N", //BGMCLEAR
+	//TODO:TEST:NONE Verify that BGM* functions max out at nine string arguments
+	//TODO:PERF:NONE Replace these expressions with a variable length list
+	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
+	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
+	"NL","NNN","0,N,NN","N,NN", //BGMVOL
+	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
+	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
+	"","","Snnn","S","NNNN,NNNNN", //GBOX
+	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
+	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
+	"","","S,SN","",//NEW
+	"NNS,NNSN","S","v","","","",//RENAME
+	"L","NNa","0","S","","NNa","NN,NNN,NNNN",//SPANGLE
+	"NNN,NNNN","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
+	"NN,NNN,NNNN,NNNNN,NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
+	"Snnn",//TMREAD
+	"S", "0",
+	"NN","NN","NN","NNN","NNN", //MEMFILL
+};
+
+const char* func_format[] = {
+	"N","S","N,NN","N","0,N","NN","0","0,N",//BUTTON
+	"NN","N","N","N","","N","NN,NNN","N,NN","0",//ICONCHK
+	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
+	"SN","N","N","N","N","NN","N,NN","",//SPHITRC
+	"","N","N","SNNS","","S",//VAL
+	"0",
+	"N","N","N","S,SN","N" // PTR
+};
+
+const char func_return[] = "NNNNNNNN"
+"NSNNNNNSN"
+"SNSNNSNNN"
+"SNNNNNNN"
+"NNSSNN"
+"N"
+"NNNNS";
+
+const char* op_format[] = {
+	"NN,SS","*","NN","NN,SN","NN","*", //;
+	"nN,sS","N", //(-)
+	"NN,SS","NN,SS","NN","NN","NN","NN", //>=
+	"NN",//%
+	"NN","NN","NN","N","N",//!
+	"*","*","*","*"
+};
+
 
 // Note: Expects null-terminated string
 int tok_in_str_index(const char* str, const char* data, struct token* tok){
@@ -166,15 +247,21 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 	int error = ERR_NONE;
 	// Re-initialize bc
 	out->size = 0;
-	reset_label(out->labels);
-	
+	reset_label(&out->labels);
+	int old_cursor;
 	while (state.cursor < state.source->size){
+		old_cursor = state.cursor;
 		error = tok_none(&state);
 		if (error != ERR_NONE) break;
 		switch(state.state){
 			case TKR_NONE:
 				break;
 			case TKR_CONVERT:
+				iprintf("line: %.*s\n", (int)state.cursor - state.tokens[0].ofs, &state.source->data[state.tokens[0].ofs]);
+				for (size_t i = 0; i < state.token_i; ++i){
+					iprintf("[line_token] ");
+					print_token(&state, state.tokens[i]);
+				}
 				error = tok_convert(&state);
 				if (error != ERR_NONE) goto crash;
 				break;
@@ -185,6 +272,12 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 	}
 	crash:
 	if (error) {
+		if (system){
+			int line_view = state.cursor - old_cursor;
+			line_view = line_view > 31 ? 31 : line_view;
+			memcpy(state.system->exec.error_info, &state.source->data[old_cursor], line_view);
+			state.system->exec.error_info[line_view+1] = '\0';
+		}
 		iprintf("tokenize error: %s\n", error_messages[error]);
 	}
 	
@@ -206,7 +299,7 @@ int tok_convert(struct tokenizer* state){
 	assert(state->token_i);
 	if (state->tokens[0].type == label){
 		// Add a label pointing to current index
-		if (!add_label(state->output->labels, &state->source->data[state->tokens[0].ofs], state->tokens[0].len, state->output->size)){
+		if (!add_label(&state->output->labels, &state->source->data[state->tokens[0].ofs], state->tokens[0].len, state->output->size)){
 			return ERR_LABEL_ADD_FAILURE;
 		}
 		// option: Don't tokenize labels into code; rely only on table entries?
@@ -234,76 +327,6 @@ int tok_convert(struct tokenizer* state){
 	
 	return ERR_NONE;
 }
-
-// * = any (don't check/special case)
-// N = number
-// n = number var
-// S = string
-// s = string var
-// A = array
-// a = array list [only SORT,RSORT should use this?]
-// v = variable list
-// E = both
-// L = label (includes string)
-// l = label list
-// 0 = Nothing (no argument) (must be first in list)
-// ; = semicolon
-// < = comma
-// , = separates valid formations
-// Note that everything is ordered from short to long.
-const char* cmd_format[] = {
-	"*","NN","N,NN","*", //DIM
-	"*","*","*","0,n", //NEXT
-	"N","","*","*", //ENDIF
-	"L,l","L,l","N","0", //RETURN
-	"0","0", //STOP
-	"0","*","0","N","N", //WAIT
-	"v,S;v","s,S;s", //LINPUT
-	"","0,N,NN,NNN,NNNN", //BEEP
-	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNS,NNNNNNNNN","0,N", //BGMCLEAR
-	//TODO:TEST:NONE Verify that BGM* functions max out at nine string arguments
-	//TODO:PERF:NONE Replace these expressions with a variable length list
-	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
-	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
-	"NL","NNN","0,N,NN","N,NN", //BGMVOL
-	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
-	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
-	"","","Snnn","S","NNNN,NNNNN", //GBOX
-	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
-	"N,NNN","","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
-	"","","S,SN","",//NEW
-	"NNSN","S","v","","","",//RENAME
-	"L","NNa","0","","","NNa","NN,NNN,NNNN",//SPANGLE
-	"NNN,NNNN","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
-	"NN,NNN,NNNN,NNNNN,NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
-	"Snnn",//TMREAD
-	"NN","NN","NN","NNN","NNN", //MEMFILL
-};
-
-const char* func_format[] = {
-	"N","S","N,NN","N","0,N","NN","0","0,N",//BUTTON
-	"NN","N","N","N","","N","NN,NNN","N,NN","0",//ICONCHK
-	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
-	"SN","N","N","N","N","NN","N,NN","",//SPHITRC
-	"","N","N","SNNS","","S",//VAL
-	"N","N","N","S,SN" // ADDR
-};
-
-const char func_return[] = "NNNNNNNN"
-"NSNNNNNSN"
-"SNSNNSNNN"
-"SNNNNNNN"
-"NNSSNN"
-"NNNNN";
-
-const char* op_format[] = {
-	"NN,SS","*","NN","NN,SN","NN","*", //;
-	"nN,sS","N", //(-)
-	"NN,SS","NN,SS","NN","NN","NN","NN", //>=
-	"NN",//%
-	"NN","NN","N","NN","N",//!
-	"*","*","*","*"
-};
 
 /// char* stack is a string of length stack_len
 /// valid is a null-terminated string
@@ -1223,7 +1246,7 @@ int tok_none(struct tokenizer* state){
 		state->is_comment = true;
 	} else {
 		iprintf("Unknown transition from NONE on %c:%d\n", c, c);
-		return ERR_SYNTAX;
+		return ERR_UNKNOWN_TRANSITION;
 	}
 	return ERR_NONE;
 }

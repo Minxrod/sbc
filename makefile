@@ -17,7 +17,7 @@ CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
 # The -MMD is important. It generates the actual dependencies...
-CFLAGS = -g -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD -O2
+CFLAGS = -g -pg -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD -O2
 # https://stackoverflow.com/a/10168396
 LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 # All the libraries that need to be linked
@@ -44,12 +44,13 @@ main: main_build
 profile: CFLAGS+=--coverage
 profile: LFLAGS+=-lgcov
 profile: main_build
-#test: CFLAGS+=--coverage
+#test: CFLAGS+=-pg
 #test: LFLAGS+=-lgcov
 test: test_build
 test: CFLAGS+=
 test_full: CFLAGS+=-DTEST_FULL
 test_full: test_build
+compsize: CFLAGS+=-DNDEBUG
 
 main_build: $(main_objs)
 	# TODO: Better CSFML library location? (How do you install it?)
@@ -57,6 +58,10 @@ main_build: $(main_objs)
 
 #gl:
 #	$(CC) $(CFLAGS) $(LFLAGS) source/opengl_test.c -o test $(LIBFLAGS) -lGL
+
+compsize: $(main_objs)
+	$(CC) $(CFLAGS) $(LFLAGS) $(build) compiled_size.c -o test $(LIBFLAGS)
+
 
 test_build: $(test_objs)
 	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)

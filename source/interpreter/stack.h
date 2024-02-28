@@ -35,7 +35,7 @@
 
 #define STACK_RETURN_INT(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((val))}}); return; }
 #define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); return; }
-#define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {(val)}}); return; }
+#define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = (val)}}); return; }
 
 
 #define VALUE_STACK_MAX 100

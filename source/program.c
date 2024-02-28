@@ -26,18 +26,36 @@ void init_mem_prg(struct program* p, int prg_size){
 struct bytecode init_bytecode(void){
 	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
 	struct bytecode bc = {
-		0, calloc_log("init_bytecode", 2, 524288), calloc_log("init_bytecode", 1, MAX_LINES), calloc_log("init_bytecode", 1, sizeof(struct labels))
+		0,
+		calloc_log("init_bytecode", 2, 524288),
+		calloc_log("init_bytecode", 1, MAX_LINES),
+		init_labels(MAX_LABELS)
 	};
 	assert(bc.data);
-	assert(bc.labels);
 	assert(bc.line_length);
+	assert(bc.labels.entry);
+	return bc;
+}
+
+/// @param size Size of bytecode buffer
+struct bytecode init_bytecode_size(int size, int lines, int labels){
+	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
+	struct bytecode bc = {
+		0,
+		calloc_log("init_bytecode_size", 1, size),
+		calloc_log("init_bytecode", 1, lines),
+		init_labels(labels)
+	};
+	assert(bc.data);
+	assert(bc.line_length);
+	assert(bc.labels.entry || !labels);
 	return bc;
 }
 
 void free_bytecode(struct bytecode bc){
 	free_log("free_bytecode", bc.data);
 	free_log("free_bytecode", bc.line_length);
-	free_log("free_bytecode", bc.labels);
+	free_labels(bc.labels);
 }
 
 // Scans for a specific instruction. Special purpose function to handle the
@@ -93,6 +111,8 @@ idx bc_scan(struct bytecode code, idx index, u8 find){
 // TODO:CODE:LOW Rename to match other load functions
 // TODO:CODE:MED Rename to indicate memory allocation
 bool prg_load(struct program* p, const char* filename){
+	p->size = 0;
+	p->data = NULL;
 	FILE* f = fopen(filename, "r");
 	if (!f){
 		iprintf("File %s load failed!\n", filename);
@@ -109,7 +129,13 @@ bool prg_load(struct program* p, const char* filename){
 		fclose(f);
 		return false;
 	}
-	// load success: read file to buffer
+	if (h.type_str[9] == 'P' && h.type_str[10] == 'R' && h.type_str[11] == 'G'){
+		// load success: read file to buffer
+	} else {
+		fclose(f);
+		iprintf("Not a program file!\n");
+		return false;
+	}
 	
 	p->size = h.prg_size;
 	p->data = malloc_log("prg_load", h.prg_size);
@@ -144,7 +170,13 @@ bool load_prg(struct program* p, const char* filename){
 		fclose(f);
 		return false;
 	}
-	// load success: read file to buffer
+	if (h.type_str[9] == 'P' && h.type_str[10] == 'R' && h.type_str[11] == 'G'){
+		// load success: read file to buffer
+	} else {
+		fclose(f);
+		iprintf("Not a program file!");
+		return false;
+	}
 	
 	p->size = h.prg_size;
 	r = fread(p->data, sizeof(char), h.prg_size, f);

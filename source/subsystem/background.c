@@ -282,7 +282,7 @@ void cmd_bgcopy(struct ptc* p){
 	// valid args: put tile
 	u16* bg = bg_page(p, p->background.page, layer);
 	
-	if (y3 < y1 || x3 < x1){
+	if (y3 < y1 || (y3 == y1 && x3 < x1)){
 		for (int y = y1; y <= y2; ++y){
 			for (int x = x1; x <= x2; ++x){
 				bg[bg_index(x-x1+x3,y-y1+y3)] = bg[bg_index(x,y)];

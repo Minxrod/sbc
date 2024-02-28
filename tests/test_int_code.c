@@ -45,7 +45,7 @@ int test_int_code(){
 	// Code searching (Variable name)
 	{
 		char* code = "V\3ABC\0L\1A\0";
-		struct bytecode o = {8, (u8*)code, NULL, NULL};
+		struct bytecode o = {8, (u8*)code, NULL, init_labels(0)};
 		u32 i = bc_scan(o, 0, BC_LABEL);
 		ASSERT(i == 6, "[bc_scan] Find index of label past variable name");
 	}
@@ -367,7 +367,7 @@ int test_int_code(){
 		ASSERT(check_code_error("LOCATE 7\r", ERR_TEST_COMMAND), "[syntax] Check missing command argument")
 		ASSERT(check_code_error("Among Us\r", ERR_TEST_STACK), "[syntax] Check extra stack values")
 		ASSERT(check_code_error("PI()\r", ERR_TEST_STACK), "[syntax] Check extra stack values")
-		ASSERT(check_code_error("\x0a\r", ERR_SYNTAX), "[syntax] Check extra stack values")
+		ASSERT(check_code_error("\x0a\r", ERR_UNKNOWN_TRANSITION), "[syntax] Check extra stack values")
 	}
 	
 	// Simple IF ELSE check (which broke??)

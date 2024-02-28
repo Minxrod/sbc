@@ -215,12 +215,22 @@ int test_int_math(){
 	
 	// AND operator errors
 	{
-		DENY(check_code_error("?\"\" AND 0\r", ERR_NONE), "[and] Error on string value 1");
-		DENY(check_code_error("?0 AND \"\"\r", ERR_NONE), "[and] Error on string value 2");
-		DENY(check_code_error("?\"\" AND \"\"\r", ERR_NONE), "[and] Error on string value 1+2");
-		DENY(check_code_error("?AND 0\r", ERR_NONE), "[sgn] Error on missing argument 1");
-		DENY(check_code_error("?0 AND\r", ERR_NONE), "[sgn] Error on missing argument 2");
-		DENY(check_code_error("?AND\r", ERR_NONE), "[sgn] Error on missing argument 1+2");
+		DENY(check_code_error("A=\"\" AND 0\r", ERR_NONE), "[and] Error on string value 1");
+		DENY(check_code_error("A=0 AND \"\"\r", ERR_NONE), "[and] Error on string value 2");
+		DENY(check_code_error("A=\"\" AND \"\"\r", ERR_NONE), "[and] Error on string value 1+2");
+		DENY(check_code_error("A=AND 0\r", ERR_NONE), "[and] Error on missing argument 1");
+		DENY(check_code_error("A=0 AND\r", ERR_NONE), "[and] Error on missing argument 2");
+		DENY(check_code_error("A=AND\r", ERR_NONE), "[and] Error on missing argument 1+2");
+	}
+	
+	// XOR operator errors
+	{
+		DENY(check_code_error("A=\"\" XOR 0\r", ERR_NONE), "[xor] Error on string value 1");
+		DENY(check_code_error("A=0 XOR \"\"\r", ERR_NONE), "[xor] Error on string value 2");
+		DENY(check_code_error("A=\"\" XOR \"\"\r", ERR_NONE), "[xor] Error on string value 1+2");
+		DENY(check_code_error("A=XOR 0\r", ERR_NONE), "[xor] Error on missing argument 1");
+		DENY(check_code_error("A=0 XOR\r", ERR_NONE), "[xor] Error on missing argument 2");
+		DENY(check_code_error("A=XOR\r", ERR_NONE), "[xor] Error on missing argument 1+2");
 	}
 	
 	SUCCESS("test_int_math success");

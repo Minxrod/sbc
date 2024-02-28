@@ -28,8 +28,8 @@ void free_graphic(struct graphic* g){
 
 void draw_graphic(struct graphic* g, struct ptc* p, int screen){
 	u8 grp[GRP_SIZE*4];
-	for (int x = 0; x < GRP_WIDTH; ++x){
-		for (int y = 0; y < GRP_HEIGHT; ++y){
+	for (int y = 0; y < GRP_HEIGHT; ++y){
+		for (int x = 0; x < GRP_WIDTH; ++x){
 			u8 col = p->res.grp[p->graphics.info[screen].displaypage][grp_index(x, y)];
 			grp[(x+(y*GRP_WIDTH))*4] = col;
 		}

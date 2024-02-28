@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <threads.h>
 
-#include "interpreter/vars.h"
 #include "common.h"
 #include "system.h"
 #include "resources.h"
@@ -17,7 +18,7 @@ struct ptc* init_system(int var, int str, int arr){
 	// TODO:CODE:LOW Where to put this?
 	srand(time(NULL));
 	
-	struct ptc* ptc = calloc_log("init_mem_prg", sizeof(struct ptc), 1);
+	struct ptc* ptc = calloc_log("init_system", sizeof(struct ptc), 1);
 	if (ptc == NULL){
 		iprintf("Error allocating memory!\n");
 		abort();
@@ -61,7 +62,8 @@ void free_system(struct ptc* p){
 	free_log("free_system", p);
 }
 
-//https://smilebasicsource.com/forum/thread/docs-ptc-acls
+// modified from
+// https://smilebasicsource.com/forum/thread/docs-ptc-acls
 char acls_code[] = 
 "VISIBLE 1,1,1,1,1,1:ICONCLR\r"
 "COLOR 0,0:CLS:GDRAWMD FALSE\r"
@@ -88,7 +90,7 @@ void cmd_acls(struct ptc* p){
 	
 	struct program acls_program = { sizeof(acls_code)-1, acls_code };
 	struct bytecode acls_bc = {
-		0, acls_bytecode, acls_bc_lines, &acls_labels
+		0, acls_bytecode, acls_bc_lines, init_labels(0)
 	};
 	
 	p->exec.error = tokenize(&acls_program, &acls_bc);

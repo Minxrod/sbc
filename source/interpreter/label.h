@@ -23,9 +23,15 @@ struct label_line {
 
 /// Label management struct. Used as a hash table mapping names to indexes.
 struct labels {
+	/// Maximum number of labels.
+	int label_count;
 	/// List of label -> index pairs.
-	struct label_line entry[MAX_LABELS];
+	struct label_line* entry;
+//	struct label_line entry[MAX_LABELS];
 };
+
+struct labels init_labels(int);
+void free_labels(struct labels);
 
 bool add_label(struct labels* l, char* name, uint_fast8_t len, idx index);
 

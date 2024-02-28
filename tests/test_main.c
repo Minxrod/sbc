@@ -16,6 +16,8 @@ int test_label(void);
 
 int test_math(void);
 
+// int test_compile(void);
+
 int test_int_vars(void);
 int test_int_code(void);
 int test_int_math(void);
@@ -41,6 +43,8 @@ int run_tests(){
 	FAST(test_label());
 	
 	FAST(test_math());
+	
+//	FAST(test_compile());
 	
 	FAST(test_int_vars());
 	FAST(test_int_code());

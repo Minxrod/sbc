@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <threads.h>
 
 /// @warning Does not handle newlines!
 void con_advance(struct console* c){
@@ -106,7 +108,7 @@ void cmd_print(struct ptc* p){
 		if (e->type & VAR_NUMBER){
 			con_putn(c, VALUE_NUM(e));
 		} else if (e->type & VAR_STRING) {
-			con_puts(c, VALUE_STR(e));
+			con_puts(c, value_str(e));
 		} else if (e->type & STACK_OP) { 
 			if (e->value.number == OP_COMMA){
 				// tab
@@ -491,5 +493,5 @@ void sys_tabstep(struct ptc* p){
 	if (cur_tabstep > 16) cur_tabstep = 16;
 	p->console.tabstep = cur_tabstep;
 	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.ptr = &p->console.sys_tabstep});
+	stack_push(s, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->console.sys_tabstep});
 }

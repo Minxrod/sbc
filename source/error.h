@@ -68,6 +68,9 @@ enum err_code {
 	ERR_ILLEGAL_ADDRESS,
 	ERR_NULL_ADDRESS,
 	ERR_MISALIGNED_ADDRESS,
+	ERR_UNKNOWN_TRANSITION,
+	ERR_BUTTON_SIGNAL,
+	ERR_USER_SIGNAL,
 };
 
 extern const char * error_messages[];

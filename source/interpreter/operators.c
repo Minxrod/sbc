@@ -80,6 +80,7 @@ void op_mult(struct ptc* p){
 		x = value_str(a);
 		
 		y->uses = 1;
+		y->len = 0; // start empty
 		if (count * str_len(x) > MAX_STRLEN){
 			p->exec.error = ERR_STRING_TOO_LONG;
 			return;
@@ -175,8 +176,7 @@ void op_assign(struct ptc* p){
 			(*dest)->uses--;
 			if (src->type == STRING_CHAR){
 				*dest = src;
-				if (src)
-					(*dest)->uses++;
+				(*dest)->uses++;
 			} else if (src->type == BC_STRING){
 				// replace with string
 				(*dest) = src;
@@ -239,6 +239,7 @@ void op_inequal(struct ptc* p){
 	}
 }
 
+// TODO:PERF:LOW remove unnecessary type checks
 void op_less(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);

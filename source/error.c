@@ -62,4 +62,7 @@ const char * error_messages[] = {
 	"Illegal pointer address",
 	"Null pointer address",
 	"Misaligned pointer address",
+	"Unknown transition",
+	"Special button triggered break",
+	"Program triggered break",
 };

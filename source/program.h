@@ -5,7 +5,7 @@
 ///
 #include "common.h"
 
-struct labels;
+#include "label.h"
 
 #define MAX_LINES 10000
 
@@ -33,11 +33,12 @@ struct bytecode {
 //	// Can be used to traverse line-by-line
 	u8* line_length;
 	// Labels structure
-	struct labels* labels;
+	struct labels labels;
 };
 
 void init_mem_prg(struct program* p, int prg_size);
 struct bytecode init_bytecode(void);
+struct bytecode init_bytecode_size(int, int, int); // variant for smaller programs
 void free_bytecode(struct bytecode);
 
 struct program init_ptr_prg(char* c);

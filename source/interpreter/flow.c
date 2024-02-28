@@ -148,7 +148,7 @@ idx search_label(struct ptc* p, void* label){
 		--len; // remove '@'
 	}
 	assert(len <= 16);
-	index = label_index(p->exec.code.labels, buf_ptr, len);
+	index = label_index(&p->exec.code.labels, buf_ptr, len);
 	if (index == LABEL_NOT_FOUND){
 		p->exec.error = ERR_LABEL_NOT_FOUND;
 		return p->exec.code.size; // error'd anyways, skip to end

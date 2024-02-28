@@ -388,9 +388,9 @@ int test_tokens(void){
 		
 		// compile program
 		tokenize(&p, &o);
-		ASSERT(label_index(o.labels, "0", 1) == 0, "[tokens] Label @0 generated successfully");
-		ASSERT(label_index(o.labels, "1", 1) == 14, "[tokens] Label @1 generated successfully");
-		ASSERT(label_index(o.labels, "2", 1) == 28, "[tokens] Label @2 generated successfully");
+		ASSERT(label_index(&o.labels, "0", 1) == 0, "[tokens] Label @0 generated successfully");
+		ASSERT(label_index(&o.labels, "1", 1) == 14, "[tokens] Label @1 generated successfully");
+		ASSERT(label_index(&o.labels, "2", 1) == 28, "[tokens] Label @2 generated successfully");
 		free_bytecode(o);
 	}
 	
@@ -442,9 +442,9 @@ int test_tokens(void){
 			ASSERT(o.data[i] == bytecode[i], "[opts] Bytecode compiled with label optimization");
 		}
 		// Labels generate correctly and at expected locations
-		ASSERT(label_index(o.labels, "0", 1) == 0, "[opts] Label @0 generated successfully");
-		ASSERT(label_index(o.labels, "1", 1) == 10, "[opts] Label @1 generated successfully");
-		ASSERT(label_index(o.labels, "2", 1) == 20, "[opts] Label @2 generated successfully");
+		ASSERT(label_index(&o.labels, "0", 1) == 0, "[opts] Label @0 generated successfully");
+		ASSERT(label_index(&o.labels, "1", 1) == 10, "[opts] Label @1 generated successfully");
+		ASSERT(label_index(&o.labels, "2", 1) == 20, "[opts] Label @2 generated successfully");
 		
 		free_bytecode(o);
 	}

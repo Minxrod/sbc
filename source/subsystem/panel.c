@@ -102,7 +102,7 @@ s16 keyboard_pos[][6]={
 	{208, -1, 32, 16, 499, 105}, // Function Key Right (sprite 82)
 	{240, 0, 16, 16, 315, 106}, // Exit button (sprite 83)
 // Bottom bar keys
-	{0, 168, 32, 32, 304, 70}, // Help key
+	{0, 168, 32, 32, 304, 70}, // Help key (sprite 84)
 	{40, 168, 32, 32, 256, 71}, // RUN/STOP Key Left
 	{72, 168, 16, 32, 260, 71}, // RUN/STOP Key Right
 	{88, 168, 16, 32, 262, 72}, // EDIT Key Left
@@ -316,9 +316,9 @@ const char* key_map =
 "\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
-"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
-"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
+"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
+"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
+"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
 ;
 
 void press_key(struct ptc* ptc, bool t, int x, int y){
@@ -398,6 +398,9 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 			for (int i = 0; i < p->func_keys_len[key]; ++i){
 				set_inkey(&ptc->input, p->func_keys[key][i]);
 			}
+		} else if (pressed_key >= 70 && pressed_key <= 72){
+			ptc->exec.error = ERR_BUTTON_SIGNAL;
+			ptc->exec.error_info[0] = pressed_key;
 		}
 	}
 	

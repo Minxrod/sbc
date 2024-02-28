@@ -17,12 +17,8 @@ struct launch_info {
 	struct ptc* p;
 	/// Pointer to program source.
 	struct program* prg;
-};
-
-// This is the DIRECT mode prompt.
-// Pretty basic, but it works.
-struct program launcher = {
-	13, "LINPUT CODE$\r"
+	/// Name of program to autoboot
+	char* prg_filename;
 };
 
 const char* bench_begin = "ACLS:CLEAR\r";
@@ -99,72 +95,195 @@ int sbc_benchmark(struct launch_info* info){
 	return 0;
 }
 
+// This is the DIRECT mode prompt.
+// Pretty basic, but it works.
+// TODO:IMPL:LOW Redesign to remove prompt symbol
+struct program launcher = {
+	13, "LINPUT CODE$\r"
+};
+
+enum launch_state {
+	LAUNCH_PROMPT,
+	LAUNCH_EDIT,
+	LAUNCH_RUN,
+	LAUNCH_BENCH,
+	LAUNCH_AUTOLOAD,
+};
+
 int system_launch(void* launch_info){
+	u8 err_msg[66] = {STRING_INLINE_CHAR}; // 2 lines + metadata
 	struct launch_info* info = (struct launch_info*)launch_info;
-	struct bytecode bc = init_bytecode();
+	struct ptc* p = info->p; // TODO:PERF:NONE replace all instances of info->p?
 	
-	if (info->prg->size){
-		info->p->exec.error = tokenize_full(info->prg, &bc, info->p, TOKOPT_VARIABLE_IDS);
-		if (info->p->exec.error == ERR_NONE){
-			run(bc, info->p);
-		}
-		
-		// Display error status
-		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
-		// TODO:CODE:HIGH This includes a const cast away. What's a good way to avoid this?
-		const struct string err_status = {
-			STRING_CHAR, strlen(error_messages[info->p->exec.error]), 0,
-			{.s = (u8*)error_messages[info->p->exec.error]}
-		};
-		con_puts(&info->p->console, &err_status);
-		con_newline(&info->p->console, true);
-		return info->p->exec.error;
+	// User program setup
+	
+	// DIRECT setup
+	struct bytecode prompt_bc = init_bytecode_size(14, 1, 0); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
+	tokenize_full(&launcher, &prompt_bc, p, TOKOPT_NONE);
+	
+	// editor setup
+	// TODO:PERF:MED Reduce memory fragmentation by loading program into bytecode memory...?
+	struct program editor = {0};
+	prg_load(&editor, "programs/EDITOR.PTC"); // TODO:CODE:MED move EDITOR to resources
+	struct bytecode editor_bc = init_bytecode_size(editor.size, 500, 64); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
+	tokenize_full(&editor, &editor_bc, p, TOKOPT_VARIABLE_IDS);
+	free_log("editor temp load", editor.data);
+	
+	// for user programs / "RUN" setup
+	struct bytecode bc = init_bytecode_size(524288, 10000, MAX_LABELS);
+	if (!bc.labels.entry || !bc.data){
+		iprintf("Failed to allocate bytecode...\n");
+		return -1;
+	}
+	init_mem_prg(&p->exec.prg, 524288/2); // TODO:CODE:MED Make this size make more sense
+	if (!p->exec.prg.data){
+		iprintf("Failed to allocate program...\n");
+		return -1;
 	}
 	
-	u8 direct_cmd[32+1] = {0};
-	struct program prog = {0, (char*)direct_cmd};
+	// Setup complete
 	con_puts(&info->p->console, "S\45Small BASIC Computer            READY");
 	con_newline(&info->p->console, true);
 	bool running = true;
-	while (running){
-		// Prompt for command
-		// TODO:IMPL:LOW Redesign to remove prompt symbol
-		info->p->exec.error = ERR_NONE;
-		info->p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
-		tokenize(&launcher, &bc);
-		run(bc, info->p);
-		
-		// Get program name from output
-		void* cmd = get_var(&info->p->vars, "CODE", 4, VAR_STRING)->value.ptr;
-		if (str_comp(cmd, "S\011REM BENCH")){
-			sbc_benchmark(launch_info);
-		}
-		str_char_copy(cmd, direct_cmd);
-		prog.size = str_len(cmd);
-		direct_cmd[prog.size++] = '\r';
-		
-		// Execute small program
-		info->p->exec.error = ERR_NONE;
-		info->p->exec.error = tokenize(&prog, &bc);
-		if (info->p->exec.error == ERR_NONE){
-			run(bc, info->p);
-		}
-		
-		// Display error status
-		iprintf("Error: %s\n", error_messages[info->p->exec.error]);
-		// TODO:CODE:HIGH This includes a const cast away. What's a good way to avoid this?
-		const struct string err_status = {
-			STRING_CHAR, strlen(error_messages[info->p->exec.error]), 0,
-			{.s = (u8*)error_messages[info->p->exec.error]}
-		};
-		con_puts(&info->p->console, &err_status);
-		con_newline(&info->p->console, true);
+	
+	int state = LAUNCH_PROMPT;
+	if (info->prg_filename){
+		state = LAUNCH_AUTOLOAD;
 	}
 	
-//	info->p->exec.error = tokenize(info->prg, &bc);
-//	free_log("system_launch", info->prg->data);
-	// only needs BC, not source
+	// TODO:IMPL:LOW Add configuration method for optimizations
 	
+	int opts = TOKOPT_VARIABLE_IDS;
+	while (running){
+		p->exec.error = ERR_NONE; // prepare for next execution
+		info->p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
+		int old_state = state;
+		switch (state){ // TODO:CODE:MED constants/enum for states
+			case LAUNCH_PROMPT: // DIRECT mode
+				{
+				run(prompt_bc, p); // get prompt
+				
+				void* cmd = get_var(&info->p->vars, "CODE", 4, VAR_STRING)->value.ptr;
+				if (str_comp(cmd, "S\011REM BENCH")){
+					state = LAUNCH_BENCH;
+					break;
+				} else if (str_comp(cmd, "S\3RUN")){
+					state = LAUNCH_RUN;
+					break;
+				}
+				// check status
+				if (p->exec.error == ERR_BUTTON_SIGNAL){
+					int sig = p->exec.error_info[0];
+					if (sig == 72){ // EDIT
+						state = LAUNCH_EDIT;
+					}
+					p->exec.error = ERR_NONE; // clear signal
+					p->exec.error_info[0] = 0; // clear signal info
+				}
+				
+				// execute single line
+				// create small program
+				u8 direct_cmd[32+1] = {0};
+				struct program prog = {0, (char*)direct_cmd};
+				str_char_copy(cmd, direct_cmd);
+				prog.size = str_len(cmd);
+				direct_cmd[prog.size++] = '\r';
+				
+				// prepare execution
+				p->exec.error = ERR_NONE;
+				p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
+				p->exec.error = tokenize_full(&prog, &bc, p, TOKOPT_NONE);
+				if (p->exec.error == ERR_NONE){
+					run(bc, p);
+				}
+				// TODO:IMPL:HIGH copy strings of type BC_* to dynamic alloc'd strings
+				}
+				break;
+				
+			case LAUNCH_EDIT: // EDIT mode
+				p->exec.error = ERR_NONE;
+				get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(0);
+				run(editor_bc, p);
+				int sig = p->exec.error_info[0];
+				if (p->exec.error == ERR_BUTTON_SIGNAL){
+					if (sig == 71){ // RUN/DIRECT
+						state = LAUNCH_PROMPT;
+						// copy program to memory
+						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
+						run(editor_bc, p);
+						// reset screen
+						p->exec.error = ERR_NONE;
+						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
+						run(editor_bc, p);
+					}
+				} else if (p->exec.error == ERR_USER_SIGNAL){
+					if (sig == 1){ // run program
+						state = LAUNCH_RUN;
+						p->exec.error = ERR_NONE;
+						// copy program to memory
+						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
+						run(editor_bc, p);
+						// reset screen
+						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
+						run(editor_bc, p);
+						// execute 
+						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(4);
+						run(editor_bc, p);
+					}
+				}
+				p->exec.error = ERR_NONE; // clear signal
+				p->exec.error_info[0] = 0; // clear signal info
+				// check for exit cause to determine next state
+				break;
+				
+			case LAUNCH_RUN: // 'RUN' mode
+				p->exec.error = tokenize_full(&p->exec.prg, &bc, p, opts);
+				if (p->exec.error == ERR_NONE){
+					run(bc, p);
+				}
+				state = LAUNCH_PROMPT; // program terminated: return to DIRECT mode
+				break;
+				
+			case LAUNCH_BENCH: // benchmark tests
+				sbc_benchmark(launch_info);
+				state = LAUNCH_PROMPT; // return to DIRECT when done
+				break;
+				
+			case LAUNCH_AUTOLOAD: // auto load and exec
+				{
+				struct program prog = {0};
+				prg_load(&prog, info->prg_filename);
+				p->exec.error = tokenize_full(&prog, &bc, p, opts);
+				if (p->exec.error == ERR_NONE){
+					run(bc, p);
+				}
+				state = LAUNCH_PROMPT; // program terminated: return to DIRECT mode
+				}
+				break;
+				
+			default:
+				return p->exec.error;
+		}
+		
+		if (old_state == LAUNCH_RUN || old_state == LAUNCH_PROMPT){
+			// Display error status (for any given execution)
+			continue;
+			iprintf("Error: %s\n", error_messages[p->exec.error]);
+			
+			strcpy((char*)err_msg + 2, error_messages[p->exec.error]);
+			err_msg[1] = strlen(error_messages[p->exec.error]);
+			strcpy((char*)err_msg + 2 + err_msg[1], p->exec.error_info);
+			err_msg[1] += strlen(p->exec.error_info);
+			
+			con_puts(&info->p->console, &err_msg);
+			con_newline(&info->p->console, true);
+		}
+		// clear error status for next execution
+		p->exec.error = ERR_NONE;
+		p->exec.error_info[0] = '\0'; // remove error string
+	}
+	
+	free_log("free exec.prg.data", p->exec.prg.data);
 	free_bytecode(bc);
 	return info->p->exec.error;
 }
@@ -266,10 +385,10 @@ int main(void){
 	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
 #endif
 	
-	struct program program = {0};
+//	struct program program = {0};
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	
-	struct launch_info info = {ptc, &program};
+	struct launch_info info = {ptc, NULL, NULL};
 	
 	// set this after creating system to ensure resources are loaded
 	
@@ -281,6 +400,11 @@ int main(void){
 	// only needs BC, not source
 	system_launch(&info);
 //	run(bc, ptc);
+	
+	// make failure conditions readable
+	do {
+		scanKeys();
+	} while (!(keysCurrent() & KEY_TOUCH));
 	
 	return 0;
 }
@@ -346,7 +470,7 @@ int main(int argc, char** argv){
 	//  Rendering <==             struct ptc ~ display state
 	
 	// Launch the program thread
-	struct launch_info info = {ptc, &program};
+	struct launch_info info = {ptc, &program, argc >= 2 ? argv[1] : NULL};
 	thrd_t prog_thread;
 	if (thrd_success != thrd_create(&prog_thread, system_launch, &info)){
 		printf("Failed to create the program thread!\n");

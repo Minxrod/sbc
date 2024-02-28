@@ -20,5 +20,6 @@ void func_peekh(struct ptc* p);
 void func_peekb(struct ptc* p);
 
 void func_addr(struct ptc* p);
+void func_ptr(struct ptc* p);
 
 void sys_memsafe(struct ptc* p);

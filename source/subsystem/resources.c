@@ -324,7 +324,6 @@ int get_chr_index(struct ptc* p, char* res){
 
 // Returns a data pointer for the resource
 // Returns NULL, if the resource name was invalid
-// TODO:ERR:MED Should ONLY work for exact names (currently allows some invalid strings)
 void* get_resource(struct ptc* p, char* name, int len){
 	assert(name);
 	assert(len <= 5);
@@ -432,11 +431,27 @@ void cmd_load(struct ptc* p){
 	
 	char* res_type = (index == -1) ? "PRG" : res_str;
 	char* res_name = (index == -1) ? res_str : &res_str[index+1];
-	void* res_data = get_resource(p, res_type, strlen(res_type));
+	void* res_data = (index == -1) ? p->exec.prg.data : get_resource(p, res_type, strlen(res_type));
+	
 	iprintf("Attempting load of type=%s (%d) name=%s at ptr=%p\n", res_type, (int)strlen(res_type), res_name, res_data);
 	if (!res_data) return; // Note: error set in get_resource
-	
-	switch (get_resource_type(res)){
+	int resource_type = TYPE_PRG;
+	if (index != -1){
+		resource_type = get_resource_type(res);
+	}
+	switch (resource_type){
+		case TYPE_PRG:
+			{
+			int size = check_load_res(res_data, "programs/", res_name, resource_type);
+			if (!size){
+				ERROR(ERR_FILE_LOAD_FAILED);
+				// TODO: set RESULT instead
+			} else {
+				p->exec.prg.size = size;
+			}
+			}
+			break;
+			
 		case TYPE_CHR:
 			// TODO:IMPL:MED Select path for searching
 			if (!load_chr(res_data, "programs/", res_name)){

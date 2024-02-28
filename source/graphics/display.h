@@ -9,6 +9,10 @@ struct display;
 #ifdef ARM9
 #include "graphics/nds/display_nds.h"
 #endif
+#ifdef NONE
+struct display {
+};
+#endif
 
 void init_display(struct ptc*);
 void free_display(struct display*);
