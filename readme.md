@@ -6,35 +6,51 @@ This is a re-implementation of Petit Computer (again) but with some different
 goals from PTC-EmkII.
 
 The goals of this program are roughly the following (in priority order)
-* Low memory usage
-* Performance
-* Compatibility
+* Lower memory usage compared to PTC
+* Performance comparable to PTC
+* Compatibility with PTC
 
 The goal of this is to write a cross-platform "compatible with PTC" interpreter
 that can work on both computer and on a DS(i).
 
-# How do I run it?
+This BASIC implementation also includes some extra functions for memory access.
 
-There are two targets currently.
-`make test` - build tests
-`make` - build regular program
+# How do I build it?
 
 ## NDS/DSi
 
-Install devkitARM, run `make -f Makefile`, and see if the output .nds works
-on your device.
+Requires devkitARM to be installed first. You can find instructions for setting up here: https://devkitpro.org/wiki/Getting_Started
 
-Untested for several versions currently.
-* TODO: Document test devices!
+Once installed, from the project root run `make -f Makefile`, and copy both the output .nds and the resources/ directory to the same location. Example:
+```sh
+cd sbc/
+make -f Makefile
+cp *.nds 'path/to/your/sd/'
+cp -r resources 'path/to/your/sd/.'
+```
+You will additionally need the various graphical resources not provided. To dump these from a copy of PTC, see instructions here: https://github.com/Minxrod/PTC-EmkII?tab=readme-ov-file#first-time-setup
+The expected file structure is flattened here: simply move all graphical files to the resources/ folder.
+
+This program has been tested with melonDS and on an R4.
 
 ## Computers
 
-There is also a makefile for regular computer platforms. (i.e. Windows, Linux)
-This targets `gcc -std=c11`, but may work with other compilers as well. If it
-doesn't, create an issue and I'll see if I can fix it.
+While this program may compile with other compilers, it was only tested with gcc on Debian 12. If it does not work with your compiler, please create an issue and provide OS/compiler version information.
 
-To build the main program for the computer target, use `make -f makefile`.
-To build the test cases, use `make -f makefile test`.
-You will need to specify the SFML install path currently, and build CSFML
-(located here: https://github.com/SFML/CSFML)
+For the PC version, first install SFML and CSFML for your platform. Note that this program was built for SFML 2.5.1, and so the version you need will be found here: https://www.sfml-dev.org/download/sfml/2.5.1/.
+For CSFML, the 2.5.1 bindings can be downloaded here: https://www.sfml-dev.org/download/csfml/, or you can build from source (located at https://github.com/SFML/CSFML).
 
+Once SFML and CSFML are installed, you will need to edit the makefile (with a lowercase 'm') and modify the CSFML path to point to your installation. Once this is done, you should be able to compile with
+```sh
+cd sbc/
+make -f makefile
+```
+If it works, the output executable file will be called 'test'. You can provide the necessary resource files in the resources/ directory.
+
+# Licenses
+
+On NDS, this program relies on devkitARM and libfat, provided by devkitPro: https://devkitpro.org/
+The license is listed here: https://github.com/devkitPro/libnds/blob/master/libnds_license.txt
+Libfat individually can be found here, and has the license at the top of various source files: https://github.com/devkitPro/libfat
+
+On PC, this program uses SFML with the CSFML binding, licensed under the zlib license: https://www.sfml-dev.org/

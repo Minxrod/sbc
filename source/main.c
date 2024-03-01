@@ -115,8 +115,6 @@ int system_launch(void* launch_info){
 	struct launch_info* info = (struct launch_info*)launch_info;
 	struct ptc* p = info->p; // TODO:PERF:NONE replace all instances of info->p?
 	
-	// User program setup
-	
 	// DIRECT setup
 	struct bytecode prompt_bc = init_bytecode_size(14, 1, 0); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
 	tokenize_full(&launcher, &prompt_bc, p, TOKOPT_NONE);
@@ -209,10 +207,11 @@ int system_launch(void* launch_info){
 					if (sig == 71){ // RUN/DIRECT
 						state = LAUNCH_PROMPT;
 						// copy program to memory
+						p->exec.error = ERR_NONE;
+						p->exec.error_info[0] = 0; // clear signal info
 						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
 						run(editor_bc, p);
 						// reset screen
-						p->exec.error = ERR_NONE;
 						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
 						run(editor_bc, p);
 					}
@@ -220,20 +219,20 @@ int system_launch(void* launch_info){
 					if (sig == 1){ // run program
 						state = LAUNCH_RUN;
 						p->exec.error = ERR_NONE;
+						p->exec.error_info[0] = 0; // clear signal info
 						// copy program to memory
 						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
 						run(editor_bc, p);
 						// reset screen
 						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
 						run(editor_bc, p);
-						// execute 
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(4);
-						run(editor_bc, p);
 					}
+				} else {
+					state = LAUNCH_PROMPT;
+					// crash to console to allow reading error message
 				}
-				p->exec.error = ERR_NONE; // clear signal
-				p->exec.error_info[0] = 0; // clear signal info
-				// check for exit cause to determine next state
+				// set this to allow EDITOR to be correctly started via LOAD/RUN or EXEC, if wanted
+				get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(1);
 				break;
 				
 			case LAUNCH_RUN: // 'RUN' mode
@@ -265,19 +264,17 @@ int system_launch(void* launch_info){
 				return p->exec.error;
 		}
 		
-		if (old_state == LAUNCH_RUN || old_state == LAUNCH_PROMPT){
-			// Display error status (for any given execution)
-			continue;
-			iprintf("Error: %s\n", error_messages[p->exec.error]);
-			
-			strcpy((char*)err_msg + 2, error_messages[p->exec.error]);
-			err_msg[1] = strlen(error_messages[p->exec.error]);
-			strcpy((char*)err_msg + 2 + err_msg[1], p->exec.error_info);
-			err_msg[1] += strlen(p->exec.error_info);
-			
-			con_puts(&info->p->console, &err_msg);
-			con_newline(&info->p->console, true);
-		}
+		(void)old_state;
+		// Display error status (for any given execution)
+		iprintf("Error: %s\n", error_messages[p->exec.error]);
+		
+		strcpy((char*)err_msg + 2, error_messages[p->exec.error]);
+		err_msg[1] = strlen(error_messages[p->exec.error]);
+		strcpy((char*)err_msg + 2 + err_msg[1], p->exec.error_info);
+		err_msg[1] += strlen(p->exec.error_info);
+		
+		con_puts(&info->p->console, &err_msg);
+		con_newline(&info->p->console, true);
 		// clear error status for next execution
 		p->exec.error = ERR_NONE;
 		p->exec.error_info[0] = '\0'; // remove error string
@@ -433,8 +430,10 @@ void v__(void); //prevent empty translation unit
 #include "system.h"
 #include "error.h"
 
+#include "extension/sbc_blockalloc.h" // to allow pointers to be limited to 32 bits for compatibility
+
 int main(int argc, char** argv){
-//	srand(time(NULL));
+	init_memory(MAX_MEMORY);
 	struct program program = {0};
 	
 	char* window_name = "SBC";
@@ -566,6 +565,7 @@ int main(int argc, char** argv){
 	
 	free_system(ptc);
 	
+	free_memory();
 	return 0;
 }
 #endif

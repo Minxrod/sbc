@@ -17,7 +17,12 @@
 #include "input.h"
 #include "timers.h"
 
-#include "graphics/display.h"
+#ifdef PC
+#include "graphics/pc/display_pc.h"
+#endif
+#ifdef ARM9
+#include "graphics/nds/display_nds.h"
+#endif
 
 // note that VAR_LIMIT should be a multiple of 2 to ensure that
 // the current hash algorithm works

@@ -71,6 +71,7 @@ enum err_code {
 	ERR_UNKNOWN_TRANSITION,
 	ERR_BUTTON_SIGNAL,
 	ERR_USER_SIGNAL,
+	ERR_FILE_SAVE_FAILED,
 };
 
 extern const char * error_messages[];

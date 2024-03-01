@@ -30,3 +30,14 @@ struct display {
 	struct sfTexture* chr_tex[12];
 	struct sfTexture* col_tex;
 };
+
+void init_display(struct ptc*);
+void free_display(struct display*);
+
+void display_draw_all(struct ptc* p);
+void display_draw_text(struct ptc* p, int screen, int prio);
+void display_draw_background(struct ptc* p, int screen, int prio);
+void display_draw_sprite(struct ptc* p, int screen, int prio);
+void display_draw_graphics(struct ptc* p, int screen, int prio);
+void display_draw_panel(struct ptc* p, int screen, int prio);
+

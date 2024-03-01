@@ -68,7 +68,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
 	ptc_err, ptc_err, cmd_load, ptc_err, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
-	cmd_restore, ptc_err, cmd_run, ptc_err, ptc_err, ptc_err, cmd_spangle, //SPANGLE, 
+	cmd_restore, ptc_err, cmd_run, cmd_save, ptc_err, ptc_err, cmd_spangle, //SPANGLE, 
 	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
 	cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv, cmd_swap, //SWAP, 
 	cmd_tmread, //TMREAD,

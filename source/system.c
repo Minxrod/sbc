@@ -12,7 +12,6 @@
 
 #include "interpreter.h"
 #include "program.h"
-#include "graphics/display.h"
 
 struct ptc* init_system(int var, int str, int arr){
 	// TODO:CODE:LOW Where to put this?

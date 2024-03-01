@@ -82,21 +82,37 @@ typedef signed int fixp;
 #define iprintf dbg_printf
 #endif
 
+#ifdef PC
+#include "sbc_blockalloc.h"
+#endif
+
 static inline void* malloc_log(char* msg, size_t size){
+#ifdef PC
+	void *ptr = sbc_malloc(size);
+#else
 	void* ptr = malloc(size);
+#endif
 	iprintf("%s malloc'd %zu at %p\n", msg, size, ptr);
 	return ptr;
 }
 
 static inline void* calloc_log(char* msg, size_t num, size_t size){
+#ifdef PC
+	void *ptr = sbc_calloc(num, size);
+#else
 	void* ptr = calloc(num, size);
+#endif
 	iprintf("%s calloc'd %zu(%zu*%zu) at %p\n", msg, num*size, num, size, ptr);
 	return ptr;
 }
 
 static inline void free_log(char* msg, void* ptr){
 	iprintf("%s free'd %p\n", msg, ptr);
+#ifdef PC
+	sbc_free(ptr);
+#else
 	free(ptr);
+#endif
 }
 
 

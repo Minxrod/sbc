@@ -32,6 +32,7 @@ extern const char* resource_path;
 #define GRP_SIZE (GRP_WIDTH*GRP_HEIGHT*1)
 #define SCR_SIZE ( 64* 64*2)
 #define COL_SIZE ( 16* 16*2)
+#define MEM_SIZE (256*  2)
 
 #define CHR_BANKS (4+4+4+8+2)
 #define SCR_BANKS 4

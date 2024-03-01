@@ -45,7 +45,7 @@ void func_floor(struct ptc* p){
 }
 
 fixp func_log_internal(fixp value){
-	return round(4096*log(value/4096));
+	return round(4096*log(value/4096.0));
 }
 
 void func_log(struct ptc* p){

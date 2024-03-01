@@ -11,9 +11,8 @@
 const char* resource_path = "resources/";
 
 int resource_size[6] = {
-	0, CHR_SIZE, SCR_SIZE, GRP_SIZE, 0, COL_SIZE,
+	0, CHR_SIZE, SCR_SIZE, GRP_SIZE, MEM_SIZE, COL_SIZE,
 };
-
 
 /// Load from a file, skipping past part of it if needed and reading only a certain length
 bool load_file(u8* dest, const char* name, int skip, int len){
@@ -59,6 +58,61 @@ if (ferror(f)){\
 	FILE_CLOSE(msg);\
 } } while(0)
 
+char* internal_type_str[] = {
+	"PETC0300RPRG",
+	"PETC0100RCHR",
+	"PETC0100RSCR",
+	"PETC0100RGRP",
+	"PETC0200RMEM",
+	"PETC0100RCOL",
+};
+
+int check_save_res(void* src, const char* search_path, const char* name, int type){
+	int size_read;
+	char path[256] = {0};
+	if (strlen(search_path) + strlen(name) >= 252){
+		FILE_ERROR("File name too long");
+	}
+	strcpy(path, search_path);
+	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
+	strcpy(path + strlen(search_path) + strlen(name), ".PTC"); // always add extension when saving
+	
+	if (type == TYPE_PRG){
+		FILE* f = fopen(path, "wb");
+		if (!f){
+			FILE_ERROR("Could not open file for writing");
+		}
+		struct program prg = *(struct program*)src;
+		
+		char data[12] = {0};
+		data[8] = prg.size & 0xff;
+		data[9] = (prg.size >> 8) & 0xff;
+		data[10] = (prg.size >> 16) & 0xff;
+		
+		fwrite(internal_type_str[type], 1, 12, f); // TODO:IMPL:LOW option to indicate different formats
+		CHECK_FILE_ERROR("Failed to write file type");
+		fwrite(data, 1, 12, f);
+		CHECK_FILE_ERROR("Failed to write program header");
+		size_read = fwrite(prg.data, 1, prg.size, f);
+		CHECK_FILE_ERROR("Failed to write program data");
+		FILE_OK(); // close and return size_read
+	} else if (type > TYPE_PRG && type < TYPE_INVALID && type != TYPE_MEM) {
+		// unimplemented type
+		FILE* f = fopen(path, "wb");
+		if (!f){
+			FILE_ERROR("Could not open file for writing");
+		}
+		
+		fwrite(internal_type_str[type], 1, 12, f); // TODO:IMPL:LOW different formats
+		CHECK_FILE_ERROR("Failed to write file type");
+		size_read = fwrite((u8*)src, 1, resource_size[type], f);
+		CHECK_FILE_ERROR("Failed to write resource data");
+		FILE_OK(); // close and return size_read
+	} else {
+		FILE_ERROR("Unimplemented or invalid resource save type");
+	}
+}
+
 int check_load_res(u8* dest, const char* search_path, const char* name, int type){
 	int size_read;
 	char path[256] = {0};
@@ -80,19 +134,46 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 				FILE_ERROR("Failed to load file");
 			}
 		}
-		struct ptc_header h;
+		char check_type[4];
+		fread(check_type, sizeof(char), 4, f);
+		CHECK_FILE_ERROR("Failed to read file magic ID");
+		fseek(f, 0, SEEK_SET);
+		CHECK_FILE_ERROR("Failed to seek to file start");
 		
-		/// TODO:CODE:MED I think this only works on little-endian devices...
-		/// (reading into header memory directly)
-		size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
-		CHECK_FILE_ERROR("Could not read header correctly");
-		if (size_read < PRG_HEADER_SIZE){
-			FILE_CLOSE("Could not read full header");
+		if (!strncmp(check_type, "PX01", 4)){
+			struct ptc_header h;
+			
+			/// TODO:CODE:MED I think this only works on little-endian devices...
+			/// (reading into header memory directly)
+			size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
+			CHECK_FILE_ERROR("Could not read header correctly");
+			if (size_read < PRG_HEADER_SIZE){
+				FILE_CLOSE("Could not read full header");
+			}
+			// Assumed successful header read - now load file contents into dest
+			size_read = fread(dest, sizeof(char), h.prg_size, f);
+			return size_read;
+		} else if (!strncmp(check_type, "PETC", 4)){
+			// internal format
+			if (fseek(f, 12, SEEK_SET)){
+				FILE_CLOSE("Failed to seek past type");
+			}
+			// read header
+			u8 prg_header[12];
+			size_read = fread(prg_header, sizeof(u8), 12, f);
+			CHECK_FILE_ERROR("Could not read program header");
+			if (size_read < 12){
+				FILE_CLOSE("Could not read complete program header");
+			}
+			// TODO:IMPL:LOW Handle packaged program files
+			// get size from header
+			int prg_size = prg_header[8] | prg_header[9] << 8 | prg_header[10] << 16;
+			
+			size_read = fread(dest, sizeof(char), prg_size, f);
+			return size_read;
+		} else {
+			FILE_ERROR("Unknown PRG file format");
 		}
-		// Assumed successful header read - now load file contents into dest
-		size_read = fread(dest, sizeof(char), h.prg_size, f);
-		return size_read;
-		
 	} else if (type >= TYPE_CHR && type <= TYPE_COL){
 		return check_load_file(dest, "", path, resource_size[type]);
 	}
@@ -472,6 +553,67 @@ void cmd_load(struct ptc* p){
 		case TYPE_GRP:
 			if (!load_grp(res_data, "programs/", res_name)){
 				ERROR(ERR_FILE_LOAD_FAILED);
+			}
+			break;
+			
+		case TYPE_SCR:
+			if (!load_scr(res_data, "programs/", res_name)){
+				ERROR(ERR_FILE_LOAD_FAILED);
+			}
+			break;
+		
+		// TODO:IMPL:HIGH Other file types
+		default:
+			iprintf("Error: Unimplemented/invalid resource type\n %s:%s\n", res_type, res_name);
+			ERROR(ERR_INVALID_RESOURCE_TYPE);
+	}
+}
+
+void cmd_save(struct ptc* p){
+	void* res = value_str(ARG(0));
+	// TODO:IMPL:LOW Dialog popups
+	// TODO:ERR:LOW Check errors are correct
+	// longest name:
+	// RRRNP:ABCDEFGH
+	char res_str[14+1] = {0}; // null terminated
+	if (str_len(res) > 14){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	str_char_copy(res, (u8*)res_str);
+	int index = -1;
+	for (int i = 0; i <= (int)str_len(res); ++i){
+		if (res_str[i] == ':'){
+			res_str[i] = '\0'; // null-terminated for strlen later on
+			index = i;
+			break;
+		}
+	}
+	if (index == -1 && str_len(res) >= 8) {
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	
+	char* res_type = (index == -1) ? "PRG" : res_str;
+	char* res_name = (index == -1) ? res_str : &res_str[index+1];
+	void* res_data = (index == -1) ? &p->exec.prg : get_resource(p, res_type, strlen(res_type));
+	
+	iprintf("Saving type=%s (%d) name=%s at ptr=%p\n", res_type, (int)strlen(res_type), res_name, res_data);
+	if (!res_data) return; // Note: error set in get_resource
+	int resource_type = TYPE_PRG;
+	if (index != -1){
+		resource_type = get_resource_type(res);
+	}
+	switch (resource_type){
+		case TYPE_PRG:
+		case TYPE_CHR:
+		case TYPE_COL:
+		case TYPE_GRP:
+		case TYPE_SCR:
+			{
+			int size = check_save_res(res_data, "programs/", res_name, resource_type);
+			if (!size){
+				ERROR(ERR_FILE_SAVE_FAILED);
+				// TODO: set RESULT instead
+			}
 			}
 			break;
 			

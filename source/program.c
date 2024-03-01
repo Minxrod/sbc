@@ -27,7 +27,7 @@ struct bytecode init_bytecode(void){
 	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
 	struct bytecode bc = {
 		0,
-		calloc_log("init_bytecode", 2, 524288),
+		calloc_log("init_bytecode", 1, 524288),
 		calloc_log("init_bytecode", 1, MAX_LINES),
 		init_labels(MAX_LABELS)
 	};

@@ -9,8 +9,7 @@
 #include <string.h>
 
 //Note: Should be const, but need to pass void* into this.
-char* single_char_strs = 
-"S\1\x00S\1\x01S\1\x02S\1\x03S\1\x04S\1\x05S\1\x06S\1\x07S\1\x08S\1\x09S\1\x0aS\1\x0bS\1\x0cS\1\x0dS\1\x0eS\1\x0f"
+char* single_char_strs_src = "S\1\x00S\1\x01S\1\x02S\1\x03S\1\x04S\1\x05S\1\x06S\1\x07S\1\x08S\1\x09S\1\x0aS\1\x0bS\1\x0cS\1\x0dS\1\x0eS\1\x0f"
 "S\1\x10S\1\x11S\1\x12S\1\x13S\1\x14S\1\x15S\1\x16S\1\x17S\1\x18S\1\x19S\1\x1aS\1\x1bS\1\x1cS\1\x1dS\1\x1eS\1\x1f"
 "S\1\x20S\1\x21S\1\x22S\1\x23S\1\x24S\1\x25S\1\x26S\1\x27S\1\x28S\1\x29S\1\x2aS\1\x2bS\1\x2cS\1\x2dS\1\x2eS\1\x2f"
 "S\1\x30S\1\x31S\1\x32S\1\x33S\1\x34S\1\x35S\1\x36S\1\x37S\1\x38S\1\x39S\1\x3aS\1\x3bS\1\x3cS\1\x3dS\1\x3eS\1\x3f"
@@ -26,8 +25,10 @@ char* single_char_strs =
 "S\1\xd0S\1\xd1S\1\xd2S\1\xd3S\1\xd4S\1\xd5S\1\xd6S\1\xd7S\1\xd8S\1\xd9S\1\xdaS\1\xdbS\1\xdcS\1\xddS\1\xdeS\1\xdf"
 "S\1\xe0S\1\xe1S\1\xe2S\1\xe3S\1\xe4S\1\xe5S\1\xe6S\1\xe7S\1\xe8S\1\xe9S\1\xeaS\1\xebS\1\xecS\1\xedS\1\xeeS\1\xef"
 "S\1\xf0S\1\xf1S\1\xf2S\1\xf3S\1\xf4S\1\xf5S\1\xf6S\1\xf7S\1\xf8S\1\xf9S\1\xfaS\1\xfbS\1\xfcS\1\xfdS\1\xfeS\1\xff";
+char* empty_str_src = "S\0";
 
-char* empty_str = "S\0";
+char* single_char_strs;
+char* empty_str;
 
 char* hex_digits = "0123456789ABCDEF";
 
@@ -89,6 +90,17 @@ bool namecmp(const char* a, const u32 len, const char b[16]){
 
 /// Allocate memory for strs
 void init_mem_str(struct strings* s, const uint_fast16_t str_count, const enum string_type str_type){
+#ifdef PC
+	// dynamic alloc places these special strings into the correct address space
+	single_char_strs = malloc_log("special_strings", 256*3+2);
+	empty_str = single_char_strs + 768;
+	memcpy(single_char_strs, single_char_strs_src, 768);
+	memcpy(empty_str, empty_str_src, 2);
+#else
+	single_char_strs = single_char_strs_src;
+	empty_str = empty_str_src;
+#endif
+	
 	s->strs_max = str_count;
 	s->strs = calloc_log("init_mem_str", str_count, sizeof(struct string));
 	s->type = str_type;

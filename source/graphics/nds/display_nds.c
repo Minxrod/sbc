@@ -179,7 +179,7 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 			
 			(void)sc;
 			(void)oam_rot;
-			if (i < 32){ // rotation groups
+			if (i < 32 && s != p->panel.keys){ // rotation groups
 				oam[i].x -= s[i].w / 2;
 				oam[i].y -= s[i].h / 2;
 				oam[i].isRotateScale = true;

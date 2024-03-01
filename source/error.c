@@ -65,4 +65,5 @@ const char * error_messages[] = {
 	"Unknown transition",
 	"Special button triggered break",
 	"Program triggered break",
+	"File failed to save",
 };
