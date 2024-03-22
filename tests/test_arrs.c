@@ -6,7 +6,7 @@
 
 int test_arrs(){
 	// init_mem_arr works as expected
-	{
+	MEM_CASE {
 		struct arrays arrs;
 		init_mem_arr(&arrs, 2, 16);
 		
@@ -15,10 +15,10 @@ int test_arrs(){
 		ASSERT(arrs.arr_data_next == 0, "[init_mem_arr] Correct next element");
 		
 		free_mem_arr(&arrs);
-	}
+	} MEM_CASE_END
 	
 	// can create a new array
-	{
+	MEM_CASE {
 		struct arrays arrs;
 		init_mem_arr(&arrs, 2, 16);
 		
@@ -29,10 +29,10 @@ int test_arrs(){
 		ASSERT(arr_size(d, ARR_DIM2) == ARR_DIM2_UNUSED, "[arr_size] No second dimension");
 		
 		free_mem_arr(&arrs);
-	}
+	} MEM_CASE_END
 	
 	// can create a new 2d array
-	{
+	MEM_CASE {
 		struct arrays arrs;
 		init_mem_arr(&arrs, 2, 16);
 		
@@ -43,10 +43,10 @@ int test_arrs(){
 		ASSERT(arr_size(d, ARR_DIM2) == 2, "[arr_size] Size of dimension 2");
 		
 		free_mem_arr(&arrs);
-	}
+	} MEM_CASE_END
 	
 	// array indexing
-	{
+	MEM_CASE {
 		struct arrays arrs;
 		init_mem_arr(&arrs, 2, 16);
 		
@@ -70,10 +70,10 @@ int test_arrs(){
 		ASSERT(arr_entry(d, 2, 0)->number == INT_TO_FP(11), "[arr_entry] Entry 2 set to 12");
 		
 		free_mem_arr(&arrs);
-	}
+	} MEM_CASE_END
 	
 	// Initialize string array
-	{
+	MEM_CASE {
 		struct arrays arrs;
 		init_mem_arr(&arrs, 2, 16);
 		
@@ -93,7 +93,7 @@ int test_arrs(){
 		ASSERT(str_comp(arr_entry(d, 1, 0)->ptr, "S\3zyx"), "[arr_entry] Entry 1 set to \"zyx\"");
 		
 		free_mem_arr(&arrs);
-	}
+	} MEM_CASE_END
 	
 	SUCCESS("test_arrs success");
 }

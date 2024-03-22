@@ -18,6 +18,8 @@
 
 #define MAX_STRLEN 256
 
+#define ERR_NUMBER_OUT_OF_RANGE 0x0123456789abcdef
+
 extern char* single_char_strs;
 extern char* empty_str;
 extern char* hex_digits;
@@ -93,11 +95,11 @@ int digit_value(const u16 c);
 // Checks if a given u16 can be converted to a u8 without loss
 bool is_char(const u16 w);
 
-fixp u8_to_number(u8* data, const int len, const int base, const bool allow_decimal);
+int64_t u8_to_number(u8* data, const int len, const int base, const bool allow_decimal);
 
 // Convert a string to a number, for any base in 2-16.
 // (Only 2,10,16 support is required for PTC)
-fixp str_to_number(const void*, const int base, const bool allow_decimal);
+int64_t str_to_number(const void*, const int base, const bool allow_decimal);
 
 // Convert number to string PTC style + sets length
 void fixp_to_str(const fixp num, void* str);
@@ -106,7 +108,7 @@ void fixp_to_str(const fixp num, void* str);
 void fixp_to_char(const fixp num, u8* str);
 
 // Convert string to number PTC style
-fixp u8_to_num(u8* data, const idx len);
+int64_t u8_to_num(u8* data, const idx len);
 
 // Constants for types mask
 // If set true, use u16, else u8 characters
@@ -150,7 +152,9 @@ void str_set_len(void* src, int len);
 // Compare two strings for equality
 bool str_comp(const void* str1, const void* str2);
 
-// Copy str1 to str2
+/// Copy str1 to str2, reusing str2's existing buffer
+/// @note Sets length of str2 to that of str1
+/// @note Does not modify uses
 void str_copy(const void* str1, void* str2);
 
 // Concatenate two strings

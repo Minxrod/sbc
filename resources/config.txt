@@ -1,3 +1,23 @@
-22 18 0 3 72 74 73 71 16 4 58 36
-73 74 71 72 99 99 99 99 16 4 58 36
+73 74 71 72 58 99 99 59 38 42 99 36 39
+22 18 0 3 72 74 73 71 38 42 58 36 39
 
+// TODO:CODE:LOW Document this better, add to readme
+First row: Keyboard/editor mode
+Arrow keys = dpad
+Enter = A
+Backspace = Y
+LR = Left/Right shift
+Select = Escape
+
+Second row: Button/game mode
+WASD = dpad
+Arrow keys = ABXY
+LR = Left/Right shift
+Enter = Start
+Select = Escape
+
+See https://www.sfml-dev.org/documentation/2.6.1/classsf_1_1Keyboard.php
+to determine key codes.
+
+Order: Up Down Left Right A B X Y L R START SELECT [MODE]
+MODE switches between control scheme 1 and 2.

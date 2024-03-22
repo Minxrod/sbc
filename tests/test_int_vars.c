@@ -10,8 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Test code (needs to persist after exec for reading some test results)
-
 int test_int_vars(){
 	{
 		char* code = "A=5\rB=8\rC=A+B\r";
@@ -60,7 +58,7 @@ int test_int_vars(){
 		struct named_var* v = get_var(&p->vars, "A", 1, VAR_STRING);
 		char* s = (char*)v->value.ptr;
 		
-		ASSERT(*s == BC_STRING, "[assign] Correct string type");
+		ASSERT(*s == STRING_CHAR, "[assign] Correct string type");
 		ASSERT(str_len(s) == 6, "[assign] Correct string length");
 		ASSERT(str_comp(s, str2), "[assign] Assign string");
 		
@@ -246,11 +244,11 @@ int test_int_vars(){
 		struct string* s2 = (struct string*)get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 1, ARR_DIM2_UNUSED)->ptr;
 		struct string* s3 = (struct string*)get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 2, ARR_DIM2_UNUSED)->ptr;
 		
-		ASSERT(s1->type == BC_STRING, "[array] Correct string type 1");
+		ASSERT(s1->type == STRING_CHAR, "[array] Correct string type 1");
 		ASSERT(str_len(s1) == 1, "[array] Correct string length");
 		ASSERT(str_comp(s1, strA), "[array] Assign string");
 		
-		ASSERT(s2->type == BC_STRING, "[array] Correct string type 2");
+		ASSERT(s2->type == STRING_CHAR, "[array] Correct string type 2");
 		ASSERT(str_len(s2) == 1, "[array] Correct string length");
 		ASSERT(str_comp(s2, strB), "[array] Assign string");
 		
@@ -445,5 +443,18 @@ int test_int_vars(){
 		
 		free_code(p);
 	}
+	
+	// Sysvar write validation
+	{
+		struct ptc* p = run_code_opts(
+			"TABSTEP=30\r",
+			TOKOPT_VARIABLE_IDS
+		);
+		
+		ASSERT(p->console.tabstep == 16, "[sysavr] Writing sysvar adjusted to valid value");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_vars success");
 }

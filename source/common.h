@@ -21,12 +21,13 @@
 #include <stdio.h> // debugging
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define FIXPOINT 12
 // Takes a fixed point number and gets the integer portion
 #define FP_TO_INT(num) ((num) >> FIXPOINT)
 // Takes an integer and converts it to fixed point
-#define INT_TO_FP(num) ((num) << FIXPOINT)
+#define INT_TO_FP(num) ((fixp)(((uint32_t)(num)) << FIXPOINT))
 // Creates a fixed point number from integer and fractional components
 
 // for bad failures 
@@ -115,4 +116,13 @@ static inline void free_log(char* msg, void* ptr){
 #endif
 }
 
+// loosely based on ideas from https://stackoverflow.com/questions/2100331/macro-definition-to-determine-big-endian-or-little-endian-machine
+// 0x04030201 if LE
+static const uint32_t endian = 0x01020304u;
+#define LITTLE_ENDIAN (\
+	(((char*)&endian)[0] == 4) &&\
+	(((char*)&endian)[1] == 3) &&\
+	(((char*)&endian)[2] == 2) &&\
+	(((char*)&endian)[3] == 1)\
+)
 

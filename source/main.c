@@ -113,10 +113,10 @@ enum launch_state {
 int system_launch(void* launch_info){
 	u8 err_msg[66] = {STRING_INLINE_CHAR}; // 2 lines + metadata
 	struct launch_info* info = (struct launch_info*)launch_info;
-	struct ptc* p = info->p; // TODO:PERF:NONE replace all instances of info->p?
+	struct ptc* p = info->p;
 	
 	// DIRECT setup
-	struct bytecode prompt_bc = init_bytecode_size(14, 1, 0); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
+	struct bytecode prompt_bc = init_bytecode_size(launcher.size, 1, 0); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
 	tokenize_full(&launcher, &prompt_bc, p, TOKOPT_NONE);
 	
 	// editor setup
@@ -128,20 +128,20 @@ int system_launch(void* launch_info){
 	free_log("editor temp load", editor.data);
 	
 	// for user programs / "RUN" setup
-	struct bytecode bc = init_bytecode_size(524288, 10000, MAX_LABELS);
+	struct bytecode bc = init_bytecode_size(MAX_SOURCE_SIZE, MAX_LINES, MAX_LABELS);
 	if (!bc.labels.entry || !bc.data){
 		iprintf("Failed to allocate bytecode...\n");
 		return -1;
 	}
-	init_mem_prg(&p->exec.prg, 524288/2); // TODO:CODE:MED Make this size make more sense
+	init_mem_prg(&p->exec.prg, MAX_SOURCE_SIZE);
 	if (!p->exec.prg.data){
 		iprintf("Failed to allocate program...\n");
 		return -1;
 	}
 	
 	// Setup complete
-	con_puts(&info->p->console, "S\45Small BASIC Computer            READY");
-	con_newline(&info->p->console, true);
+	con_puts(&p->console, "S\45Small BASIC Computer            READY");
+	con_newline(&p->console, true);
 	bool running = true;
 	
 	int state = LAUNCH_PROMPT;
@@ -154,14 +154,14 @@ int system_launch(void* launch_info){
 	int opts = TOKOPT_VARIABLE_IDS;
 	while (running){
 		p->exec.error = ERR_NONE; // prepare for next execution
-		info->p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
+		p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
 		int old_state = state;
-		switch (state){ // TODO:CODE:MED constants/enum for states
+		switch (state){
 			case LAUNCH_PROMPT: // DIRECT mode
 				{
 				run(prompt_bc, p); // get prompt
 				
-				void* cmd = get_var(&info->p->vars, "CODE", 4, VAR_STRING)->value.ptr;
+				void* cmd = get_var(&p->vars, "CODE", 4, VAR_STRING)->value.ptr;
 				if (str_comp(cmd, "S\011REM BENCH")){
 					state = LAUNCH_BENCH;
 					break;
@@ -194,7 +194,6 @@ int system_launch(void* launch_info){
 				if (p->exec.error == ERR_NONE){
 					run(bc, p);
 				}
-				// TODO:IMPL:HIGH copy strings of type BC_* to dynamic alloc'd strings
 				}
 				break;
 				
@@ -273,8 +272,8 @@ int system_launch(void* launch_info){
 		strcpy((char*)err_msg + 2 + err_msg[1], p->exec.error_info);
 		err_msg[1] += strlen(p->exec.error_info);
 		
-		con_puts(&info->p->console, &err_msg);
-		con_newline(&info->p->console, true);
+		con_puts(&p->console, &err_msg);
+		con_newline(&p->console, true);
 		// clear error status for next execution
 		p->exec.error = ERR_NONE;
 		p->exec.error_info[0] = '\0'; // remove error string
@@ -282,7 +281,7 @@ int system_launch(void* launch_info){
 	
 	free_log("free exec.prg.data", p->exec.prg.data);
 	free_bytecode(bc);
-	return info->p->exec.error;
+	return p->exec.error;
 }
 
 
@@ -432,6 +431,12 @@ void v__(void); //prevent empty translation unit
 
 #include "extension/sbc_blockalloc.h" // to allow pointers to be limited to 32 bits for compatibility
 
+enum emu_key_mode {
+	MODE_KEYBOARD,
+	MODE_BUTTON,
+	MODE_COUNT,
+};
+
 int main(int argc, char** argv){
 	init_memory(MAX_MEMORY);
 	struct program program = {0};
@@ -476,17 +481,20 @@ int main(int argc, char** argv){
 		abort();
 	}
 	
-	int keys[12];
+	int key_mode = 0;
+	int keys[MODE_COUNT][13];
 	FILE* file = fopen("resources/config.txt", "r");
 	if (!file){
 		printf("Failed to read config file!\n");
 		abort();
 	}
-	for (int i = 0; i < 12; ++i){
-		int r = fscanf(file, "%d", &keys[i]);
-		if (!r || r == EOF){
-			printf("Failed to read key %d\n", 1+i);
-			abort();
+	for (int m = 0; m < MODE_COUNT; ++m){
+		for (int i = 0; i < 13; ++i){
+			int r = fscanf(file, "%d", &keys[m][i]);
+			if (!r || r == EOF){
+				printf("Failed to read key %d\n", 1+i);
+				abort();
+			}
 		}
 	}
 	
@@ -499,13 +507,9 @@ int main(int argc, char** argv){
 			}
 			
 			if (event.type == sfEvtTextEntered){
-				if (event.text.unicode <= 128){
-					// TODO:CODE:LOW Check these as additional button presses instead?
-					if (event.text.unicode == '\b'){
-						b |= BUTTON_Y;
-					} else if (event.text.unicode == '\r'){
-						b |= BUTTON_A;
-					} else {
+				if (event.text.unicode <= 128 && key_mode == MODE_KEYBOARD){
+					if (!(event.text.unicode == '\b' || event.text.unicode == '\r'))
+					{
 						set_inkey(&ptc->input, to_wide(event.text.unicode));
 					}
 				} else if (event.text.unicode >= 12289 && event.text.unicode <= 12540){
@@ -537,13 +541,18 @@ int main(int argc, char** argv){
 		
 		// various frame updates
 		for (int i = 0; i < 12; ++i){
-			b |= sfKeyboard_isKeyPressed(keys[i]) << i;
+			b |= sfKeyboard_isKeyPressed(keys[key_mode][i]) << i;
 		}
 		set_input(&ptc->input, b);
 		if (check_pressed(&ptc->input, BUTTON_ID_SELECT)){
 			// TODO:CODE:MED Move this somewhere else...?
 			// TODO:CODE:MED Thread-safety??
 			ptc->exec.error = ERR_BREAK;
+		}
+		
+		if (sfKeyboard_isKeyPressed(keys[key_mode][12])){
+			// change input mode
+			key_mode = (key_mode + 1) % MODE_COUNT;
 		}
 		
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);

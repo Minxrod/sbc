@@ -82,6 +82,9 @@ void func_iconchk(struct ptc* p);
 void sys_iconpage(struct ptc* p);
 void sys_iconpmax(struct ptc* p);
 void sys_iconpuse(struct ptc* p);
+void syschk_iconpuse(struct ptc* p);
+void syschk_iconpmax(struct ptc* p);
+void syschk_iconpage(struct ptc* p);
 
 void refresh_panel(struct ptc*);
 void set_panel_bg(struct ptc* p, enum pnltype type);

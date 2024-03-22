@@ -78,7 +78,7 @@ int test_vars(){
 	*/
 	
 	// Get a new variable
-	{
+	MEM_CASE {
 		struct variables v;
 		init_mem_var(&v, 8);
 		
@@ -89,10 +89,10 @@ int test_vars(){
 		ASSERT(var->value.number == 0, "[get_var] Create var with value 0");
 		
 		free_mem_var(&v);
-	}
+	} MEM_CASE_END
 	
 	// Get and write to a new variable, then read it again
-	{
+	MEM_CASE {
 		struct variables v;
 		init_mem_var(&v, 8);
 		
@@ -107,10 +107,10 @@ int test_vars(){
 		ASSERT(var->value.number == INT_TO_FP(123), "[get_var] Check value is 123");
 		
 		free_mem_var(&v);
-	}
+	} MEM_CASE_END
 	
 	// Read and write multiple variables
-	{
+	MEM_CASE {
 		struct variables v;
 		init_mem_var(&v, 8);
 		
@@ -133,10 +133,10 @@ int test_vars(){
 		ASSERT(var->value.number == INT_TO_FP(256), "[get_var] Check value is 256");
 		
 		free_mem_var(&v);
-	}
+	} MEM_CASE_END
 	
 	// Check that names can be shared between differing types (as different vars)
-	{
+	MEM_CASE {
 		struct variables v;
 		struct strings s;
 		v.strs = &s;
@@ -156,10 +156,10 @@ int test_vars(){
 		
 		free_mem_str(&s);
 		free_mem_var(&v);
-	}
+	} MEM_CASE_END
 	
 	// Check that default initialization of array works as expected
-	{
+	MEM_CASE {
 		struct variables v;
 		struct arrays a;
 		v.arrs = &a;
@@ -185,10 +185,10 @@ int test_vars(){
 		
 		free_mem_arr(&a);
 		free_mem_var(&v);
-	}
+	} MEM_CASE_END
 	
 	// Create an array via get_new_arr_var; 2-dimensional array
-	{
+	MEM_CASE {
 		struct variables v;
 		struct arrays a;
 		v.arrs = &a;
@@ -210,7 +210,7 @@ int test_vars(){
 		
 		free_mem_arr(&a);
 		free_mem_var(&v);
-	}
+	} MEM_CASE_END
 	
 	SUCCESS("test_vars success");
 }

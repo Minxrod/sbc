@@ -4,6 +4,7 @@
 #include "header.h"
 #include "ptc.h"
 #include "interpreter/label.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,7 +21,7 @@
  */
 void init_mem_prg(struct program* p, int prg_size){
 	p->size = 0;
-	p->data = calloc_log("init_mem_prg", 2, prg_size);
+	p->data = calloc_log("init_mem_prg", 1, prg_size);
 }
 
 struct bytecode init_bytecode(void){
@@ -121,8 +122,9 @@ bool prg_load(struct program* p, const char* filename){
 	struct ptc_header h;
 	size_t r;
 	
-	/// TODO:CODE:MED I think this only works on little-endian devices...
-	/// (reading into header memory directly)
+	assert(LITTLE_ENDIAN);
+	// only works on little-endian devices...
+	// (reading into header memory directly)
 	r = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
 	if (r < PRG_HEADER_SIZE || ferror(f)){
 		iprintf("Could not read header correctly!\n");
@@ -162,8 +164,9 @@ bool load_prg(struct program* p, const char* filename){
 	struct ptc_header h;
 	size_t r;
 	
-	/// TODO:CODE:MED I think this only works on little-endian devices...
-	/// (reading into header memory directly)
+	assert(LITTLE_ENDIAN);
+	// only works on little-endian devices...
+	// (reading into header memory directly)
 	r = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
 	if (r < PRG_HEADER_SIZE || ferror(f)){
 		iprintf("Could not read header correctly!\n");

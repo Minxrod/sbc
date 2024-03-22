@@ -34,7 +34,7 @@ int test_tokens(void){
 	}
 	
 	// Tokenization of array declaration
-	{
+	MEM_CASE {
 		char* code = "DIM A[16]\r";
 		// run program
 		struct program p = {
@@ -52,10 +52,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of 2D array declaration
-	{
+	MEM_CASE {
 		char* code = "DIM A[3,5]\r";
 		// run program
 		struct program p = {
@@ -73,10 +73,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of multiple array declaration
-	{
+	MEM_CASE {
 		char* code = "DIM A[6],B[3,2]\r";
 		// run program
 		struct program p = {
@@ -94,10 +94,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of complex array declaration
-	{
+	MEM_CASE {
 		char* code = "DIM A[6+B[5]]\r";
 		// run program
 		struct program p = {
@@ -115,10 +115,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of function call with variable lengths
-	{
+	MEM_CASE {
 		char* code = "?PI()\r";
 		// run program
 		struct program p = {
@@ -136,10 +136,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of function call with variable lengths
-	{
+	MEM_CASE {
 		char* code = "?ATAN(2,4)\r";
 		// run program
 		struct program p = {
@@ -157,10 +157,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of function call with variable lengths
-	{
+	MEM_CASE {
 		char* code = "?ATAN(ABS(2),ABS(6))\r";
 		// run program
 		struct program p = {
@@ -178,10 +178,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of array access with assignment
-	{
+	MEM_CASE {
 		char* code = "A[0]=7\r";
 		// run program
 		struct program p = {
@@ -199,10 +199,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// DIM of string array
-	{
+	MEM_CASE {
 		char* code = "DIM A$[1]\rA$[0]=\"A\"\r";
 		// run program
 		struct program p = {
@@ -221,10 +221,10 @@ int test_tokens(void){
 		ASSERT(o.line_length[0] == 8, "[tokens] Correct line length");
 		ASSERT(o.line_length[1] == 14, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// PRINT special eval rules
-	{
+	MEM_CASE {
 		char* code = "PRINT A,B,,C;D,E,;F G\r";
 		// run program
 		struct program p = {
@@ -242,10 +242,10 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length"); // Check line length correct
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// FOR tokenization
-	{
+	MEM_CASE {
 		char* code = "FOR I=0 TO 9:?I:NEXT\r";
 		// run program
 		struct program p = {
@@ -263,7 +263,7 @@ int test_tokens(void){
 		iprintf("\n");
 		ASSERT(o.line_length[0] == o.size, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// IF tokenization
 	{
@@ -288,6 +288,23 @@ int test_tokens(void){
 				bc,
 				4
 			), "[tokens] Sysvar tokenization"
+		);
+	}
+	
+	// Writable sysvar tokenization
+	{
+		char bc[] = {
+			BC_SYSVAR, SYS_ICONPUSE,
+			BC_SMALL_NUMBER, 0,
+			BC_OPERATOR, OP_ASSIGN,
+			BC_SYSVAR_VALIDATE, SYS_ICONPUSE,
+		};
+		ASSERT(
+			token_code(
+				"ICONPUSE=0\r",
+				bc,
+				8
+			), "[tokens] Sysvar write tokenization"
 		);
 	}
 	
@@ -360,7 +377,7 @@ int test_tokens(void){
 	}
 	
 	// Line lengths checking
-	{
+	MEM_CASE {
 		char* code = "?I\r?I,\r?PI()+43\r?PI()+123456\r";
 		// run program
 		struct program p = {
@@ -375,10 +392,10 @@ int test_tokens(void){
 		ASSERT(o.line_length[2] == 10, "[tokens] Correct line length");
 		ASSERT(o.line_length[3] == 14, "[tokens] Correct line length");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Label checking
-	{
+	MEM_CASE {
 		char* code = "@0\rI=I+1\r@1\rI=I+1\r@2\r";
 		// run program
 		struct program p = {
@@ -392,7 +409,7 @@ int test_tokens(void){
 		ASSERT(label_index(&o.labels, "1", 1) == 14, "[tokens] Label @1 generated successfully");
 		ASSERT(label_index(&o.labels, "2", 1) == 28, "[tokens] Label @2 generated successfully");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Numbers in other bases
 	{
@@ -426,7 +443,7 @@ int test_tokens(void){
 	}
 	
 	// Tokenization with basic optimization of removing label strings from bytecode
-	{
+	MEM_CASE {
 		char* code = "@0\rI=I+1\r@1\rI=I+1\r@2\r";
 		// run program
 		struct program p = {
@@ -447,10 +464,10 @@ int test_tokens(void){
 		ASSERT(label_index(&o.labels, "2", 1) == 20, "[opts] Label @2 generated successfully");
 		
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization with optimization of pre-calc'd variable IDs
-	{
+	MEM_CASE {
 		char* code = "A=B+C\rD=A+B+C\r";
 		// run program
 		struct program p = { strlen(code), code };
@@ -467,10 +484,10 @@ int test_tokens(void){
 		
 		free_bytecode(o);
 		free_system(ptc);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization with optimization of pre-calc'd variable IDs (strings)
-	{
+	MEM_CASE {
 		char* code = "A$=B$+C$\rD$=A$+B$+C$\r";
 		// run program
 		struct program p = { strlen(code), code };
@@ -487,10 +504,10 @@ int test_tokens(void){
 		
 		free_bytecode(o);
 		free_system(ptc);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization with optimization of pre-calc'd variable IDs (arrays)
-	{
+	MEM_CASE {
 		char* code = "DIM A[1],B[1]\rA[0]=B[0]\r";
 		// run program
 		struct program p = { strlen(code), code };
@@ -507,7 +524,7 @@ int test_tokens(void){
 		
 		free_bytecode(o);
 		free_system(ptc);
-	}
+	} MEM_CASE_END
 	
 	// Tokenization of SORT, RSORT
 	{
@@ -560,6 +577,24 @@ int test_tokens(void){
 			), "[tokens] DATA tokenization when DATA occurs beyond index 256"
 		);
 	}
+	
+	// MEM$ sysvar tokenization
+	{
+		char bc[] = {
+			BC_SYSVAR, SYS_MEM,
+			BC_STRING, 0,
+			BC_OPERATOR, OP_ASSIGN,
+			BC_SYSVAR_VALIDATE, SYS_MEM,
+		};
+		ASSERT(
+			token_code(
+				"MEM$=\"\"\r",
+				bc,
+				8
+			), "[tokens] Sysvar write tokenization"
+		);
+	}
+
 	
 	SUCCESS("test_tokens success");
 }

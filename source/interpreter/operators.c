@@ -14,7 +14,9 @@ void op_add(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
+	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
+	
+	if (a->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
@@ -25,7 +27,7 @@ void op_add(struct ptc* p){
 		}
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x + y}});
-	} else if (a->type & b->type & VAR_STRING){
+	} else {
 		struct string* x, * y, * z;
 		
 		// The value_str function checks uses to get the next string
@@ -34,11 +36,13 @@ void op_add(struct ptc* p){
 		y = value_str(b);
 		z->uses = 1;
 		
+		if (str_len(x) + str_len(y) > MAX_STRLEN){
+			ERROR(ERR_STRING_TOO_LONG);
+		}
+		
 		str_concat(x, y, z);
 		
 		stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = z}});
-	} else {
-		p->exec.error = ERR_OP_DIFFERENT_TYPES;
 	}
 }
 
@@ -147,49 +151,52 @@ void op_assign(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	// a = b
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x = VALUE_NUM(b);
+	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
+	
+	if (a->type & VAR_NUMBER){
+		fixp x = VALUE_NUM(b);
 		
 		*(s32*)a->value.ptr = x;
-	} else if (a->type & b->type & VAR_STRING){
+	} else {
 		// A = variable containing pointer to struct string*
 		struct string** dest = (struct string**)a->value.ptr;
+		struct string* new_alloc = get_new_str(&p->strs); // creates copies for strings from source
+		// if new_alloc is unused, there is no problem since uses is not set
 		struct string* src = value_str(b);
+		assert(dest); // var must exist
+		assert(*dest); // must contain a valid string already
+		char dest_old_type = (*dest)->type;
 		
-		if (src == *dest)
-			return; // no change
-		if (*dest == NULL || **(char**)dest == BC_STRING){
-			// if dest is currently NOT writable string
-			if (src->type == STRING_CHAR){
-				// shallow copy alloc'd string, track use
-				(*dest) = src;
-				(*dest)->uses++;
-			} else if (src->type == BC_STRING){
-				(*dest) = src;
-				// no uses: read only
-			} else {
-				iprintf("Unknown source string type!\n");
-				abort();
-			}
-		} else if (**(char**)dest == STRING_CHAR){
-			// dest is writable: replace it here
+		if (dest_old_type == STRING_CHAR || dest_old_type == STRING_WIDE){
+			// dest is dynamic: we replace it here, so reduce uses count
 			(*dest)->uses--;
-			if (src->type == STRING_CHAR){
+		}
+		// TODO:IMPL:LOW TOKOPT for storing read-only BC_STRING
+		// (saves memory but breaks on bytecode replacement)
+		if (src->type == STRING_CHAR){
+			*dest = src;
+			(*dest)->uses++;
+		} else if (src->type == BC_STRING){
+			if (!new_alloc) {
+				ERROR(ERR_OUT_OF_MEMORY); // failed to alloc string
+			}
+			str_copy(src, new_alloc);
+			++new_alloc->uses;
+			*dest = new_alloc;
+		} else if (src->type == STRING_WIDE){
+			if (src == &p->res.mem_str){
+				// For MEM specifically, we need to copy the characters to a new string
+				// TODO:IMPL:LOW Handle extra characters better
+				str_copy(src, new_alloc);
+				++new_alloc->uses;
+				*dest = new_alloc;
+			} else { // just assign a reference
 				*dest = src;
 				(*dest)->uses++;
-			} else if (src->type == BC_STRING){
-				// replace with string
-				(*dest) = src;
-			} else {
-				iprintf("Unknown source string type!\n");
-				abort();
 			}
 		} else {
-			iprintf("Unknown destination string type!\n");
-			abort();
+			ABORT("Unknown source string type!\n");
 		}
-	} else {
-		p->exec.error = ERR_OP_ASSIGN_INVALID_TYPE;
 	}
 }
 
@@ -198,22 +205,22 @@ void op_equal(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
+	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
+	
+	if (a->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
 		y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == y)}});
-	} else if (a->type & b->type & VAR_STRING){
+	} else {
 		struct string* x, * y;
 		
 		x = value_str(a);
 		y = value_str(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_comp(x, y))}});
-	} else {
-		p->exec.error = ERR_OP_DIFFERENT_TYPES;
 	}
 }
 
@@ -222,7 +229,9 @@ void op_inequal(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
+	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
+	
+	if (a->type & VAR_NUMBER){
 		s32 x, y;
 		
 		x = VALUE_NUM(a);
@@ -239,22 +248,17 @@ void op_inequal(struct ptc* p){
 	}
 }
 
-// TODO:PERF:LOW remove unnecessary type checks
 void op_less(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x < y)}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x < y)}});
 }
 
 void op_greater(struct ptc* p){
@@ -262,16 +266,12 @@ void op_greater(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x > y)}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x > y)}});
 }
 
 void op_less_equal(struct ptc* p){
@@ -279,16 +279,12 @@ void op_less_equal(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x <= y)}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x <= y)}});
 }
 
 void op_greater_equal(struct ptc* p){
@@ -296,16 +292,12 @@ void op_greater_equal(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x >= y)}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	s32 x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x >= y)}});
 }
 
 void op_modulo(struct ptc* p){
@@ -313,18 +305,14 @@ void op_modulo(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {x % y}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {x % y}});
 }
 
 void op_and(struct ptc* p){
@@ -332,16 +320,12 @@ void op_and(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		fixp x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) & FP_TO_INT(y))}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) & FP_TO_INT(y))}});
 }
 
 void op_or(struct ptc* p){
@@ -349,16 +333,12 @@ void op_or(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		fixp x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) | FP_TO_INT(y))}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) | FP_TO_INT(y))}});
 }
 
 void op_xor(struct ptc* p){
@@ -366,45 +346,33 @@ void op_xor(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & b->type & VAR_NUMBER){
-		fixp x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) ^ FP_TO_INT(y))}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x, y;
+	
+	x = VALUE_NUM(a);
+	y = VALUE_NUM(b);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) ^ FP_TO_INT(y))}});
 }
 
 void op_not(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & VAR_NUMBER){
-		fixp x;
-		
-		x = VALUE_NUM(a);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(~FP_TO_INT(x))}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x;
+	
+	x = VALUE_NUM(a);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(~FP_TO_INT(x))}});
 }
 
 void op_logical_not(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & VAR_NUMBER){
-		fixp x;
-		
-		x = VALUE_NUM(a);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == 0)}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPES;
-	}
+	fixp x;
+	
+	x = VALUE_NUM(a);
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == 0)}});
 }
 

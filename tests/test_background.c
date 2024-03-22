@@ -8,7 +8,7 @@
 
 int test_background(void){
 	// Initialization
-	{
+	MEM_CASE {
 		struct background* b = init_background();
 		
 		ASSERT(b->page == 0, "[bg] Default page is zero");
@@ -21,7 +21,7 @@ int test_background(void){
 		}
 		
 		free_background(b);
-	}
+	} MEM_CASE_END
 	
 	// Basic BGPAGE
 	{

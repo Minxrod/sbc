@@ -13,7 +13,7 @@
 
 int test_int_code(){
 	// Code searching
-	{
+	MEM_CASE {
 		char* code = "FOR I=0 TO 9\r\rNEXT\r";
 		struct program p = {
 			strlen(code), code
@@ -25,10 +25,10 @@ int test_int_code(){
 		u32 i = bc_scan(o, 0, BC_OPERATOR);
 		ASSERT(i == 6, "[bc_scan] Find index of operator");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Code searching (not faked)
-	{
+	MEM_CASE {
 		char* code = "?\"O=\"+\"O=\"\r";
 		struct program p = {
 			strlen(code), code,
@@ -40,7 +40,7 @@ int test_int_code(){
 		u32 i = bc_scan(o, 0, BC_OPERATOR);
 		ASSERT(i == 8, "[bc_scan] Find index of operator without being in string");
 		free_bytecode(o);
-	}
+	} MEM_CASE_END
 	
 	// Code searching (Variable name)
 	{
@@ -581,6 +581,25 @@ int test_int_code(){
 	{
 		ASSERT(check_code_error("@L\rGOSUB @L\r", ERR_OUT_OF_MEMORY), "[gosub] Recursion maximum error");
 		ASSERT(check_code_error("@L\rFOR I=0 TO 1\rGOTO @L\r", ERR_OUT_OF_MEMORY), "[for] Recursion maximum error");
+	}
+	
+	// VISIBLE tests
+	{
+		{
+			struct ptc* p = run_code("VISIBLE 1,1,1,1,1,1\r");
+			ASSERT(p->res.visible == 63, "[visible] All visible");
+			free_code(p);
+		}
+		{
+			struct ptc* p = run_code("VISIBLE 0,0,0,0,0,0\r");
+			ASSERT(p->res.visible == 0, "[visible] All hidden");
+			free_code(p);
+		}
+		{
+			struct ptc* p = run_code("VISIBLE ,,0,0,1,1\r");
+			ASSERT(p->res.visible == (48|3), "[visible] Previous state kept on omission");
+			free_code(p);
+		}
 	}
 	
 	SUCCESS("test_int_code success");

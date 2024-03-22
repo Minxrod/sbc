@@ -356,14 +356,20 @@ void display_draw_sprite(struct ptc* p, int screen, int prio){
 	}
 	if (screen == 1){
 		// Icons are drawn on any panel setting
+		struct sprite_array icon_sprites = init_sprite_array();
 		for (int i = 0; i < ICON_KEYS; ++i){
 			struct sprite_info* key = &p->panel.keys[ICON_PAGE_START+i];
 			// active is a good check to see if the sprite is correctly defined, for now
 			if (key->active){
-				add_sprite(sprites, key);
+				add_sprite(icon_sprites, key);
 			}
-			// TODO:IMPL:HIGH Sprites correct AND icons
 		}
+		
+		d->rs.texture = d->chr_tex[3+5*screen];
+		sfShader_setFloatUniform(d->shader, "colbank", 1+3*screen);
+		sfShader_setBoolUniform(d->shader, "grp_mode", false);
+		sfRenderWindow_drawVertexArray(d->rw, icon_sprites.va, &d->rs);
+		free_sprite_array(icon_sprites);
 	}
 	if (p->panel.key_pressed){
 		offset_key(p, p->panel.id_pressed, -INT_TO_FP(1));

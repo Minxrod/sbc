@@ -121,6 +121,8 @@ void func_chkchr(struct ptc* p);
 void sys_csrx(struct ptc* p);
 void sys_csry(struct ptc* p);
 void sys_tabstep(struct ptc* p);
+void syschk_tabstep(struct ptc* p);
+
 
 static inline u16 con_text_getc(struct console* c, u32 x, u32 y){
 	return c->text[y][x];

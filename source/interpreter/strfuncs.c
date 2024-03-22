@@ -41,8 +41,8 @@ void func_mid(struct ptc* p){
 	
 	dest->uses = 1;
 	dest->len = len;
-	// TODO:IMPL:LOW Determine type for destination string
-	u8 type = str_type(str);
+	
+	u8 type = str_type(str) | (str_type(dest) << 1);
 	str_copy_buf(str_at(str, start), str_at(dest, 0), type, len);
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
@@ -223,8 +223,8 @@ void func_right(struct ptc* p){
 	
 	dest->uses = 1;
 	dest->len = count;
-	// TODO:IMPL:LOW Determine type for destination string
-	uint_fast8_t type = str_type(str); //< source type
+	
+	uint_fast8_t type = str_type(str) | (str_type(dest) << 1); //< source type
 	str_copy_buf(str_at(str, max_len - count), str_at(dest, 0), type, dest->len);
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});

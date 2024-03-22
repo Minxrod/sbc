@@ -8,7 +8,7 @@
 
 int test_console(void){
 	// Test console creation
-	{
+	MEM_CASE {
 		struct console* c = init_console();
 		
 		ASSERT(c->x == 0, "[console] Correct starting X");
@@ -16,10 +16,10 @@ int test_console(void){
 		ASSERT(c->col == 0, "[console] Correct starting color");
 		ASSERT(c->tabstep == 4, "[console] Correct starting tabstep");
 		free_console(c);
-	}
+	} MEM_CASE_END
 	
 	// Test console puts
-	{
+	MEM_CASE {
 		struct console* c = init_console();
 		
 		con_puts(c, "S\006ABC123");
@@ -34,7 +34,7 @@ int test_console(void){
 		ASSERT(c->x == 6, "[console] Correct ending coordinates");
 		ASSERT(c->y == 0, "[console] Correct ending coordinates");
 		free_console(c);
-	}
+	} MEM_CASE_END
 	
 	/*
 	 * Console program tests

@@ -45,7 +45,6 @@ void sys_date(struct ptc* p){
 	int month = tm->tm_mon + 1;
 	int year = tm->tm_year + 1900;
 	
-	// TODO:PERF:LOW Instead of allocating a string, use an inline string
 	struct string* str = get_new_str(&p->strs);
 	str->uses = 1;
 	str->len = 10;
@@ -73,7 +72,6 @@ void sys_time(struct ptc* p){
 	int min = tm->tm_min;
 	int sec = tm->tm_sec;
 	
-	// TODO:PERF:LOW Instead of allocating a string, use an inline string
 	struct string* str = get_new_str(&p->strs);
 	str->uses = 1;
 	str->len = 8;

@@ -143,8 +143,9 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 		if (!strncmp(check_type, "PX01", 4)){
 			struct ptc_header h;
 			
-			/// TODO:CODE:MED I think this only works on little-endian devices...
-			/// (reading into header memory directly)
+			assert(LITTLE_ENDIAN);
+			// only works on little-endian devices...
+			// (reading into header memory directly)
 			size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
 			CHECK_FILE_ERROR("Could not read header correctly");
 			if (size_read < PRG_HEADER_SIZE){
@@ -174,6 +175,8 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 		} else {
 			FILE_ERROR("Unknown PRG file format");
 		}
+	} else if (type == TYPE_MEM){
+		return check_load_file(dest, "", path, resource_size[type]);
 	} else if (type >= TYPE_CHR && type <= TYPE_COL){
 		return check_load_file(dest, "", path, resource_size[type]);
 	}
@@ -232,19 +235,29 @@ int check_load_file(u8* dest, const char* search_path, const char* name, int siz
 		fread(header, sizeof(u8), 4, f);
 		CHECK_FILE_ERROR("Failed to read header");
 		
-		// Used destinations as temporary storage - may lead to artifacting but reduces memory use
-		u8* compressed = dest;
-		size_read = fread(dest, sizeof(u8), size, f);
+		// Determine size of file
+		if (fseek(f, 0, SEEK_END)){
+			FILE_CLOSE("Failed to seek to end of file");
+		}
+		int file_size = ftell(f);
+		if (file_size < 0){
+			FILE_CLOSE("Failed to determine file size");
+		}
+		rewind(f); // resets errors apparently
+		
+		// Use destination as temporary storage
+		// causes brief artifacting but requires zero extra memory
+		u8* compressed = dest + size - file_size; // places file at end of destination
+		size_read = fread(compressed, sizeof(u8), file_size, f);
 		CHECK_FILE_ERROR("Failed to read file");
+		compressed += 8; // skip header
 		
 		int bits = header[0];
 		int expected_size = header[1] | (header[2] << 8) | (header[3] << 16);
 		(void)expected_size; // for when assert fails
 		assert(expected_size == size); // request == expected
-		unsigned char* decompressed = sbc_decompress(compressed, size, bits);
-		memcpy(dest, decompressed, size);
-//		free_log("load_file", compressed); // TODO:PERF:LOW See if zero-allocation version is feasible?
-		free_log("load_file", decompressed);
+		sbc_decompress(compressed, dest, size, bits);
+		
 		FILE_OK();
 	} else {
 		FILE_CLOSE("Failed to load file (Unknown format)");
@@ -274,6 +287,8 @@ bool load_grp(u8* dest, const char* path, const char* name){
 }
 
 void init_resource(struct resources* r){
+	static_assert(sizeof(r->mem) == MEM_SIZE);
+	
 	r->search_path = "programs/"; // Program resource search path
 #ifdef ARM9
 	// Assign pointers into VRAM as needed
@@ -355,6 +370,14 @@ void init_resource(struct resources* r){
 	for (int i = 0; i < 12; ++i){
 		load_file(r->key_chr[i], key_files[i], 48 + (i >= 2 && i % 2 ? CHR_SIZE : 0), CHR_SIZE);
 	}
+	// Initialize MEM$
+	r->mem_str = (struct string){
+		.type=STRING_WIDE,
+		.len=0,
+		.uses=1,
+		.ptr.w = r->mem.chars
+	};
+	r->mem_ptr = &r->mem_str;
 }
 
 void free_resource(struct resources* r){
@@ -442,6 +465,8 @@ void* get_resource(struct ptc* p, char* name, int len){
 		} else if (c == 'G' || (c == 'C' && bank == 2)){
 			// GRP COL2
 			upper = p->graphics.screen;
+		} else if (c == 'M'){
+			// MEM$ does not require any of this
 		} else {
 			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 			return NULL;
@@ -482,6 +507,8 @@ void* get_resource(struct ptc* p, char* name, int len){
 	} else if (c == 'G' && id == 'R' && t == 'P'){ //GRP
 		// TODO:IMPL:LOW Does page matter here?
 		return p->res.grp[(int)bank];
+	} else if (c == 'M' && id == 'E' && t == 'M'){
+		return p->res.mem.data;
 	}
 	p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 	return NULL;
@@ -523,10 +550,10 @@ void cmd_load(struct ptc* p){
 	switch (resource_type){
 		case TYPE_PRG:
 			{
-			int size = check_load_res(res_data, "programs/", res_name, resource_type);
+			int size = check_load_res(res_data, p->res.search_path, res_name, resource_type);
 			if (!size){
 				ERROR(ERR_FILE_LOAD_FAILED);
-				// TODO: set RESULT instead
+				// TODO:IMPL:LOW set RESULT instead
 			} else {
 				p->exec.prg.size = size;
 			}
@@ -535,7 +562,7 @@ void cmd_load(struct ptc* p){
 			
 		case TYPE_CHR:
 			// TODO:IMPL:MED Select path for searching
-			if (!load_chr(res_data, "programs/", res_name)){
+			if (!load_chr(res_data, p->res.search_path, res_name)){
 				ERROR(ERR_FILE_LOAD_FAILED);
 			}
 			
@@ -543,7 +570,7 @@ void cmd_load(struct ptc* p){
 			break;
 			
 		case TYPE_COL:
-			if (!load_col(res_data, "programs/", res_name)){
+			if (!load_col(res_data, p->res.search_path, res_name)){
 				ERROR(ERR_FILE_LOAD_FAILED);
 			}
 			
@@ -551,18 +578,28 @@ void cmd_load(struct ptc* p){
 			break;
 			
 		case TYPE_GRP:
-			if (!load_grp(res_data, "programs/", res_name)){
+			if (!load_grp(res_data, p->res.search_path, res_name)){
 				ERROR(ERR_FILE_LOAD_FAILED);
 			}
 			break;
 			
 		case TYPE_SCR:
-			if (!load_scr(res_data, "programs/", res_name)){
+			if (!load_scr(res_data, p->res.search_path, res_name)){
 				ERROR(ERR_FILE_LOAD_FAILED);
 			}
 			break;
 		
-		// TODO:IMPL:HIGH Other file types
+		case TYPE_MEM:;
+			assert(LITTLE_ENDIAN);
+			int size = check_load_res(p->res.mem.data, p->res.search_path, res_name, TYPE_MEM);
+//			p->res.mem_str.ptr.w = p->res.mem.chars;
+			p->res.mem_str.len = p->res.mem.size;
+			if (!size){
+				ERROR(ERR_FILE_LOAD_FAILED);
+				// TODO:IMPL:LOW set RESULT instead
+			}
+			break;
+		
 		default:
 			iprintf("Error: Unimplemented/invalid resource type\n %s:%s\n", res_type, res_name);
 			ERROR(ERR_INVALID_RESOURCE_TYPE);
@@ -870,4 +907,23 @@ void cmd_colset(struct ptc* p){
 	// TODO:TEST:MED This loses the lowest bit of green?
 	*col_data = r | (g << 5) | b << 10;
 	p->res.regen_col = true;
+}
+
+void sys_mem(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	stack_push(s, (struct stack_entry){VAR_STRING | VAR_VARIABLE, {.ptr = &p->res.mem_ptr}});
+}
+
+void syschk_mem(struct ptc* p){
+	assert(p->res.mem_ptr);
+	// ensure that pointer assignment is turned into a copy
+	str_copy(p->res.mem_ptr, &p->res.mem_str);
+	// reduce uses of this string
+	int type = *(char*)p->res.mem_ptr;
+	if (type == STRING_CHAR || type == STRING_WIDE){
+		((struct string*)p->res.mem_ptr)->uses--;
+	}
+	// restore regular pointer
+	p->res.mem_ptr = &p->res.mem_str;
 }

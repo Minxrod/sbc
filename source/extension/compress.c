@@ -81,7 +81,7 @@ int sbc_compress(const unsigned char* const source_data, unsigned char* output_d
 // Allocates memory to char* output
 struct sbc_compression_result sbc_optimal_compress(const unsigned char* const source_data, int source_size, int unit_size){
 	struct sbc_compression_result result;
-	result.output = calloc_log("sbc_optimal_compress", 1, source_size); // only allow results smaller than size
+	result.output = calloc(1, source_size); // only allow results smaller than size
 	result.size = source_size;
 	result.bits = -1;
 	for (int bits = 0; bits < 8; ++bits){
@@ -120,8 +120,10 @@ int sbc_read_bits(const unsigned char* const source_data, int* bit_index, int bi
 	//      1xx xxxxxx
 }
 
-// TODO:IMPL:MED decompress into pre-alloc'd memory version
-unsigned char* sbc_decompress(const unsigned char* const source_data, int decompressed_size, int cache_bits){
+// note: decompression happens from low to high address
+// if compressed is placed at end of destination range,
+// decompression should only overwrite bytes that have already been read
+unsigned char* sbc_decompress(const unsigned char* const source_data, unsigned char* dest, int decompressed_size, int cache_bits){
 	// Cache info
 	unsigned char cache[128] = {0};
 	const int cache_maximum = 1 << cache_bits;
@@ -131,7 +133,7 @@ unsigned char* sbc_decompress(const unsigned char* const source_data, int decomp
 	
 	int cache_next_slot = 0;
 	
-	unsigned char* output = malloc_log("sbc_decompress", decompressed_size); // region will be entirely filled
+	unsigned char* output = dest;
 	
 	int source_bit = 0;
 	for (int i = 0; i < decompressed_size; ++i){

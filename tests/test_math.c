@@ -36,12 +36,13 @@ int test_math(){
 			iprintf("File %s load failed!\n", test_data);
 			abort();
 		}
-		int expected;
-		//TODO:CODE:MED this only works on little-endian devices
+		int32_t expected;
+		assert(sizeof(int32_t) == 4);
+		assert(LITTLE_ENDIAN); // reading into int32_t only works on little-endian devices
 		
 		// Iterate over all fixedpoint values from 0 to 262143/4096
 		for (fixp i = 0; i <= 262143; i += 1){
-			fread(&expected, sizeof(int), 1, f);
+			fread(&expected, sizeof(int32_t), 1, f);
 			if (ferror(f)){
 				iprintf("Failed to read file at %d\n", i);
 				abort();

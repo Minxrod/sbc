@@ -11,7 +11,7 @@ int test_strs(){
 	string creation tests
 	*/
 	// Create string slots
-	{
+	MEM_CASE {
 		struct strings strs;
 		const u32 max = 8;
 		
@@ -22,10 +22,10 @@ int test_strs(){
 		ASSERT(strs.str_data != NULL, "[init_mem_str] Successful memory allocation");
 		
 		free_mem_str(&strs);
-	}
+	} MEM_CASE_END
 	
 	// Get unused string slots
-	{
+	MEM_CASE {
 		struct strings strs;
 		const u32 max = 8;
 		
@@ -40,7 +40,7 @@ int test_strs(){
 		ASSERT(&strs.strs[1] == new_str, "[get_new_str] Get fresh string memory");
 		
 		free_mem_str(&strs);
-	}
+	} MEM_CASE_END
 	
 	// String comparison appears to work
 	{
@@ -170,6 +170,11 @@ int test_strs(){
 		
 		ASSERT(count == 1, "[read_one] Read one character");
 		ASSERT(num == INT_TO_FP(5), "[read_one] Value read is 5");
+	}
+	
+	// specific to_wide
+	{
+		ASSERT(to_wide('\x21') == 65281, "[to_wide] 0x21");
 	}
 	
 	SUCCESS("test_strs success");

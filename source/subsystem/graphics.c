@@ -349,9 +349,9 @@ void cmd_gcopy(struct ptc* p){
 		y2 = temp;
 	}
 	
-	// TODO:TEST:HIGH Check that this works in each direction, overlaps, offscreen
+	// TODO:TEST:MED Check that this works with offscreen coords
 	iprintf("gcopy %d,%d,%d,%d,%d,%d\n", x1, y1, x2, y2, x3, y3);
-	if (y3 < y1 || x3 < x1){
+	if (y3 < y1 || (y3 == y1 && x3 < x1)){
 		for (int y = y1; y <= y2; ++y){
 			for (int x = x1; x <= x2; ++x){
 				u8 p;

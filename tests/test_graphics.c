@@ -117,6 +117,32 @@ int test_graphics(void){
 		free_code(p);
 	}
 	
+	// GCOPY
+#define GCOPY_TEST(dx,dy,msg) do {\
+		struct ptc* p = run_code(\
+			"FOR X=0 TO 3\rFOR Y=0 TO 3\rGPSET 1+X,1+Y,X+4*Y\rNEXT\rNEXT\r"\
+			"GCOPY 0,1,1,4,4,"#dx","#dy",1\r"\
+		);\
+		for (int x = dx; x < dx+4; ++x){\
+			for (int y = dy; y < dy+4; ++y){\
+				ASSERT(p->res.grp[0][grp_index(x,y)] == (x-dx)+4*(y-dy), "[gcopy] "msg);\
+			}\
+		}\
+		free_code(p);\
+	} while(0)
+	// GCOPY overlap tests
+	{
+		GCOPY_TEST(0,0,"up left");
+		GCOPY_TEST(0,1,"up");
+		GCOPY_TEST(0,2,"up right");
+		GCOPY_TEST(1,0,"left");
+		GCOPY_TEST(1,1,"self copy");
+		GCOPY_TEST(1,2,"right");
+		GCOPY_TEST(2,0,"down left");
+		GCOPY_TEST(2,1,"down");
+		GCOPY_TEST(2,2,"down right");
+	}
+	
 	// GLINE tests
 /*	{
 		struct ptc* p = run_code(

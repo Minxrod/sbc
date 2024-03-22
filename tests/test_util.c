@@ -21,11 +21,12 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 //	assert(strlen(code) < 1024); // prevents exceeding outcode buffer
 //	memset(outcode, 0x0f, 2048); // identify errors of failing to write
 	// init system
+	MEM_CASE // only the start here!
 	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit);
 	ptc->res.search_path = "tests/data/"; // override standard search path with test path
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
-	init_mem_prg(&ptc->exec.prg, 524288/2); // TODO:CODE:LOW
+	init_mem_prg(&ptc->exec.prg, MAX_SOURCE_SIZE);
     strcpy(ptc->exec.prg.data, code);
 	ptc->exec.prg.size = strlen(code);
 	struct bytecode o = init_bytecode();
@@ -42,7 +43,8 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 	if (ptc->exec.error){
 		iprintf("Error: %s\n", error_messages[ptc->exec.error]);
 	}
-//	free_bytecode(o); // Note: Doing this here causes reads of strings to be invalid during test cases
+	
+	// 
 	return ptc;
 }
 
@@ -66,9 +68,10 @@ struct ptc* run_code(char* code){
 }
 
 void free_code(struct ptc* ptc){
-	free_bytecode(ptc->exec.code);
+	free_bytecode(ptc->exec.code); // must be done here to preserve string memory
 	free_log("free_mem_prg", ptc->exec.prg.data);
 	free_system(ptc);
+	MEM_CASE_END // done here to clean up block
 }
 
 // Return value of 0 indicates success
@@ -86,6 +89,7 @@ bool check_code_error(char* code, enum err_code expected){
 #include <stdio.h>
 
 int token_code(char* code, char* expected, int size){
+	MEM_CASE
 	struct program p = { strlen(code), code };
 	struct bytecode o = init_bytecode();
 	
@@ -102,5 +106,6 @@ int token_code(char* code, char* expected, int size){
 	}
 	iprintf("\n");
 	free_bytecode(o);
+	MEM_CASE_END
 	return !error;
 }

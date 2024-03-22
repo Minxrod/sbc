@@ -140,3 +140,6 @@ bool check_cmd(const char* stack, int stack_len, const char* valid);
 int tok_test(struct tokenizer* state);
 
 void tok_base_number(struct tokenizer* state);
+
+// debug
+void print_token(struct tokenizer* state, struct token t);

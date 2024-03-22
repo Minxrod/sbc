@@ -32,7 +32,8 @@ extern const char* resource_path;
 #define GRP_SIZE (GRP_WIDTH*GRP_HEIGHT*1)
 #define SCR_SIZE ( 64* 64*2)
 #define COL_SIZE ( 16* 16*2)
-#define MEM_SIZE (256*  2)
+/// Size of MEM file: 256 16-bit characters + 4 byte size
+#define MEM_SIZE (256*  2+4)
 
 #define CHR_BANKS (4+4+4+8+2)
 #define SCR_BANKS 4
@@ -79,7 +80,6 @@ extern int resource_size[6];
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
 struct resources {
-	// TODO:IMPL:MED MEM type?
 	//BGU,D,F,[SPU,S or SPD,K,S]
 	const char* search_path;
 	
@@ -103,6 +103,18 @@ struct resources {
 	u16* col_banks;
 	
 	u16* bg_upper;
+	
+	struct string mem_str;
+	void* mem_ptr;
+	union {
+		struct {
+			u16 chars[MAX_STRLEN];
+			u32 size;
+		};
+		struct {
+			u8 data[MEM_SIZE];
+		};
+	} mem;
 	
 	u8 visible;
 };
@@ -166,4 +178,8 @@ void cmd_colread(struct ptc* p);
 // File
 void cmd_save(struct ptc* p);
 void cmd_load(struct ptc* p);
+
+// MEM$
+void sys_mem(struct ptc* p);
+void syschk_mem(struct ptc* p);
 

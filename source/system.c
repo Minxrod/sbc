@@ -14,7 +14,6 @@
 #include "program.h"
 
 struct ptc* init_system(int var, int str, int arr){
-	// TODO:CODE:LOW Where to put this?
 	srand(time(NULL));
 	
 	struct ptc* ptc = calloc_log("init_system", sizeof(struct ptc), 1);
@@ -104,19 +103,27 @@ void cmd_acls(struct ptc* p){
 
 void cmd_visible(struct ptc* p){
 	if (p->stack.stack_i != 6){
-		ERROR(ERR_SYNTAX); // TODO:ERR:LOW correct error
+		ERROR(ERR_SYNTAX);
 	}
 	u8 visible_flags = 0;
 	for (int i = 0; i < 6; ++i){
 		struct stack_entry* e = stack_get(&p->stack, i);
-		if (e->type == VAR_NUMBER){
-			visible_flags |= 1 << i;
+		if (e->type & VAR_NUMBER){
+			int bit;
+			STACK_INT_RANGE(i,0,1,bit);
+			if (bit){
+				visible_flags |= bit << i;
+			} else {
+				visible_flags &= ~(1 << i) & 0x3f;
+			}
+			iprintf("%d\n", bit);
 		} else if (e->type == STACK_OP && e->value.number == OP_COMMA){
 			// keep previous value if 
 			visible_flags |= (p->res.visible & (1 << i));
-		} else {
-			// invalid argument
-			ERROR(ERR_ILLEGAL_FUNCTION_CALL); // TODO:ERR:LOW check correct errors?
+		} else if (e->type & VAR_STRING){
+			ERROR(ERR_TYPE_MISMATCH);
+		} else { // invalid argument, shouldn't usually happen
+			ERROR(ERR_SYNTAX);
 		}
 	}
 	p->res.visible = visible_flags;

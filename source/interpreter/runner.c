@@ -100,11 +100,26 @@ DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
 	sys_sphitno, ptc_err, ptc_err, ptc_err,
-	sys_keyboard, sys_funcno, ptc_err, ptc_err, ptc_err,
-	ptc_err, ptc_err,
-	ptc_err,
+	sys_keyboard, sys_funcno,
+	ptc_err, ptc_err, ptc_err, // ICONPMAX
+	ptc_err, ptc_err, // ERR
+	sys_mem,
 	sys_memsafe
 };
+
+DTCM_DATA const ptc_call ptc_sysvars_valid[] = {
+	NULL, NULL, NULL, NULL, // VERSION
+	NULL, NULL, NULL, NULL, // MAINCNTH
+	NULL, NULL, NULL, NULL, NULL, // RESULT
+	NULL, NULL, NULL, NULL, // TCHTIME
+	NULL, NULL, syschk_tabstep,
+	NULL, NULL, NULL, NULL, // SPHITT
+	NULL, NULL, NULL, NULL, NULL, // ICONPMAX
+	NULL, NULL, // ERR
+	syschk_mem,
+	NULL
+};
+
 
 /// Debug function for checking command/function names from IDs
 static inline void print_name(const char* names, int data){
@@ -227,6 +242,19 @@ void run(struct bytecode code, struct ptc* p) {
 					r->error = ERR_UNIMPLEMENTED;
 				}
 				check_time(&p->time, 5);
+				break;
+				
+			case BC_SYSVAR_VALIDATE:
+				print_name(sysvars, data);
+				if ((u8)data >= sizeof(ptc_sysvars_valid)/sizeof(ptc_sysvars_valid[0])){
+					r->error = ERR_PTC_SYSVAR_INVALID;
+					break;
+				}
+				if (ptc_sysvars_valid[(u32)data]){
+					ptc_sysvars_valid[(u32)data](p);
+				} else {
+					r->error = ERR_UNIMPLEMENTED;
+				}
 				break;
 				
 			case BC_NUMBER:
@@ -483,16 +511,11 @@ void cmd_exec(struct ptc* p){
 	filename_buf[str_len(filename)] = '\0';
 	
 	// Load program into memory and tokenize into bc
-	// TODO:CODE:LOW This doesn't /look/ safe, but it should be.
-	// The bytecode is designed to always compile smaller or equal than the program
-	// source code in UCS2 (u16 chars). This shouldn't ever destroy the code
-	// being currently tokenized, as source files are stored in 8-bit characters
-	// which are loaded into the second half.
-	// TODO:TEST:MED This absolutely needs some test cases
 	iprintf("\nold=%d ", p->exec.code.size);
 //	struct program prog = { 0, (char*)&p->exec.code.data[524288] };
 	if (!(p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, filename_buf, TYPE_PRG))){
 		// Failed to load, potentially destroyed code
+		// TODO:IMPL:LOW Set RESULT here instead
 		ERROR(ERR_FILE_LOAD_FAILED);
 	}
 	

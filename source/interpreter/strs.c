@@ -162,7 +162,7 @@ int digit_value(const u16 c){
 	return -1;
 }
 
-fixp u8_to_number(u8* data, const int len, const int base, const bool allow_decimal){
+int64_t u8_to_number(u8* data, const int len, const int base, const bool allow_decimal){
 	const struct string str = {
 		.type = STRING_CHAR, .len = len, .ptr.s = data
 	};
@@ -170,7 +170,7 @@ fixp u8_to_number(u8* data, const int len, const int base, const bool allow_deci
 }
 
 // More general number parsing
-fixp str_to_number(const void* str, const int base, const bool allow_decimal){
+int64_t str_to_number(const void* str, const int base, const bool allow_decimal){
 	size_t len = str_len(str);
 	
 	unsigned int number = 0;
@@ -206,22 +206,25 @@ fixp str_to_number(const void* str, const int base, const bool allow_decimal){
 			// Stop reading on invalid character (useful for VAL)
 			break;
 		}
+		if (number >= (524288u)){
+			break;
+		}
 	}
 	//TODO:ERR:MED Check overflow
 	
-	fixp combined;
+	int64_t combined;
 	if (is_negative){
-		combined = INT_TO_FP(-number); // TODO:CODE:MED I think this is technically UB?
+		combined = INT_TO_FP(-number);
 		combined -= INT_TO_FP(1) * fraction / maximum;
 	} else {
-		combined = number * 4096 + 4096 * fraction / maximum;
+		combined = ((int64_t)number * 4096) + 4096 * fraction / maximum;
 	}
 	
 //	printf("Number := %f Combined := %d\n", (double)number, combined);
 	return combined;
 }
 
-fixp u8_to_num(u8* data, const idx len){
+int64_t u8_to_num(u8* data, const idx len){
 	return u8_to_number(data, len, 10, true);
 }
 
@@ -326,11 +329,10 @@ void fixp_to_char(const fixp n, u8* str){
 u16 to_wide(u8 c){
 	if (c < 0x21){
 		return c;
-	} else if (c >= 0x21 && c < 0x28){
+	} else if (c >= 0x21 && c < 0x80){
 		if (c == 0x22) return 0x201d;
 		if (c == 0x27) return 0x2019;
-		return (c - 0x20) | 0xff00;
-	} else if (c >= 0x28 && c < 0x80){
+		if (c == 0x5c) return 0xffe5;
 		return (c - 0x20) | 0xff00;
 	} else if (c >= 0x80 && c < 0xa1){
 		return c;
@@ -360,6 +362,7 @@ u8 to_char(u16 w){
 		abort();
 	} else if (wh == 0xff){
 		if (wl == 0x70) return 0xb0;
+		if (wl == 0xe5) return 0x5c;
 		return wl + 0x20;
 	} else if (wh == 0x30){
 		// "".join([chr(x) if x>=0 else '?' for x in [ktk.find(chr(i)) for i in range(0,256)]])
@@ -422,7 +425,7 @@ void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count){
 			((u16*)dest)[i] = to_wide(((u8*)src)[i]);
 		} else if (types == (STR_COPY_DEST_16 | STR_COPY_SRC_16)){
 			// u16 -> u16
-			((u16*)dest)[i] = to_wide(((u16*)src)[i]);
+			((u16*)dest)[i] = ((u16*)src)[i];
 		}
 	}
 }
@@ -438,13 +441,16 @@ void str_wide_copy(const void* src, u16* dest){
 	
 	switch (*(char*)src){
 		case STRING_CHAR:
-			str_copy_buf(s->ptr.s, dest, STR_COPY_DEST_16, s->len);
+			str_copy_buf(s->ptr.s, dest, STR_COPY_SRC_8 | STR_COPY_DEST_16, s->len);
 			return;
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
 		case STRING_INLINE_CHAR:
 			str_copy_buf(&((u8*)src)[2], dest, STR_COPY_DEST_16, ((u8*)src)[1]);
+			return;
+		case STRING_WIDE:
+			str_copy_buf(s->ptr.w, dest, STR_COPY_DEST_16 | STR_COPY_SRC_16, s->len);
 			return;
 		case STRING_INLINE_WIDE:
 		default:
@@ -470,6 +476,9 @@ void str_char_copy(const void* src, u8* dest){
 		case BC_LABEL:
 		case BC_STRING:
 			str_copy_buf(&((u8*)src)[2], dest, STR_COPY_DEST_8, ((u8*)src)[1]);
+			return;
+		case STRING_WIDE:
+			str_copy_buf(s->ptr.w, dest, STR_COPY_SRC_16 | STR_COPY_DEST_8, s->len);
 			return;
 		default:
 			iprintf("Unimplemented/Not a valid string type! (Copy u8)\n");
@@ -513,7 +522,9 @@ u16 str_at_wide(const void* src, const u16 index){
 		case STRING_INLINE_CHAR:
 			return to_wide(((u8*)src)[2+index]);
 		case STRING_INLINE_WIDE:
+			return ((u16*)src)[1+index];
 		case STRING_WIDE:
+			return s->ptr.w[index];
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at_wide)\n");
 			abort();
@@ -549,6 +560,7 @@ u32 str_len(const void* src){
 	
 	switch (*(char*)src){
 		case STRING_CHAR:
+		case STRING_WIDE:
 			return s->len;
 		case BC_STRING:
 		case BC_LABEL:
@@ -599,6 +611,7 @@ bool str_comp(const void* str1, const void* str2){
 	
 	if (str1 == str2) return true;
 	
+//	iprintf("lens %d==%d\n", str_len(str1), str_len(str2));
 	u32 len = str_len(str1);
 	if (len != str_len(str2)){
 		return false;
@@ -608,6 +621,7 @@ bool str_comp(const void* str1, const void* str2){
 	str_wide_copy(str2, cmp2);
 	
 	for (u32 i = 0; i < len; ++i){
+//		iprintf("%d==%d\n", cmp1[i], cmp2[i]);
 		if (cmp1[i] != cmp2[i]){
 			return false;
 		}
@@ -626,6 +640,12 @@ void str_copy(const void* src, void* src_dest){
 			str_char_copy(src, dest);
 			((struct string*)src_dest)->len = str_len(src);
 			break;
+		case STRING_WIDE:{
+			u16* dest = ((struct string*)src_dest)->ptr.w;
+			str_wide_copy(src, dest);
+			((struct string*)src_dest)->len = str_len(src);
+			break;
+			}
 		case BC_STRING:
 		case BC_LABEL:
 		case BC_LABEL_STRING:

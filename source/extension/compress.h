@@ -19,5 +19,4 @@ struct sbc_compression_result sbc_optimal_compress(const unsigned char* const so
 
 int sbc_read_bits(const unsigned char* const source_data, int* bit_index, int bits);
 
-// TODO:IMPL:LOW unit size?
-unsigned char* sbc_decompress(const unsigned char* const source_data, int decompressed_size, int cache_bits);
+unsigned char* sbc_decompress(const unsigned char* const source_data, unsigned char* dest, int decompressed_size, int cache_bits);

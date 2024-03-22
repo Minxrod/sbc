@@ -57,7 +57,7 @@ main_build: $(main_objs)
 	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o test $(LIBFLAGS)
 
 #gl:
-#	$(CC) $(CFLAGS) $(LFLAGS) source/opengl_test.c -o test $(LIBFLAGS) -lGL
+#	$(CC) $(CFLAGS) $(LFLAGS) source/graphics/pc/opengl_test.c -o test $(LIBFLAGS) -lGL
 
 compsize: $(main_objs)
 	$(CC) $(CFLAGS) $(LFLAGS) $(build) compiled_size.c -o test $(LIBFLAGS)
@@ -65,6 +65,8 @@ compsize: $(main_objs)
 
 test_build: $(test_objs)
 	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)
+	
+test: test_build
 	./test
 
 clean:

@@ -83,22 +83,67 @@ int test_resources(void){
 	
 	// extension:SBCC format
 	{
-		unsigned char* res = sbc_decompress((unsigned char*)"\xf8\x00", 8, 0);
+		unsigned char src_dest[8] = {0,0,0,0,0,0,0xf8,0};
+		unsigned char* res = sbc_decompress(src_dest + 6, src_dest, 8, 0);
 		unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,};
 		for (int i = 0; i < 8; ++i){
 			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
 		}
-		free_log("test decompress", res);
 	}
 	
 	// simple test 2
 	{
-		unsigned char* res = sbc_decompress((unsigned char*)"\xf8\x00", 4, 0);
+		unsigned char src_dest[4] = {0,0,0xf8,0};
+		unsigned char* res = sbc_decompress(src_dest + 2, src_dest, 4, 0);
 		unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,};
 		for (int i = 0; i < 4; ++i){
 			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
 		}
-		free_log("test decompress", res);
+	}
+	
+	// Test MEM resource loading
+	{
+		struct ptc* p = run_code("LOAD\"MEM:MCHRENC\",0\r");
+		u8 str[256];
+		for (int i = 0; i < 256; ++i){
+			str[i] = i;
+		}
+		
+		struct string expected = {
+			STRING_CHAR, .len=256, 1, {.s = str}
+		};
+		
+		ASSERT(str_comp(&p->res.mem_str, &expected), "[mem] Loaded MEM$ correctly");
+		
+		free_code(p);
+	}
+	
+	// Test regular MEM$ assignment
+	{
+		struct ptc* p = run_code("MEM$=\"ABCD\"\r");
+		
+		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] Wrote MEM$ correctly");
+		
+		free_code(p);
+	}
+	
+	// MEM$ reading
+	{
+		struct ptc* p = run_code("MEM$=\"ABCD\"\rA$=MEM$\r");
+		
+		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] Wrote MEM$ correctly");
+		CHECK_VAR_STR("A","S\4ABCD");
+		
+		free_code(p);
+	}
+	
+	// MEM$ saved past CLEAR
+	{
+		struct ptc* p = run_code("MEM$=\"ABCD\"\rCLEAR\r");
+		
+		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] MEM$ is not deleted");
+		
+		free_code(p);
 	}
 	
 	SUCCESS("test_resources success");

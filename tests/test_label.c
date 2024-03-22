@@ -4,7 +4,7 @@
 
 int test_label(void){
 	// Add label to struct
-	{
+	MEM_CASE {
 		struct labels l = init_labels(MAX_LABELS);
 		
 		ASSERT(add_label(&l, "A", 1, 0), "[label] Label A was added successfully");
@@ -18,10 +18,10 @@ int test_label(void){
 		ASSERT(label_index(&l, "D", 1) == 527, "[label] D == 527");
 		
 		free_labels(l);
-	}
+	} MEM_CASE_END
 	
 	// Add labels but prevent duplicates
-	{
+	MEM_CASE {
 		struct labels l = init_labels(MAX_LABELS);
 		
 		ASSERT(add_label(&l, "A", 1, 0), "[label] Label A was added successfully");
@@ -34,10 +34,10 @@ int test_label(void){
 		ASSERT(label_index(&l, "AAA", 3) == 64, "[label] AAA == 64");
 		
 		free_labels(l);
-	}
+	} MEM_CASE_END
 	
 	// Reset labels
-	{
+	MEM_CASE {
 		struct labels l = init_labels(MAX_LABELS);
 		
 		ASSERT(add_label(&l, "A", 1, 0), "[label] Label A was added successfully");
@@ -58,7 +58,7 @@ int test_label(void){
 		ASSERT(label_index(&l, "D", 1) == LABEL_NOT_FOUND, "[label] No D");
 		
 		free_labels(l);
-
-	}
+	} MEM_CASE_END
+	
 	SUCCESS("test_label success");
 }

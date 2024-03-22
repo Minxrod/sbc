@@ -8,6 +8,7 @@
 #include "label.h"
 
 #define MAX_LINES 10000
+#define MAX_SOURCE_SIZE 524288
 
 /// Program source code.
 ///

@@ -211,12 +211,11 @@ void cmd_spset(struct ptc* p){
 		height = STACK_INT(7);
 	}
 	// TODO:ERR:MED bounds checking
-	// TODO:IMPL:HIGH Finish initializing the rest of the important properties
+	// TODO:TEST:MED Validate that this initialization is correct
 	p->sprites.info[p->sprites.page][id] = init_sprite_info(id,chr,pal,horiz_flip,vert_flip,prio,width,height);
 }
 
 void cmd_spofs(struct ptc* p){
-	// TODO:ERR:MED bounds checking
 	int id;
 	fixp x, y;
 	int time;
@@ -507,7 +506,7 @@ void cmd_spanim(struct ptc* p){
 	int id, chrs, time;
 	// TODO:ERR:LOW Determine errors
 	STACK_INT_RANGE(0,0,99,id);
-	STACK_INT_RANGE(1,0,511,chrs); // TODO:TEST:LOW check that this is the maximum
+	STACK_INT_MIN(1,0,chrs);
 	STACK_INT_MIN(2,0,time);
 	
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];

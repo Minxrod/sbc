@@ -238,6 +238,8 @@ int test_int_func(){
 		
 		CHECK_VAR_STR("T","S\0018");
 		CHECK_VAR_STR("U","S\001F");
+		
+		free_code(p);
 	}
 	
 	SUCCESS("test_int_func success");

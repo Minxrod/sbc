@@ -95,11 +95,6 @@ void con_putn_at(struct console* c, int x, int y, fixp n){
 
 void cmd_print(struct ptc* p){
 	struct console* c = &p->console;
-	// Ensure tabstep is up to date
-	int cur_tabstep = FP_TO_INT(p->console.sys_tabstep);
-	if (cur_tabstep < 1) cur_tabstep = 1;
-	if (cur_tabstep > 16) cur_tabstep = 16;
-	p->console.tabstep = cur_tabstep;
 	
 	u32 i = 0;
 	while (i < p->stack.stack_i){
@@ -484,14 +479,14 @@ void sys_csry(struct ptc* p){
 }
 
 void sys_tabstep(struct ptc* p){
-	// TODO:IMPL:HIGH figure out how to validate assignments here?
 	struct value_stack* s = &p->stack;
 	
-	// TODO:CODE:LOW dedup with print
+	stack_push(s, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->console.sys_tabstep});
+}
+
+void syschk_tabstep(struct ptc* p){
 	int cur_tabstep = FP_TO_INT(p->console.sys_tabstep);
 	if (cur_tabstep < 1) cur_tabstep = 1;
 	if (cur_tabstep > 16) cur_tabstep = 16;
 	p->console.tabstep = cur_tabstep;
-	
-	stack_push(s, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->console.sys_tabstep});
 }

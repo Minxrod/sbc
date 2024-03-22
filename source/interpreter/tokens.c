@@ -67,7 +67,7 @@ const char* sysvars =
 "SPHITNO SPHITX  SPHITY  SPHITT  "
 "KEYBOARDFUNCNO  ICONPUSEICONPAGEICONPMAX"
 "ERL     ERR     "
-"MEM     "
+"MEM$    "
 // extension
 "MEMSAFE ";
 
@@ -628,9 +628,9 @@ int tok_test(struct tokenizer* state){
 
 // none of these values will exceed 100[?]
 
-fixp tok_to_num(struct tokenizer* state, struct token* t){
-	fixp number = u8_to_num((u8*)&state->source->data[t->ofs], t->len);
-	iprintf("Number := %f", (double)number);
+int64_t tok_to_num(struct tokenizer* state, struct token* t){
+	int64_t number = u8_to_num((u8*)&state->source->data[t->ofs], t->len);
+	iprintf("Number := %f", (double)number/4096.0);
 	return number;
 }
 
@@ -638,6 +638,7 @@ int tok_code(struct tokenizer* state){
 	// assume the order is fixed
 	char* data = (char*)state->output->data;
 	idx* size = &state->output->size;
+	uint64_t sys_validate = 0;
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		switch (state->tokens[i].type){
@@ -697,13 +698,20 @@ int tok_code(struct tokenizer* state){
 				;
 				int base = state->source->data[state->tokens[i].ofs+1] == 'H' ? 16 : 2;
 				
-				fixp n = u8_to_number((u8*)&state->source->data[state->tokens[i].ofs+2], state->tokens[i].len-2, base, false);
+				int64_t n = u8_to_number((u8*)&state->source->data[state->tokens[i].ofs+2], state->tokens[i].len-2, base, false);
 				goto number_common;
 				
 			case number:
 				n = tok_to_num(state, &state->tokens[i]);
 				
 			number_common:
+				iprintf("full: %lx\n", n);
+				if (((n >> 31) & 0x1) != (n >> 63)){
+					if (n >= 0x080000000l && n <= 0x0ffffffff && state->tokens[i].type == number){
+						// this is not an error for &H or &B, but is for number
+						return ERR_OVERFLOW;
+					}
+				}
 				if (n >= 0 && n < INT_TO_FP(100) && n == (n & (fixp)0xfffff000)){
 					data[(*size)++] = BC_SMALL_NUMBER;
 					data[(*size)++] = FP_TO_INT(n);
@@ -823,6 +831,9 @@ int tok_code(struct tokenizer* state){
 			case sysvar:
 				data[(*size)++] = BC_SYSVAR;
 				data[(*size)++] = state->tokens[i].cmd;
+				// If sysvar is writable, add a check to ensure the value is limited to the valid range
+				
+				sys_validate |= ((uint64_t)1 << state->tokens[i].cmd);
 				break;
 				
 			case label:
@@ -847,7 +858,24 @@ int tok_code(struct tokenizer* state){
 				return ERR_UNKNOWN_TOKEN_TYPE;
 		}
 	}
+	
 tok_code_exit:
+	// Must be placed at end to happen after assignment
+	if (sys_validate & (
+		(1 << SYS_ICONPAGE) |
+		(1 << SYS_ICONPMAX) |
+		(1 << SYS_ICONPUSE) |
+		(1 << SYS_TABSTEP) |
+		(1 << SYS_MEM)
+	)){
+		for (int i = 0; i < 32; ++i){
+			if (sys_validate & (1 << i)){
+				data[(*size)++] = BC_SYSVAR_VALIDATE;
+				data[(*size)++] = i;
+			}
+		}
+	}
+	
 	state->token_i = 0;
 	return ERR_NONE;
 }
@@ -950,11 +978,11 @@ void tok_eval(struct tokenizer* state){
 			e.argc_stack[e.argc_i]++;
 			tok_eval_clean_stack(&e, prio);
 			if (implicit_commas){
-				// don't push commas unless they are prior to another comma or at the end of the line
+				// don't push commas unless they are prior to another comma or at the beginning/end of the line
 				if (state->tokens[i].cmd == OP_SEMICOLON){
 					e.result[e.result_i++] = state->tokens[i];
 				} else { // must be a comma here
-					if (state->tokens[i+1].type == newline || state->tokens[i+1].prio % 8 == 1){
+					if (!e.result_i || state->tokens[i+1].type == newline || (i>0 && state->tokens[i-1].prio % 8 == 1)){
 						e.result[e.result_i++] = state->tokens[i];
 					}
 				}
