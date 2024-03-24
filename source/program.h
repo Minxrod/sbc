@@ -44,7 +44,7 @@ void free_bytecode(struct bytecode);
 
 struct program init_ptr_prg(char* c);
 
-bool prg_load(struct program* p, const char* filename);
+bool load_prg_alloc(struct program* p, const char* filename);
 bool load_prg(struct program* p, const char* filename);
 
 // Scans for location of some instruction starting from index

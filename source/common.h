@@ -119,6 +119,10 @@ static inline void free_log(char* msg, void* ptr){
 // loosely based on ideas from https://stackoverflow.com/questions/2100331/macro-definition-to-determine-big-endian-or-little-endian-machine
 // 0x04030201 if LE
 static const uint32_t endian = 0x01020304u;
+#ifdef LITTLE_ENDIAN
+#undef LITTLE_ENDIAN
+#endif
+
 #define LITTLE_ENDIAN (\
 	(((char*)&endian)[0] == 4) &&\
 	(((char*)&endian)[1] == 3) &&\

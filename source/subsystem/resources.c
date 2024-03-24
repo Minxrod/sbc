@@ -378,6 +378,8 @@ void init_resource(struct resources* r){
 		.ptr.w = r->mem.chars
 	};
 	r->mem_ptr = &r->mem_str;
+	// Initialize RESULT
+	r->result = 1;
 }
 
 void free_resource(struct resources* r){
@@ -517,7 +519,6 @@ void* get_resource(struct ptc* p, char* name, int len){
 void cmd_load(struct ptc* p){
 	void* res = value_str(ARG(0));
 	// TODO:IMPL:LOW Dialog popups
-	// TODO:ERR:LOW Check errors are correct
 	// longest name:
 	// RRRNP:ABCDEFGH
 	char res_str[14+1] = {0}; // null terminated
@@ -533,7 +534,7 @@ void cmd_load(struct ptc* p){
 			break;
 		}
 	}
-	if (index == -1 && str_len(res) >= 8) {
+	if (index == -1 && str_len(res) > 8) {
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
 	
@@ -551,53 +552,38 @@ void cmd_load(struct ptc* p){
 		case TYPE_PRG:
 			{
 			int size = check_load_res(res_data, p->res.search_path, res_name, resource_type);
-			if (!size){
-				ERROR(ERR_FILE_LOAD_FAILED);
-				// TODO:IMPL:LOW set RESULT instead
-			} else {
+			p->res.result = size != 0;
+			if (size){
 				p->exec.prg.size = size;
 			}
 			}
 			break;
 			
 		case TYPE_CHR:
-			// TODO:IMPL:MED Select path for searching
-			if (!load_chr(res_data, p->res.search_path, res_name)){
-				ERROR(ERR_FILE_LOAD_FAILED);
-			}
+			p->res.result = load_chr(res_data, p->res.search_path, res_name);
 			
 			p->res.regen_chr[get_chr_index(p, res_type)] = true;
 			break;
 			
 		case TYPE_COL:
-			if (!load_col(res_data, p->res.search_path, res_name)){
-				ERROR(ERR_FILE_LOAD_FAILED);
-			}
+			p->res.result = load_col(res_data, p->res.search_path, res_name);
 			
 			p->res.regen_col = true;
 			break;
 			
 		case TYPE_GRP:
-			if (!load_grp(res_data, p->res.search_path, res_name)){
-				ERROR(ERR_FILE_LOAD_FAILED);
-			}
+			p->res.result = load_grp(res_data, p->res.search_path, res_name);
 			break;
 			
 		case TYPE_SCR:
-			if (!load_scr(res_data, p->res.search_path, res_name)){
-				ERROR(ERR_FILE_LOAD_FAILED);
-			}
+			p->res.result = load_scr(res_data, p->res.search_path, res_name);
 			break;
 		
 		case TYPE_MEM:;
 			assert(LITTLE_ENDIAN);
 			int size = check_load_res(p->res.mem.data, p->res.search_path, res_name, TYPE_MEM);
-//			p->res.mem_str.ptr.w = p->res.mem.chars;
 			p->res.mem_str.len = p->res.mem.size;
-			if (!size){
-				ERROR(ERR_FILE_LOAD_FAILED);
-				// TODO:IMPL:LOW set RESULT instead
-			}
+			p->res.result = size != 0;
 			break;
 		
 		default:
@@ -625,7 +611,7 @@ void cmd_save(struct ptc* p){
 			break;
 		}
 	}
-	if (index == -1 && str_len(res) >= 8) {
+	if (index == -1 && str_len(res) > 8) {
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
 	
@@ -647,10 +633,7 @@ void cmd_save(struct ptc* p){
 		case TYPE_SCR:
 			{
 			int size = check_save_res(res_data, "programs/", res_name, resource_type);
-			if (!size){
-				ERROR(ERR_FILE_SAVE_FAILED);
-				// TODO: set RESULT instead
-			}
+			p->res.result = size != 0;
 			}
 			break;
 			
@@ -927,3 +910,10 @@ void syschk_mem(struct ptc* p){
 	// restore regular pointer
 	p->res.mem_ptr = &p->res.mem_str;
 }
+
+void sys_result(struct ptc* p){
+	struct value_stack* s = &p->stack;
+	
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(p->res.result)}});
+}
+

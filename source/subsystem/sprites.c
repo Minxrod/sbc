@@ -350,7 +350,7 @@ void cmd_spscale(struct ptc* p){
 void func_sphit(struct ptc* p){
 	int id, start;
 	start = 0;
-	if (p->stack.stack_i == 1){
+	if (p->exec.argcount == 1){
 		STACK_REL_INT_RANGE(-1,0,99,id);
 		p->stack.stack_i -= 1;
 	} else {

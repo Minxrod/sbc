@@ -705,7 +705,7 @@ int tok_code(struct tokenizer* state){
 				n = tok_to_num(state, &state->tokens[i]);
 				
 			number_common:
-				iprintf("full: %lx\n", n);
+//				iprintf("full: %lx\n", n);
 				if (((n >> 31) & 0x1) != (n >> 63)){
 					if (n >= 0x080000000l && n <= 0x0ffffffff && state->tokens[i].type == number){
 						// this is not an error for &H or &B, but is for number
@@ -766,7 +766,7 @@ int tok_code(struct tokenizer* state){
 				// This is because instructions are ALWAYS expected to compile smaller than the wide-char source
 				// A [wide] -> (VA [regular var-name access] || iA [id-based access])
 				// This can be broken if hash collisions lead to IDs greater than 256.
-				bool is_array_type = state->tokens[i].type == array_name;
+				bool is_array_type = state->tokens[i].type == array_name || state->tokens[i].type == array_actual;
 				if ((state->opts & TOKOPT_VARIABLE_IDS) && state->tokens[i].type != dim_arr){
 					// Get variable index in table
 					int len = state->tokens[i].len;
@@ -866,7 +866,8 @@ tok_code_exit:
 		(1 << SYS_ICONPMAX) |
 		(1 << SYS_ICONPUSE) |
 		(1 << SYS_TABSTEP) |
-		(1 << SYS_MEM)
+		(1 << SYS_MEM) |
+		((uint64_t)1 << SYS_MEMSAFE)
 	)){
 		for (int i = 0; i < 32; ++i){
 			if (sys_validate & (1 << i)){

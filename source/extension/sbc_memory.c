@@ -79,7 +79,7 @@ void cmd_memcopy(struct ptc* p){
 			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 		}
 	}
-	// TODO:ERR:LOW prevent dest, src overlap
+	// prevent dest, src overlap
 	if (src <= dest && (u8*)dest <= (u8*)src + size){
 		// destination range lies partially within src range: illegal
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
@@ -103,10 +103,11 @@ void cmd_memfill(struct ptc* p){
 	int size;
 	STACK_INT_MIN(2,0,size);
 	if (p->memapi.sys_memsafe){
-		// TODO:PERF:NONE one of these checks is possibly redundant?
 		if (dest_num < ADDR_MIN || dest_num > ADDR_MAX){
 			ERROR(ERR_ILLEGAL_ADDRESS);
 		} else if (dest_num + size >= ADDR_MAX){
+			// this check is separate to have a different error when offset is
+			// out of range vs the initial address
 			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 		}
 	}
@@ -225,49 +226,68 @@ void func_addr(struct ptc* p){
 		}
 	} else if (addr_type == FUNC_ADDR_INTERNAL){
 		// access to subsystems
-		// TODO:IMPL:MED offset protection for system items
+		int res_max = 0;
 		
 		if (str_comp(resource, "S\10!CONSOLE")){
 			res_ptr = &p->console;
+			res_max = sizeof(p->console);
 		} else if (str_comp(resource, "S\3!BG")){
 			res_ptr = &p->background;
+			res_max = sizeof(p->background);
 		} else if (str_comp(resource, "S\7!SPRITE")){
 			res_ptr = &p->sprites;
+			res_max = sizeof(p->sprites);
 		} else if (str_comp(resource, "S\11!GRAPHICS")){
 			res_ptr = &p->graphics;
+			res_max = sizeof(p->graphics);
 		} else if (str_comp(resource, "S\6!PANEL")){
 			res_ptr = &p->panel;
+			res_max = sizeof(p->panel);
 		} else if (str_comp(resource, "S\11!RESOURCE")){
 			res_ptr = &p->res;
+			res_max = sizeof(p->res);
 		} else if (str_comp(resource, "S\6!INPUT")){
-			res_ptr = &p->res;
-		} else if (str_comp(resource, "S\5!TIME")){
-			res_ptr = &p->res;
+			res_ptr = &p->input;
+			res_max = sizeof(p->input);
 		} else if (str_comp(resource, "S\4!VAR")){
 			res_ptr = &p->vars;
+			res_max = sizeof(p->vars);
 		} else if (str_comp(resource, "S\4!STR")){
 			res_ptr = &p->strs;
+			res_max = sizeof(p->strs);
 		} else if (str_comp(resource, "S\6!ARRAY")){
 			res_ptr = &p->arrs;
+			res_max = sizeof(p->arrs);
 		} else if (str_comp(resource, "S\7!SYSTEM")){
 			res_ptr = p;
+			res_max = sizeof(*p);
 		} else if (str_comp(resource, "S\5!EXEC")){
 			res_ptr = &p->exec;
+			res_max = sizeof(p->exec);
 		} else if (str_comp(resource, "S\7!SOURCE")){
 			res_ptr = &p->exec.prg;
+			res_max = sizeof(p->exec.prg);
 		} else if (str_comp(resource, "S\11!BYTECODE")){
 			res_ptr = &p->exec.code;
+			res_max = sizeof(p->exec.code);
 		} else {
 			ERROR(ERR_ILLEGAL_FUNCTION_CALL); // can't find system element
 		}
-		// Does a single dereference of the given address
+		assert(res_max > (int)sizeof(void*)); // ensure that check is not for pointer instead of value
+		if (p->memapi.sys_memsafe){
+			if (ofs < 0 || ofs >= res_max){
+				ERROR(ERR_ILLEGAL_OFFSET);
+			}
+		}
 	} else if (len <= 5){
 		res_ptr = str_to_resource(p, resource);
 		if (p->exec.error == ERR_INVALID_RESOURCE_TYPE){
 			p->exec.error = ERR_NONE; // allowed here, retry with variable name
 		}
-		if (ofs < 0 || ofs > resource_size[get_resource_type(resource)]){
-			ERROR(ERR_ILLEGAL_ADDRESS);
+		if (p->memapi.sys_memsafe){
+			if (ofs < 0 || ofs >= resource_size[get_resource_type(resource)]){
+				ERROR(ERR_ILLEGAL_OFFSET);
+			}
 		}
 	}
 	
@@ -280,7 +300,6 @@ void func_ptr(struct ptc* p){
 	fixp ptr = STACK_REL_NUM(-1);
 	--p->stack.stack_i;
 	
-	// TODO:CODE:NONE this is 32-bit
 	out_str->ptr.s[0] = '0';
 	out_str->ptr.s[1] = 'x';
 	for (int i = 0; i < 8; ++i){
@@ -297,9 +316,9 @@ void func_ptr(struct ptc* p){
 void sys_memsafe(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	
-	// TODO:IMPL:LOW Separate assignment and reading for sysvars?
-	int cur_memsafe = p->memapi.sys_memsafe;
-	p->memapi.sys_memsafe = INT_TO_FP(!!cur_memsafe);
-	
 	stack_push(s, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->memapi.sys_memsafe});
+}
+
+void syschk_memsafe(struct ptc* p){
+	p->memapi.sys_memsafe = INT_TO_FP(!!p->memapi.sys_memsafe);
 }

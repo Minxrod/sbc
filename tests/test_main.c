@@ -60,6 +60,8 @@ int run_tests(int argc, char** argv){
 	
 	FAST(test_math);
 	
+//	FAST(test_transpile);
+	
 	FAST(test_int_vars);
 	FAST(test_int_code);
 	FAST(test_int_operator);

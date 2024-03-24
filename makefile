@@ -53,8 +53,8 @@ test_full: test_build
 compsize: CFLAGS+=-DNDEBUG
 
 main_build: $(main_objs)
-	# TODO: Better CSFML library location? (How do you install it?)
-	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o test $(LIBFLAGS)
+	# TODO:CODE:NONE Better CSFML library location? (How do you install it?)
+	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o sbc $(LIBFLAGS)
 
 #gl:
 #	$(CC) $(CFLAGS) $(LFLAGS) source/graphics/pc/opengl_test.c -o test $(LIBFLAGS) -lGL

@@ -68,7 +68,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
 	ptc_err, ptc_err, cmd_load, ptc_err, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
-	cmd_restore, ptc_err, cmd_run, cmd_save, ptc_err, ptc_err, cmd_spangle, //SPANGLE, 
+	cmd_restore, cmd_rsort, cmd_run, cmd_save, ptc_err, cmd_sort, cmd_spangle, //SPANGLE, 
 	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
 	cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv, cmd_swap, //SWAP, 
 	cmd_tmread, //TMREAD,
@@ -96,7 +96,7 @@ DTCM_DATA const ptc_call ptc_functions[] = {
 DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
 	sys_time, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
-	sys_freevar, sys_freemem, ptc_err, ptc_err, ptc_err, //RESULT
+	sys_freevar, sys_freemem, ptc_err, ptc_err, sys_result, //RESULT
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
 	sys_sphitno, ptc_err, ptc_err, ptc_err,
@@ -117,7 +117,7 @@ DTCM_DATA const ptc_call ptc_sysvars_valid[] = {
 	NULL, NULL, NULL, NULL, NULL, // ICONPMAX
 	NULL, NULL, // ERR
 	syschk_mem,
-	NULL
+	syschk_memsafe,
 };
 
 
@@ -312,28 +312,28 @@ void run(struct bytecode code, struct ptc* p) {
 				}
 				break;
 				
+			case BC_ARRAY_NAME:;
+				enum types t = VAR_ARRAY; // type of variable
+				void* x;                  // pointer to variable value
+				char* name;               // variable struct
+				uint_fast8_t len;         // length of variable name
+				goto name_shared;
+				
 			case BC_VARIABLE_NAME:
+				iprintf("name=");
 				// this is both array accesses and regular vars
 				// difference determined by whether or not ARGCOUNT was set
 				// before reading variable
-				iprintf("name=");
-				
-				// type of variable
-				enum types t;
-				// pointer to variable value
-				void* x;
-				// variable struct
-				char* name;
-				// length of variable name
-				u8 len;
-				if (data < 'A'){
+				t = 0;
+			name_shared:
+				if (data < 'A'){ // data byte contains length of name
 					name = (char*)&code.data[r->index];
 					len = code.data[r->index+(u8)data-1] == '$' ? data-1 : data;
-					t = code.data[r->index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER; 
-				} else {
+					t |= code.data[r->index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER; 
+				} else { // data byte contains name (single letter optimization)
 					name = &data;
 					len = 1;
-					t = VAR_NUMBER;
+					t |= VAR_NUMBER;
 				}
 				
 				if (!r->argcount){
@@ -357,6 +357,7 @@ void run(struct bytecode code, struct ptc* p) {
 				}
 				
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
+				// debug printing
 				if (data < 'A'){
 					iprintf("%.*s", data, &code.data[r->index]);
 					r->index += data + (data & 1); // to next instruction
@@ -364,7 +365,6 @@ void run(struct bytecode code, struct ptc* p) {
 					iprintf("%c", code.data[r->index-1]);
 				}
 				//debug
-	//			stack_print(&p->stack);
 				check_time(&p->time, 7);
 				break;
 			

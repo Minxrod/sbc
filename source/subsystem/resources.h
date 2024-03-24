@@ -117,6 +117,9 @@ struct resources {
 	} mem;
 	
 	u8 visible;
+	
+	/// RESULT sysvar, set by file operations
+	int result;
 };
 
 int check_load_res(u8* dest, const char* search_path, const char* name, int type);
@@ -182,4 +185,5 @@ void cmd_load(struct ptc* p);
 // MEM$
 void sys_mem(struct ptc* p);
 void syschk_mem(struct ptc* p);
+void sys_result(struct ptc* p);
 

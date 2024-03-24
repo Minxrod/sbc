@@ -71,7 +71,7 @@ u32 name_hash(const char* name, const u32 len, const u32 hmax){
 	for (u32 i=1; i<len; ++i){
 		hash += name[i]*i*179;
 	}
-	return hash % hmax; // TODO:PERF:LOW See if replacing modulo with & is faster
+	return hash & (hmax - 1); // % hmax
 }
 
 bool namecmp(const char* a, const u32 len, const char b[16]){

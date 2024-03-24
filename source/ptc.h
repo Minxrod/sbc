@@ -73,6 +73,8 @@ enum sysvars {
 	SYS_ICONPUSE, SYS_ICONPAGE, SYS_ICONPMAX,
 	SYS_ERL, SYS_ERR,
 	SYS_MEM,
+	// extra
+	SYS_MEMSAFE,
 };
 
 enum operations {

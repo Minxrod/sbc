@@ -106,14 +106,8 @@ idx bc_scan(struct bytecode code, idx index, u8 find){
 	return BC_SCAN_NOT_FOUND;
 }*/
 
-
-/// Allocates memory equivalent to the program size!
-/// Returns true on success, and false on failure
-// TODO:CODE:LOW Rename to match other load functions
-// TODO:CODE:MED Rename to indicate memory allocation
-bool prg_load(struct program* p, const char* filename){
+bool load_prg_internal(struct program* p, const char* filename, bool alloc){
 	p->size = 0;
-	p->data = NULL;
 	FILE* f = fopen(filename, "r");
 	if (!f){
 		iprintf("File %s load failed!\n", filename);
@@ -140,56 +134,31 @@ bool prg_load(struct program* p, const char* filename){
 	}
 	
 	p->size = h.prg_size;
-	p->data = malloc_log("prg_load", h.prg_size);
+	if (alloc){
+		p->data = malloc_log("prg_load", h.prg_size);
+	}
 	r = fread(p->data, sizeof(char), h.prg_size, f);
 	if (r < h.prg_size || ferror(f)){
 		iprintf("Could not read file corrcetly!\n");
 		fclose(f);
-		free_log("prg_load", p->data);
+		if (alloc){
+			free_log("prg_load", p->data);
+		}
 		return false;
 	}
 	// file read success: close file
 	fclose(f);
 	return true;
+
 }
 
-// TODO:CODE:MED Deduplicate with prg_load
-// Expects pre-allocated buffer of enough size.
+/// Allocates memory equivalent to the program size on success
+/// Returns true on success, and false on failure
+bool load_prg_alloc(struct program* p, const char* filename){
+	p->data = NULL;
+	return load_prg_internal(p, filename, true);
+}
+
 bool load_prg(struct program* p, const char* filename){
-	FILE* f = fopen(filename, "r");
-	if (!f){
-		iprintf("File %s load failed!\n", filename);
-		return false;
-	}
-	struct ptc_header h;
-	size_t r;
-	
-	assert(LITTLE_ENDIAN);
-	// only works on little-endian devices...
-	// (reading into header memory directly)
-	r = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
-	if (r < PRG_HEADER_SIZE || ferror(f)){
-		iprintf("Could not read header correctly!\n");
-		fclose(f);
-		return false;
-	}
-	if (h.type_str[9] == 'P' && h.type_str[10] == 'R' && h.type_str[11] == 'G'){
-		// load success: read file to buffer
-	} else {
-		fclose(f);
-		iprintf("Not a program file!");
-		return false;
-	}
-	
-	p->size = h.prg_size;
-	r = fread(p->data, sizeof(char), h.prg_size, f);
-	if (r < h.prg_size || ferror(f)){
-		iprintf("Could not read file corrcetly!\n");
-		fclose(f);
-		return false;
-	}
-	// file read success: close file
-	fclose(f);
-	return true;
+	return load_prg_internal(p, filename, false);
 }
-

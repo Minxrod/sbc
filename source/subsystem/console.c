@@ -181,25 +181,6 @@ void cmd_cls(struct ptc* p){
 #define INPUT_LEFT 258
 #define INPUT_RIGHT 259
 
-u16 input_keys(struct ptc* p){
-	struct input* i = &p->input;
-	if (check_pressed_manual(i, BUTTON_ID_A, 15, 4)){
-		return INPUT_RETURN;
-	} else if (check_pressed_manual(i, BUTTON_ID_Y, 15, 4)){
-		return INPUT_BACKSPACE;
-	} else if (check_pressed_manual(i, BUTTON_ID_UP, 15, 4)){
-		return INPUT_UP;
-	} else if (check_pressed_manual(i, BUTTON_ID_DOWN, 15, 4)){
-		return INPUT_DOWN;
-	} else if (check_pressed_manual(i, BUTTON_ID_LEFT, 15, 4)){
-		return INPUT_LEFT;
-	} else if (check_pressed_manual(i, BUTTON_ID_RIGHT, 15, 4)){
-		return INPUT_RIGHT;
-	}
-	// convert inputs
-	return get_inkey(i); //returns 0 if no keys
-}
-
 u16* shared_input(struct ptc* p){
 	// TODO:IMPL:LOW Use BREPEAT values if set
 	// TODO:IMPL:LOW Set color when entering text
@@ -207,9 +188,11 @@ u16* shared_input(struct ptc* p){
 	// TODO:IMPL:MED Blinking text cursor
 	// TODO:TEST:MED Write tests for these
 	struct console* con = &p->console;
+	
 	uint_fast16_t inkey;
 	uint_fast8_t keyboard;
 	u16* output = con->text[con->y]; // start of current line
+//	u8* outcol = con->color[con->y];
 	uint_fast8_t out_index = 0;
 	uint_fast8_t out_index_max = 0;
 	int old_panel = p->panel.type;
@@ -218,12 +201,12 @@ u16* shared_input(struct ptc* p){
 	p->panel.type = PNL_KYA;
 	set_panel_bg(p, PNL_KYA);
 	do {
-		inkey = get_inkey(&p->input);
-		keyboard = get_pressed_key(p);
 		// wait for a frame to pass
 		int t = get_time(&p->time);
 		// This test_mode check isn't ideal, but it allows test
 		// cases to run without waiting for an update from another thread
+		inkey = get_inkey(&p->input); // these are buffered so can be placed before
+		keyboard = get_pressed_key(p);
 		while (!inkey && !con->test_mode && t == get_time(&p->time)){
 			// sleep for user input
 			struct timespec tspec = {.tv_nsec=1000000000/600};
@@ -276,7 +259,6 @@ u16* shared_input(struct ptc* p){
 		}
 		p->console.x = out_index;
 	} while (p->exec.error == ERR_NONE && inkey != '\r'
-			&& keyboard != 60
 			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
 	p->panel.type = old_panel;
 	p->console.cursor_visible = false;

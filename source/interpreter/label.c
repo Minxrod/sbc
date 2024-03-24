@@ -27,7 +27,7 @@ int find_label_slot(struct labels* l, char* name, uint_fast8_t len){
 	u32 step = 0;
 	
 	do {
-		hash = (hash + step) % l->label_count; // TODO:PERF:LOW use & instead
+		hash = (hash + step) & (l->label_count - 1); // % label_count
 		label = &l->entry[hash];
 		if (label->name[0] == '\0'){
 			return hash; // available slot!
@@ -70,7 +70,7 @@ int find_label(struct labels* l, char* name, uint_fast8_t len){
 	u32 step = 0;
 	
 	do {
-		hash = (hash + step) % l->label_count;
+		hash = (hash + step) & (l->label_count - 1); // & label_count
 		label = &l->entry[hash];
 		if (label->name[0] == '\0'){
 			return -1; // available slot -> didn't find it

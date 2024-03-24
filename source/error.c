@@ -66,4 +66,6 @@ const char * error_messages[] = {
 	"Special button triggered break",
 	"Program triggered break",
 	"File failed to save",
+	"Illegal pointer offset",
+	"Can't sort array using itself as key",
 };

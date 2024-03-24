@@ -29,7 +29,9 @@ cp *.nds 'path/to/your/sd/'
 cp -r resources 'path/to/your/sd/.'
 ```
 You will additionally need the various graphical resources not provided. To dump these from a copy of PTC, see instructions here: https://github.com/Minxrod/PTC-EmkII?tab=readme-ov-file#first-time-setup
-The expected file structure is flattened here: simply move all graphical files to the resources/ folder.
+The expected file structure is flattened here: simply move all files from `resources/graphics/` and `resources/ui/` files to the resources/ folder. Eventually, the script will be adapated for sbc.
+
+To add programs and resources to run/load, place your .PTC files in the programs/ directory. The file format can be PTC SD file format or PTC's internal format.
 
 This program has been tested with melonDS and on an R4.
 
@@ -45,7 +47,9 @@ Once SFML and CSFML are installed, you will need to edit the makefile (with a lo
 cd sbc/
 make -f makefile
 ```
-If it works, the output executable file will be called 'test'. You can provide the necessary resource files in the resources/ directory.
+If it works, the output executable file will be called 'sbc'. You can provide the necessary resource files in the resources/ directory, following the same process as for NDS/DSi.
+
+To add programs and resources to run/load, place your .PTC files in the programs/ directory.
 
 # Licenses
 

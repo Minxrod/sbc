@@ -23,3 +23,4 @@ void func_addr(struct ptc* p);
 void func_ptr(struct ptc* p);
 
 void sys_memsafe(struct ptc* p);
+void syschk_memsafe(struct ptc* p);

@@ -72,6 +72,8 @@ enum err_code {
 	ERR_BUTTON_SIGNAL,
 	ERR_USER_SIGNAL,
 	ERR_FILE_SAVE_FAILED,
+	ERR_ILLEGAL_OFFSET,
+	ERR_SORT_SAME_ARRAY,
 };
 
 extern const char * error_messages[];

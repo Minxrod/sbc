@@ -122,7 +122,7 @@ int system_launch(void* launch_info){
 	// editor setup
 	// TODO:PERF:MED Reduce memory fragmentation by loading program into bytecode memory...?
 	struct program editor = {0};
-	prg_load(&editor, "programs/EDITOR.PTC"); // TODO:CODE:MED move EDITOR to resources
+	load_prg_alloc(&editor, "programs/EDITOR.PTC"); // TODO:CODE:MED move EDITOR to resources
 	struct bytecode editor_bc = init_bytecode_size(editor.size, 500, 64); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
 	tokenize_full(&editor, &editor_bc, p, TOKOPT_VARIABLE_IDS);
 	free_log("editor temp load", editor.data);
@@ -150,12 +150,12 @@ int system_launch(void* launch_info){
 	}
 	
 	// TODO:IMPL:LOW Add configuration method for optimizations
-	
 	int opts = TOKOPT_VARIABLE_IDS;
 	while (running){
 		p->exec.error = ERR_NONE; // prepare for next execution
 		p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
 		int old_state = state;
+		iprintf("MAIN state=%d\n", state);
 		switch (state){
 			case LAUNCH_PROMPT: // DIRECT mode
 				{
@@ -177,6 +177,7 @@ int system_launch(void* launch_info){
 					}
 					p->exec.error = ERR_NONE; // clear signal
 					p->exec.error_info[0] = 0; // clear signal info
+					break;
 				}
 				
 				// execute single line
@@ -243,20 +244,14 @@ int system_launch(void* launch_info){
 				break;
 				
 			case LAUNCH_BENCH: // benchmark tests
+				p->exec.code = bc; // ensure it has correct resource
 				sbc_benchmark(launch_info);
 				state = LAUNCH_PROMPT; // return to DIRECT when done
 				break;
 				
-			case LAUNCH_AUTOLOAD: // auto load and exec
-				{
-				struct program prog = {0};
-				prg_load(&prog, info->prg_filename);
-				p->exec.error = tokenize_full(&prog, &bc, p, opts);
-				if (p->exec.error == ERR_NONE){
-					run(bc, p);
-				}
-				state = LAUNCH_PROMPT; // program terminated: return to DIRECT mode
-				}
+			case LAUNCH_AUTOLOAD: // auto load program
+				load_prg(&p->exec.prg, info->prg_filename);
+				state = LAUNCH_RUN;
 				break;
 				
 			default:
@@ -381,21 +376,14 @@ int main(void){
 	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
 #endif
 	
-//	struct program program = {0};
 	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 	
 	struct launch_info info = {ptc, NULL, NULL};
 	
 	// set this after creating system to ensure resources are loaded
-	
-//	prg_load(&program, "programs/PERFTS2.PTC");
-//	struct bytecode bc = init_bytecode(program.size);
-//	tokenize(&program, &bc);
-//	free_log("main", program.data);
 	irqSet(IRQ_VBLANK, frame_update);
-	// only needs BC, not source
+	
 	system_launch(&info);
-//	run(bc, ptc);
 	
 	// make failure conditions readable
 	do {
@@ -439,13 +427,13 @@ enum emu_key_mode {
 
 int main(int argc, char** argv){
 	init_memory(MAX_MEMORY);
-	struct program program = {0};
+//	struct program program = {0};
 	
 	char* window_name = "SBC";
 	if (argc >= 2){
 		// Load .PTC file as program
 		window_name = argv[1];
-		prg_load(&program, argv[1]);
+//		load_prg_alloc(&program, argv[1]);
 	}
 	// Auto-inputs
 	FILE* inputs = NULL;
@@ -474,7 +462,7 @@ int main(int argc, char** argv){
 	//  Rendering <==             struct ptc ~ display state
 	
 	// Launch the program thread
-	struct launch_info info = {ptc, &program, argc >= 2 ? argv[1] : NULL};
+	struct launch_info info = {ptc, NULL, argc >= 2 ? argv[1] : NULL};
 	thrd_t prog_thread;
 	if (thrd_success != thrd_create(&prog_thread, system_launch, &info)){
 		printf("Failed to create the program thread!\n");

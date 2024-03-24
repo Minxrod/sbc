@@ -456,5 +456,68 @@ int test_int_vars(){
 		free_code(p);
 	}
 	
+	// SORT
+	{
+		struct ptc* p = run_code_opts(
+			"DIM A[20]\rFOR I=0 TO 19\rA[I]=-I\rNEXT\rSORT 0,20,A\r",
+			TOKOPT_NONE
+		);
+		
+		void* v = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY)->value.ptr;
+		iprintf("%p\n", v);
+		ASSERT(v, "[sort] Array exists");
+		ASSERT(arr_size(v, ARR_DIM1) == 20, "[sort] Array correct size 1");
+		ASSERT(arr_size(v, ARR_DIM2) == ARR_DIM2_UNUSED, "[sort] Array correct size 2");
+		for (int i = 0; i < 20-1; ++i){
+			fixp a = get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number;
+			fixp b = get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i+1, ARR_DIM2_UNUSED)->number;
+			ASSERT(a <= b, "[sort] Sorted array");
+		}
+		
+		free_code(p);
+	}
+	
+	// with variable optimization
+	{
+		struct ptc* p = run_code_opts(
+			"DIM A[20]\rFOR I=0 TO 19\rA[I]=-I\rNEXT\rSORT 0,20,A\r",
+			TOKOPT_VARIABLE_IDS
+		);
+		
+		void* v = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY)->value.ptr;
+		iprintf("%p\n", v);
+		ASSERT(v, "[sort] Array exists");
+		ASSERT(arr_size(v, ARR_DIM1) == 20, "[sort] Array correct size 1");
+		ASSERT(arr_size(v, ARR_DIM2) == ARR_DIM2_UNUSED, "[sort] Array correct size 2");
+		for (int i = 0; i < 20-1; ++i){
+			fixp a = get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i, ARR_DIM2_UNUSED)->number;
+			fixp b = get_arr_entry(&p->vars, "A", 1, VAR_NUMBER | VAR_ARRAY, i+1, ARR_DIM2_UNUSED)->number;
+			ASSERT(a <= b, "[sort] Sorted array");
+		}
+		
+		free_code(p);
+	}
+	
+	// string sort with variable optimization
+	{
+		struct ptc* p = run_code_opts(
+			"A$[0]=\"A\"\rA$[1]=\"AA\"\rA$[2]=\"B\"\rSORT 0,10,A$\r",
+			TOKOPT_VARIABLE_IDS
+		);
+		
+		void* v = test_var(&p->vars, "A", VAR_STRING | VAR_ARRAY)->value.ptr;
+		ASSERT(v, "[sort] Array exists");
+		ASSERT(arr_size(v, ARR_DIM1) == 10, "[sort] String array correct size 1");
+		ASSERT(arr_size(v, ARR_DIM2) == ARR_DIM2_UNUSED, "[sort] String array correct size 2");
+		
+		ASSERT(str_comp(get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 0, ARR_DIM2_UNUSED)->ptr, "S\0"), "[sort] A$[0] = empty");
+		ASSERT(str_comp(get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 6, ARR_DIM2_UNUSED)->ptr, "S\0"), "[sort] A$[6] = empty");
+		ASSERT(str_comp(get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 7, ARR_DIM2_UNUSED)->ptr, "S\1A"), "[sort] A$[7] = A");
+		ASSERT(str_comp(get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 8, ARR_DIM2_UNUSED)->ptr, "S\2AA"), "[sort] A$[8] = AA");
+		ASSERT(str_comp(get_arr_entry(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY, 9, ARR_DIM2_UNUSED)->ptr, "S\1B"), "[sort] A$[9] = B");
+		
+		free_code(p);
+	}
+	
 	SUCCESS("test_int_vars success");
 }
