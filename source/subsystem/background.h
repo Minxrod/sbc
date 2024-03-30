@@ -30,7 +30,7 @@ struct background {
 		fixp step_y;
 		
 		fixp time;
-	} ofs[2][2]; // index order: page layer
+	} ofs[2][2]; // index order: ofs[page][layer]
 	
 	/// BG clipping info.
 	/// 

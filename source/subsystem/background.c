@@ -163,10 +163,7 @@ void cmd_bgfill(struct ptc* p){
 void cmd_bgofs(struct ptc* p){
 	int layer, time;
 	fixp x, y;
-	layer = STACK_INT(0);
-	if (layer < 0 || layer > 1){
-		ERROR(ERR_OUT_OF_RANGE);
-	}
+	STACK_INT_RANGE(0,0,1,layer);
 	x = STACK_NUM(1);
 	y = STACK_NUM(2);
 	
@@ -178,8 +175,8 @@ void cmd_bgofs(struct ptc* p){
 	} else {
 		STACK_INT_MIN(3,0,time);
 		if (time){
-			b->step_x = (b->x - x) / time;
-			b->step_y = (b->y - y) / time;
+			b->step_x = (x - b->x) / time;
+			b->step_y = (y - b->y) / time;
 		} else {
 			b->x = x;
 			b->y = y;
