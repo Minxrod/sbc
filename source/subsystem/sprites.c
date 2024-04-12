@@ -1,5 +1,7 @@
 #include "sprites.h"
 
+#include "common.h"
+#include "resources.h"
 #include "system.h"
 #include "vars.h"
 #include "error.h"
@@ -22,7 +24,7 @@ struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,
 		},{ // collision
 			0,0,0,0,INT_TO_FP(w),INT_TO_FP(h),false,0xff
 		},{ // animation
-			1,0,0,false,0,0
+			1,0,0,false,0,-1
 		},{ // sprite vars
 			0,0,0,0,0,0,0,0
 		}
@@ -35,18 +37,18 @@ void free_sprites(struct sprites* s){
 
 void step_sprites(struct sprites* s){
 	// Note: Code adapted from PTC-EmkII Sprites.cpp (Sprites::update())
-	for (int p = 0; p < 2; ++p){
+	for (int p = 0; p < SCREEN_COUNT; ++p){
 		struct sprite_info* info = s->info[p]; //array of sprites
 		for (int i = 0; i < MAX_SPRITES; ++i){
 			struct sprite_info* spr = &info[i];
-			if (!spr->active) continue; // only update live sprites
+			if (!spr->active){ continue; } // only update live sprites
 			if (spr->scale.time >= 0){
 				spr->scale.s += spr->scale.ds;
 				spr->scale.time--;
 			}
 			if (spr->angle.time >= 0){
 				// TODO:IMPL:MED interpolation direction?
-				spr->angle.a += spr->angle.da;
+				spr->angle.a += spr->angle.da % INT_TO_FP(360);
 				spr->angle.time--;
 			}
 			if (spr->pos.time >= 0){
@@ -65,11 +67,12 @@ void step_sprites(struct sprites* s){
 					spr->anim.current_chr += chr_step;
 					
 					if ((spr->anim.current_chr - spr->chr) / chr_step == spr->anim.chrs){ //loop complete
-						if (!spr->anim.loop_forever)
+						if (!spr->anim.loop_forever){
 							spr->anim.loop--;
+						}
 						if (!spr->anim.loop_forever && spr->anim.loop == 0){ //all loops complete
 							spr->anim.current_chr -= chr_step;
-							spr->chr = spr->anim.current_chr; //no more animation; frame remains last frame
+							//no more animation; frame remains last frame
 							break;
 						}
 						spr->anim.current_chr = spr->chr;
@@ -85,14 +88,13 @@ void step_sprites(struct sprites* s){
 // and they don't overlap, then they aren't colliding. Otherwise, they are.
 // TODO:TEST:MED This really needs a lot of testing.
 bool is_hit(struct sprite_info* a, struct sprite_info* b){
-	if (!a->active || !b->active)
+	if (!a->active || !b->active){
 		return false; //can't hit inactive sprites
-	
-	if (!(a->hit.mask & b->hit.mask))
+	}
+	if (!(a->hit.mask & b->hit.mask)){
 		return false; //can't hit different groups
-	
+	}
 	// TODO:IMPL:LOW Doesn't implement adjust for scale flag?
-	// TODO:CODE:NONE Rewrite to use a vector struct?
 	// Note: These are vectors, so the numeric values shouldn't matter too much
 	fixp normals[3][2] = {
 		{INT_TO_FP(1), 0},
@@ -176,6 +178,15 @@ bool is_hit(struct sprite_info* a, struct sprite_info* b){
 	return true;
 }
 
+// Gets a character index for this sprite (in 4-character sprite units)
+int get_sprite_chr(struct sprite_info* s){
+	int chr = s->chr;
+//	if (s->anim.loop_forever || s->anim.loop)
+	if (s->anim.current_chr >= 0)
+		chr = s->anim.current_chr;
+	return chr;
+}
+
 void cmd_sppage(struct ptc* p){
 	int page = STACK_INT(0);
 	
@@ -220,8 +231,8 @@ void cmd_spofs(struct ptc* p){
 	fixp x, y;
 	int time;
 	STACK_INT_RANGE(0,0,99,id);
-	x = STACK_NUM(1) & 0x0ffff000; // TODO:TEST:LOW Check that these values are correct
-	y = STACK_NUM(2) & 0x0ffff000;
+	x = STACK_NUM(1) & 0xfffff000; // TODO:TEST:LOW Check that these values are correct
+	y = STACK_NUM(2) & 0xfffff000;
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
 	if (p->stack.stack_i == 3){
 		// spofs id,x,y
@@ -230,10 +241,12 @@ void cmd_spofs(struct ptc* p){
 		s->pos.time = -1;
 	} else {
 		STACK_INT_MIN(3,0,time);
+//		iprintf("x=%d y=%d t=%d\n", x, y, time);
 		if (time){
 			s->pos.dx = (x - s->pos.x) / time;
 			s->pos.dy = (y - s->pos.y) / time;
-			s->pos.time = time;
+//			iprintf("dx=%d dy=%d\n", s->pos.dx, s->pos.dy);
+			s->pos.time = time - 1; // TODO:CODE:NONE rework step to use time and time == 0 instead?
 		} else {
 			s->pos.x = x;
 			s->pos.y = y;
@@ -397,10 +410,11 @@ void cmd_spangle(struct ptc* p){
 	if (!s->active) {
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
-	// TODO:PERF:NONE See if angle units of 2^n are better
+	
+	angle = (STACK_INT(1) % 360);
+//	if (angle < 0) angle += 360;
+	
 	if (p->stack.stack_i == 2){
-		angle = STACK_INT(1) % 360;
-		if (angle < 0) angle += 360;
 		s->angle.a = INT_TO_FP(angle);
 		s->angle.time = -1;
 	} else {
@@ -414,19 +428,15 @@ void cmd_spangle(struct ptc* p){
 			}
 		}
 		
-		angle = STACK_INT(1) % 360;
-		if (angle < 0) angle += 360;
 		struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
 //		s->angle.a = ;
 		if (time){
 			if (dir < 0){
 				// 45 -> 90 step 45/time
 				s->angle.da = (INT_TO_FP(angle) - s->angle.a) / time;
-				if (s->angle.da < 0) s->angle.da += INT_TO_FP(360);
 			} else {
 				// 45 -> 90 step 315/time
-				s->angle.da = (INT_TO_FP(angle) - s->angle.a) / time;
-				if (s->angle.da < 0) s->angle.da += INT_TO_FP(360);
+				s->angle.da = (s->angle.a - INT_TO_FP(angle)) / time;
 			}
 		} else {
 			s->angle.a = INT_TO_FP(angle);
@@ -513,6 +523,7 @@ void cmd_spanim(struct ptc* p){
 	s->anim.chrs = chrs;
 	s->anim.frames_per_chr = time;
 	s->anim.current_frame = 0;
+	s->anim.current_chr = s->chr;
 	
 	if (p->stack.stack_i == 3){
 		s->anim.loop = 0;
@@ -525,4 +536,7 @@ void cmd_spanim(struct ptc* p){
 	}
 }
 
+void sys_sphitno(struct ptc* p){
+	STACK_RETURN_INT(p->sprites.sphitno);
+}
 

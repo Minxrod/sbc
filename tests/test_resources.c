@@ -85,7 +85,7 @@ int test_resources(void){
 	{
 		unsigned char src_dest[8] = {0,0,0,0,0,0,0xf8,0};
 		unsigned char* res = sbc_decompress(src_dest + 6, src_dest, 8, 0);
-		unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,};
+		const unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,};
 		for (int i = 0; i < 8; ++i){
 			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
 		}
@@ -95,7 +95,7 @@ int test_resources(void){
 	{
 		unsigned char src_dest[4] = {0,0,0xf8,0};
 		unsigned char* res = sbc_decompress(src_dest + 2, src_dest, 4, 0);
-		unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,};
+		const unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,};
 		for (int i = 0; i < 4; ++i){
 			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
 		}

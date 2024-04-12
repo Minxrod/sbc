@@ -39,7 +39,9 @@
 #define ARR_LIMIT 2048
 #endif
 
-// note: members here are stored directly (why?)
+/// The system struct. This contains the entire interpreter state.
+///
+// TODO:CODE:LOW change name to sbc at some point
 struct ptc {
 	// upper screen stuff
 	struct console console;
@@ -81,6 +83,21 @@ struct ptc {
 
 struct ptc* init_system(int var, int str, int arr);
 void free_system(struct ptc*);
+
+/// Information struct containing program source and the system to run it on.
+///
+/// Used for launching the main thread on PC.
+struct launch_info {
+	/// Pointer to system struct
+	struct ptc* p;
+	/// Pointer to program source.
+	struct program* prg;
+	/// Name of program to autoboot
+	char* prg_filename;
+};
+
+// This is intended to accept a struct launch_info, but is void* for use in thrd_create
+int launch_system(void*);
 
 void cmd_acls(struct ptc*);
 void cmd_visible(struct ptc*);

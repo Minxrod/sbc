@@ -5,10 +5,13 @@
 ///
 
 #include "common.h"
+#include "resources.h"
 
 #include <assert.h>
 
 struct ptc;
+
+#define BG_LAYERS 2
 
 ///
 /// Background management struct.
@@ -30,7 +33,7 @@ struct background {
 		fixp step_y;
 		
 		fixp time;
-	} ofs[2][2]; // index order: ofs[page][layer]
+	} ofs[SCREEN_COUNT][BG_LAYERS]; // index order: ofs[page][layer]
 	
 	/// BG clipping info.
 	/// 
@@ -40,7 +43,7 @@ struct background {
 		uint_fast8_t y1;
 		uint_fast8_t x2;
 		uint_fast8_t y2;
-	} clip[2];
+	} clip[SCREEN_COUNT];
 	
 };
 

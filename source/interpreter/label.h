@@ -11,12 +11,15 @@
 /// Can be increased if needed. Value should always be a power of two.
 #define MAX_LABELS 2048
 
+/// Size of maximum label length, in characters
+#define MAX_LABEL_SIZE 16
+
 #define LABEL_NOT_FOUND ((idx)-1)
 
 /// Pair mapping a label to a BC index
 struct label_line {
 	/// Label name
-	char name[16];
+	char name[MAX_LABEL_SIZE];
 	/// Index into program BC
 	idx index;
 };
@@ -43,3 +46,6 @@ int find_label(struct labels* l, char* name, uint_fast8_t len);
 int find_label_slot(struct labels* l, char* name, uint_fast8_t len);
 
 idx label_index(struct labels* l, char* name, uint_fast8_t len);
+
+struct ptc;
+idx search_label(struct ptc* p, void* label);

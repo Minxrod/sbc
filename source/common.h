@@ -29,6 +29,7 @@
 // Takes an integer and converts it to fixed point
 #define INT_TO_FP(num) ((fixp)(((uint32_t)(num)) << FIXPOINT))
 // Creates a fixed point number from integer and fractional components
+#define FIXP_1 INT_TO_FP(1)
 
 // for bad failures 
 // and those that aren't properly handled yet...

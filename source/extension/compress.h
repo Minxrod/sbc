@@ -8,9 +8,15 @@ void sbc_write_bit(unsigned char* output_data, int* output_index, int value);
 
 int sbc_compress(const unsigned char* const source_data, unsigned char* output_data, int source_size, int cache_size, int unit_size);
 
+/// Stores the result of a call to sbc_optimal_compress.
+/// 
+/// This contains all the information needed to create an SBC compressed file.
 struct sbc_compression_result {
+	/// Size of compressed result
 	int size;
+	/// Size of compression cache, in bits
 	int bits;
+	/// Pointer to output compressed data
 	unsigned char* output;
 };
 

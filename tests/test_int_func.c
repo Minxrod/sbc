@@ -211,6 +211,11 @@ int test_int_func(){
 			"S$=HEX$(524287.8)\r"
 			"T$=HEX$(-8,1)\r" // edge cases 2-arg
 			"U$=HEX$(15,1)\r"
+			"V$=HEX$(3)\r"
+			"W$=HEX$(7)\r"
+			"X$=HEX$(1)\r"
+			"Y$=HEX$(-2)\r"
+			"Z$=HEX$(0)\r"
 		);
 		
 		CHECK_VAR_STR("A","S\0019");
@@ -238,6 +243,12 @@ int test_int_func(){
 		
 		CHECK_VAR_STR("T","S\0018");
 		CHECK_VAR_STR("U","S\001F");
+		
+		CHECK_VAR_STR("V","S\0013");
+		CHECK_VAR_STR("W","S\0017");
+		CHECK_VAR_STR("X","S\0011");
+		CHECK_VAR_STR("Y","S\005FFFFE");
+		CHECK_VAR_STR("Z","S\0010");
 		
 		free_code(p);
 	}

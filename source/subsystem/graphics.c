@@ -1,5 +1,6 @@
 #include "graphics.h"
 
+#include "resources.h"
 #include "system.h"
 #include "error.h"
 
@@ -237,9 +238,8 @@ void cmd_gputchr(struct ptc* p){
 		// pointer to destination page
 		u8* dest = grp_drawpage(p);
 		// copy to destination
-		// TODO:CODE:NONE constants for character size
-		for (int y = 0; y < 8; ++y){
-			for (int x = 0; x < 8; x+=2){
+		for (int y = 0; y < CHR_HEIGHT; ++y){
+			for (int x = 0; x < CHR_WIDTH; x+=2){
 				uint_fast8_t col1 = src[x/2+4*y] & 0x0f;
 				uint_fast8_t col2 = src[x/2+4*y] >> 4;
 				for (int i = 0; i < size; ++i){
@@ -269,7 +269,7 @@ void cmd_gputchr(struct ptc* p){
 }
 
 void func_gspoit(struct ptc* p){
-	int page, x, y;
+	int x, y;
 	u8* dest;
 	if (p->exec.argcount == 2){
 		dest = grp_drawpage(p);
@@ -277,6 +277,7 @@ void func_gspoit(struct ptc* p){
 		y = STACK_REL_INT(-1);
 		p->stack.stack_i -= 2;
 	} else {
+		int page;
 		STACK_REL_INT_RANGE(-3,0,3,page);
 		x = STACK_REL_INT(-2);
 		y = STACK_REL_INT(-1);
@@ -392,6 +393,9 @@ void cmd_gcopy(struct ptc* p){
 	}
 }
 
+/// Mathematical constant pi (as double)
+#define PI 3.141592653589
+
 void cmd_gcircle(struct ptc* p){
 	int x, y, r;
 	u8 color = p->graphics.color;
@@ -407,14 +411,102 @@ void cmd_gcircle(struct ptc* p){
 	int angle_units = r + 16;
 	// this implementation will be a bit slow it's just to have <something>
 	for (int i = 0; i < angle_units; ++i){
-		// TODO:CODE:NONE pi constant
-		double angle = 2.0 * 3.141592653589 * i / angle_units;
-		double angle2 = 2.0 * 3.141592653589 * (i + 1) / angle_units;
+		double angle = 2.0 * PI * i / angle_units;
+		double angle2 = 2.0 * PI * (i + 1) / angle_units;
 		int x1 = x + r * cos(angle);
 		int y1 = y + r * sin(angle);
 		int x2 = x + r * cos(angle2);
 		int y2 = y + r * sin(angle2);
 		
 		draw_line(x1,y1,x2,y2,page,color,drawmode);
+	}
+}
+
+// Based on "combined-scan-and-fill" algorithm listed at
+// https://en.wikipedia.org/wiki/Flood_fill?useskin=monobook
+static inline bool inside(u8* data, int x, int y, u8 match){
+	if (x < 0 || x >= GRP_WIDTH || y < 0 || y >= GRP_HEIGHT) return 0;
+	
+	return data[grp_index(x,y)] == match; // matching first color
+}
+
+#define PAINT_STACK_MAX 256
+
+#define PAINT_STACK_ADD(x1,x2,y1,dy) do {\
+	/* TODO:PERF:NONE write bytes here? see if stack needs to be faster */\
+	if (stack_i >= PAINT_STACK_MAX){\
+		ERROR(ERR_PAINT_STACK_OVERFLOW);\
+	}\
+	stack[stack_i++] = ((x1) | ((x2) << 8) | ((y1) << 16) | ((dy > 0) << 24));\
+} while(0)
+
+#define PAINT_STACK_GET(x1,x2,y1,dy) do {\
+	u32 v = stack[--stack_i];\
+	x1 = v & 0xff;\
+	x2 = (v & 0xff00) >> 8;\
+	y1 = (v & 0xff0000) >> 16;\
+	dy = v & 0x1000000 ? 1 : -1;\
+} while(0)
+
+
+void cmd_gpaint(struct ptc* p){
+	// GPAINT X Y [C [B]]
+	// TODO:IMPL:LOW border version
+	// TODO:ERR:MED determine errors + bounds checks
+	// TODO:ERR:HIGH rework to use a queue to see if it prevents a trivial stack overflow?
+	int x, y;
+	int c, b;
+	x = STACK_INT(0);
+	y = STACK_INT(1);
+	if (p->stack.stack_i > 2){
+		c = STACK_INT(2);
+		if (p->stack.stack_i > 3){
+			b = STACK_INT(3);
+			(void)b;
+		}
+	} else {
+		c = p->graphics.color;
+	}
+	u8* data = p->res.grp[p->graphics.info[p->graphics.screen].drawpage];
+	
+	u8 match = data[grp_index(x,y)];
+	int stack_i = 0;
+	u32 stack[PAINT_STACK_MAX];
+	
+	PAINT_STACK_ADD(x, x, y, 1);
+	PAINT_STACK_ADD(x, x, y - 1, -1);
+	
+	while (stack_i > 0){
+		int x1, x2, dy;
+		PAINT_STACK_GET(x1, x2, y, dy);
+		
+		x = x1;
+		if (inside(data, x, y, match)){
+			while(inside(data, x-1, y, match)){
+				data[grp_index(x-1, y)] = c;
+				--x;
+			}
+			if (x < x1){
+				PAINT_STACK_ADD(x, x1 - 1, y - dy, -dy);
+			}
+		}
+		while(x1 <= x2){
+			while(inside(data, x1, y, match)){
+				data[grp_index(x1, y)] = c;
+				++x1;
+			}
+			if (x1 > x){
+				PAINT_STACK_ADD(x, x1 - 1, y + dy, dy);
+			}
+			if (x1 - 1 > x2){
+				PAINT_STACK_ADD(x2 + 1, x1 - 1, y - dy, -dy);
+			}
+			++x1;
+			while (x1 < x2 && !inside(data, x1, y, match)){
+				++x1;
+			}
+			x = x1;
+		}
+		iprintf("paintstack=%d\n", stack_i);
 	}
 }

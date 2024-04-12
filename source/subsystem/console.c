@@ -1,5 +1,6 @@
 #include "console.h"
 
+#include "strs.h"
 #include "system.h"
 #include "ptc.h"
 #include "error.h"
@@ -181,6 +182,8 @@ void cmd_cls(struct ptc* p){
 #define INPUT_LEFT 258
 #define INPUT_RIGHT 259
 
+#define FRAME_TENTH_NS (1000000000/600)
+
 u16* shared_input(struct ptc* p){
 	// TODO:IMPL:LOW Use BREPEAT values if set
 	// TODO:IMPL:LOW Set color when entering text
@@ -198,7 +201,7 @@ u16* shared_input(struct ptc* p){
 	int old_panel = p->panel.type;
 	p->console.cursor_visible = true;
 	// enable typing during INPUT/LINPUT if not already active
-	p->panel.type = PNL_KYA;
+	p->panel.type = PNL_KYA; // TODO:IMPL:MED Update panel fully on load
 	set_panel_bg(p, PNL_KYA);
 	do {
 		// wait for a frame to pass
@@ -209,7 +212,7 @@ u16* shared_input(struct ptc* p){
 		keyboard = get_pressed_key(p);
 		while (!inkey && !con->test_mode && t == get_time(&p->time)){
 			// sleep for user input
-			struct timespec tspec = {.tv_nsec=1000000000/600};
+			struct timespec tspec = {.tv_nsec=FRAME_TENTH_NS};
 			thrd_sleep(&tspec, NULL);
 		}
 		// Check for special keys
@@ -366,9 +369,13 @@ void cmd_input(struct ptc* p){
 					// TODO:TEST:LOW Check that wide strings work here
 					bool require_wide = false;
 					for (int j = prev_i; j < out_i; ++j){
-						if (!is_char(output[j])) require_wide = true;
+						if (!is_char(output[j])){
+							require_wide = true;
+							break;
+						}
 					}
 					
+					s->type = require_wide ? STRING_WIDE : STRING_CHAR;
 					s->uses = 1;
 					s->len = out_i - prev_i - 1;
 					for (int j = prev_i; j < out_i; ++j){
@@ -384,7 +391,6 @@ void cmd_input(struct ptc* p){
 			} else {
 				// invalid argument type
 				p->exec.error = ERR_UNKNOWN_TYPE;
-				p->stack.stack_i = 0;
 				return;
 			}
 		}
@@ -394,7 +400,6 @@ void cmd_input(struct ptc* p){
 		}
 	}
 	con_newline(con, true); // from user entering the line successfully.
-	p->stack.stack_i = 0;
 }
 
 void cmd_linput(struct ptc* p){

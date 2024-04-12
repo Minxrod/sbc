@@ -1,6 +1,7 @@
 #include "flow.h"
 
 #include "common.h"
+#include "label.h"
 #include "ptc.h"
 #include "system.h"
 #include "program.h"
@@ -130,32 +131,6 @@ void cmd_next(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-idx search_label(struct ptc* p, void* label){
-	assert(label); // label must exist
-	// Labels must always be located at the beginning of a line.
-	idx index = 0;
-	
-	u8 buf[20];
-	char* buf_ptr = (char*)buf;
-	int len = str_len(label);
-	if (*(char*)label == BC_LABEL || *(char*)label == BC_LABEL_STRING){
-		assert(len <= 16);
-		str_char_copy(label, buf);
-	} else { // assume regular string
-		assert(len <= 17);
-		str_char_copy(label, buf);
-		++buf_ptr; // pointer past '@'
-		--len; // remove '@'
-	}
-	assert(len <= 16);
-	index = label_index(&p->exec.code.labels, buf_ptr, len);
-	if (index == LABEL_NOT_FOUND){
-		p->exec.error = ERR_LABEL_NOT_FOUND;
-		return p->exec.code.size; // error'd anyways, skip to end
-	}
-	return index;
-}
-
 // IF uses the value on the stack to determine where to jump to next, either the
 // THEN/GOTO block or the ELSE block.
 void cmd_if(struct ptc* p){
@@ -179,10 +154,9 @@ void cmd_if(struct ptc* p){
 		if (index == BC_SCAN_NOT_FOUND){
 			p->exec.error = ERR_MISSING_ELSE_AND_ENDIF;
 			return;
-		} else {
-			jump_ok = p->exec.code.data[index+1] == CMD_ELSE;
-			index += 2; // move to instruction past ELSE or ENDIF
 		}
+		jump_ok = p->exec.code.data[index+1] == CMD_ELSE;
+		index += 2; // move to instruction past ELSE or ENDIF
 	}
 	// If there's a label AND it's not followed by a GOSUB
 	char* label = (char*)&p->exec.code.data[index];
@@ -215,12 +189,10 @@ void cmd_else(struct ptc* p){
 	p->exec.code.data[index+1] != CMD_ENDIF);
 	
 	if (index == BC_SCAN_NOT_FOUND){
-		p->exec.error = ERR_MISSING_ELSE_AND_ENDIF;
-		return;
-	} else {
-		index += 2; // move to instruction past ELSE or ENDIF
-		p->exec.index = index;
+		ERROR(ERR_MISSING_ELSE_AND_ENDIF);
 	}
+	index += 2; // move to instruction past ELSE or ENDIF
+	p->exec.index = index;
 }
 
 void cmd_endif(struct ptc* p){
@@ -235,14 +207,14 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	assert(e->type & (VAR_NUMBER | VAR_STRING));
 	if (e->type & VAR_NUMBER){
 		// Rest of stack contains labels in order
-		s32 label_index = VALUE_INT(e);
+		int label_i = VALUE_INT(e);
 //		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
-		if (label_index < 0 || label_index+1 >= (int)p->stack.stack_i){
+		if (label_i < 0 || label_i+1 >= (int)p->stack.stack_i){
 			return; // No jump: number is out of range
 		}
-		label = p->stack.entry[label_index+1].value.ptr;
+		label = p->stack.entry[label_i+1].value.ptr;
 	} else {
-		label = e->value.ptr;
+		label = value_str(e); //value_str
 	}
 	// Search code for label
 	u32 index = search_label(p, label);

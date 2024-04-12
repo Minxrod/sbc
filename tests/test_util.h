@@ -60,10 +60,14 @@
 }
 
 // Quick checks
-#define CHECK_VAR_INT(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == INT_TO_FP(num), var" == "#num); }
+#define CHECK_VAR_INT(var,num) do {\
+/*	iprintf(var"=%d exp=%d\n", test_var(&p->vars, var, VAR_NUMBER)->value.number, INT_TO_FP(num));*/\
+	ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == INT_TO_FP(num), var" == "#num);\
+} while(0)
+
 #define CHECK_VAR_NUM(var,num) {ASSERT(test_var(&p->vars, var, VAR_NUMBER)->value.number == num, var" == "#num" (fixp)"); }
 #define CHECK_VAR_STR(var,str) { \
-	iprintf("%s\n", (char*)str_at(test_var(&p->vars, var, VAR_STRING)->value.ptr, 0));\
+/*	iprintf("check=%s\n", (char*)str_at(test_var(&p->vars, var, VAR_STRING)->value.ptr, 0));*/\
 	ASSERT(str_comp(test_var(&p->vars, var, VAR_STRING)->value.ptr, str), var" == "#str);\
 }
 
@@ -87,4 +91,4 @@ bool check_code_error(char* code, enum err_code expected);
 
 void free_code(struct ptc* ptc);
 
-int token_code(char* code, char* expected, int size);
+int token_code(char* code, const char* expected, int size);

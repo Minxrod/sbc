@@ -157,10 +157,6 @@ void sys_maincnth(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((get_time(&p->time) & 0xfffff00000) >> 20)}});
 }
 
-void sys_sphitno(struct ptc* p){
-	STACK_RETURN_INT(p->sprites.sphitno);
-}
-
 void sys_freemem(struct ptc* p){
 	int freemem_kb = (p->arrs.arr_data_size - p->arrs.arr_data_next) * sizeof(union value) / 1024; // number of elements remaining * size of elements remaining
 	

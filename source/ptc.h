@@ -3,7 +3,13 @@
 /// @file
 /// @brief Defines enumerations for PTC functions and bytecode instructions.
 /// 
+/// These enums are used both during the tokenization process to store the
+/// command/function/operator types, as well as in the compiled bytecode to
+/// indicate what commands etc. get executed.
 
+/// Bytecode instruction types. Each one denotes some specific operation to execute.
+///
+/// Most are two bytes long, though some are larger and some are variable-length.
 enum bytecode_ops {
 	BC_ARGCOUNT = 'A',
 	BC_ARRAY_NAME = 'a',
@@ -28,6 +34,13 @@ enum bytecode_ops {
 	BC_SYSVAR_VALIDATE = 'y',
 };
 
+/// Size of compiled BC_NUMBER
+#define BC_NUMBER_SIZE 6
+/// Size of generic compiled operation. Some special cases can be larger than this, or variable-length.
+#define BC_INSTR_SIZE 2
+
+/// IDs that correspond to what command is being executed.
+/// These appear in the compiled bytecode after a BC_COMMAND instruction and take up one byte.
 enum command_ids {
 	CMD_PRINT=0, CMD_LOCATE, CMD_COLOR, CMD_DIM,
 	CMD_FOR, CMD_TO, CMD_STEP, CMD_NEXT,
@@ -53,6 +66,8 @@ enum command_ids {
 	CMD_TALK, CMD_TALKSTOP,
 };
 
+/// IDs that correspond to what function is being executed.
+/// These appear in the compiled bytecode after a BC_FUNCTION instruction and take up one byte.
 enum functions {
 	FUNC_ABS, FUNC_ASC, FUNC_ATAN, FUNC_BGCHK, FUNC_BGMCHK, FUNC_BGMGETV, FUNC_BTRIG, FUNC_BUTTON,
 	FUNC_CHKCHR, FUNC_CHR, FUNC_COS, FUNC_DEG, FUNC_EXP, FUNC_FLOOR, FUNC_GSPOIT, FUNC_HEX, FUNC_ICONCHK,
@@ -62,6 +77,8 @@ enum functions {
 	FUNC_TALKCHK,
 };
 
+/// IDs that correspond to what system variable is being used by BC_SYSVAR or BC_SYSVAR_VALIDATE.
+/// These appear in the compiled bytecode after the instruction and take up one byte.
 enum sysvars {
 	SYS_TRUE, SYS_FALSE, SYS_CANCEL, SYS_VERSION,
 	SYS_TIME, SYS_DATE, SYS_MAINCNTL, SYS_MAINCNTH,
@@ -77,6 +94,8 @@ enum sysvars {
 	SYS_MEMSAFE,
 };
 
+/// IDs that correspond to what operation is being calculated by BC_OPERATOR.
+/// These appear in the compiled bytecode after the instruction and take up one byte.
 enum operations {
 	OP_ADD=0, OP_COMMA, OP_SUBTRACT, OP_MULTIPLY, OP_DIVIDE, OP_SEMICOLON,
 	OP_ASSIGN, OP_NEGATE,

@@ -351,11 +351,11 @@ int test_tokens(void){
 	
 	// DATA tokenization
 	{
-		char bc[] = "d\0120\000AA\000BCdefd\5 G H \0";
+		char bc[] = "d\0130\000AA\000BCdef\0\0d\6 G H \0";
 		ASSERT(
 			token_code(
 				"DATA 0,AA , BCdef   \rDATA \" G H \"\r",
-				bc, 20
+				bc, 24
 			), "[tokens] DATA tokenization"
 		);
 	}
@@ -428,16 +428,16 @@ int test_tokens(void){
 		ASSERT(
 			token_code(
 				"DATA A\rDATA AA\rDATA AAA\r DATA AAAA\r",
-				"d\1A\0d\2AAd\3AAA\0d\4AAAA",
-				20
+				"d\2A\0d\3AA\0\0d\4AAA\0d\5AAAA\0\0",
+				24
 			), "[tokens] DATA tokenization of odd length"
 		);
 		// Test with full strings
 		ASSERT(
 			token_code(
 				"DATA \"A\"\rDATA \"AA\"\rDATA \"AAA\"\r DATA \"AAAA\"\r",
-				"d\1A\0d\2AAd\3AAA\0d\4AAAA",
-				20
+				"d\2A\0d\3AA\0\0d\4AAA\0d\5AAAA\0\0",
+				24
 			), "[tokens] DATA tokenization of odd length"
 		);
 	}
@@ -512,7 +512,7 @@ int test_tokens(void){
 		// run program
 		struct program p = { strlen(code), code };
 		struct bytecode o = init_bytecode();
-		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16);
+		struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
 		
 		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
 		// Bytecode is as expected
@@ -568,12 +568,12 @@ int test_tokens(void){
 		"REM AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r"
 		"DATA 1234,56789\r";
 		char bc[] = {
-			BC_DATA, 10, '1', '2', '3', '4', 0,
-			'5', '6', '7', '8', '9'
+			BC_DATA, 11, '1', '2', '3', '4', 0,
+			'5', '6', '7', '8', '9', 0, 0
 		};
 		ASSERT(
 			token_code(
-				code, bc, 12
+				code, bc, 14
 			), "[tokens] DATA tokenization when DATA occurs beyond index 256"
 		);
 	}

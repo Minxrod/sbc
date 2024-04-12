@@ -11,30 +11,30 @@ void func_rnd(struct ptc* p){
 	// TODO:ERR:LOW Check number of arguments!
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & VAR_NUMBER){
-		s32 r, max;
-		
-		max = FP_TO_INT(VALUE_NUM(a));
-		r = rand();
-		if (max == 0)
-			max = 1;
-		if (max < 0){
-			max = -max;
-			r %= max;
-			r = -r;
-		} else {
-			r %= max;
-		}
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(r)}});
+	int r;
+	int max;
+
+	max = FP_TO_INT(VALUE_NUM(a));
+	r = rand();
+	if (max == 0) {
+		max = 1;
+	}
+	if (max < 0){
+		max = -max;
+		r %= max;
+		r = -r;
 	} else {
-		p->exec.error = ERR_FUNC_INVALID_TYPE;
-	}	
+		r %= max;
+	}
+
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(r)}});
 }
 
+// Approximately 3.141 in 20.12FP
+#define FIXP_PI 12867
+
 void func_pi(struct ptc* p){
-	// Approximately 3.141 in 20.12FP
-	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {12867}}); 
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {FIXP_PI}});
 }
 
 void func_floor(struct ptc* p){
@@ -88,11 +88,11 @@ void func_pow(struct ptc* p){
 }
 
 fixp func_rad_internal(fixp deg){
-	return (int64_t)deg * 12867 / INT_TO_FP(180);
+	return (int64_t)deg * FIXP_PI / INT_TO_FP(180);
 }
 
 fixp func_deg_internal(fixp rad){
-	return (int64_t)rad * INT_TO_FP(180) / 12867;
+	return (int64_t)rad * INT_TO_FP(180) / FIXP_PI;
 }
 
 void func_rad(struct ptc* p){
@@ -148,7 +148,6 @@ void func_atan(struct ptc* p){
 	if (p->exec.argcount == 1){
 		struct stack_entry* ratio = stack_pop(&p->stack);
 		
-		// TODO:ERR:MED Check error conditions
 		STACK_RETURN_NUM(func_atan_internal(VALUE_NUM(ratio)));
 	} else {
 		struct stack_entry* x = stack_pop(&p->stack);

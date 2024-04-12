@@ -1,5 +1,6 @@
 #include "background.h"
 
+#include "resources.h"
 #include "system.h"
 #include "error.h"
 
@@ -17,9 +18,8 @@ void free_background(struct background* b){
 }
 
 void step_background(struct background* b){
-	// TODO:CODE:NONE pages constant
-	for (int p = 0; p < 2; ++p){
-		for (int l = 0; l < 2; ++l){
+	for (int p = 0; p < SCREEN_COUNT; ++p){
+		for (int l = 0; l < BG_LAYERS; ++l){
 			struct bg_offset* bg = &b->ofs[p][l];
 			if (bg->time > 0){
 				bg->x += bg->step_x;
@@ -57,7 +57,7 @@ void cmd_bgpage(struct ptc* p){
 void cmd_bgclr(struct ptc* p){
 	if (p->stack.stack_i == 0){
 		// clear both layers on current page
-		for (int l = 0; l <= 1; ++l){
+		for (int l = 0; l < BG_LAYERS; ++l){
 			u16* bg = bg_page(p, p->background.page, l);
 			memset(bg, 0, SCR_SIZE);
 		}
@@ -186,16 +186,16 @@ void cmd_bgofs(struct ptc* p){
 }
 
 void cmd_bgclip(struct ptc* p){
-	// TODO:ERR:MED check bounds
-	uint_fast8_t x1 = STACK_INT(0);
-	uint_fast8_t y1 = STACK_INT(1);
-	uint_fast8_t x2 = STACK_INT(2);
-	uint_fast8_t y2 = STACK_INT(3);
+	uint_fast8_t x1, y1, x2, y2;
+	STACK_INT_RANGE(0,0,31,x1);
+	STACK_INT_RANGE(1,0,23,y1);
+	STACK_INT_RANGE(2,0,31,x2);
+	STACK_INT_RANGE(3,0,23,y2);
 	
-	p->background.clip[p->background.page].x1 = x1;
-	p->background.clip[p->background.page].y1 = y1;
-	p->background.clip[p->background.page].x2 = x2;
-	p->background.clip[p->background.page].y2 = y2;
+	p->background.clip[p->background.page].x1 = 8 * x1;
+	p->background.clip[p->background.page].y1 = 8 * y1;
+	p->background.clip[p->background.page].x2 = 8 * x2 + 7;
+	p->background.clip[p->background.page].y2 = 8 * y2 + 7;
 }
 
 void cmd_bgread(struct ptc* p){

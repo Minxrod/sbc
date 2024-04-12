@@ -5,12 +5,17 @@
 /// 
 
 #include "common.h"
+#include "resources.h"
 
 #define MAX_SPRITES 100
 
+/// Sprite management struct.
+/// Contains all information relating to sprite system state.
 struct sprites {
 	int page;
 	
+	/// All information for a single sprite.
+	/// Includes character, position, transformations, animation, etc.
 	struct sprite_info {
 		/// Is the sprite currently enabled?
 		bool active;
@@ -106,12 +111,14 @@ struct sprites {
 			/// Current animation frame
 			int current_frame;
 			/// Current animation character
+			/// -1 = animation disabled
+			/// 0-511 = actual sprite chr
 			int current_chr;
 		} anim;
 		
 		/// Sprite variables (used by `SPSETV`, `SPGETV`)
 		fixp vars[8];
-	} info[2][MAX_SPRITES];
+	} info[SCREEN_COUNT][MAX_SPRITES];
 	
 	fixp sphitno;
 	fixp sphitx;
@@ -126,6 +133,7 @@ struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,
 
 void step_sprites(struct sprites* s);
 bool is_hit(struct sprite_info* a, struct sprite_info* b);
+int get_sprite_chr(struct sprite_info* s);
 
 struct ptc;
 
@@ -150,3 +158,8 @@ void cmd_spcolvec(struct ptc* p);
 void func_sphit(struct ptc* p);
 void func_sphitsp(struct ptc* p);
 void func_sphitrc(struct ptc* p);
+
+void sys_sphitno(struct ptc* p);
+void sys_sphitx(struct ptc* p);
+void sys_sphity(struct ptc* p);
+void sys_sphitt(struct ptc* p);

@@ -74,7 +74,7 @@ void free_code(struct ptc* ptc){
 	MEM_CASE_END // done here to clean up block
 }
 
-// Return value of 0 indicates success
+/// @return true if expected error occurs
 bool check_code_error(char* code, enum err_code expected){
 	struct ptc* p = run_code(code);
 	
@@ -88,8 +88,8 @@ bool check_code_error(char* code, enum err_code expected){
 #include "common.h"
 #include <stdio.h>
 
-int token_code(char* code, char* expected, int size){
-	MEM_CASE
+int token_code(char* code, const char* expected, int size){
+	MEM_CASE;
 	struct program p = { strlen(code), code };
 	struct bytecode o = init_bytecode();
 	
@@ -106,6 +106,6 @@ int token_code(char* code, char* expected, int size){
 	}
 	iprintf("\n");
 	free_bytecode(o);
-	MEM_CASE_END
+	MEM_CASE_END;
 	return !error;
 }

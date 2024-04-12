@@ -9,277 +9,6 @@
 
 // Common main stuff
 
-/// Information struct containing program source and the system to run it on.
-///
-/// Used for launching the main thread on PC.
-struct launch_info {
-	/// Pointer to system struct
-	struct ptc* p;
-	/// Pointer to program source.
-	struct program* prg;
-	/// Name of program to autoboot
-	char* prg_filename;
-};
-
-const char* bench_begin = "ACLS:CLEAR\r";
-const char* bench_mid = "FOR J=1 TO 5\r"
-"\r"
-"M=POW(10,J)\r"
-"\r"
-"T=MAINCNTL\r"
-"FOR I=1 TO M\r";
-const char* bench_end = "NEXT\r"
-"S=MAINCNTL-T\r"
-"\r"
-"?M,S\r"
-"IF S>=1000 THEN @END\r"
-"NEXT\r"
-"@END\r";
-
-int sbc_benchmark(struct launch_info* info){
-	char src[1024] = {0};
-	char pre[100];
-	char code[100];
-	char post[100];
-	struct program p = { 0, src };
-	struct bytecode bc = info->p->exec.code;
-	
-	FILE* f = fopen("resources/sbccompat.txt","r");
-	if (!f){
-		iprintf("Failed to open benchmark tests file!\n");
-		return 1;
-	}
-	FILE* result = fopen("sbccompat_out", "w");
-	if (!result){
-		iprintf("Failed to open benchmark results file!\n");
-		fclose(f);
-		return 1;
-	}
-	int index = 0;
-	while (!feof(f)){
-		fgets(pre, 100, f);
-		fgets(code, 100, f);
-		fgets(post, 100, f);
-		for (int i = 0; i < 100; ++i){
-			if (pre[i] == '\\') pre[i] = '\r';
-			if (code[i] == '\\') code[i] = '\r';
-			if (post[i] == '\\') post[i] = '\r';
-			if (pre[i] == '\n') pre[i] = '\r';
-			if (code[i] == '\n') code[i] = '\r';
-			if (post[i] == '\n') post[i] = '\r';
-		}
-		sprintf(src, "%s?%d\r%s%s%s%s%s%n", bench_begin, index, pre, bench_mid, code, bench_end, post, (int*)&p.size);
-//		fprintf(f2, "%s", src);
-		info->p->exec.error = ERR_NONE; // reset for next run
-		info->p->exec.error = tokenize_full(&p, &bc, info->p, TOKOPT_VARIABLE_IDS);
-		if (info->p->exec.error == ERR_NONE){
-			run(bc, info->p);
-		}
-		
-		if (info->p->exec.error == ERR_NONE){
-			fixp num = test_var(&info->p->vars, "S", VAR_NUMBER)->value.number;
-			fixp lev = test_var(&info->p->vars, "J", VAR_NUMBER)->value.number;
-			int perf = FP_TO_INT(num);
-			for (int i = FP_TO_INT(lev); i < 5; ++i){
-				perf *= 10;
-			}
-			fprintf(result, "%d\n", perf);
-		} else {
-			fprintf(result, "%s\n", error_messages[info->p->exec.error]);
-		}
-		++index;
-	}
-	fclose(f);
-	fclose(result);
-//	free_bytecode(bc);
-	return 0;
-}
-
-// This is the DIRECT mode prompt.
-// Pretty basic, but it works.
-// TODO:IMPL:LOW Redesign to remove prompt symbol
-struct program launcher = {
-	13, "LINPUT CODE$\r"
-};
-
-enum launch_state {
-	LAUNCH_PROMPT,
-	LAUNCH_EDIT,
-	LAUNCH_RUN,
-	LAUNCH_BENCH,
-	LAUNCH_AUTOLOAD,
-};
-
-int system_launch(void* launch_info){
-	u8 err_msg[66] = {STRING_INLINE_CHAR}; // 2 lines + metadata
-	struct launch_info* info = (struct launch_info*)launch_info;
-	struct ptc* p = info->p;
-	
-	// DIRECT setup
-	struct bytecode prompt_bc = init_bytecode_size(launcher.size, 1, 0); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
-	tokenize_full(&launcher, &prompt_bc, p, TOKOPT_NONE);
-	
-	// editor setup
-	// TODO:PERF:MED Reduce memory fragmentation by loading program into bytecode memory...?
-	struct program editor = {0};
-	load_prg_alloc(&editor, "programs/EDITOR.PTC"); // TODO:CODE:MED move EDITOR to resources
-	struct bytecode editor_bc = init_bytecode_size(editor.size, 500, 64); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
-	tokenize_full(&editor, &editor_bc, p, TOKOPT_VARIABLE_IDS);
-	free_log("editor temp load", editor.data);
-	
-	// for user programs / "RUN" setup
-	struct bytecode bc = init_bytecode_size(MAX_SOURCE_SIZE, MAX_LINES, MAX_LABELS);
-	if (!bc.labels.entry || !bc.data){
-		iprintf("Failed to allocate bytecode...\n");
-		return -1;
-	}
-	init_mem_prg(&p->exec.prg, MAX_SOURCE_SIZE);
-	if (!p->exec.prg.data){
-		iprintf("Failed to allocate program...\n");
-		return -1;
-	}
-	
-	// Setup complete
-	con_puts(&p->console, "S\45Small BASIC Computer            READY");
-	con_newline(&p->console, true);
-	bool running = true;
-	
-	int state = LAUNCH_PROMPT;
-	if (info->prg_filename){
-		state = LAUNCH_AUTOLOAD;
-	}
-	
-	// TODO:IMPL:LOW Add configuration method for optimizations
-	int opts = TOKOPT_VARIABLE_IDS;
-	while (running){
-		p->exec.error = ERR_NONE; // prepare for next execution
-		p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
-		int old_state = state;
-		iprintf("MAIN state=%d\n", state);
-		switch (state){
-			case LAUNCH_PROMPT: // DIRECT mode
-				{
-				run(prompt_bc, p); // get prompt
-				
-				void* cmd = get_var(&p->vars, "CODE", 4, VAR_STRING)->value.ptr;
-				if (str_comp(cmd, "S\011REM BENCH")){
-					state = LAUNCH_BENCH;
-					break;
-				} else if (str_comp(cmd, "S\3RUN")){
-					state = LAUNCH_RUN;
-					break;
-				}
-				// check status
-				if (p->exec.error == ERR_BUTTON_SIGNAL){
-					int sig = p->exec.error_info[0];
-					if (sig == 72){ // EDIT
-						state = LAUNCH_EDIT;
-					}
-					p->exec.error = ERR_NONE; // clear signal
-					p->exec.error_info[0] = 0; // clear signal info
-					break;
-				}
-				
-				// execute single line
-				// create small program
-				u8 direct_cmd[32+1] = {0};
-				struct program prog = {0, (char*)direct_cmd};
-				str_char_copy(cmd, direct_cmd);
-				prog.size = str_len(cmd);
-				direct_cmd[prog.size++] = '\r';
-				
-				// prepare execution
-				p->exec.error = ERR_NONE;
-				p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
-				p->exec.error = tokenize_full(&prog, &bc, p, TOKOPT_NONE);
-				if (p->exec.error == ERR_NONE){
-					run(bc, p);
-				}
-				}
-				break;
-				
-			case LAUNCH_EDIT: // EDIT mode
-				p->exec.error = ERR_NONE;
-				get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(0);
-				run(editor_bc, p);
-				int sig = p->exec.error_info[0];
-				if (p->exec.error == ERR_BUTTON_SIGNAL){
-					if (sig == 71){ // RUN/DIRECT
-						state = LAUNCH_PROMPT;
-						// copy program to memory
-						p->exec.error = ERR_NONE;
-						p->exec.error_info[0] = 0; // clear signal info
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
-						run(editor_bc, p);
-						// reset screen
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
-						run(editor_bc, p);
-					}
-				} else if (p->exec.error == ERR_USER_SIGNAL){
-					if (sig == 1){ // run program
-						state = LAUNCH_RUN;
-						p->exec.error = ERR_NONE;
-						p->exec.error_info[0] = 0; // clear signal info
-						// copy program to memory
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
-						run(editor_bc, p);
-						// reset screen
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
-						run(editor_bc, p);
-					}
-				} else {
-					state = LAUNCH_PROMPT;
-					// crash to console to allow reading error message
-				}
-				// set this to allow EDITOR to be correctly started via LOAD/RUN or EXEC, if wanted
-				get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(1);
-				break;
-				
-			case LAUNCH_RUN: // 'RUN' mode
-				p->exec.error = tokenize_full(&p->exec.prg, &bc, p, opts);
-				if (p->exec.error == ERR_NONE){
-					run(bc, p);
-				}
-				state = LAUNCH_PROMPT; // program terminated: return to DIRECT mode
-				break;
-				
-			case LAUNCH_BENCH: // benchmark tests
-				p->exec.code = bc; // ensure it has correct resource
-				sbc_benchmark(launch_info);
-				state = LAUNCH_PROMPT; // return to DIRECT when done
-				break;
-				
-			case LAUNCH_AUTOLOAD: // auto load program
-				load_prg(&p->exec.prg, info->prg_filename);
-				state = LAUNCH_RUN;
-				break;
-				
-			default:
-				return p->exec.error;
-		}
-		
-		(void)old_state;
-		// Display error status (for any given execution)
-		iprintf("Error: %s\n", error_messages[p->exec.error]);
-		
-		strcpy((char*)err_msg + 2, error_messages[p->exec.error]);
-		err_msg[1] = strlen(error_messages[p->exec.error]);
-		strcpy((char*)err_msg + 2 + err_msg[1], p->exec.error_info);
-		err_msg[1] += strlen(p->exec.error_info);
-		
-		con_puts(&p->console, &err_msg);
-		con_newline(&p->console, true);
-		// clear error status for next execution
-		p->exec.error = ERR_NONE;
-		p->exec.error_info[0] = '\0'; // remove error string
-	}
-	
-	free_log("free exec.prg.data", p->exec.prg.data);
-	free_bytecode(bc);
-	return p->exec.error;
-}
-
-
 #ifdef ARM9_BUILD
 #include <nds.h>
 #include <fat.h>
@@ -318,6 +47,26 @@ void init(void){
 	
 	oamInit(&oamMain, SpriteMapping_1D_128, true);
 	oamInit(&oamSub, SpriteMapping_1D_128, true);
+	
+	windowEnable(WINDOW_0);
+	windowEnableSub(WINDOW_0);
+	bgWindowEnable(bg0l, WINDOW_0);
+	bgWindowEnable(bg1l, WINDOW_0);
+	bgWindowEnable(bg0, WINDOW_0);
+	bgWindowEnable(bg1, WINDOW_0);
+	bgWindowEnable(con_fg, WINDOW_0 | WINDOW_OUT);
+	bgWindowEnable(con_bg, WINDOW_0 | WINDOW_OUT);
+	bgWindowEnable(con_fgl, WINDOW_0 | WINDOW_OUT);
+	bgWindowEnable(con_bgl, WINDOW_0 | WINDOW_OUT);
+	oamWindowEnable(&oamMain, WINDOW_0 | WINDOW_OUT);
+	oamWindowEnable(&oamSub, WINDOW_0 | WINDOW_OUT);
+	
+	// Uncomment this to make everything half-resolution (not useful but looks cool)
+/*	REG_MOSAIC = 0x1111;
+	REG_MOSAIC_SUB = 0x1111;
+	for (int i = 0; i < 7; ++i){
+		bgMosaicEnable(i);
+	}*/
 	
 	// extended palette mode
 //	vramSetBankF(VRAM_F_BG_EXT_PALETTE);
@@ -383,7 +132,7 @@ int main(void){
 	// set this after creating system to ensure resources are loaded
 	irqSet(IRQ_VBLANK, frame_update);
 	
-	system_launch(&info);
+	launch_system(&info);
 	
 	// make failure conditions readable
 	do {
@@ -464,7 +213,7 @@ int main(int argc, char** argv){
 	// Launch the program thread
 	struct launch_info info = {ptc, NULL, argc >= 2 ? argv[1] : NULL};
 	thrd_t prog_thread;
-	if (thrd_success != thrd_create(&prog_thread, system_launch, &info)){
+	if (thrd_success != thrd_create(&prog_thread, launch_system, &info)){
 		printf("Failed to create the program thread!\n");
 		abort();
 	}

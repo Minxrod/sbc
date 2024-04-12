@@ -13,11 +13,6 @@
  * Initializes a block of program memory.
  * @param p Program struct
  * @param prg_size Size of program (in bytes/chars).
- * 
- * The allocated memory size will be 2*prg_size. For PTC, the typical maximum
- * prg_size would be 524228, and the allocated memory is 1048456 bytes, or
- * slightly less than 1MB.
- * 
  */
 void init_mem_prg(struct program* p, int prg_size){
 	p->size = 0;
@@ -28,7 +23,7 @@ struct bytecode init_bytecode(void){
 	// labels struct is expected to be zero-initialized. Others, it may not be necessary.
 	struct bytecode bc = {
 		0,
-		calloc_log("init_bytecode", 1, 524288),
+		calloc_log("init_bytecode", 1, MAX_SOURCE_SIZE),
 		calloc_log("init_bytecode", 1, MAX_LINES),
 		init_labels(MAX_LABELS)
 	};
@@ -59,17 +54,19 @@ void free_bytecode(struct bytecode bc){
 	free_labels(bc.labels);
 }
 
-// Scans for a specific instruction. Special purpose function to handle the
-// various instruction lengths.
-idx bc_scan(struct bytecode code, idx index, u8 find){
+// Scans for two instructions, searching for the second and storing the prior one as well
+struct idx_pair bc_scan_pair(struct bytecode code, idx index, u8 find){
 	// search for find in code.data
+	struct idx_pair result = { BC_SCAN_NOT_FOUND, index };
 	while (index < code.size){ 
 		u8 cur = code.data[index];
 //		iprintf("%d: %c,%d", (int)index, cur >= 32 ? cur : '?', code->data[index+1]);
-		if (cur == find){
-			return index;
+		if (cur == find/* || (find == BC_COMMAND && cur == BC_COMMAND_FIRST)*/){
+			result.index = index;
+			return result;
 		}
-		//debug! 
+		result.prev = index;
+		//debug!
 		u8 len = code.data[++index];
 //		iprintf("/%.*s\n", len, &code->data[index+1]);
 		if (cur == BC_STRING || cur == BC_LABEL || cur == BC_LABEL_STRING || cur == BC_DATA){
@@ -78,21 +75,29 @@ idx bc_scan(struct bytecode code, idx index, u8 find){
 		} else if (cur == BC_WIDE_STRING){
 			index++;
 			index += sizeof(u16) * len;
-		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME){
+		} else if (cur == BC_DIM || cur == BC_VARIABLE_NAME || cur == BC_ARRAY_NAME){
 			cur = len;
 			++index;
-			if (cur >= 'A'){
-			} else {
+			if (cur < 'A'){
 				index += len + (len & 1);
 			}
 		} else if (cur == BC_NUMBER){
-			index += 6-1; // change if number syntax gets modified?
+			index += BC_NUMBER_SIZE-1; // change if number syntax gets modified?
 		} else {
-			index += 2-1;
+			index += BC_INSTR_SIZE-1;
 		}
 	}
-	return BC_SCAN_NOT_FOUND;
+	result.index = BC_SCAN_NOT_FOUND;
+	return result;
 }
+
+// Scans for a specific instruction. Special purpose function to handle the
+// various instruction lengths.
+idx bc_scan(struct bytecode code, idx index, u8 find){
+	// search for find in code.data
+	return bc_scan_pair(code, index, find).index;
+}
+
 
 /// @warning Only capable of finding instructions that have size of two bytes.
 /// Such as BC_COMMAND, BC_FUNCTION, etc.

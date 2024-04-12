@@ -1,6 +1,8 @@
 #include "label.h"
 
 #include "strs.h"
+#include "system.h"
+#include "ptc.h"
 
 #include <assert.h>
 
@@ -74,7 +76,8 @@ int find_label(struct labels* l, char* name, uint_fast8_t len){
 		label = &l->entry[hash];
 		if (label->name[0] == '\0'){
 			return -1; // available slot -> didn't find it
-		} else if (step++ >= (u32)l->label_count){
+		}
+		if (step++ >= (u32)l->label_count){
 			return -1; // didn't find it anywhere
 		}
 	} while (!namecmp(name, len, label->name));
@@ -90,3 +93,28 @@ idx label_index(struct labels* l, char* name, uint_fast8_t len){
 	return l->entry[entry_index].index;
 }
 
+idx search_label(struct ptc* p, void* label){
+	assert(label); // label must exist
+	// Labels must always be located at the beginning of a line.
+	idx index = 0;
+
+	u8 buf[MAX_LABEL_SIZE];
+	char* buf_ptr = (char*)buf;
+	int len = str_len(label);
+	if (*(char*)label == BC_LABEL || *(char*)label == BC_LABEL_STRING){
+		assert(len <= 16);
+		str_char_copy(label, buf);
+	} else { // assume regular string
+		assert(len <= 17);
+		str_char_copy(label, buf);
+		++buf_ptr; // pointer past '@'
+		--len; // remove '@'
+	}
+	assert(len <= 16);
+	index = label_index(&p->exec.code.labels, buf_ptr, len);
+	if (index == LABEL_NOT_FOUND){
+		p->exec.error = ERR_LABEL_NOT_FOUND;
+		return p->exec.code.size; // error'd anyways, skip to end
+	}
+	return index;
+}

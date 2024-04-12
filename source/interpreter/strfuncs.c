@@ -44,7 +44,7 @@ void func_mid(struct ptc* p){
 	
 	u8 type = str_type(str) | (str_type(dest) << 1);
 	str_copy_buf(str_at(str, start), str_at(dest, 0), type, len);
-	
+
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
@@ -283,8 +283,9 @@ void func_hex(struct ptc* p){
 	if (digits){
 		num &= 0x0fffff >> 4*(5-digits);
 	}
-	int len;
-	sprintf((char*)dest->ptr.s, "%.*X%n", digits, num, &len);
+	int len = 0;
+	sprintf((char*)dest->ptr.s, "%0*X%n", digits, num, &len);
+	iprintf("[%d]%0X=%.*s", len, num, len, dest->ptr.s);
 	
 	dest->len = len;
 	dest->uses = 1;

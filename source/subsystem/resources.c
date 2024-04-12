@@ -89,21 +89,20 @@ int check_save_res(void* src, const char* search_path, const char* name, int typ
 		data[9] = (prg.size >> 8) & 0xff;
 		data[10] = (prg.size >> 16) & 0xff;
 		
-		fwrite(internal_type_str[type], 1, 12, f); // TODO:IMPL:LOW option to indicate different formats
+		fwrite(internal_type_str[type], 1, 12, f);
 		CHECK_FILE_ERROR("Failed to write file type");
 		fwrite(data, 1, 12, f);
 		CHECK_FILE_ERROR("Failed to write program header");
 		size_read = fwrite(prg.data, 1, prg.size, f);
 		CHECK_FILE_ERROR("Failed to write program data");
 		FILE_OK(); // close and return size_read
-	} else if (type > TYPE_PRG && type < TYPE_INVALID && type != TYPE_MEM) {
-		// unimplemented type
+	} else if (type > TYPE_PRG && type < TYPE_INVALID) {
 		FILE* f = fopen(path, "wb");
 		if (!f){
 			FILE_ERROR("Could not open file for writing");
 		}
 		
-		fwrite(internal_type_str[type], 1, 12, f); // TODO:IMPL:LOW different formats
+		fwrite(internal_type_str[type], 1, 12, f);
 		CHECK_FILE_ERROR("Failed to write file type");
 		size_read = fwrite((u8*)src, 1, resource_size[type], f);
 		CHECK_FILE_ERROR("Failed to write resource data");
@@ -113,6 +112,7 @@ int check_save_res(void* src, const char* search_path, const char* name, int typ
 	}
 }
 
+// TODO:ERR:LOW Add file type validation
 int check_load_res(u8* dest, const char* search_path, const char* name, int type){
 	int size_read;
 	char path[256] = {0};
@@ -286,6 +286,15 @@ bool load_grp(u8* dest, const char* path, const char* name){
 	return check_load_file(dest, path, name, GRP_SIZE);
 }
 
+void init_col(struct resources* r){
+	char name[] = "COLX.PTC"; // TODO:PERF:NONE only set one character
+	// TODO:CODE:LOW dedup with init_resource
+	for (int i = 0; i < 2 * COL_BANKS; ++i){
+		name[3] = '0' + (i % 3); // col_files[4*i+3];
+		load_col((u8*)r->col[i], resource_path, name);
+	}
+}
+
 void init_resource(struct resources* r){
 	static_assert(sizeof(r->mem) == MEM_SIZE);
 	
@@ -349,7 +358,6 @@ void init_resource(struct resources* r){
 	"SPU0SPU1SPU2SPU3SPU4SPU5SPU6SPU7SPS0SPS1"
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
 	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
-	const char* col_files = "COL0COL1COL2COL0COL1COL2";
 	
 	char name[] = "XXXX.PTC";
 	
@@ -360,12 +368,9 @@ void init_resource(struct resources* r){
 		load_chr(r->chr[i], resource_path, name);
 	}
 	
-	for (int i = 0; i < 6; ++i){
-		for (int j = 0; j < 4; ++j){
-			name[j] = col_files[4*i+j];
-		}
-		load_col((u8*)r->col[i], resource_path, name);
-	}
+	// Initialize color palettes
+	init_col(r);
+
 	// Load keyboard sprites in-memory for fast access
 	for (int i = 0; i < 12; ++i){
 		load_file(r->key_chr[i], key_files[i], 48 + (i >= 2 && i % 2 ? CHR_SIZE : 0), CHR_SIZE);
@@ -430,14 +435,15 @@ int get_chr_index(struct ptc* p, char* res){
 
 // Returns a data pointer for the resource
 // Returns NULL, if the resource name was invalid
-void* get_resource(struct ptc* p, char* name, int len){
+void* get_resource(struct ptc* p, const char* name, int len){
 	assert(name);
 	assert(len <= 5);
 	char c = name[0]; //category
 	char id = name[1]; //id help for SCU/SPU
 	char t = name[2]; //type (within category)
 	
-	int bank = 0, upper = -1; 
+	int bank = 0;
+	int upper = -1;
 	if (len == 5){
 		bank = name[3] - '0';
 		upper = name[4] == 'L';
@@ -494,6 +500,7 @@ void* get_resource(struct ptc* p, char* name, int len){
 			}
 		}
 		if (id != 'P'){
+			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
 			return NULL; // name is invalid
 		}
 		if (t == 'S'){
@@ -581,7 +588,7 @@ void cmd_load(struct ptc* p){
 		
 		case TYPE_MEM:;
 			assert(LITTLE_ENDIAN);
-			int size = check_load_res(p->res.mem.data, p->res.search_path, res_name, TYPE_MEM);
+			int size = check_load_res(res_data, p->res.search_path, res_name, TYPE_MEM);
 			p->res.mem_str.len = p->res.mem.size;
 			p->res.result = size != 0;
 			break;
@@ -626,6 +633,9 @@ void cmd_save(struct ptc* p){
 		resource_type = get_resource_type(res);
 	}
 	switch (resource_type){
+		case TYPE_MEM:;
+			assert(LITTLE_ENDIAN);
+			// fallthrough
 		case TYPE_PRG:
 		case TYPE_CHR:
 		case TYPE_COL:
@@ -728,6 +738,7 @@ void cmd_chrset(struct ptc* p){
 	int id;
 	STACK_INT_RANGE(1,0,255,id);
 	void* data = value_str(ARG(2)); // pointer to string (which is itself a pointer)
+//	iprintf("str[%d]=%.*s\n", str_len(data), str_len(data), (char*)str_at(data, 0));
 	if (str_len(data) != 64){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
@@ -771,17 +782,8 @@ void cmd_chrset(struct ptc* p){
 void cmd_colinit(struct ptc* p){
 	// COLINIT [resource [color]]
 	if (p->stack.stack_i == 0){
-		// reset all
-		const char* col_files = "COL0COL1COL2COL0COL1COL2";
-		
-		char name[] = "XXXX.PTC"; // TODO:PERF:NONE only set one character
-		// TODO:CODE:LOW dedup with init_resource
-		for (int i = 0; i < 6; ++i){
-			for (int j = 0; j < 4; ++j){
-				name[j] = col_files[4*i+j];
-			}
-			load_col((u8*)p->res.col[i], resource_path, name);
-		}
+		// reset all colors
+		init_col(&p->res);
 	} else if (p->stack.stack_i == 1){
 		// COLINIT resource
 		void* res_str = value_str(ARG(0));
@@ -797,21 +799,24 @@ void cmd_colinit(struct ptc* p){
 	} else {
 		// COLINIT resource index
 		void* res_str = value_str(ARG(0));
-		u16 from_file[256]; // TODO:PERF:LOW loading entire file is slow, store it in-mem?
-		// TODO:CODE:MED this can be simplified
-		u16* col_data;
+		char name[] = "COLX.PTC";
+		int id = 0;
+		// TODO:CODE:NONE dedup with COLINIT resource?
 		if (str_comp(res_str, "S\2BG")){
-			col_data = get_resource(p, "COL0", 4);
-			load_col((u8*)from_file, resource_path, "COL0.PTC");
+			id = 0;
 		} else if (str_comp(res_str, "S\2SP")){
-			col_data = get_resource(p, "COL1", 4);
-			load_col((u8*)from_file, resource_path, "COL1.PTC");
+			id = 1;
 		} else if (str_comp(res_str, "S\3GRP")){
-			col_data = get_resource(p, "COL2", 4);
-			load_col((u8*)from_file, resource_path, "COL2.PTC");
+			id = 2;
 		} else {
 			ERROR(ERR_INVALID_RESOURCE_TYPE);
 		}
+		name[3] = '0' + id;
+		// Load from file into memory
+		u16 from_file[256]; // TODO:PERF:LOW loading entire file is slow, store it in-mem?
+		u16* col_data = get_resource(p, name, 4);
+		load_col((u8*)from_file, resource_path, name);
+		// Extract specific color index
 		int index;
 		STACK_INT_RANGE(1,0,255,index);
 		col_data[index] = from_file[index];
@@ -892,6 +897,23 @@ void cmd_colset(struct ptc* p){
 	p->res.regen_col = true;
 }
 
+void cmd_new(struct ptc* p){
+	p->exec.prg.size = 0;
+}
+
+void cmd_append(struct ptc* p){
+	// TODO:IMPL:LOW
+	(void)p;
+}
+
+void cmd_rename(struct ptc* p){
+	(void)p;
+}
+
+void cmd_delete(struct ptc* p){
+	(void)p;
+}
+
 void sys_mem(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	
@@ -909,6 +931,8 @@ void syschk_mem(struct ptc* p){
 	}
 	// restore regular pointer
 	p->res.mem_ptr = &p->res.mem_str;
+	// set length of stored str
+	p->res.mem.size = p->res.mem_str.len;
 }
 
 void sys_result(struct ptc* p){

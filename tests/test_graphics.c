@@ -52,7 +52,7 @@ int test_graphics(void){
 	{
 		struct ptc* p = run_code("GLINE 0,0,7,0,1\rGLINE 0,0,7,7,2\rGLINE 0,0,0,7,3\r");
 		
-		u8 match[64] = {
+		const u8 match[64] = {
 			3,1,1,1,1,1,1,1,
 			3,2,0,0,0,0,0,0,
 			3,0,2,0,0,0,0,0,
@@ -78,7 +78,7 @@ int test_graphics(void){
 	{
 		struct ptc* p = run_code("GLINE 3,7,0,6,1\rGLINE 1,2,3,4,2\rGLINE 0,7,6,3,3\r");
 		
-		u8 match[64] = {
+		const u8 match[64] = {
 			0,0,0,0,0,0,0,0,
 			0,0,0,0,0,0,0,0,
 			0,2,0,0,0,0,0,0,
@@ -107,13 +107,17 @@ int test_graphics(void){
 			"GPSET 46,72,81\rB=GSPOIT(46,72)\r"
 			"GPSET 0,0,4\rC=GSPOIT(0,0)\r"
 			"GPSET 256,192,72\rD=GSPOIT(256,192)\r"
+			"E=GSPOIT(0,0,0)\r"
+			"F=GSPOIT(1,0,0)\r"
 		);
 		
 		CHECK_VAR_INT("A",3);
 		CHECK_VAR_INT("B",81);
 		CHECK_VAR_INT("C",4);
-		CHECK_VAR_NUM("D",-INT_TO_FP(1));
-		
+		CHECK_VAR_INT("D",-1);
+		CHECK_VAR_INT("E",4);
+		CHECK_VAR_INT("F",0); // different page
+
 		free_code(p);
 	}
 	

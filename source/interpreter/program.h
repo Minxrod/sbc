@@ -50,6 +50,13 @@ bool load_prg(struct program* p, const char* filename);
 // Scans for location of some instruction starting from index
 // Returns the index of found string
 idx bc_scan(struct bytecode code, idx index, u8 find) ITCM_CODE;
+
+struct idx_pair {
+	idx prev;
+	idx index;
+};
+
+struct idx_pair bc_scan_pair(struct bytecode code, idx index, u8 find) ITCM_CODE;
 //idx bc_scan_2(struct bytecode code, idx index, u8 instr, u8 data);
 
 #include <limits.h>

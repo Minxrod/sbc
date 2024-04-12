@@ -71,7 +71,7 @@ void add_sprite(struct sprite_array sa, struct sprite_info* s){
 	
 	//rotate around s.home_x, s.home_y
 	if (s->angle.a){
-		fixp a = s->angle.a * 3.14159 / 180;
+		fixp a = -s->angle.a * 3.14159 / 180;
 		rotate_xy(&x1,&y1,a);
 		rotate_xy(&x2,&y2,a);
 		rotate_xy(&x3,&y3,a);
@@ -102,9 +102,7 @@ void add_sprite(struct sprite_array sa, struct sprite_info* s){
 
 	fixp xc = x1;
 	fixp yc = y1;
-	int chr = 4*s->chr;
-	if (s->anim.loop_forever || s->anim.loop)
-		chr = 4*s->anim.current_chr;
+	int chr = 4*get_sprite_chr(s);
 	
 //	int va_new_start = sfVertexArray_getVertexCount(va);
 	// Round to integers

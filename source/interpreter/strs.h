@@ -18,14 +18,11 @@
 
 #define MAX_STRLEN 256
 
-#define ERR_NUMBER_OUT_OF_RANGE 0x0123456789abcdef
-
 extern char* single_char_strs;
 extern char* empty_str;
 extern char* hex_digits;
 
-// string meta
-// type can be 'S' or 'W'
+// type can also be 'S' or 'W'
 enum string_type {
 	STRING_CHAR = 's',
 	STRING_WIDE = 'w',
@@ -33,8 +30,7 @@ enum string_type {
 	STRING_INLINE_WIDE = 'X',
 };
 
-// string table info
-// Note that this table doesn't necessarily contain actual data.
+/// A single dynamic string.
 struct string {
 	/// Type of string
 	char type;
@@ -51,6 +47,7 @@ struct string {
 	} ptr;
 };
 
+/// Struct containing all string information.
 struct strings {
 	/// Max strings allocated
 	uint_fast16_t strs_max;
@@ -84,10 +81,10 @@ u32 name_hash(const char* name, const u32 len, const u32 hmax);
 bool namecmp(const char* a, const u32 len, const char b[16]);
 
 //Convert char to wide char
-u16 to_wide(const u8 c);
+u16 to_wide(u8 c);
 
 //Reverse char to wide char
-u8 to_char(const u16 c);
+u8 to_char(u16 w);
 
 //Convert a (hex) digit into an integer;
 int digit_value(const u16 c);
@@ -118,16 +115,16 @@ int64_t u8_to_num(u8* data, const idx len);
 #define STR_COPY_DEST_16 2
 
 // Copy from src buffer to destination buffer
-void str_copy_buf(const void* src, void* dest, const u8 types, const u16 count);
+void str_copy_buf(const void* src, void* dest, u8 types, u16 count);
 
 // Get pointer to character at location
-void* str_at(const void* src, const u16 index);
+void* str_at(const void* src, u16 index);
 
 // Get character (wide) at current location
-u16 str_at_wide(const void* src, const u16 index);
+u16 str_at_wide(const void* src, u16 index);
 
 // Get character (small) at current location
-u16 str_at_char(const void* src, const u16 index);
+u16 str_at_char(const void* src, u16 index);
 
 // Copy to u8 str
 void str_char_copy(const void* src, u8* dest);

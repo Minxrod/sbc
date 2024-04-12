@@ -12,10 +12,10 @@
 struct ptc;
 struct stack_entry;
 
-// Reads from src up to len characters into e
-// Returns characters read
-//int read_one(struct ptc* p, u16* src, size_t len, struct stack_entry* e);
-int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* e);
+/// Reads from data block src up to len characters into dest
+///
+/// @return Number of characters read
+int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* dest);
 
 void cmd_read(struct ptc* p);
 void cmd_restore(struct ptc* p);

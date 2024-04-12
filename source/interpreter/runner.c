@@ -21,6 +21,7 @@
 #include "subsystem/resources.h"
 #include "subsystem/sprites.h"
 #include "subsystem/graphics.h"
+#include "vars.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,15 +59,15 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_end, cmd_stop,
 	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
 	cmd_input, cmd_linput,
-	ptc_err, ptc_stub, //BEEP
+	cmd_append, ptc_stub, //BEEP
 	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_bgmstub, //BGMCLEAR 
 	ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, //BGMVOL
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
 	cmd_chrset, cmd_clear, cmd_colinit, cmd_colread, cmd_colset, ptc_err, //CONT
 	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
 	cmd_gcircle, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
-	cmd_gpage, ptc_err, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
-	ptc_err, ptc_err, cmd_load, ptc_err, //NEW, 
+	cmd_gpage, cmd_gpaint, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
+	cmd_key, ptc_err, cmd_load, cmd_new, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
 	cmd_restore, cmd_rsort, cmd_run, cmd_save, ptc_err, cmd_sort, cmd_spangle, //SPANGLE, 
 	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
@@ -130,6 +131,30 @@ static inline void print_name(const char* names, int data){
 	iprintf("cmd=%s", name);
 }
 
+struct var_name {
+	char* name;
+	int len;
+	int type;
+};
+
+struct var_name read_var_name(struct bytecode* b, idx index){
+	struct var_name result;
+	u8 instr = b->data[index];
+	assert(instr == BC_VARIABLE_NAME || instr == BC_ARRAY_NAME || instr == BC_DIM);
+	u8 data = b->data[index+1];
+	if (data < 'A'){ // data byte contains length of name
+		result.name = (char*)b->data + index + 2;
+		bool is_str = b->data[index + data - 1 + 2] == '$';
+		result.len = is_str ? data-1 : data;
+		result.type = is_str ? VAR_STRING : VAR_NUMBER;
+	} else { // data byte contains name (single letter optimization)
+		result.name = (char*)b->data + index + 1;
+		result.len = 1;
+		result.type = VAR_NUMBER;
+	}
+	return result;
+}
+
 /// The big interpreter function.
 /// 
 /// Takes a chunk of bytecode stored in code and runs it.
@@ -144,14 +169,14 @@ void run(struct bytecode code, struct ptc* p) {
 	r->index = 0;
 	r->data_index = 0;
 	r->data_offset = 0;
-	r->code = code; // TODO:CODE:MED Since this is a value copy, don't use code anymore for consistency
+	r->code = code;
 	p->stack.stack_i = 0;
 	
 	while (r->index < r->code.size && !p->exec.error){
 		// get one instruction and execute it
 		start_time(&p->time);
-		char instr = code.data[r->index++];
-		char data = code.data[r->index++];
+		char instr = r->code.data[r->index++];
+		char data = r->code.data[r->index++];
 		
 		iprintf("%c ", instr);
 		
@@ -170,9 +195,9 @@ void run(struct bytecode code, struct ptc* p) {
 			case BC_LABEL_STRING:
 			case BC_STRING:
 				iprintf("len=%d ", data);
-				iprintf("%.*s", data, &code.data[r->index]);
+				iprintf("%.*s", data, &r->code.data[r->index]);
 				// push string pointer to the stack
-				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_STRING, {.ptr = (void*)&code.data[r->index-2]}};
+				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_STRING, {.ptr = (void*)&r->code.data[r->index-2]}};
 				r->index += data + (data & 1); // to next instruction
 				check_time(&p->time, 1);
 				break;
@@ -261,10 +286,10 @@ void run(struct bytecode code, struct ptc* p) {
 				{
 				fixp number = 0;
 				
-				number |= (fixp)((unsigned char)code.data[r->index++] << 24);
-				number |= (unsigned char)code.data[r->index++] << 16;
-				number |= (unsigned char)code.data[r->index++] << 8;
-				number |= (unsigned char)code.data[r->index++];
+				number |= (fixp)((unsigned char)r->code.data[r->index++] << 24);
+				number |= (unsigned char)r->code.data[r->index++] << 16;
+				number |= (unsigned char)r->code.data[r->index++] << 8;
+				number |= (unsigned char)r->code.data[r->index++];
 				
 				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {number}};
 				iprintf("num=%.12f", number / 4096.0);
@@ -272,8 +297,7 @@ void run(struct bytecode code, struct ptc* p) {
 				check_time(&p->time, 6);
 				break;
 				
-			case BC_VARIABLE_ID_SMALL:
-				;
+			case BC_VARIABLE_ID_SMALL:;
 				int id; // Note: Can also be set via BC_VARIABLE_ID
 				id = (u8)data;
 			bc_variable_id_shared:
@@ -306,8 +330,8 @@ void run(struct bytecode code, struct ptc* p) {
 				// TODO:TEST:MED Check that ID is calculated correctly
 				// Note: id variable declared in BC_VARIABLE_ID_SMALL
 				id = (u8)data;
-				id |= (u8)code.data[r->index++] << 8;
-				id |= (u8)code.data[r->index++] << 16;
+				id |= (u8)r->code.data[r->index++] << 8;
+				id |= (u8)r->code.data[r->index++] << 16;
 				goto bc_variable_id_shared;
 				}
 				break;
@@ -315,8 +339,8 @@ void run(struct bytecode code, struct ptc* p) {
 			case BC_ARRAY_NAME:;
 				enum types t = VAR_ARRAY; // type of variable
 				void* x;                  // pointer to variable value
-				char* name;               // variable struct
-				uint_fast8_t len;         // length of variable name
+//				char* name;               // variable struct
+//				uint_fast8_t len;         // length of variable name
 				goto name_shared;
 				
 			case BC_VARIABLE_NAME:
@@ -325,19 +349,12 @@ void run(struct bytecode code, struct ptc* p) {
 				// difference determined by whether or not ARGCOUNT was set
 				// before reading variable
 				t = 0;
-			name_shared:
-				if (data < 'A'){ // data byte contains length of name
-					name = (char*)&code.data[r->index];
-					len = code.data[r->index+(u8)data-1] == '$' ? data-1 : data;
-					t |= code.data[r->index+(u8)data-1] == '$' ? VAR_STRING : VAR_NUMBER; 
-				} else { // data byte contains name (single letter optimization)
-					name = &data;
-					len = 1;
-					t |= VAR_NUMBER;
-				}
+			name_shared:;
+				struct var_name var = read_var_name(&r->code, r->index-2);
+				var.type |= t;
 				
 				if (!r->argcount){
-					struct named_var* v = get_var(&p->vars, name, len, t);
+					struct named_var* v = get_var(&p->vars, var.name, var.len, var.type);
 					if (!v){
 						r->error = p->vars.error;
 						break;
@@ -348,7 +365,7 @@ void run(struct bytecode code, struct ptc* p) {
 					idx b = (r->argcount == 2) ? (idx)STACK_REL_INT(-1) : ARR_DIM2_UNUSED;
 					p->stack.stack_i -= r->argcount;
 					
-					union value* val = get_arr_entry(&p->vars, name, len, t | VAR_ARRAY, a, b);
+					union value* val = get_arr_entry(&p->vars, var.name, var.len, var.type | VAR_ARRAY, a, b);
 					if (!val){
 						r->error = p->vars.error;
 						break;
@@ -356,13 +373,13 @@ void run(struct bytecode code, struct ptc* p) {
 					x = val;
 				}
 				
-				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | t, {.ptr = x}};
+				p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_VARIABLE | var.type, {.ptr = x}};
 				// debug printing
 				if (data < 'A'){
-					iprintf("%.*s", data, &code.data[r->index]);
+					iprintf("%.*s", data, &r->code.data[r->index]);
 					r->index += data + (data & 1); // to next instruction
 				} else {
-					iprintf("%c", code.data[r->index-1]);
+					iprintf("%c", r->code.data[r->index-1]);
 				}
 				//debug
 				check_time(&p->time, 7);
@@ -380,7 +397,7 @@ void run(struct bytecode code, struct ptc* p) {
 					get_new_arr_var(&p->vars, &data, 1, VAR_NUMBER | VAR_ARRAY, a, b);
 					r->error = p->vars.error;
 				} else {
-					char* x = (char*)&code.data[r->index];
+					char* x = (char*)&r->code.data[r->index];
 					iprintf("%.*s", data, x);
 					r->index += data + (data & 1); // to next instruction
 					
@@ -410,10 +427,14 @@ void run(struct bytecode code, struct ptc* p) {
 				// call_entry: Var ptr 
 				// stack: end, [step]
 				iprintf("\n");
-//				if (!p->calls.stack_i){
-//					p->exec.error = ERR_BEGIN_LOOP_FAIL;
-//					break;
-//				}
+				if (!p->calls.stack_i){
+					p->exec.error = ERR_BEGIN_LOOP_FAIL;
+					break;
+				} else if (!p->stack.stack_i){
+					p->exec.error = ERR_BEGIN_LOOP_NO_END;
+					break;
+				}
+				
 				fixp* current = (fixp*)p->calls.entry[p->calls.stack_i-1].var;
 				fixp end;
 				fixp step;
@@ -432,29 +453,59 @@ void run(struct bytecode code, struct ptc* p) {
 					int nest = 1;
 					// Scan for NEXT only at start of line
 					// TODO:TEST:MED Check behavior of cases with ::NEXT
-					idx index = r->index;
+//					idx index = r->index;
+					struct idx_pair result = {0, r->index};
 					while (nest > 0){
-						index = bc_scan(p->exec.code, index, BC_COMMAND_FIRST);
-						if (index == BC_SCAN_NOT_FOUND){
+						result = bc_scan_pair(r->code, result.index, BC_COMMAND_FIRST);
+						if (result.index == BC_SCAN_NOT_FOUND){
 							p->exec.error = ERR_FOR_WITHOUT_NEXT;
 							break;
 						}
 						// Found BC_COMMAND; check if NEXT or FOR
 //						instr = p->exec.code.data[index];
-						data = p->exec.code.data[index+1];
+						data = r->code.data[result.index+1];
 						if (data == CMD_NEXT){
-							// TODO:IMPL:HIGH Check variable for a given NEXT to see if it counts or not
-							// find NEXT, go back one instruction, execute statement if it is VAR?
-							// Found a NEXT
-							nest--;
+							iprintf("prev=%d[%s] index=%d[%s]\n", result.prev, r->code.data + result.prev, result.index, r->code.data + result.index);
+							if (result.prev == BC_SCAN_NOT_FOUND){
+								// Found generic NEXT
+								nest--;
+							} else {
+								// Specific NEXT potientially found
+								u8 var_check = r->code.data[result.prev];
+								// Check for variable for a given NEXT to see if it counts or not
+								if (var_check == BC_VARIABLE_NAME || var_check == BC_VARIABLE_ID || var_check == BC_VARIABLE_ID_SMALL){
+									// have variable: check that it matches stored NEXT variable
+									struct named_var* v;
+									if (var_check == BC_VARIABLE_NAME){
+										// get var by name
+										struct var_name var = read_var_name(&r->code, result.prev);
+										v = get_var(&p->vars, var.name, var.len, var.type);
+									} else if (var_check == BC_VARIABLE_ID_SMALL){
+										// get var by ID
+										v = &p->vars.vars[r->code.data[result.prev + 1]];
+									} else {
+										// larger var ID
+										v = &p->vars.vars[r->code.data[result.prev + 1] | (r->code.data[result.prev + 2] << 8) | (r->code.data[result.prev + 3] << 16)];
+									}
+									// verify variable matches
+									if (current == &v->value.number){
+										result.index += 2; // past NEXT [var]
+										break; // ignore nesting?
+									}
+									// ignore otherwise? unclear
+								} else {
+									// treat as generic next
+									nest--;
+								}
+							}
 						} else if (data == CMD_FOR){
 							// Found a FOR, so we need to search for another NEXT
 							nest++;
 						}
-						index += 2; // advance past this command
+						result.index += 2; // advance past this command
 					}
 					// index now points to one past the NEXT, the correct location
-					r->index = index;
+					r->index = result.index;
 				} else {
 					// execution continues as normal into the loop
 				}
@@ -469,12 +520,8 @@ void run(struct bytecode code, struct ptc* p) {
 				// ignore these!
 				iprintf("len=%d ", data);
 				for (int i = 0; i < (int)data; ++i){
-					char c = code.data[r->index + i];
-					if (c){
-						iprintf("%c", c);
-					} else {
-						iprintf("\\0");
-					}
+					char c = r->code.data[r->index + i];
+					iprintf("%c", c ? c : ',');
 				}
 				
 				r->index += data + (data & 1); // to next instruction

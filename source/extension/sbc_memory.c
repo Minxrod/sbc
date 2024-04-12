@@ -183,6 +183,8 @@ void func_addr(struct ptc* p){
 				ERROR(ERR_ILLEGAL_ADDRESS);
 			} else if (ADDR_ALIGN && (ofs_num & 0x3)){
 				ERROR(ERR_MISALIGNED_ADDRESS);
+			} else if (FIXP_TO_PTR(ofs_num) == NULL){
+				ERROR(ERR_NULL_ADDRESS);
 			}
 		}
 		// dereference this address once
@@ -303,9 +305,9 @@ void func_ptr(struct ptc* p){
 	out_str->ptr.s[0] = '0';
 	out_str->ptr.s[1] = 'x';
 	for (int i = 0; i < 8; ++i){
-		int p = ptr & 0xf;
+		int d = ptr & 0xf;
 		ptr >>= 4;
-		out_str->ptr.s[9-i] = hex_digits[p];
+		out_str->ptr.s[9-i] = hex_digits[d];
 	}
 	out_str->len = 10;
 	out_str->uses = 1;

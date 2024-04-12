@@ -7,9 +7,6 @@
 
 struct ptc;
 
-// TODO:CODE:MED Figure out where to put this? label.h?
-idx search_label(struct ptc* p, void* label);
-
 void cmd_for(struct ptc* p);
 void cmd_to(struct ptc* p);
 void cmd_step(struct ptc* p);

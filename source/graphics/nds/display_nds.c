@@ -141,7 +141,9 @@ void display_background(struct ptc* p, int screen){
 	// TODO:IMPL:MED BGCLIP bounds
 	bg_scroll* bg = screen ? BG_OFFSET_SUB : BG_OFFSET;
 	// BG0 = 2 BG1 = 3
+	struct bg_clip clip = p->background.clip[screen];
 	if (screen == 0){
+		// TODO:PERF:NONE write directly to memory here instead of using functions
 		if (p->res.visible & VISIBLE_BG0){
 			videoBgEnable(2);
 		} else {
@@ -152,6 +154,7 @@ void display_background(struct ptc* p, int screen){
 		} else {
 			videoBgDisable(3);
 		}
+		windowSetBounds(WINDOW_0, clip.x1, clip.y1, clip.x2, clip.y2);
 	} else { // screen 1
 		if (p->res.visible & VISIBLE_BG0){
 			videoBgEnableSub(2);
@@ -163,11 +166,12 @@ void display_background(struct ptc* p, int screen){
 		} else {
 			videoBgDisableSub(3);
 		}
+		windowSetBoundsSub(WINDOW_0, clip.x1, clip.y1, clip.x2, clip.y2);
 	}
 	
 	for (int i = 0; i <= 1; ++i){
-		bg[i].x = FP_TO_INT(p->background.ofs[screen][i].x);
-		bg[i].y = FP_TO_INT(p->background.ofs[screen][i].y);
+		bg[2+i].x = FP_TO_INT(p->background.ofs[screen][i].x);
+		bg[2+i].y = FP_TO_INT(p->background.ofs[screen][i].y);
 	}
 }
 
@@ -187,6 +191,7 @@ void display_sprite(struct ptc* p, int screen){
 	for (int i = 0; i < SPRITE_COUNT; ++i){
 		oam[i].isRotateScale = false;
 		oam[i].isHidden = true;
+		oam[i].isMosaic = true;
 	}
 	// render in display_panel_keys instead
 	if (screen == 1 && p->panel.type >= PNL_KYA) return;
@@ -203,15 +208,21 @@ void display_sprite(struct ptc* p, int screen){
 	for (int i = 0; i < MAX_SPRITES; ++i){
 		if (s[i].active){
 			oam[i].isHidden = false;
-			oam[i].gfxIndex = s[i].chr + 512 * screen;
+			oam[i].gfxIndex = get_sprite_chr(&s[i]) + 512 * screen;
 			oam[i].palette = s[i].pal;
 			oam[i].priority = s[i].prio;
 			oam[i].colorMode = OBJCOLOR_16;
 			oam[i].hFlip = s[i].flip_x;
 			oam[i].vFlip = s[i].flip_y;
 			fixp sc = s[i].scale.s; // 0.0 to 2.0
-			oam[i].x = FP_TO_INT(s[i].pos.x - s[i].home_x);
-			oam[i].y = FP_TO_INT(s[i].pos.y - s[i].home_y);
+			int x = FP_TO_INT(s[i].pos.x - s[i].home_x);
+			int y = FP_TO_INT(s[i].pos.y - s[i].home_y);
+			if (x < -128 || x >= 256 || y <= -64 || y >= 192){
+				oam[i].isHidden = true;
+				continue;
+			}
+			oam[i].x = x;
+			oam[i].y = y;
 			
 			uint_fast8_t shape = (s[i].w > s[i].h) + 2 * (s[i].w < s[i].h);
 			uint_fast16_t size = spr_calc_size(shape, s[i].w, s[i].h);

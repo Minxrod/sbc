@@ -8,7 +8,7 @@
 #include "ptc.h"
 
 // Returns number of characters read OR READ_ONE_ERR if an error occurs
-int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
+int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* dest){
 	// skip leading spaces
 	size_t i = 0;
 	while (i < len && src[i] == ' '){
@@ -39,7 +39,7 @@ int read_one_u8(struct ptc* p, u8* src, size_t len, struct stack_entry* dest){
 		// Read number!
 		for (; i < len && i - start < 16; ++i){
 			u8 c = src[i];
-			if (is_number(c) || c == '-'){
+			if (is_number(c) || c == '-' || c == '.'){
 				conversion[i - start] = c;
 			} else if (c == BC_DATA_DELIM){ 
 				break; // stop reading here
@@ -92,6 +92,7 @@ void cmd_read(struct ptc* p){
 	for (int i = 0; i < p->stack.stack_i; ++i){
 		block_size = data_block[1];
 		iprintf("src=%d size=%d", p->exec.data_index, block_size);
+		iprintf(" data=\"%.*s\"", block_size, &data_block[2 + p->exec.data_offset]);
 		data_src = &data_block[2 + p->exec.data_offset];
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));

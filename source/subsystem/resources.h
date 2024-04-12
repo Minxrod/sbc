@@ -11,40 +11,64 @@
 
 #include "strs.h"
 
-//PRG: already defined
-//MEM: this is a string
-//CHR: working on it
-//GRP: working on it
-//SCR: working on it (copy)
-//COL: working on it (copy)
-
 extern const char* resource_path;
 
+/// Number of screens supported by the interpreter.
+#define SCREEN_COUNT 2
+/// Width of the screen, in pixels
+#define SCREEN_WIDTH 256
+/// Height of the screen, in pixels
+#define SCREEN_HEIGHT 192
+
+/// Width of GRP layer, in pixels.
 #define GRP_WIDTH 256
+/// Height of GRP layer, in pixels.
 #define GRP_HEIGHT 192
+/// Width of background layer, in tiles.
 #define BG_WIDTH 64
+/// Height of background layer, in tiles.
 #define BG_HEIGHT 64
+/// Width of a single CHR tile, in pixels.
+#define CHR_WIDTH 8
+/// Height of a single CHR tile, in pixels.
+#define CHR_HEIGHT 8
+/// Size of a CHR tile, in bytes.
+#define CHR_UNIT_SIZE (CHR_WIDTH * CHR_HEIGHT / 2)
 
 // Format: width*height*unit_size
-/// Size of one CHR bank
-/// Sizes all in bytes
-#define CHR_SIZE (256* 64/2)
-#define GRP_SIZE (GRP_WIDTH*GRP_HEIGHT*1)
-#define SCR_SIZE ( 64* 64*2)
+/// Size of one CHR bank, in bytes
+#define CHR_SIZE (256*CHR_UNIT_SIZE)
+/// Size of one GRP layer, in bytes
+#define GRP_SIZE (GRP_WIDTH*GRP_HEIGHT)
+/// Size of one background layer, in bytes
+#define SCR_SIZE (BG_WIDTH*BG_HEIGHT*sizeof(u16))
+/// Size of one COL resource, in bytes
 #define COL_SIZE ( 16* 16*2)
 /// Size of MEM file: 256 16-bit characters + 4 byte size
-#define MEM_SIZE (256*  2+4)
+#define MEM_SIZE (MAX_STRLEN*sizeof(u16)+4)
 
+/// Number of unique CHR resource banks for a single screen.
 #define CHR_BANKS (4+4+4+8+2)
+/// Number of unique SCR resources for a single screen.
 #define SCR_BANKS 4
+/// Number of 256-color COL palettes for a single screen.
 #define COL_BANKS 3
+/// Number of GRP layers in total. These are shared between all screens.
+#define GRP_BANKS 4
 
+/// Bitmask for console visibility
 #define VISIBLE_CONSOLE 1
-#define VISIBLE_BG0 2
-#define VISIBLE_BG1 4
-#define VISIBLE_SPRITE 8
-#define VISIBLE_PANEL 16
+/// Bitmask for panel visibility
+#define VISIBLE_PANEL 2
+/// Bitmask for foreground BG layer visibility
+#define VISIBLE_BG0 4
+/// Bitmask for background BG layer visibility
+#define VISIBLE_BG1 8
+/// Bitmask for sprite visibility
+#define VISIBLE_SPRITE 16
+/// Bitmask for graphics layer visibility
 #define VISIBLE_GRAPHICS 32
+/// Bitmask representing all visual systems being enabled
 #define VISIBLE_ALL 0x3f
 
 #ifdef ARM9
@@ -83,15 +107,15 @@ struct resources {
 	//BGU,D,F,[SPU,S or SPD,K,S]
 	const char* search_path;
 	
-	u8* chr[CHR_BANKS*2];
-	// TODO:CODE:LOW Maybe move regen_chr to display?
-	bool regen_chr[CHR_BANKS*2];
+	u8* chr[CHR_BANKS*SCREEN_COUNT];
 	
-	u16* scr[4*2]; //8K*4*2 -> 64K (VRAM)
+	bool regen_chr[CHR_BANKS*SCREEN_COUNT];
+	
+	u16* scr[SCR_BANKS*SCREEN_COUNT]; //8K*4*2 -> 64K (VRAM)
 	
 	u8* grp[4]; //48K*4 -> 192K (RAM) 96K VRAM
 	
-	u16* col[COL_BANKS*2]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
+	u16* col[COL_BANKS*SCREEN_COUNT]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
 	bool regen_col;
 	
 	u8* key_chr[12]; // 8K*12 -> 96K (RAM)
@@ -139,7 +163,7 @@ int get_chr_index(struct ptc* p, char* res);
 
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid
-void* get_resource(struct ptc* p, char* name, int len);
+void* get_resource(struct ptc* p, const char* name, int len);
 
 static inline int get_resource_type(void* res){
 	if (str_len(res) < 3) return TYPE_INVALID;
@@ -181,6 +205,12 @@ void cmd_colread(struct ptc* p);
 // File
 void cmd_save(struct ptc* p);
 void cmd_load(struct ptc* p);
+
+// PRG Files
+void cmd_new(struct ptc* p);
+void cmd_append(struct ptc* p);
+void cmd_rename(struct ptc* p);
+void cmd_delete(struct ptc* p);
 
 // MEM$
 void sys_mem(struct ptc* p);

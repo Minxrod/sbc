@@ -25,8 +25,3 @@ void sys_tchy(struct ptc* p);
 
 void sys_funcno(struct ptc* p);
 void sys_keyboard(struct ptc* p);
-
-void sys_sphitno(struct ptc* p);
-void sys_sphitx(struct ptc* p);
-void sys_sphity(struct ptc* p);
-void sys_sphitt(struct ptc* p);

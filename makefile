@@ -8,7 +8,8 @@
 # Source, build settings
 SOURCE = source source/graphics/pc source/graphics source/interpreter source/subsystem source/extension tests
 BUILD = build/
-CSFML = /home/minxrod/Documents/source/notmine/CSFML/
+# TODO:CODE:LOW Install CSFML as git submodule and use that path instead (more portable)
+CSFML = ../../notmine/CSFML/
 CSFML_INCLUDE = $(CSFML)include/
 CSFML_LIB = $(CSFML)lib/
 
@@ -17,7 +18,7 @@ CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
 # The -MMD is important. It generates the actual dependencies...
-CFLAGS = -g -pg -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD -O2
+CFLAGS = -g -pg -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE),-I$(srcdir)) -DPC -MMD
 # https://stackoverflow.com/a/10168396
 LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 # All the libraries that need to be linked
@@ -53,7 +54,6 @@ test_full: test_build
 compsize: CFLAGS+=-DNDEBUG
 
 main_build: $(main_objs)
-	# TODO:CODE:NONE Better CSFML library location? (How do you install it?)
 	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o sbc $(LIBFLAGS)
 
 #gl:

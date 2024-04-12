@@ -4,7 +4,17 @@
 
 struct ptc;
 
+/// Struct to contain memory-related values useful to the SBC memory functions.
+/// 
+/// This only contains the memsafe sysvar, currently.
 struct memory_api {
+	/// System variable that enables pointer validation checks when set.
+	/// Depending on the function, this can enable some weak bounds checks,
+	/// checks for overlapping ranges, and misaligned pointers.
+	/// 
+	/// This also functionally limits the range of memory available to that
+	/// which is part of internal interpreter state, and can be made to work
+	/// cross-platform with some creative pointer arithmetic.
 	fixp sys_memsafe;
 };
 

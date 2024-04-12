@@ -1,4 +1,6 @@
 #pragma once
+#ifndef SBC_DISPLAY
+#define SBC_DISPLAY
 
 #include "graphics/pc/tilemap.h"
 #include "graphics/pc/sprite.h"
@@ -70,3 +72,4 @@ void display_icon(struct ptc* p);
 void display_cursor(struct ptc* p);
 void display_graphics(struct ptc* p, int screen, int prio);
 
+#endif

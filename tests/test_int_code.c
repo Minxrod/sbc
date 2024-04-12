@@ -602,5 +602,56 @@ int test_int_code(){
 		}
 	}
 	
+	// DATA with decimal, empty string
+	{
+		char* code = "DATA 1.5,2.5,\"\"\rREAD D,C,B$\r";
+		struct ptc* p = run_code(code);
+		
+		CHECK_VAR_NUM("D", 4096+2048);
+		CHECK_VAR_NUM("C", 8192+2048);
+		CHECK_VAR_STR("B", "S\0");
+		
+		free_code(p);
+	}
+	
+	// GOTO various argument test
+	{
+		ASSERT(check_code_error("GOTO @L\r?1/0\r@L\r", ERR_NONE), "[goto] Jump with label");
+		ASSERT(check_code_error("GOTO \"@L\"\r?1/0\r@L\r", ERR_NONE), "[goto] Jump with string");
+		ASSERT(check_code_error("A$=\"@L\"\rGOTO A$\r?1/0\r@L\r", ERR_NONE), "[goto] Jump with string var");
+	}
+	
+	// NEXT with variable specified (simple)
+	{
+		char* code = "FOR I=0 TO 9\rNEXT I\r";
+		struct ptc* p = run_code(code);
+		CHECK_VAR_INT("I", 10);
+		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
+		free_code(p);
+	}
+
+	// NEXT with variable specified (skip FOR)
+	{
+		char* code = "FOR I=1 TO -1\rNEXT I\r";
+		struct ptc* p = run_code(code);
+		CHECK_VAR_INT("I", 1);
+		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
+		free_code(p);
+	}
+
+	// NEXT with variable specified (skip FOR, doesn't match)
+	{
+		ASSERT(check_code_error("FOR I=1 TO -1\rNEXT J\r", ERR_FOR_WITHOUT_NEXT), "[for] FOR with incorrect NEXT variable");
+	}
+
+	// NEXT with variable specified (skip FOR, skip internal NEXT)
+	{
+		char* code = "FOR I=2 TO -1\rNEXT J\rNEXT I\r";
+		struct ptc* p = run_code(code);
+		CHECK_VAR_INT("I", 2);
+		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
+		free_code(p);
+	}
+
 	SUCCESS("test_int_code success");
 }

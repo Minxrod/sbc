@@ -210,6 +210,15 @@ void cmd_pnlstr(struct ptc* p){
 	}
 }
 
+void cmd_key(struct ptc* p){
+	int key_id;
+	STACK_INT_RANGE(0,1,5,key_id);
+	void* key_str = STACK_STR(1);
+	
+	// updates visual and data
+	set_function_key(p, key_id, key_str);
+}
+
 void cmd_iconset(struct ptc* p){
 	// ICONSET id,icon
 	int i, icon;
@@ -273,7 +282,7 @@ void set_panel_bg(struct ptc* p, enum pnltype type){
 
 void set_function_key(struct ptc* p, int key, const void* string){
 	assert(1 <= key && key <= 5);
-	key--;
+	--key;
 	p->panel.func_keys_len[key] = str_len(string);
 	str_wide_copy(string, p->panel.func_keys[key]);
 	struct console* c = p->panel.keys_text;
