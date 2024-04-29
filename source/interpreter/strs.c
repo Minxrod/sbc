@@ -206,11 +206,10 @@ int64_t str_to_number(const void* str, const int base, const bool allow_decimal)
 			// Stop reading on invalid character (useful for VAL)
 			break;
 		}
-		if (number >= (524288u)){
+		if (number >= 524288){
 			break;
 		}
 	}
-	//TODO:ERR:MED Check overflow
 	
 	int64_t combined;
 	if (is_negative){
@@ -230,10 +229,10 @@ int64_t u8_to_num(u8* data, const idx len){
 
 // Returns STR_COPY_SRC_8 if string is u8 type
 // Returns STR_COPY_SRC_16 if string is u16 type
-int str_type(const void* src){
-	assert(src);
+int str_type(const void* str){
+	assert(str);
 	
-	switch (*(char*)src){
+	switch (*(char*)str){
 		case STRING_CHAR:
 		case BC_LABEL_STRING:
 		case BC_LABEL:

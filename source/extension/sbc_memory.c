@@ -188,7 +188,9 @@ void func_addr(struct ptc* p){
 			}
 		}
 		// dereference this address once
-		res_ptr = *(void**)(FIXP_TO_PTR(ofs_num));
+		void** ptr = (void**)FIXP_TO_PTR(ofs_num);
+		assert(ptr);
+		res_ptr = *ptr;
 		// return here
 		STACK_RETURN_NUM(PTR_TO_FIXP(res_ptr));
 	} else if (addr_type == FUNC_ADDR_VAR_DATA || addr_type == FUNC_ADDR_VAR_STRUCT){

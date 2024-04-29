@@ -1,0 +1,6 @@
+[submodule "util/external/ndstool"]
+	path = util/external/ndstool
+	url = https://github.com/devkitPro/ndstool
+[submodule "util/external/CSFML"]
+	path = util/external/CSFML
+	url = https://github.com/SFML/CSFML/

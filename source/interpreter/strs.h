@@ -68,14 +68,22 @@ void free_mem_str(struct strings* s);
 
 struct string* get_new_str(struct strings* s);
 
-bool is_lower(const char c);
-bool is_upper(const char c);
-bool is_number(const char c);
-bool is_alpha(const char c);
-bool is_alphanum(const char c);
-bool is_name_start(const char c);
-bool is_name(const char c);
-bool is_varname(const char c);
+/// Checks if character is a lowercase letter ('a'-'z')
+bool is_lower(char c);
+/// Checks if character is an uppercase letter ('A'-'Z')
+bool is_upper(char c);
+/// Checks if character is a digit ('0'-'9')
+bool is_number(char c);
+/// Checks if character is a letter ('a'-'z' or 'A'-'Z')
+bool is_alpha(char c);
+/// Checks if character is alphanumeric (a letter or a number)
+bool is_alphanum(char c);
+/// Checks if character can be the first character of a PTC identifier (a letter or underscore '_')
+bool is_name_start(char c);
+/// Checks if a character can be part of a PTC identifier (a letter, number, or underscore '_')
+bool is_name(char c);
+/// Checks if a character can be part of a PTC variable name (alphanumeric, underscore '_', or dollar sign '$')
+bool is_varname(char c);
 
 u32 name_hash(const char* name, const u32 len, const u32 hmax);
 bool namecmp(const char* a, const u32 len, const char b[16]);
@@ -99,19 +107,24 @@ int64_t u8_to_number(u8* data, const int len, const int base, const bool allow_d
 int64_t str_to_number(const void*, const int base, const bool allow_decimal);
 
 // Convert number to string PTC style + sets length
-void fixp_to_str(const fixp num, void* str);
+void fixp_to_str(fixp num, void* dest);
 
 // Convert number to u8* PTC style
 void fixp_to_char(const fixp num, u8* str);
 
 // Convert string to number PTC style
-int64_t u8_to_num(u8* data, const idx len);
+int64_t u8_to_num(u8* data, idx len);
 
 // Constants for types mask
 // If set true, use u16, else u8 characters
+
+/// Parameter to str_copy_buf that denotes the source as u8*
 #define STR_COPY_SRC_8 0
+/// Parameter to str_copy_buf that denotes the destination as u8*
 #define STR_COPY_DEST_8 0
+/// Parameter to str_copy_buf that denotes the source as u16*
 #define STR_COPY_SRC_16 1
+/// Parameter to str_copy_buf that denotes the destination as u16*
 #define STR_COPY_DEST_16 2
 
 // Copy from src buffer to destination buffer

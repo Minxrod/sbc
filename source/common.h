@@ -8,6 +8,8 @@
 /// This file defines macros for fixed-point number usage, error handling,
 /// and argument access.
 /// 
+/// Note that some defines require a `struct ptc* p` to work as expected.
+///
 /// It also contains typedefs for short fixed-length types
 /// such as u8, u16, etc. for platforms that do not define these by default.
 /// (libnds provides these normally, but the PC build must re-define them.)
@@ -23,60 +25,72 @@
 #include <stdbool.h>
 #include <assert.h>
 
+/// Fractional bits in fixed point numbers
 #define FIXPOINT 12
-// Takes a fixed point number and gets the integer portion
+/// Takes a fixed point number and gets the integer portion
 #define FP_TO_INT(num) ((num) >> FIXPOINT)
-// Takes an integer and converts it to fixed point
+/// Takes an integer and converts it to fixed point
 #define INT_TO_FP(num) ((fixp)(((uint32_t)(num)) << FIXPOINT))
-// Creates a fixed point number from integer and fractional components
+/// Constant for one (20.12 fixed point)
 #define FIXP_1 INT_TO_FP(1)
 
-// for bad failures 
-// and those that aren't properly handled yet...
+/// Kills the program with a message
+/// For unrecoverable failures and those that aren't properly handled yet
 #define ABORT(msg) { iprintf(msg"\n"); abort(); }
 
-/// The following defines expect to be used within a function that has 
-/// access to `struct ptc* p`, for error setting and other checks.
+// The following defines expect to be used within a function that has
+// access to `struct ptc* p`, for error setting and other checks.
 
-// For errors that can be handled by the interpreter
+/// For errors that can be handled by the interpreter
 #define ERROR(code) { p->exec.error = code; return; }
-// To read an argument on the stack
+/// To read an argument by index on the stack
 #define ARG(index) (stack_get(&p->stack, index))
 
 #ifndef ARM9
-// ignored for non-arm9 platforms
+/// Places the code in ITCM on NDS
+/// @note Ignored for non-NDS platforms
 #define ITCM_CODE
+/// Places the code in DTCM on NDS
+/// @note Ignored for non-NDS platforms
 #define DTCM_DATA
+/// Places the code in DTCM on NDS
+/// @note Ignored for non-NDS platforms
 #define DTCM_BSS
 #endif
 
 #ifdef ARM9
 #include <nds/ndstypes.h>
 #include <nds.h>
-
-#ifdef NDEBUG
-#define iprintf if(0)iprintf
-#endif
 #endif
 
 #ifndef ARM9
+/// 8-bit unsigned int type
 typedef uint8_t u8;
+/// 16-bit unsigned int type
 typedef uint16_t u16;
+/// 32-bit unsigned int type
 typedef uint32_t u32;
+/// 8-bit signed int type
 typedef int8_t s8;
+/// 16-bit signed int type
 typedef int16_t s16;
+/// 32-bit signed int type
 typedef int32_t s32;
-#ifdef NDEBUG
-#define iprintf if(0)printf
-#else
+// Macro to convert iprintf to printf, used on non-NDS platforms
 #define iprintf printf
 #endif
+
+#ifdef NDEBUG
+#ifdef iprintf
+#undef iprintf
+#endif
+#define iprintf if(0)iprintf
 #endif
 
-// Type to handle instruction indexes
-// Should correspond to realistic sizes for each platform
-typedef unsigned int idx;
-typedef signed int fixp;
+/// Type to handle instruction indexes
+typedef uint32_t idx;
+/// Type to indicate a fixed-point number. This is expected to be 20.12
+typedef int32_t fixp;
 
 #ifdef EZ80
 #include <debug.h>
@@ -88,6 +102,7 @@ typedef signed int fixp;
 #include "sbc_blockalloc.h"
 #endif
 
+/// Logged memory management function
 static inline void* malloc_log(char* msg, size_t size){
 #ifdef PC
 	void *ptr = sbc_malloc(size);
@@ -98,6 +113,7 @@ static inline void* malloc_log(char* msg, size_t size){
 	return ptr;
 }
 
+/// Logged memory management function
 static inline void* calloc_log(char* msg, size_t num, size_t size){
 #ifdef PC
 	void *ptr = sbc_calloc(num, size);
@@ -108,6 +124,7 @@ static inline void* calloc_log(char* msg, size_t num, size_t size){
 	return ptr;
 }
 
+/// Logged memory management function
 static inline void free_log(char* msg, void* ptr){
 	iprintf("%s free'd %p\n", msg, ptr);
 #ifdef PC
@@ -117,6 +134,7 @@ static inline void free_log(char* msg, void* ptr){
 #endif
 }
 
+// TODO:CODE:LOW make this not create a ton of redundant `endian`s in memory
 // loosely based on ideas from https://stackoverflow.com/questions/2100331/macro-definition-to-determine-big-endian-or-little-endian-machine
 // 0x04030201 if LE
 static const uint32_t endian = 0x01020304u;
@@ -124,6 +142,8 @@ static const uint32_t endian = 0x01020304u;
 #undef LITTLE_ENDIAN
 #endif
 
+/// Macro that evaluates to true on platforms that store numbers as little-endian
+/// Used to validate certain dubious "read file into memory" tricks as actually working
 #define LITTLE_ENDIAN (\
 	(((char*)&endian)[0] == 4) &&\
 	(((char*)&endian)[1] == 3) &&\

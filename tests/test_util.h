@@ -8,14 +8,16 @@
 
 // Initialize test environment (memory block)
 // This is for tests that require use of dynamic memory
+// Intended to only allocate once, and be "cleared" by MEM_CASE_END for re-use.
 #define MEM_CASE do {\
-	init_memory(MAX_MEMORY);\
+	if (!sbc_membase) init_memory(MAX_MEMORY);\
 } while(0);
 
 // Clears test environment (memory block)
 // This is for tests that require use of dynamic memory
+// Note that this actually just resets sbc_memnext.
 #define MEM_CASE_END do {\
-	free_memory();\
+	reset_memory();\
 } while(0);
 
 #endif
@@ -38,13 +40,14 @@
 // Expect true; failure is permitted to continue (no return)
 #define CHECK(a, msg)  if ((check_fail = !(a))) { printf("\033[31m"INFO_STR" Failed (Continued): "msg"\033[0m\n"); }
 // Report all tests passed
-#define SUCCESS(msg) if (!check_fail) {\
-	printf("\033[32mSuccess: "msg"\033[37m\n");\
-	return 0;\
-} else {\
+#define SUCCESS(msg) do {\
+	if (!check_fail) {\
+		printf("\033[32mSuccess: "msg"\033[37m\n");\
+		return 0;\
+	}\
 	printf("\033[31mFailed: "msg"\033[37m\n");\
 	return 1;\
-}
+} while(0)
 
 /// Determines if executable terminates on first failure or continues running
 #define FASTEND 1

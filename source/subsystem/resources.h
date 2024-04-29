@@ -19,6 +19,8 @@ extern const char* resource_path;
 #define SCREEN_WIDTH 256
 /// Height of the screen, in pixels
 #define SCREEN_HEIGHT 192
+/// Expected framerate (frames/second)
+#define FRAMERATE 60
 
 /// Width of GRP layer, in pixels.
 #define GRP_WIDTH 256

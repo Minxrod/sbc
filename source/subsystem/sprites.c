@@ -31,10 +31,6 @@ struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,
 	};
 }
 
-void free_sprites(struct sprites* s){
-	(void)s;
-}
-
 void step_sprites(struct sprites* s){
 	// Note: Code adapted from PTC-EmkII Sprites.cpp (Sprites::update())
 	for (int p = 0; p < SCREEN_COUNT; ++p){

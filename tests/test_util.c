@@ -22,7 +22,7 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 //	memset(outcode, 0x0f, 2048); // identify errors of failing to write
 	// init system
 	MEM_CASE // only the start here!
-	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit);
+	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit, true);
 	ptc->res.search_path = "tests/data/"; // override standard search path with test path
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o

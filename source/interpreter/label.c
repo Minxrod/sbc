@@ -22,26 +22,6 @@ void free_labels(struct labels l){
 	free_log("free_labels", l.entry);
 }
 
-// Finds a location for a *new* label
-int find_label_slot(struct labels* l, char* name, uint_fast8_t len){
-	struct label_line* label;
-	u32 hash = name_hash(name, len, l->label_count);
-	u32 step = 0;
-	
-	do {
-		hash = (hash + step) & (l->label_count - 1); // % label_count
-		label = &l->entry[hash];
-		if (label->name[0] == '\0'){
-			return hash; // available slot!
-		}
-		if (step++ >= (u32)l->label_count){
-			return -1;
-		}
-	} while (!namecmp(name, len, label->name));
-	// Label is already defined here!
-	return -1;
-}
-
 bool add_label(struct labels* l, char* name, uint_fast8_t len, idx index){
 	int entry_index = find_label_slot(l, name, len);
 	
@@ -64,7 +44,6 @@ void reset_label(struct labels* l){
 	}
 }
 
-// TODO:CODE:LOW Merge with find_label_slot?
 // Finds the location of a previously defined label
 int find_label(struct labels* l, char* name, uint_fast8_t len){
 	struct label_line* label;
@@ -83,6 +62,26 @@ int find_label(struct labels* l, char* name, uint_fast8_t len){
 	} while (!namecmp(name, len, label->name));
 	// Label is defined!
 	return hash;
+}
+
+// Finds a location for a *new* label
+int find_label_slot(struct labels* l, char* name, uint_fast8_t len){
+	struct label_line* label;
+	u32 hash = name_hash(name, len, l->label_count);
+	u32 step = 0;
+
+	do {
+		hash = (hash + step) & (l->label_count - 1); // % label_count
+		label = &l->entry[hash];
+		if (label->name[0] == '\0'){
+			return hash; // available slot!
+		}
+		if (step++ >= (u32)l->label_count){
+			return -1;
+		}
+	} while (!namecmp(name, len, label->name));
+	// Label is already defined here!
+	return -1;
 }
 
 idx label_index(struct labels* l, char* name, uint_fast8_t len){

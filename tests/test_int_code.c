@@ -250,20 +250,7 @@ int test_int_code(){
 		
 		free_code(p);
 	}
-	
-	// DTREAD tests
-	{
-		char* code = "DTREAD(\"2023/09/19\"),Y,M,D\r";
-		
-		struct ptc* p = run_code(code);
-		// Check various substrings
-		CHECK_VAR_INT("Y",2023);
-		CHECK_VAR_INT("M",9);
-		CHECK_VAR_INT("D",19);
-		
-		free_code(p);
-	}
-	
+
 	// FOR stack stuff test
 	{
 		char* code = "FOR I=0 TO 1\rFOR J=0 TO 1\r?I,J\rIF J==0 THEN NEXT J\rNEXT I\rNEXT J\r";
@@ -383,12 +370,20 @@ int test_int_code(){
 	
 	// EXEC simple test
 	{
-		ASSERT(check_code_error("EXEC \"file_does_not_exist.PTC\"\r", ERR_FILE_LOAD_FAILED), "[exec] Check if file load fails correctly");
-		struct ptc* p = run_code("EXEC \"IFELSE.PTC\"\r");
+		struct ptc* p = run_code("EXEC \"IFELSE\"\r");
 		ASSERT(p->exec.error == ERR_NONE, "[exec] Program ran with no errors");
+		ASSERT(p->res.result == 1, "[exec] Program did execute, RESULT set");
 		CHECK_VAR_INT("TY",13);
-		
 		free_code(p);
+	}
+
+	// EXEC simple failure
+	{
+		struct ptc* p = run_code("EXEC \"NOTEXIST\"\r");
+		ASSERT(p->exec.error == ERR_NONE, "[exec] Program did not execute, but no error");
+		ASSERT(p->res.result == 0, "[exec] Program did not execute, but no error");
+		free_code(p);
+
 	}
 	
 	// DATA multiple lines

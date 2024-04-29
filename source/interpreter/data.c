@@ -1,5 +1,7 @@
 #include "data.h"
 
+#include "common.h"
+
 #include "interpreter/strs.h"
 #include "interpreter/tokens.h"
 #include "system.h"
@@ -66,10 +68,12 @@ void find_data(struct ptc* p){
 	p->exec.data_offset = 0;
 }
 
+/// Offset into data block where data actually starts
+#define DATA_DATA_OFS 2
+
 void cmd_read(struct ptc* p){
 	// Get variables from stack and call read() into each of them (using DATA string as source)
 	// Get pointer, offset for data
-	// TODO:CODE:LOW Constant for 2
 	if (p->exec.data_index == BC_SCAN_NOT_FOUND){
 		ERROR(ERR_OUT_OF_DATA);
 	}
@@ -92,8 +96,8 @@ void cmd_read(struct ptc* p){
 	for (int i = 0; i < p->stack.stack_i; ++i){
 		block_size = data_block[1];
 		iprintf("src=%d size=%d", p->exec.data_index, block_size);
-		iprintf(" data=\"%.*s\"", block_size, &data_block[2 + p->exec.data_offset]);
-		data_src = &data_block[2 + p->exec.data_offset];
+		iprintf(" data=\"%.*s\"", block_size, &data_block[DATA_DATA_OFS + p->exec.data_offset]);
+		data_src = &data_block[DATA_DATA_OFS + p->exec.data_offset];
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));
 		if (read == READ_ONE_ERR){

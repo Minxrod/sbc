@@ -120,14 +120,24 @@ struct sprites {
 		fixp vars[8];
 	} info[SCREEN_COUNT][MAX_SPRITES];
 	
+	/// Sprite id of last SPHIT collision.
 	fixp sphitno;
+	/// Sprite x-coordinate of last SPHIT collision.
+	/// @warning Unimplemented
 	fixp sphitx;
+	/// Sprite y-coordinate of last SPHIT collision.
+	/// @warning Unimplemented
 	fixp sphity;
+	/// Something related to sprite collision.
+	/// @note I don't know what this does.
+	/// @warning Unimplemented
 	fixp sphitt;
 };
 
+/// Initializes sprites struct data.
+///
+/// @param s Pointer to sprites struct to initialize
 void init_sprites(struct sprites* s);
-void free_sprites(struct sprites* s);
 
 struct sprite_info init_sprite_info(int id,int chr,int pal,bool horiz,bool vert,int prio,int w, int h);
 
@@ -137,7 +147,22 @@ int get_sprite_chr(struct sprite_info* s);
 
 struct ptc;
 
+/// Implements the SPPAGE function of PTC.
+///
+/// SPPAGE selects the screen to use for sprite commands.
+///
+/// Syntax: `SPPAGE screen`
+///
+/// @param p System struct
 void cmd_sppage(struct ptc* p);
+
+/// Implements the SPSET function of PTC.
+///
+/// SPSET creates a new sprite with the given sprite ID.
+///
+/// Syntax: `SPSET id, chr, pal, h, v, prio {, width, height}`
+///
+/// @param p System struct
 void cmd_spset(struct ptc* p);
 void cmd_spclr(struct ptc* p);
 void cmd_sphome(struct ptc* p);

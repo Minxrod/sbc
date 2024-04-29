@@ -41,7 +41,7 @@
 
 /// The system struct. This contains the entire interpreter state.
 ///
-// TODO:CODE:LOW change name to sbc at some point
+// TODO:CODE:LOW change name to sbc at some point?
 struct ptc {
 	// upper screen stuff
 	struct console console;
@@ -81,7 +81,7 @@ struct ptc {
 	struct memory_api memapi;
 };
 
-struct ptc* init_system(int var, int str, int arr);
+struct ptc* init_system(int var, int str, int arr, bool headless);
 void free_system(struct ptc*);
 
 /// Information struct containing program source and the system to run it on.

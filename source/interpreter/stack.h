@@ -37,7 +37,7 @@
 #define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); return; }
 #define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = (val)}}); return; }
 
-
+// TODO:CODE:NONE rename to "size" as max is misleading
 #define VALUE_STACK_MAX 100
 #define CALL_STACK_MAX 256
 
@@ -71,24 +71,38 @@ static inline void* value_str(struct stack_entry* e){
 
 // Inlining the stack functions improved speed from ~380 to ~360
 // (Placing in ICTM changed to 370 instead; consider again if running out of space...?
+
+/// Reads an entry from the stack by index.
+///
+/// @param s Stack to read
+/// @param index Stack entry to read from
+/// @return Pointer to value in stack
 static inline struct stack_entry* stack_get(struct value_stack* s, int index){
+	assert(0 <= index && index < s->stack_i);
 	return &s->entry[index];
 }
 
+/// Pushes an entry onto the top of the value stack
+///
+/// @param s Stack to modify
+/// @param value Value to be add to the stack.
 static inline void stack_push(struct value_stack* s, struct stack_entry value){
 	assert(s->stack_i < VALUE_STACK_MAX);
 	s->entry[s->stack_i++] = value;
 }
 
+/// Pop an entry from the top of the value stack
+///
+/// @warning The entry is stored in the space that will be considered "available" for future stack pushes.
+/// Therefore, do not write to the stack until you are done reading from this entry.
+///
+/// @param s Stack to pop from
+/// @return Pointer to stack entry
+// TODO:PERF:NONE see if value copy is faster?
 static inline struct stack_entry* stack_pop(struct value_stack* s){
 	assert(s->stack_i > 0);
 	return &s->entry[--s->stack_i];
 }
-
-//struct stack_entry* stack_get(struct value_stack* s, int index) ITCM_CODE;
-
-//void stack_push(struct value_stack* s, struct stack_entry value) ITCM_CODE;
-//struct stack_entry* stack_pop(struct value_stack* s) ITCM_CODE;
 
 void stack_print(struct value_stack* s);
 
@@ -104,10 +118,10 @@ struct call_stack {
 	/// Represents an entry in the call stack.
 	/// Depending on the type of call, stores either...
 	/// * GOSUB - Return index
-	/// * FOR - Return index, variable pointer
+	/// * FOR - Loop info index + length, variable pointer
 	struct call_entry {
 		enum call_type type; // FOR or GOSUB
-		idx address; // instruction index
+		u32 address; // combined instruction index and expression size for FOR
 //		uint_fast8_t var_type;
 		void* var; // fixp* or struct string**
 	} entry[CALL_STACK_MAX];

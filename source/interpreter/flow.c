@@ -32,8 +32,17 @@ void cmd_for(struct ptc* p){
 	if (p->calls.stack_i == CALL_STACK_MAX-1){
 		ERROR(ERR_OUT_OF_MEMORY);
 	}
-	p->calls.entry[p->calls.stack_i].address = index+2;
-//	p->calls.entry[p->calls.stack_i].var_type = e->type;// this is never used
+	// Note: instruction index is limited to [0,MAX_SOURCE_SIZE) currently
+	// Line size (and distance to BC_BEGIN_LOOP) is in [0,100) and usually small
+	// Store offset as part of index here, and save the searching on every NEXT command
+	idx to_start = index + 2;
+	idx to_size = bc_scan(p->exec.code, to_start, BC_BEGIN_LOOP);
+	if (to_size == BC_SCAN_NOT_FOUND) {
+		ERROR(ERR_FOR_MISSING_BEGIN_LOOP);
+	}
+
+	// stores beginning of TO [STEP] expression and size of expression
+	p->calls.entry[p->calls.stack_i].address = to_start | ((to_size - to_start) << 24);
 	p->calls.entry[p->calls.stack_i].var = e->value.ptr;
 	
 	p->calls.stack_i++;
@@ -87,16 +96,16 @@ void cmd_next(struct ptc* p){
 	// this is the FOR call we are processing.
 	struct call_entry* c = &p->calls.entry[stack_i];
 	u32 addr = c->address; //points to just after FOR
-	// march address forward until hitting B command
-	// TODO:PERF:LOW Execute to BC_BEGIN_LOOP instead of searching to it first
-	addr = bc_scan(p->exec.code, addr, BC_BEGIN_LOOP);
+	idx to_start = addr & 0x00ffffff;
+	idx to_size = addr >> 24;
+
 	struct bytecode code = p->exec.code;
 	struct runner temp = p->exec; // copy code state (not stack)
 	
 	// addr points to loop condition setup
 	struct bytecode for_condition;
-	for_condition.size = addr - c->address;
-	for_condition.data = &code.data[c->address];
+	for_condition.size = to_size;
+	for_condition.data = &code.data[to_start];
 	run(for_condition, p);
 	p->exec = temp; //restore program state
 	
@@ -125,7 +134,7 @@ void cmd_next(struct ptc* p){
 		}
 	} else {
 		// loop continues, jump back to this point
-		p->exec.index = c->address;
+		p->exec.index = to_start;
 	}
 	// NEXT should clear stack when done
 	p->stack.stack_i = 0;

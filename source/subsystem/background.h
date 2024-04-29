@@ -60,6 +60,11 @@ static inline u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
 
 //u16* bg_page(struct ptc* p, u8 page, u8 layer);
 // TODO:PERF:LOW Check if these are better as inlines
+/// Calculates the index into a SCR resource from tile coordinates.
+///
+/// @param x X-coordiante in range [0,BG_WIDTH)
+/// @param y Y-coordiante in range [0,BG_HEIGHT)
+/// @return Index into a SCR array
 u16 bg_index(uint_fast8_t x, uint_fast8_t y);
 u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y);
 

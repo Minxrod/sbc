@@ -13,7 +13,7 @@
 #include "interpreter.h"
 #include "program.h"
 
-struct ptc* init_system(int var, int str, int arr){
+struct ptc* init_system(int var, int str, int arr, bool headless){
 	srand(time(NULL));
 	
 	struct ptc* ptc = calloc_log("init_system", sizeof(struct ptc), 1);
@@ -35,6 +35,7 @@ struct ptc* init_system(int var, int str, int arr){
 	ptc->vars.arrs = &ptc->arrs;
 	// init various ptc items
 	// TODO:CODE:MED use subsytem initialization functions?
+	// TODO:CODE:MED Separate init and alloc clearly?
 	ptc->console.tabstep = 4;
 	ptc->console.sys_tabstep = INT_TO_FP(4);
 	ptc->res.visible = VISIBLE_ALL;
@@ -50,8 +51,10 @@ struct ptc* init_system(int var, int str, int arr){
 	init_sprites(&ptc->sprites);
 	init_graphics(&ptc->graphics);
 	
-	init_display(ptc); // needs resources as well
-	
+	if (!headless){
+		init_display(ptc); // needs resources as well
+	}
+
 	// must occur after resources as it depend on SCR
 	init_panel(ptc);
 	
@@ -405,6 +408,16 @@ enum launch_state {
 	LAUNCH_AUTOLOAD,
 };
 
+int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int tokopts){
+	p->exec.error = ERR_NONE;
+	p->calls.stack_i = 0;
+	p->exec.error = tokenize_full(prg, bc, p, tokopts);
+	if (p->exec.error == ERR_NONE){
+		run(*bc, p);
+	}
+	return p->exec.error;
+}
+
 // this is practically the main function, barring some platform-specific intialization
 int launch_system(void* launch_info){
 	u8 err_msg[66] = {STRING_INLINE_CHAR}; // 2 lines + metadata
@@ -485,12 +498,7 @@ int launch_system(void* launch_info){
 				direct_cmd[prog.size++] = '\r';
 				
 				// prepare execution
-				p->exec.error = ERR_NONE;
-				p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
-				p->exec.error = tokenize_full(&prog, &bc, p, TOKOPT_NONE);
-				if (p->exec.error == ERR_NONE){
-					run(bc, p);
-				}
+				token_and_run(p, &prog, &bc, TOKOPT_NONE);
 				}
 				break;
 				
@@ -533,10 +541,7 @@ int launch_system(void* launch_info){
 				break;
 				
 			case LAUNCH_RUN: // 'RUN' mode
-				p->exec.error = tokenize_full(&p->exec.prg, &bc, p, opts);
-				if (p->exec.error == ERR_NONE){
-					run(bc, p);
-				}
+				token_and_run(p, &p->exec.prg, &bc, opts);
 				state = LAUNCH_PROMPT; // program terminated: return to DIRECT mode
 				break;
 				

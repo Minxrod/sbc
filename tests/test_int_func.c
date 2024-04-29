@@ -1,3 +1,4 @@
+#include "input.h"
 #include "test_util.h"
 
 #include "system.h"
@@ -58,6 +59,13 @@ int test_int_func(){
 		free_code(p);
 	}
 	
+	// SUBST$ errors
+	{
+		ASSERT(check_code_error("?SUBST$(\"A\"*256,256,0,\"D\")\r", ERR_STRING_TOO_LONG), "[subst] Result string too long (256+1)");
+		ASSERT(check_code_error("?SUBST$(\"A\"*256,253,3,\"D\"*5)\r", ERR_STRING_TOO_LONG), "[subst] Result string too long (253+5)");
+		ASSERT(check_code_error("?SUBST$(\"A\"*256,251,5,\"D\"*5)\r", ERR_NONE), "[subst] Result string OK (251+5)");
+	}
+
 	// ASC
 	{
 		char* code = "A=ASC(\"0\")\rB=ASC(\"A\")\rC=ASC(CHR$(0))\rD=ASC(\"abc\")\r";
@@ -70,6 +78,13 @@ int test_int_func(){
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(97), "[asc] Value of first char of \"abc\" string");
 		
 		free_code(p);
+	}
+
+	// ASC errors
+	{
+		DENY(check_code_error("A=ASC(\"\")\r", ERR_NONE), "[asc] Error on empty string");
+		DENY(check_code_error("A=ASC()\r", ERR_NONE), "[asc] Error on no string");
+		DENY(check_code_error("A=ASC(6)\r", ERR_NONE), "[asc] Error on number");
 	}
 	
 	// CHR$
@@ -253,5 +268,65 @@ int test_int_func(){
 		free_code(p);
 	}
 	
+	// DTREAD test
+	{
+		char* code = "DTREAD(\"2023/09/19\"),Y,M,D\r";
+
+		struct ptc* p = run_code(code);
+		// Check various substrings
+		CHECK_VAR_INT("Y",2023);
+		CHECK_VAR_INT("M",9);
+		CHECK_VAR_INT("D",19);
+
+		free_code(p);
+	}
+
+	// DTREAD test II (unrealistic date)
+	{
+		struct ptc* p = run_code("DTREAD(\"6789/00/99\"),Y,M,D\r");
+		// Check various substrings
+		CHECK_VAR_INT("Y",6789);
+		CHECK_VAR_INT("M",00);
+		CHECK_VAR_INT("D",99);
+
+		free_code(p);
+	}
+
+	// DTREAD syntax errors
+	{
+		DENY(check_code_error("DTREAD(\"2024-04-12\"),Y,M,D\r", ERR_NONE), "[dtread] Check for slashes");
+		DENY(check_code_error("DTREAD(\"AAAA/04/12\"),Y,M,D\r", ERR_NONE), "[dtread] Check for numbers");
+		DENY(check_code_error("DTREAD(\"2024/04\"),Y,M,D\r", ERR_NONE), "[dtread] Check for length too small");
+		DENY(check_code_error("DTREAD(\"2024/04/123\"),Y,M,D\r", ERR_NONE), "[dtread] Check for length too big");
+	}
+
+	// TMREAD test I (normal time)
+	{
+		struct ptc* p = run_code("TMREAD(\"19:15:08\"),H,M,S\r");
+		// Check various substrings
+		CHECK_VAR_INT("H",19);
+		CHECK_VAR_INT("M",15);
+		CHECK_VAR_INT("S",8);
+		free_code(p);
+	}
+
+	// TMREAD test II (unrealistic time)
+	{
+		struct ptc* p = run_code("TMREAD(\"27:63:99\"),H,M,S\r");
+		// Check various substrings
+		CHECK_VAR_INT("H",27);
+		CHECK_VAR_INT("M",63);
+		CHECK_VAR_INT("S",99);
+		free_code(p);
+	}
+
+	// TMREAD syntax errors
+	{
+		DENY(check_code_error("TMREAD(\"19-17-47\"),H,M,S\r", ERR_NONE), "[dtread] Check for colons");
+		DENY(check_code_error("TMREAD(\"AA:18:00\"),H,M,S\r", ERR_NONE), "[dtread] Check for numbers");
+		DENY(check_code_error("TMREAD(\"19:18\"),H,M,S\r", ERR_NONE), "[dtread] Check for length too small");
+		DENY(check_code_error("TMREAD(\"19:18:345\"),H,M,S\r", ERR_NONE), "[dtread] Check for length too big");
+	}
+
 	SUCCESS("test_int_func success");
 }

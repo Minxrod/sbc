@@ -140,6 +140,7 @@ struct var_name {
 struct var_name read_var_name(struct bytecode* b, idx index){
 	struct var_name result;
 	u8 instr = b->data[index];
+	(void)instr;
 	assert(instr == BC_VARIABLE_NAME || instr == BC_ARRAY_NAME || instr == BC_DIM);
 	u8 data = b->data[index+1];
 	if (data < 'A'){ // data byte contains length of name
@@ -163,15 +164,19 @@ struct var_name read_var_name(struct bytecode* b, idx index){
 /// 
 /// @param code Program bytecode struct.
 /// @param p PTC struct containing entire state of interpreter + system
-/// 
-void run(struct bytecode code, struct ptc* p) {
+/// @param init_exec If true, re-initializes more of the execution state.
+void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 	struct runner* r = &p->exec;
+	r->code = code;
+	if (init_exec){
+		r->error = ERR_NONE;
+		p->calls.stack_i = 0;
+	}
 	r->index = 0;
 	r->data_index = 0;
 	r->data_offset = 0;
-	r->code = code;
 	p->stack.stack_i = 0;
-	
+
 	while (r->index < r->code.size && !p->exec.error){
 		// get one instruction and execute it
 		start_time(&p->time);
@@ -327,7 +332,6 @@ void run(struct bytecode code, struct ptc* p) {
 				
 			case BC_VARIABLE_ID:
 				{
-				// TODO:TEST:MED Check that ID is calculated correctly
 				// Note: id variable declared in BC_VARIABLE_ID_SMALL
 				id = (u8)data;
 				id |= (u8)r->code.data[r->index++] << 8;
@@ -465,7 +469,7 @@ void run(struct bytecode code, struct ptc* p) {
 //						instr = p->exec.code.data[index];
 						data = r->code.data[result.index+1];
 						if (data == CMD_NEXT){
-							iprintf("prev=%d[%s] index=%d[%s]\n", result.prev, r->code.data + result.prev, result.index, r->code.data + result.index);
+//							iprintf("prev=%d[%s] index=%d[%s]\n", result.prev, r->code.data + result.prev, result.index, r->code.data + result.index);
 							if (result.prev == BC_SCAN_NOT_FOUND){
 								// Found generic NEXT
 								nest--;
@@ -541,18 +545,15 @@ void run(struct bytecode code, struct ptc* p) {
 		
 		iprintf("\n");
 	}
-	
-//	iprintf("%d\n", r->index);
-	/*
-	for (u32 i = 0; i < p->stack.stack_i; ++i){
-		iprintf("%d:%d\n", p->stack.entry[i].type, p->stack.entry[i].value.number);
-	}
-	*/
+}
+
+void run(struct bytecode code, struct ptc* p){
+	_run(code, p, false);
 }
 
 void cmd_exec(struct ptc* p){
 	// EXEC filename
-	char filename_buf[257];
+	char filename_buf[256+1];
 	void* filename = value_str(ARG(0));
 	str_char_copy(filename, (u8*)filename_buf);
 	filename_buf[str_len(filename)] = '\0';
@@ -561,9 +562,9 @@ void cmd_exec(struct ptc* p){
 	iprintf("\nold=%d ", p->exec.code.size);
 //	struct program prog = { 0, (char*)&p->exec.code.data[524288] };
 	if (!(p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, filename_buf, TYPE_PRG))){
-		// Failed to load, potentially destroyed code
-		// TODO:IMPL:LOW Set RESULT here instead
-		ERROR(ERR_FILE_LOAD_FAILED);
+		// Failed to load file
+		p->res.result = 0;
+		return;
 	}
 	
 	// tokenize updates all relevant exec.code values
@@ -576,6 +577,7 @@ void cmd_exec(struct ptc* p){
 	p->exec.data_offset = 0;
 	p->exec.argcount = 0;
 //	p->exec.prg = prog;
+	p->res.result = 1;
 }
 
 void cmd_run(struct ptc* p){

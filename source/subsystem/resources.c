@@ -1,5 +1,6 @@
 #include "resources.h"
 
+#include "header.h"
 #include "system.h"
 #include "error.h"
 #include "extension/compress.h"
@@ -287,8 +288,7 @@ bool load_grp(u8* dest, const char* path, const char* name){
 }
 
 void init_col(struct resources* r){
-	char name[] = "COLX.PTC"; // TODO:PERF:NONE only set one character
-	// TODO:CODE:LOW dedup with init_resource
+	char name[] = "COLX.PTC";
 	for (int i = 0; i < 2 * COL_BANKS; ++i){
 		name[3] = '0' + (i % 3); // col_files[4*i+3];
 		load_col((u8*)r->col[i], resource_path, name);
@@ -351,6 +351,14 @@ void init_resource(struct resources* r){
 		"resources/makeKANA.NCGR","resources/makeKANA.NCGR",
 		"resources/makeKANA_SHIFT.NCGR","resources/makeKANA_SHIFT.NCGR",
 	};
+	const int key_files_header_size[12] = {
+		12, 12,
+		48, 48,
+		48, 48,
+		48, 48,
+		48, 48,
+		48, 48,
+	};
 	
 	// Load default resource files
 	const char* chr_files = 
@@ -373,7 +381,7 @@ void init_resource(struct resources* r){
 
 	// Load keyboard sprites in-memory for fast access
 	for (int i = 0; i < 12; ++i){
-		load_file(r->key_chr[i], key_files[i], 48 + (i >= 2 && i % 2 ? CHR_SIZE : 0), CHR_SIZE);
+		load_file(r->key_chr[i], key_files[i], key_files_header_size[i] + (i >= 2 && i % 2 ? CHR_SIZE : 0), CHR_SIZE);
 	}
 	// Initialize MEM$
 	r->mem_str = (struct string){
@@ -647,7 +655,6 @@ void cmd_save(struct ptc* p){
 			}
 			break;
 			
-		// TODO:IMPL:HIGH Other file types
 		default:
 			iprintf("Error: Unimplemented/invalid resource type\n %s:%s\n", res_type, res_name);
 			ERROR(ERR_INVALID_RESOURCE_TYPE);
@@ -876,7 +883,7 @@ void cmd_colset(struct ptc* p){
 	for (int i = 0; i < 6; ++i){
 		int c = str_at_char(col_str, i);
 		if (!is_number(c) && !(c >= 'A' && c <= 'F')){
-			ERROR(ERR_ILLEGAL_FUNCTION_CALL); // TODO:TEST:LOW Check error code
+			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 		}
 	}
 	

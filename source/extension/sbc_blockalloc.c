@@ -18,7 +18,11 @@ void init_memory(int memory_max){
 	}
 }
 
-void free_memory(){
+void reset_memory(void){
+	sbc_memnext = sbc_membase;
+}
+
+void free_memory(void){
 	iprintf("free_memory block\n");
 	free(sbc_membase); // frees all memory at once
 	sbc_membase = NULL; // allow re-alloc with init_memory again

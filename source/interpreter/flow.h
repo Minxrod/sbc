@@ -39,5 +39,20 @@ void cmd_gosub(struct ptc* p);
 void cmd_on(struct ptc* p);
 void cmd_return(struct ptc* p);
 
+/// Implements the `END` command of PTC.
+///
+/// Terminates the program. Does not allow continues.
+///
+/// Syntax: `END`
+///
+/// @param p System struct
 void cmd_end(struct ptc* p);
+
+/// Implements the `STOP` command of PTC.
+///
+/// Breaks the program. Can be continued with `CONT`.
+///
+/// Syntax: `STOP`
+///
+/// @param p System struct
 void cmd_stop(struct ptc* p);

@@ -1,0 +1,21 @@
+CompileFlags:
+  Add: [-std=c11, -Wall, -Werror, -Wextra, -Wpedantic, -Wno-missing-prototypes]
+  # Remove extra warnings specified in compile commands.
+  # Single value is also acceptable, same as "Remove: [-mabi]"
+  Remove: -mabi
+Diagnostics:
+  # Tweak Clang-Tidy checks.
+  ClangTidy:
+    Add: [performance*, modernize*, readability*]
+    # I like single-letter variable names.
+    Remove: [modernize-use-trailing-return-type, readability-identifier-length]
+    CheckOptions:
+      readability-identifier-naming.VariableCase: lower_case
+      # I like the single-line if for small condition checks.
+      readability-braces-around-statements.ShortStatementLines: 2
+      # These are too common, so are silenced for now.
+      readability-magic-numbers.IgnorePowersOf2IntegerValues: true
+      readability-magic-numbers.IgnoredIntegerValues: 0;1;3;7;15;31;63;127;255;511;1023
+      # Macros ignored because the details hidden are largely irrelevant (bounds on valid arguments usually)
+      readability-function-cognitive-complexity.IgnoreMacros: true
+#---

@@ -472,7 +472,7 @@ int test_tokens(void){
 		// run program
 		struct program p = { strlen(code), code };
 		struct bytecode o = init_bytecode();
-		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16);
+		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16, true);
 		
 		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
 		// Bytecode is as expected
@@ -492,7 +492,7 @@ int test_tokens(void){
 		// run program
 		struct program p = { strlen(code), code };
 		struct bytecode o = init_bytecode();
-		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16);
+		struct ptc* ptc = init_system(VAR_LIMIT, 16, 16, true);
 		
 		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
 		// Bytecode is as expected
@@ -512,7 +512,7 @@ int test_tokens(void){
 		// run program
 		struct program p = { strlen(code), code };
 		struct bytecode o = init_bytecode();
-		struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
+		struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, true);
 		
 		tokenize_full(&p, &o, ptc, TOKOPT_VARIABLE_IDS);
 		// Bytecode is as expected

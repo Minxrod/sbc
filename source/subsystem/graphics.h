@@ -10,7 +10,6 @@
 
 struct ptc;
 
-// TODO:CODE:NONE Determine whether 'screen' or 'page' should be used
 /// Graphics struct.
 /// 
 /// Manages metadata about the graphics subsystem. Note that the graphics page
@@ -47,7 +46,6 @@ static inline u16 grp_index(uint_fast8_t x, uint_fast8_t y){
 	return px + py * 8 + tx * 64 + ty * 512 + cx * 4096 + cy * 16384;
 }
 
-// Note: No error checking here
 static inline void grp_pixel(u8* page, int x, int y, u8 color, bool drawmode){
 	if (x >= 0 && x < GRP_WIDTH){
 		if (y >= 0 && y < GRP_HEIGHT){
@@ -77,7 +75,30 @@ void cmd_gdrawmd(struct ptc* p);
 void cmd_gcircle(struct ptc* p);
 void cmd_gprio(struct ptc* p);
 void cmd_gputchr(struct ptc* p);
+
+/// Implements the `GCOPY` function of PTC.
+///
+/// Copies a rectangle from a graphics page to a different part of the draw page.
+///
+/// Syntax: `GCOPY [source_page,] x1, y1, x2, y2, x3, y3, mode
+///
+/// @param p System struct
 void cmd_gcopy(struct ptc* p);
+
+/// Implements the `GPAINT` function of PTC.
+///
+/// Performs a flood fill on part of the graphics page.
+///
+/// Syntax: `GPAINT x, y[, color[, border]]`
+///
+/// @param p System struct
 void cmd_gpaint(struct ptc* p);
 
+/// Implements the `GSPOIT` function of PTC.
+///
+/// Reads a pixel from the graphics page.
+///
+/// Syntax: `GSPOIT([page,] x, y)`
+///
+/// @param p System struct
 void func_gspoit(struct ptc* p);

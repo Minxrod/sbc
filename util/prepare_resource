@@ -1,0 +1,33 @@
+#!/bin/bash
+# usage:
+NDS_FILE=$1
+EXTRACT_DIR=$2
+if [[ $# -ne 2 ]]; then
+	echo "usage: $0 nds_file extract_dir"
+	exit
+fi
+
+# Use ndstool to extract PTC files
+./util/external/ndstool/ndstool -x -d resources/"$EXTRACT_DIR" "$NDS_FILE"
+
+# Extract necessary PTC resources
+cd resources/
+# TODO:CODE:LOW This relative pathing is silly. What's a better way to do this?
+../util/ntr_to_ptc "$EXTRACT_DIR"BGU.NCGR BGU
+../util/ntr_to_ptc "$EXTRACT_DIR"BGD.NCGR BGD
+../util/ntr_to_ptc "$EXTRACT_DIR"BGF.NCGR BGF
+../util/ntr_to_ptc "$EXTRACT_DIR"partsSPU.NCGR SPU
+../util/ntr_to_ptc "$EXTRACT_DIR"partsSPS.NCGR SPS
+../util/ntr_to_ptc "$EXTRACT_DIR"partsSPDK.NCGR SPD
+../util/ntr_to_ptc "$EXTRACT_DIR"defBGSP.NCLR COL0 && cp COL0.PTC COL1.PTC
+../util/ntr_to_ptc "$EXTRACT_DIR"GRP.NCLR COL2
+cp "$EXTRACT_DIR"make*.NCGR "$EXTRACT_DIR"pnl*.NSCR .
+cd ..
+
+# Extract sample programs
+mkdir -p programs/
+cp resources/"$EXTRACT_DIR"*.PRG programs/
+cd programs/
+for name in *.PRG; do
+	mv $name ${name%.PRG}.PTC
+done

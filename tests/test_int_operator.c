@@ -91,7 +91,6 @@
 	ASSERT(check_code_error("_$="c"\r", e), "[error] Error: "#e);\
 } while(0)
 
-// TODO:PERF:MED reuse system to save a lot of pointless allocations
 int test_int_operator(void){
 	/* 
 	 * operation error testing

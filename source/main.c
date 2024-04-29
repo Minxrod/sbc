@@ -125,7 +125,7 @@ int main(void){
 	consoleDemoInit(); // Uses VRAM C but I guess this is fine as a debug tool
 #endif
 	
-	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
+	ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
 	
 	struct launch_info info = {ptc, NULL, NULL};
 	
@@ -190,14 +190,14 @@ int main(int argc, char** argv){
 		inputs = fopen(argv[2], "r");
 	}
 	
-	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT);
+	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
 	
 	// https://gist.github.com/def-/fee8bb041719337c8812
 	// used as convenient reference
 	sfRenderWindow* window;
 	
-	window = sfRenderWindow_create((sfVideoMode){256,384,32}, window_name, sfResize | sfClose, NULL);
-	sfRenderWindow_setFramerateLimit(window, 60);
+	window = sfRenderWindow_create((sfVideoMode){SCREEN_WIDTH, SCREEN_HEIGHT*SCREEN_COUNT, 32}, window_name, sfResize | sfClose, NULL);
+	sfRenderWindow_setFramerateLimit(window, FRAMERATE);
 	if (!window){
 		printf("Failed to create the render window!\n");
 		abort();
@@ -292,6 +292,7 @@ int main(int argc, char** argv){
 			key_mode = (key_mode + 1) % MODE_COUNT;
 		}
 		
+		// TODO:IMPL:LOW Adjust for scaled window
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
 		if (pos.x >= 0 && pos.x < 256 && pos.y >= 192 && pos.y < 192+192){
 			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
@@ -308,7 +309,8 @@ int main(int argc, char** argv){
 	
 	//TODO:CODE:MED Signal thread to die on exit
 	sfRenderWindow_destroy(window);
-	
+	// tell thread to die before freeing system
+
 	free_system(ptc);
 	
 	free_memory();

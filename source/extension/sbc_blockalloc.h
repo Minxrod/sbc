@@ -8,7 +8,8 @@
 extern void* sbc_membase;
 
 void init_memory(int);
-void free_memory();
+void reset_memory(void);
+void free_memory(void);
 // Intended for allocations that don't ever get free'd while the system is active
 void* sbc_malloc(int size);
 void* sbc_calloc(int count, int size);

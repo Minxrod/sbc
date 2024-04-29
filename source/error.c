@@ -70,4 +70,5 @@ const char * error_messages[] = {
 	"Can't sort array using itself as key",
 	"Entered BC_BEGIN_LOOP with no TO value!",
 	"GPAINT stack overflow",
+	"FOR command has no matching BC_BEGIN_LOOP",
 };
