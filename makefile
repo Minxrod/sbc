@@ -19,7 +19,7 @@ CC = gcc
 # https://stackoverflow.com/questions/1867065/how-to-suppress-gcc-warnings-from-library-headers
 # -isystem needed for SFML, which throws a deprecation warning (error) otherwise
 # The -MMD is important. It generates the actual dependencies...
-CFLAGS = -g -pg -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE) $(TESTS),-I$(srcdir)) -DPC -MMD -O2
+CFLAGS = -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(foreach srcdir,$(SOURCE) $(TESTS),-I$(srcdir)) -DPC -MMD
 # https://stackoverflow.com/a/10168396
 # indicates location of CSFML shared object files
 LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
@@ -44,15 +44,20 @@ $(BUILD)%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-.phony: main test
+.phony: debug release test profile
 
-main: main_build
+main: debug
+debug: CFLAGS+=-g
+debug: CFLAGS+=-pg
+release: CFLAGS+=-DNDEBUG
+release: CFLAGS+=-O2
+debug release: main_build
 profile: CFLAGS+=--coverage
 profile: LFLAGS+=-lgcov
 profile: main_build
-#test: CFLAGS+=-pg
+test: CFLAGS+=-g
+test: CFLAGS+=-pg
 #test: LFLAGS+=-lgcov
-test: CFLAGS+=
 compsize: CFLAGS+=-DNDEBUG
 
 $(BUILD)csfml:
@@ -71,7 +76,6 @@ main_build: $(main_objs) $(BUILD)csfml
 # TODO:CODE:NONE csfml probably shouldn't be a dependency here
 test: $(test_objs) $(BUILD)csfml
 	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)
-	./test
 
 ntr_to_ptc:
 	$(CC) util/ntr_to_ptc.c -o util/ntr_to_ptc

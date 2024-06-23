@@ -648,5 +648,18 @@ int test_int_code(){
 		free_code(p);
 	}
 
+	// FOR bug with failing to find starting variable in this specific case
+	// Issue cuased by bug in cmd_for where search begins from index + 2 instead of index,
+	// In this case, search starts from SL read as BC_STRING of length 'L'=0x4c, leading to searching out-of-bounds sometimes
+	// If the source is big enough for the search to continuie, this reads random garbage code from later in the program.
+	// Occasionally this "succeeds" and then jumps to strange locations. (This is now fixed, but I thought it was interesting).
+	{
+		struct ptc* p = run_code("FOR I=SL+V TO 0\rNEXT\r");
+		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
+		free_code(p);
+	}
+
+	// TODO:TEST:LOW DATA A DATA B?
+
 	SUCCESS("test_int_code success");
 }

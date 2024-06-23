@@ -6,6 +6,8 @@
 #include "resources.h"
 #include "system.h"
 #include "error.h"
+#include "input.h"
+#include <SFML/Graphics/RenderWindow.h>
 
 // Common main stuff
 
@@ -174,6 +176,9 @@ enum emu_key_mode {
 	MODE_COUNT,
 };
 
+// UDLR, ABXY, LR SELECT START, and a special 'toggle mode' key
+#define KEY_COUNT 13
+
 int main(int argc, char** argv){
 	init_memory(MAX_MEMORY);
 //	struct program program = {0};
@@ -196,7 +201,7 @@ int main(int argc, char** argv){
 	// used as convenient reference
 	sfRenderWindow* window;
 	
-	window = sfRenderWindow_create((sfVideoMode){SCREEN_WIDTH, SCREEN_HEIGHT*SCREEN_COUNT, 32}, window_name, sfResize | sfClose, NULL);
+	window = sfRenderWindow_create((sfVideoMode){SCREEN_WIDTH*2, SCREEN_HEIGHT*SCREEN_COUNT*2, 32}, window_name, sfResize | sfClose, NULL);
 	sfRenderWindow_setFramerateLimit(window, FRAMERATE);
 	if (!window){
 		printf("Failed to create the render window!\n");
@@ -219,14 +224,14 @@ int main(int argc, char** argv){
 	}
 	
 	int key_mode = 0;
-	int keys[MODE_COUNT][13];
+	int keys[MODE_COUNT][KEY_COUNT];
 	FILE* file = fopen("resources/config.txt", "r");
 	if (!file){
 		printf("Failed to read config file!\n");
 		abort();
 	}
 	for (int m = 0; m < MODE_COUNT; ++m){
-		for (int i = 0; i < 13; ++i){
+		for (int i = 0; i < KEY_COUNT; ++i){
 			int r = fscanf(file, "%d", &keys[m][i]);
 			if (!r || r == EOF){
 				printf("Failed to read key %d\n", 1+i);
@@ -245,7 +250,8 @@ int main(int argc, char** argv){
 			
 			if (event.type == sfEvtTextEntered){
 				if (event.text.unicode <= 128 && key_mode == MODE_KEYBOARD){
-					if (!(event.text.unicode == '\b' || event.text.unicode == '\r'))
+					// Note: \x1b = snake, but is also the code for ESC key. In keyboard mode this is still treated as ESC to allow easy program breaks.
+					if (!(event.text.unicode == '\b' || event.text.unicode == '\r' || event.text.unicode == '\x1b'))
 					{
 						set_inkey(&ptc->input, to_wide(event.text.unicode));
 					}
@@ -277,39 +283,40 @@ int main(int argc, char** argv){
 		}
 		
 		// various frame updates
-		for (int i = 0; i < 12; ++i){
+		for (int i = 0; i < BUTTON_COUNT; ++i){
 			b |= sfKeyboard_isKeyPressed(keys[key_mode][i]) << i;
 		}
-		set_input(&ptc->input, b);
-		if (check_pressed(&ptc->input, BUTTON_ID_SELECT)){
-			// TODO:CODE:MED Move this somewhere else...?
-			// TODO:CODE:MED Thread-safety??
-			ptc->exec.error = ERR_BREAK;
-		}
+		set_input(ptc, b);
 		
 		if (sfKeyboard_isKeyPressed(keys[key_mode][12])){
 			// change input mode
 			key_mode = (key_mode + 1) % MODE_COUNT;
 		}
 		
-		// TODO:IMPL:LOW Adjust for scaled window
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
-		if (pos.x >= 0 && pos.x < 256 && pos.y >= 192 && pos.y < 192+192){
-			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
-			press_key(ptc, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
-		} else {
-//			set_touch(&ptc->input, sfMouse_isButtonPressed(0), pos.x, pos.y - 192);
+		sfVector2u window_size = sfRenderWindow_getSize(window);
+		if (pos.y >= (int)window_size.y / 2){
+			int tchx = SCREEN_WIDTH * pos.x / window_size.x;
+			int tchy = SCREEN_HEIGHT * pos.y / (window_size.y / 2) - SCREEN_HEIGHT;
+//			iprintf("%d,%d\n", tchx, tchy);
+			set_touch(&ptc->input, sfMouse_isButtonPressed(0), tchx, tchy);
+			press_key(ptc, sfMouse_isButtonPressed(0), tchx, tchy);
 		}
+
 		step_sprites(&ptc->sprites);
 		step_background(&ptc->background);
 		inc_time(&ptc->time);
 		
 		display_draw_all(ptc);
 	}
-	
-	//TODO:CODE:MED Signal thread to die on exit
+
+	// Done with GUI
 	sfRenderWindow_destroy(window);
-	// tell thread to die before freeing system
+
+	// this causes program to stop execution after instruction finishes
+	ptc->exec.error = ERR_SHUTDOWN;
+	iprintf("Waiting for program thread to terminate\n");
+	thrd_join(prog_thread, NULL);
 
 	free_system(ptc);
 	

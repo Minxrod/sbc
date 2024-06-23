@@ -1,6 +1,7 @@
 #include "graphics.h"
 
 #include "resources.h"
+#include "stack.h"
 #include "system.h"
 #include "error.h"
 
@@ -424,10 +425,11 @@ void cmd_gcircle(struct ptc* p){
 
 // Based on "combined-scan-and-fill" algorithm listed at
 // https://en.wikipedia.org/wiki/Flood_fill?useskin=monobook
-static inline bool inside(u8* data, int x, int y, u8 match){
+// match: positive = only fill this color negative = fill any other color
+static inline bool inside(u8* data, int x, int y, int match){
 	if (x < 0 || x >= GRP_WIDTH || y < 0 || y >= GRP_HEIGHT) return 0;
 	
-	return data[grp_index(x,y)] == match; // matching first color
+	return match >= 0 ? (data[grp_index(x,y)] == match) : (data[grp_index(x,y)] != -match - 1); // matching first color
 }
 
 #define PAINT_STACK_MAX 256
@@ -451,25 +453,28 @@ static inline bool inside(u8* data, int x, int y, u8 match){
 
 void cmd_gpaint(struct ptc* p){
 	// GPAINT X Y [C [B]]
-	// TODO:IMPL:LOW border version
 	// TODO:ERR:MED determine errors + bounds checks
-	// TODO:ERR:HIGH rework to use a queue to see if it prevents a trivial stack overflow?
+	// TODO:IMPL:MED This version runs out of memory too easily. Is there a way to fix this without just allocating a larger stack?
+	// Maybe try a simpler recursive implementation, but periodically filter out already checked pixels to keep border smaller?
 	int x, y;
-	int c, b;
+	int c;
 	x = STACK_INT(0);
 	y = STACK_INT(1);
 	if (p->stack.stack_i > 2){
-		c = STACK_INT(2);
-		if (p->stack.stack_i > 3){
-			b = STACK_INT(3);
-			(void)b;
-		}
+		STACK_INT_RANGE(2,0,255,c);
 	} else {
 		c = p->graphics.color;
 	}
 	u8* data = p->res.grp[p->graphics.info[p->graphics.screen].drawpage];
-	
-	u8 match = data[grp_index(x,y)];
+
+	int match;
+	if (p->stack.stack_i > 3){
+		int b;
+		STACK_INT_RANGE(3,0,255,b);
+		match = -1 - b;
+	} else {
+		match = data[grp_index(x,y)];
+	}
 	int stack_i = 0;
 	u32 stack[PAINT_STACK_MAX];
 	

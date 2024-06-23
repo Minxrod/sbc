@@ -4,7 +4,13 @@
 #include <time.h>
 #include <threads.h>
 
+#include <dirent.h> // Needed for FILES; not standard library!
+
+#include "arrays.h"
+#include "background.h"
 #include "common.h"
+#include "console.h"
+#include "error.h"
 #include "system.h"
 #include "resources.h"
 #include "stack.h"
@@ -17,11 +23,10 @@ struct ptc* init_system(int var, int str, int arr, bool headless){
 	srand(time(NULL));
 	
 	struct ptc* ptc = calloc_log("init_system", sizeof(struct ptc), 1);
-	if (ptc == NULL){
+	if (!ptc){
 		iprintf("Error allocating memory!\n");
 		abort();
 	}
-//	*ptc = (const struct ptc){0}; // see if this reduces stack
 	init_resource(&ptc->res);
 //	iprintf("%zd\n", sizeof(struct ptc));
 	
@@ -29,24 +34,14 @@ struct ptc* init_system(int var, int str, int arr, bool headless){
 	init_mem_var(&ptc->vars, var);
 	init_mem_str(&ptc->strs, str, STRING_CHAR);
 //	iprintf("%p %p %p %p\n", (void*)ptc->vars.vars, (void*)ptc->strs.strs, ptc->strs.str_data, NULL);
-//	return ptc;
+
 	init_mem_arr(&ptc->arrs, var, arr);
 	ptc->vars.strs = &ptc->strs;
 	ptc->vars.arrs = &ptc->arrs;
-	// init various ptc items
-	// TODO:CODE:MED use subsytem initialization functions?
-	// TODO:CODE:MED Separate init and alloc clearly?
-	ptc->console.tabstep = 4;
-	ptc->console.sys_tabstep = INT_TO_FP(4);
-	ptc->res.visible = VISIBLE_ALL;
-	ptc->background.clip[0].x1 = 0;
-	ptc->background.clip[0].y1 = 0;
-	ptc->background.clip[0].x2 = 255;
-	ptc->background.clip[0].y2 = 191;
-	ptc->background.clip[1].x1 = 0;
-	ptc->background.clip[1].y1 = 0;
-	ptc->background.clip[1].x2 = 255;
-	ptc->background.clip[1].y2 = 191;
+
+	// init various subsystems
+	init_console(&ptc->console);
+	init_background(&ptc->background);
 	init_input(&ptc->input);
 	init_sprites(&ptc->sprites);
 	init_graphics(&ptc->graphics);
@@ -55,7 +50,7 @@ struct ptc* init_system(int var, int str, int arr, bool headless){
 		init_display(ptc); // needs resources as well
 	}
 
-	// must occur after resources as it depend on SCR
+	// must occur after resources as it depends on SCR
 	init_panel(ptc);
 	
 	return ptc;
@@ -144,7 +139,7 @@ void cmd_vsync(struct ptc* p){
 	int delay = STACK_INT(0);
 	
 	int64_t start_time = get_time(&p->time);
-	while (get_time(&p->time) - start_time < delay){
+	while (get_time(&p->time) - start_time < delay && !p->exec.error){
 		// wait for 10ms before checking again
 		thrd_sleep(&(struct timespec){.tv_nsec=(1e7)}, NULL);
 	}
@@ -164,7 +159,7 @@ void cmd_wait(struct ptc* p){
 	int64_t start_time = get_time(&p->time);
 	
 	//thrd_sleep(&(struct timespec){.tv_sec = big, .tv_nsec=nsec}, NULL);
-	while (get_time(&p->time) - start_time < delay){
+	while (get_time(&p->time) - start_time < delay && !p->exec.error){
 		// wait for 10ms before checking again
 		thrd_sleep(&(struct timespec){.tv_nsec=(1e7)}, NULL);
 	}
@@ -286,14 +281,20 @@ void _cmd_sort_shared(struct ptc* p, comparison comp){
 		ERROR(ERR_SYNTAX); // 32 is max number of arrays
 	}
 	// SORT start, size, arr, [arr1, arr2, ...]
-	// TODO:ERR:MED Check that arrays are not 2D
 	union value* data = *(void**)stack_get(&p->stack, 2)->value.ptr;
 //	iprintf("%p\n", (void*)data);
 	int array_min_size = arr_size(data, ARR_DIM1);
+	// In concept this is fine but PTC doesn't allow it
+	if (arr_size(data, ARR_DIM2) != ARR_DIM2_UNUSED){
+		ERROR(ERR_SORT_2D);
+	}
 	for (int k = 3; k < p->stack.stack_i; ++k){
 		extra[k-3] = *(union value**)stack_get(&p->stack, k)->value.ptr;
 		if ((int)arr_size(extra[k-3], ARR_DIM1) < array_min_size){
 			array_min_size = arr_size(extra[k-3], ARR_DIM1);
+		}
+		if (arr_size(extra[k-3], ARR_DIM2) != ARR_DIM2_UNUSED){
+			ERROR(ERR_SORT_2D);
 		}
 		if (extra[k-3] == data){
 			// This does not work in this implemtation but would be valid in PTC
@@ -317,6 +318,32 @@ void cmd_sort(struct ptc* p){
 
 void cmd_rsort(struct ptc* p){
 	_cmd_sort_shared(p, ARG(2)->type & VAR_STRING ? str_rsort_comp : fixp_rsort_comp);
+}
+
+void cmd_files(struct ptc* p){
+	char filename[32] = {BC_STRING, 0};
+	if (p->exec.argcount){
+		// FILES (type)
+		ERROR(ERR_UNIMPLEMENTED);
+		// Note: Needs to load each file entry to check header for type.
+	} else {
+		// FILES (all)
+		DIR* dir = opendir(p->res.search_path);
+		for (struct dirent* d = readdir(dir); d != NULL; d = readdir(dir)){
+			filename[1] = strchr(d->d_name, '.') - d->d_name;
+			if (filename[1] > 8 || !filename[1]){
+				continue; // file is inaccessible, name is too big
+			}
+			for (int i = 0; i < filename[1]; ++i){
+				if (!is_name(filename[2 + i])){
+					continue; // skip due to invalid characters
+				}
+			}
+			strncpy(filename + 2, d->d_name, strchr(d->d_name, '.') - d->d_name); // strip any extension
+			con_puts(&p->console, filename);
+			con_newline(&p->console, true);
+		}
+	}
 }
 
 const char* bench_begin = "ACLS:CLEAR\r";
@@ -408,6 +435,11 @@ enum launch_state {
 	LAUNCH_AUTOLOAD,
 };
 
+/// Tokenizes and executes the program using the current system and options.
+///
+/// Note that this clears the error code and call stack.
+///
+/// @return Error code of execution
 int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int tokopts){
 	p->exec.error = ERR_NONE;
 	p->calls.stack_i = 0;
@@ -461,6 +493,7 @@ int launch_system(void* launch_info){
 	// TODO:IMPL:LOW Add configuration method for optimizations
 	int opts = TOKOPT_NONE;
 	while (running){
+		running = p->exec.error != ERR_SHUTDOWN;
 		p->exec.error = ERR_NONE; // prepare for next execution
 		p->calls.stack_i = 0; // TODO:IMPL:MED Determine a better way to handle this
 		int old_state = state;
@@ -486,6 +519,8 @@ int launch_system(void* launch_info){
 					}
 					p->exec.error = ERR_NONE; // clear signal
 					p->exec.error_info[0] = 0; // clear signal info
+					break;
+				} else if (p->exec.error == ERR_SHUTDOWN){
 					break;
 				}
 				
@@ -571,6 +606,10 @@ int launch_system(void* launch_info){
 		
 		con_puts(&p->console, &err_msg);
 		con_newline(&p->console, true);
+		//
+		if (p->exec.error == ERR_SHUTDOWN){
+			break;
+		}
 		// clear error status for next execution
 		p->exec.error = ERR_NONE;
 		p->exec.error_info[0] = '\0'; // remove error string

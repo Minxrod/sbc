@@ -57,6 +57,7 @@ enum tokenizer_opts {
 
 struct token {
 	enum type {
+		tt_empty=0,
 		number,
 		string,
 		name,

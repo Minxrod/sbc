@@ -48,7 +48,7 @@ This program has been tested with melonDS and on an R4.
 
 # Building for PC
 
-While this program may compile with other compilers, it was only tested with gcc on Debian 12. If it does not work with your compiler, please create an issue and provide OS/compiler version information.
+While this program may compile with other compilers, it was only tested with `gcc` on Debian 12. If it does not work with your compiler, please create an issue and provide OS/compiler version information.
 
 The build process builds CSFML from source as a submodule.
 For the PC version, first install SFML for your platform as described in the dependencies section. Note that this program was built for SFML 2.5.1, and so the version you need will be found here, if on Windows: https://www.sfml-dev.org/download/sfml/2.5.1/.

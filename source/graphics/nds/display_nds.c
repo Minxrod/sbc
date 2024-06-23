@@ -138,12 +138,11 @@ void display_panel_console(struct ptc* p){
 }
 
 void display_background(struct ptc* p, int screen){
-	// TODO:IMPL:MED BGCLIP bounds
 	bg_scroll* bg = screen ? BG_OFFSET_SUB : BG_OFFSET;
 	// BG0 = 2 BG1 = 3
 	struct bg_clip clip = p->background.clip[screen];
 	if (screen == 0){
-		// TODO:PERF:NONE write directly to memory here instead of using functions
+		// TODO:PERF:NONE write directly to memory here instead of using functions?
 		if (p->res.visible & VISIBLE_BG0){
 			videoBgEnable(2);
 		} else {

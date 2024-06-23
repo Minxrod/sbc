@@ -26,7 +26,8 @@ void init_input(struct input* i){
 	i->current_base = 0;
 }
 
-void set_input(struct input* i, int b) {
+void set_input(struct ptc* p, int b) {
+	struct input* i = &p->input;
 	i->old_button = i->button;
 	i->button = b;
 	
@@ -36,6 +37,11 @@ void set_input(struct input* i, int b) {
 		} else {
 			i->times[j].frame = 0;
 		}
+	}
+	// check for SELECT break here
+	// TODO:CODE:MED is this thread-safe?
+	if (i->times[BUTTON_ID_SELECT].frame == 1){
+		p->exec.error = ERR_BREAK;
 	}
 }
 

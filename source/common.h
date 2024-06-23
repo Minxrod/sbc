@@ -42,7 +42,7 @@
 // access to `struct ptc* p`, for error setting and other checks.
 
 /// For errors that can be handled by the interpreter
-#define ERROR(code) { p->exec.error = code; return; }
+#define ERROR(code) do { p->exec.error = code; return; } while (0)
 /// To read an argument by index on the stack
 #define ARG(index) (stack_get(&p->stack, index))
 
@@ -84,7 +84,7 @@ typedef int32_t s32;
 #ifdef iprintf
 #undef iprintf
 #endif
-#define iprintf if(0)iprintf
+#define iprintf if(0)printf
 #endif
 
 /// Type to handle instruction indexes
@@ -134,13 +134,12 @@ static inline void free_log(char* msg, void* ptr){
 #endif
 }
 
-// TODO:CODE:LOW make this not create a ton of redundant `endian`s in memory
+#ifndef __GNUC__
+// Note: creates various static copies - not a huge deal, but does waste some memory...
 // loosely based on ideas from https://stackoverflow.com/questions/2100331/macro-definition-to-determine-big-endian-or-little-endian-machine
-// 0x04030201 if LE
-static const uint32_t endian = 0x01020304u;
-#ifdef LITTLE_ENDIAN
-#undef LITTLE_ENDIAN
-#endif
+#ifndef LITTLE_ENDIAN
+/// Placed in memory as 04 03 02 01 if LE
+static const uint32_t endian = 0x01020304;
 
 /// Macro that evaluates to true on platforms that store numbers as little-endian
 /// Used to validate certain dubious "read file into memory" tricks as actually working
@@ -150,4 +149,11 @@ static const uint32_t endian = 0x01020304u;
 	(((char*)&endian)[2] == 2) &&\
 	(((char*)&endian)[3] == 1)\
 )
-
+#endif
+#else // GCC specific extension endian check (but doesn't waste memory)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define LITTLE_ENDIAN 1
+#else
+#define LITTLE_ENDIAN 0
+#endif // __BYTE_ORDER__
+#endif // __GNUC__

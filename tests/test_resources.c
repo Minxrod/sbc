@@ -1,8 +1,14 @@
+#include "common.h"
+#include "header.h"
+#include "strs.h"
 #include "test_util.h"
 
 #include "subsystem/resources.h"
 #include "system.h"
 #include "extension/compress.h"
+
+#include <stdio.h>
+#include <errno.h>
 
 int test_resources(void){
 	// Check character resource indexes are correct for valid strings
@@ -81,6 +87,166 @@ int test_resources(void){
 		ASSERT(get_chr_index(&p, "SPS1") == 43, "[resource] SPS1 L");
 	}
 	
+	// type verification check
+	{
+		ASSERT(verify_file_type(TEST_SEARCH_PATH"IFELSE.PTC", TYPE_PRG), "PRG detected as PRG");
+		DENY(verify_file_type(TEST_SEARCH_PATH"IFELSE.PTC", TYPE_MEM), "PRG not detected as MEM");
+		ASSERT(verify_file_type(TEST_SEARCH_PATH"MCHRENC.PTC", TYPE_MEM), "MEM detected as MEM");
+		DENY(verify_file_type(TEST_SEARCH_PATH"MCHRENC.PTC", TYPE_PRG), "MEM not detected as PRG");
+		DENY(verify_file_type(TEST_SEARCH_PATH"BGF0.PTC", TYPE_MEM), "CHR not detected as MEM");
+		DENY(verify_file_type(TEST_SEARCH_PATH"BGF0.PTC", TYPE_PRG), "CHR not detected as PRG");
+		ASSERT(verify_file_type(TEST_SEARCH_PATH"BGF0.PTC", TYPE_CHR), "CHR not detected as PRG");
+
+		ASSERT(verify_search_file_type(TEST_SEARCH_PATH, "IFELSE", TYPE_PRG), "PRG found with search path");
+		ASSERT(verify_search_file_type(TEST_SEARCH_PATH, "MCHRENC", TYPE_MEM), "MEM found with search path");
+		ASSERT(verify_search_file_type(TEST_SEARCH_PATH, "BGF0", TYPE_CHR), "PRG found with search path");
+	}
+
+	// validate resource types
+	{
+#define VERIFY_STR(str)\
+do {\
+	ASSERT(verify_resource_type(str), "Verify type "str)\
+	ASSERT(verify_resource_type(str":"), "Verify type "str":")\
+} while (0)
+#define DENY_STR(str)\
+do {\
+	DENY(verify_resource_type(str), "Deny type "str)\
+	DENY(verify_resource_type(str":"), "Deny type "str":")\
+} while (0)
+// BGF variations
+		VERIFY_STR("BGF");
+		VERIFY_STR("BGF0");
+		DENY_STR("BGF1"); // not allowed in PTC
+		DENY_STR("BGF2");
+		DENY_STR("BGF3");
+		VERIFY_STR("BGF0L");
+		VERIFY_STR("BGF0U");
+		// BGU variations
+		VERIFY_STR("BGU");
+		VERIFY_STR("BGU0");
+		VERIFY_STR("BGU1");
+		VERIFY_STR("BGU2");
+		VERIFY_STR("BGU3");
+		VERIFY_STR("BGU0L");
+		VERIFY_STR("BGU1L");
+		VERIFY_STR("BGU2L");
+		VERIFY_STR("BGU3L");
+		VERIFY_STR("BGU0U");
+		VERIFY_STR("BGU1U");
+		VERIFY_STR("BGU2U");
+		VERIFY_STR("BGU3U");
+		// BGD variations
+		VERIFY_STR("BGD");
+		VERIFY_STR("BGD0");
+		VERIFY_STR("BGD1");
+		DENY_STR("BGD2");
+		DENY_STR("BGD3");
+		VERIFY_STR("BGD0L");
+		VERIFY_STR("BGD1L");
+		DENY_STR("BGD2L");
+		DENY_STR("BGD3L");
+		VERIFY_STR("BGD0U");
+		VERIFY_STR("BGD1U");
+		DENY_STR("BGD2U");
+		DENY_STR("BGD3U");
+		// SPU variations
+		VERIFY_STR("SPU");
+		VERIFY_STR("SPU0");
+		VERIFY_STR("SPU1");
+		VERIFY_STR("SPU2");
+		VERIFY_STR("SPU3");
+		VERIFY_STR("SPU4");
+		VERIFY_STR("SPU5");
+		VERIFY_STR("SPU6");
+		VERIFY_STR("SPU7");
+		VERIFY_STR("SPU0U");
+		VERIFY_STR("SPU1U");
+		VERIFY_STR("SPU2U");
+		VERIFY_STR("SPU3U");
+		VERIFY_STR("SPU4U");
+		VERIFY_STR("SPU5U");
+		VERIFY_STR("SPU6U");
+		VERIFY_STR("SPU7U");
+		// SPS variations
+		VERIFY_STR("SPS");
+		VERIFY_STR("SPS0");
+		VERIFY_STR("SPS1");
+		VERIFY_STR("SPS0L");
+		VERIFY_STR("SPS1L");
+		VERIFY_STR("SPS0U");
+		VERIFY_STR("SPS1U");
+		// SPD variations
+		VERIFY_STR("SPD");
+		VERIFY_STR("SPD0");
+		VERIFY_STR("SPD1");
+		VERIFY_STR("SPD2");
+		VERIFY_STR("SPD3");
+		VERIFY_STR("SPD0L");
+		VERIFY_STR("SPD1L");
+		VERIFY_STR("SPD2L");
+		VERIFY_STR("SPD3L");
+		// COL variations
+		VERIFY_STR("COL");
+		VERIFY_STR("COL0");
+		VERIFY_STR("COL1");
+		VERIFY_STR("COL2");
+		VERIFY_STR("COL0L");
+		VERIFY_STR("COL1L");
+		VERIFY_STR("COL2L");
+		VERIFY_STR("COL0U");
+		VERIFY_STR("COL1U");
+		VERIFY_STR("COL2U");
+		// MEM variants
+		VERIFY_STR("MEM");
+		VERIFY_STR("MEM9"); // basically anything is valid
+		VERIFY_STR("MEM!!");
+		// PRG variants
+		VERIFY_STR("PRG");
+		VERIFY_STR("PRG6"); // extra chars get ignored in PTC
+		VERIFY_STR("PRG??");
+		// GRP
+		VERIFY_STR("GRP");
+		VERIFY_STR("GRP0");
+		VERIFY_STR("GRP1");
+		VERIFY_STR("GRP2");
+		VERIFY_STR("GRP3");
+		VERIFY_STR("GRP0U"); // last char is ignored, one again
+		VERIFY_STR("GRP1L");
+		VERIFY_STR("GRP2P");
+		VERIFY_STR("GRP3F");
+		// SCR
+		VERIFY_STR("SCU");
+		VERIFY_STR("SCU0");
+		VERIFY_STR("SCU1");
+		VERIFY_STR("SCU0L");
+		VERIFY_STR("SCU1L");
+		VERIFY_STR("SCU0U");
+		VERIFY_STR("SCU1U");
+	}
+
+	// check valid resource names
+	{
+		ASSERT(verify_resource_name("BGF0:FONT"), "Check valid name");
+		ASSERT(verify_resource_name("PRG:MYPROG"), "Check valid name");
+		ASSERT(verify_resource_name("SPS0L:TOUCHSPR"), "Check valid name");
+		ASSERT(verify_resource_name("GAME4"), "Check valid name");
+		DENY(verify_resource_name("##GAME##"), "Check invalid name");
+		DENY(verify_resource_name("PRG:?"), "Check invalid name");
+		DENY(verify_resource_name(":8"), "Check invalid name");
+		DENY(verify_resource_name(":"), "Check invalid name");
+		DENY(verify_resource_name("MEM:"), "Check invalid name");
+		DENY(verify_resource_name("MEM:ABCDEFGHI"), "Check invalid name");
+		DENY(verify_resource_name("ABCDEFGHI"), "Check invalid name");
+	}
+
+	// test string wrapper
+	{
+		ASSERT(verify_resource_type_str("S\3BGF"), "[verify] Valid type string");
+		DENY(verify_resource_type_str("S\6AAAAAA"), "[verify] Invalid type string");
+		DENY(verify_resource_type_str("S\4BGF4"), "[verify] Invalid type string");
+	}
+
 	// extension:SBCC format
 	{
 		unsigned char src_dest[8] = {0,0,0,0,0,0,0xf8,0};
@@ -99,51 +265,6 @@ int test_resources(void){
 		for (int i = 0; i < 4; ++i){
 			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
 		}
-	}
-	
-	// Test MEM resource loading
-	{
-		struct ptc* p = run_code("LOAD\"MEM:MCHRENC\",0\r");
-		u8 str[256];
-		for (int i = 0; i < 256; ++i){
-			str[i] = i;
-		}
-		
-		struct string expected = {
-			STRING_CHAR, .len=256, 1, {.s = str}
-		};
-		
-		ASSERT(str_comp(&p->res.mem_str, &expected), "[mem] Loaded MEM$ correctly");
-		
-		free_code(p);
-	}
-	
-	// Test regular MEM$ assignment
-	{
-		struct ptc* p = run_code("MEM$=\"ABCD\"\r");
-		
-		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] Wrote MEM$ correctly");
-		
-		free_code(p);
-	}
-	
-	// MEM$ reading
-	{
-		struct ptc* p = run_code("MEM$=\"ABCD\"\rA$=MEM$\r");
-		
-		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] Wrote MEM$ correctly");
-		CHECK_VAR_STR("A","S\4ABCD");
-		
-		free_code(p);
-	}
-	
-	// MEM$ saved past CLEAR
-	{
-		struct ptc* p = run_code("MEM$=\"ABCD\"\rCLEAR\r");
-		
-		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] MEM$ is not deleted");
-		
-		free_code(p);
 	}
 	
 	SUCCESS("test_resources success");

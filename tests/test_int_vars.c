@@ -1,3 +1,4 @@
+#include "common.h"
 #include "test_util.h"
 
 #include "interpreter.h"

@@ -9,7 +9,7 @@
 #include <assert.h>
 
 // x,y,w,h,chr,keycode
-s16 keyboard_pos[][6]={
+const s16 keyboard_pos[][6]={
 // The primary keyboard keys [1-68]
 // First row
 	{0, 48, 32, 32, 280, 1}, // Escape (sprite 0)
@@ -118,8 +118,8 @@ s16 keyboard_pos[][6]={
 
 void init_panel(struct ptc* p){
 	p->panel.type = PNL_KYA;
-	p->panel.text = init_console();
-	p->panel.keys_text = init_console();
+	p->panel.text = alloc_console();
+	p->panel.keys_text = alloc_console();
 	p->panel.shift = 0;
 	p->panel.cursor = PNL_INSERT;
 	set_panel_bg(p, p->panel.type);

@@ -1,5 +1,6 @@
 #include "mathptc.h"
 
+#include "common.h"
 #include "error.h"
 #include "system.h"
 
@@ -70,10 +71,6 @@ fixp func_atan2_internal(fixp y, fixp x){
 	return res;
 }
 
-fixp func_pow_internal(fixp base, fixp e){
-	return floor(4096*(pow(base/4096.0, e/4096.0)));
-}
-
 void func_pow(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* e = stack_pop(s);
@@ -81,9 +78,17 @@ void func_pow(struct ptc* p){
 	
 	fixp pow_b = VALUE_NUM(b);
 	fixp pow_e = VALUE_NUM(e);
-	// TODO:ERR:MED Check for int overflow and float overflow = ERR_ILLEGAL_FUNCTION_CALL
+
+	float f = powf(pow_b/4096.0, pow_e/4096.0);
+
+	// TODO:TEST:LOW validate error ranges are correct
+	if (isinf(f)){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	} else if (4096*f >= 524288 || 4096*f <= -524288) {
+		ERROR(ERR_OVERFLOW);
+	}
 	
-	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_pow_internal(pow_b, pow_e)}});
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {4096*f}});
 }
 
 fixp func_rad_internal(fixp deg){

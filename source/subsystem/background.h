@@ -47,8 +47,19 @@ struct background {
 	
 };
 
-struct background* init_background(void);
+/// Allocates memory for a background object
+///
+/// @return Newly-alloc'd background object
+struct background* alloc_background(void);
+/// Initializes background memory to it's initial state
+///
+/// @param b Background objecet to initialize
+void init_background(struct background* b);
 void free_background(struct background* b);
+
+/// Steps the background interpolation state forward by one frame
+///
+/// @param b Pointer to background state
 void step_background(struct background* b);
 
 static inline u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){

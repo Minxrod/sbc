@@ -21,18 +21,19 @@ int test_math(void);
 // int test_compile(void);
 int test_transpile(void);
 
-int test_int_vars(void);
-int test_int_code(void);
-int test_int_math(void);
-int test_int_func(void);
-int test_int_operator(void);
-
 int test_input(void);
 int test_console(void);
 int test_background(void);
 int test_sprite(void);
 int test_graphics(void);
 int test_resources(void);
+
+int test_int_vars(void);
+int test_int_code(void);
+int test_int_math(void);
+int test_int_func(void);
+int test_int_operator(void);
+int test_int_resources(void);
 
 int run_tests(int argc, char** argv){
 #ifdef ARM9
@@ -50,7 +51,7 @@ int run_tests(int argc, char** argv){
 	}
 	
 	// assumptions
-	static_assert(CHAR_BIT == 8);
+	static_assert(CHAR_BIT == 8, "This assumption is used basically everywhere");
 	
 	FAST(test_vars);
 	FAST(test_strs);
@@ -62,18 +63,19 @@ int run_tests(int argc, char** argv){
 	
 //	FAST(test_transpile);
 	
-	FAST(test_int_vars);
-	FAST(test_int_code);
-	FAST(test_int_operator);
-	FAST(test_int_math);
-	FAST(test_int_func);
-	
 	FAST(test_input);
 	FAST(test_console);
 	FAST(test_background);
 	FAST(test_sprite);
 	FAST(test_graphics);
 	FAST(test_resources);
+
+	FAST(test_int_vars);
+	FAST(test_int_code);
+	FAST(test_int_operator);
+	FAST(test_int_math);
+	FAST(test_int_func);
+	FAST(test_int_resources);
 	
 	return 0;
 }

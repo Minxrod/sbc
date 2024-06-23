@@ -328,26 +328,26 @@ void fixp_to_char(const fixp n, u8* str){
 u16 to_wide(u8 c){
 	if (c < 0x21){
 		return c;
-	} else if (c >= 0x21 && c < 0x80){
+	}
+	if (c < 0x80){
 		if (c == 0x22) return 0x201d;
 		if (c == 0x27) return 0x2019;
 		if (c == 0x5c) return 0xffe5;
 		return (c - 0x20) | 0xff00;
-	} else if (c >= 0x80 && c < 0xa1){
+	}
+	if (c < 0xa1){
 		return c;
-	} else if (c >= 0xa1 && c < 0xe0){
+	}
+	if (c < 0xe0){
 		if (c == 0xb0) return 0xff70;
 		const u8 katakana[] = "\x02\x0c\x0d\x01\xfb\xf2\xa1\xa3\xa5\xa7\xa9\xe3\xe5\xe7"
 		"\xc3?\xa2\xa4\xa6\xa8\xaa\xab\xad\xaf\xb1\xb3\xb5\xb7\xb9\xbb\xbd\xbf"
 		"\xc1\xc4\xc6\xc8\xca\xcb\xcc\xcd\xce\xcf\xd2\xd5\xd8\xdb\xde\xdf\xe0"
 		"\xe1\xe2\xe4\xe6\xe8\xe9\xea\xeb\xec\xed\xef\xf3\x9b\x9c";
 		return katakana[c - 0xa1] | 0x3000;
-	} else if (c >= 0xe0){
-		return c;
-	} else {
-		iprintf("Error converting to wide char (unimplemented)\n");
-		abort();
 	}
+	// c >= 0xe0
+	return c;
 }
 
 // "".join([chr(x) if x>=0 else '?' for x in [ktk.find(chr(i)) for i in range(0,256)]])

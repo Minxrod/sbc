@@ -230,6 +230,8 @@ void cmd_spofs(struct ptc* p){
 	x = STACK_NUM(1) & 0xfffff000; // TODO:TEST:LOW Check that these values are correct
 	y = STACK_NUM(2) & 0xfffff000;
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
+	if (!s->active) ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+
 	if (p->stack.stack_i == 3){
 		// spofs id,x,y
 		s->pos.x = x;

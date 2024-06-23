@@ -77,6 +77,8 @@ enum err_code {
 	ERR_BEGIN_LOOP_NO_END,
 	ERR_PAINT_STACK_OVERFLOW,
 	ERR_FOR_MISSING_BEGIN_LOOP,
+	ERR_SORT_2D,
+	ERR_SHUTDOWN,
 };
 
 extern const char * error_messages[];

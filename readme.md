@@ -17,7 +17,7 @@ This BASIC implementation also includes some extra functions for memory access.
 
 # How do I build it?
 
-See build.md
+See `build.md`
 
 # Usage
 

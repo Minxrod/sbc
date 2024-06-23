@@ -37,9 +37,8 @@
 #define STACK_RETURN_NUM(val) { stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {(val)}}); return; }
 #define STACK_RETURN_STR(val) { stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = (val)}}); return; }
 
-// TODO:CODE:NONE rename to "size" as max is misleading
-#define VALUE_STACK_MAX 100
-#define CALL_STACK_MAX 256
+#define VALUE_STACK_SIZE 100
+#define CALL_STACK_SIZE 256
 
 /**
  * Value stack. Each entry is a tagged union specifying the same set of types
@@ -51,7 +50,7 @@ struct value_stack {
 	struct stack_entry {
 		uint_fast8_t type; // Increase if more needed?
 		union value value;
-	} entry[VALUE_STACK_MAX];
+	} entry[VALUE_STACK_SIZE];
 };
 
 // This function replaces the VALUE_STR macro in places where use count must be
@@ -87,7 +86,7 @@ static inline struct stack_entry* stack_get(struct value_stack* s, int index){
 /// @param s Stack to modify
 /// @param value Value to be add to the stack.
 static inline void stack_push(struct value_stack* s, struct stack_entry value){
-	assert(s->stack_i < VALUE_STACK_MAX);
+	assert(s->stack_i < VALUE_STACK_SIZE);
 	s->entry[s->stack_i++] = value;
 }
 
@@ -124,5 +123,5 @@ struct call_stack {
 		u32 address; // combined instruction index and expression size for FOR
 //		uint_fast8_t var_type;
 		void* var; // fixp* or struct string**
-	} entry[CALL_STACK_MAX];
+	} entry[CALL_STACK_SIZE];
 };

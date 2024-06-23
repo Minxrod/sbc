@@ -9,7 +9,7 @@
 int test_background(void){
 	// Initialization
 	MEM_CASE {
-		struct background* b = init_background();
+		struct background* b = alloc_background();
 		
 		ASSERT(b->page == 0, "[bg] Default page is zero");
 		

@@ -59,9 +59,11 @@ struct console {
 
 /// Allocates a new `struct console` and initializes it.
 ///
-/// @note Allocates memory - free with free_console.
 /// @return New console struct.
-struct console* init_console(void);
+struct console* alloc_console(void);
+
+/// Initializes the default console state.
+void init_console(struct console* c);
 
 /// Frees memory allocated by `init_console`.
 /// 

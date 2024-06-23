@@ -7,10 +7,17 @@
 #include <assert.h>
 #include <string.h>
 
-struct background* init_background(void){
-	struct background* b = calloc_log("init_background", sizeof(struct background), 1);
-	// everything defaults to zero for now
-	return b;
+struct background* alloc_background(void){
+	return calloc_log("init_background", sizeof(struct background), 1);
+}
+
+void init_background(struct background* b){
+	for (int i = 0; i < SCREEN_COUNT; ++i){
+		b->clip[i].x1 = 0;
+		b->clip[i].y1 = 0;
+		b->clip[i].x2 = SCREEN_WIDTH - 1;
+		b->clip[i].y2 = SCREEN_HEIGHT - 1;
+	}
 }
 
 void free_background(struct background* b){

@@ -73,6 +73,17 @@ extern const char* resource_path;
 /// Bitmask representing all visual systems being enabled
 #define VISIBLE_ALL 0x3f
 
+/// Maximum length of filename (without resource type or extension)
+#define MAX_RESOURCE_NAME_LENGTH 8
+/// Maximum length of resource type string (ex. BGD, SPU, MEM)
+#define MAX_RESOURCE_TYPE_LENGTH 5
+/// Maximum length of complete PTC-style resource identifier
+#define MAX_RESOURCE_STR_LENGTH (MAX_RESOURCE_NAME_LENGTH + 1 + MAX_RESOURCE_TYPE_LENGTH)
+/// Separator character between resource type and resource name
+#define RESOURCE_SEPARATOR ':'
+
+#define MAX_FILEPATH_LENGTH 255
+
 #ifdef ARM9
 #define VRAM_BASE (0x06000000)
 #define VRAM_BG_BASE (VRAM_BASE + 0x0)
@@ -148,10 +159,19 @@ struct resources {
 	int result;
 };
 
+struct ptc;
+
+bool verify_resource_type(const char* resource_type);
+bool verify_resource_type_str(const void* res);
+bool verify_resource_name(const char* resource_name);
+void* get_resource_ptr(struct ptc* p, const char* resource_type);
+
+bool verify_file_type(const char* path, int type);
+bool verify_search_file_type(const char* search_path, const char* name, int type);
 int check_load_res(u8* dest, const char* search_path, const char* name, int type);
 int check_load_file(u8* dest, const char* search_path, const char* name, int size);
 
-bool load_file(u8* dest, const char* name, int skip, int len);
+int load_file(u8* dest, const char* path, int skip, int len);
 bool load_chr(u8* dest, const char* path, const char* name);
 bool load_col(u8* dest, const char* path, const char* name);
 bool load_scr(u16* dest, const char* path, const char* name);
@@ -159,15 +179,10 @@ bool load_scr(u16* dest, const char* path, const char* name);
 void init_resource(struct resources* r);
 void free_resource(struct resources* r);
 
-struct ptc;
+int get_chr_index(struct ptc* p, const char* res);
 
-int get_chr_index(struct ptc* p, char* res);
-
-/// Returns a data pointer for the resource
-/// Returns NULL, if the resource name was invalid
-void* get_resource(struct ptc* p, const char* name, int len);
-
-static inline int get_resource_type(void* res){
+/// Only works on valid resource names - does only minimal checks to determine type.
+static inline int get_resource_type(const void* res){
 	if (str_len(res) < 3) return TYPE_INVALID;
 	u16 c1 = to_char(str_at_wide(res, 0));
 	u16 c2 = to_char(str_at_wide(res, 1));

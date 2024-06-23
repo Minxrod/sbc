@@ -14,22 +14,25 @@
 
 void cmd_for(struct ptc* p){
 	// current stack consists of one var ptr
-	// Note: Don't pop from stack - variable is needed for initial assignment later
+	// Old design: [VAR] [FOR] [START] [ASSIGNMENT]
+	// New design: [VAR] [START] [ASSIGNMENT] [FOR]
+	// This works the same way, but it relies on the additional assumption that stack entries
+	// are never erased until a new entry is added.
 	struct stack_entry* e = &p->stack.entry[0];
 	
 	p->calls.entry[p->calls.stack_i].type = CALL_FOR;
 	//note: this points to just after FOR
-	u32 index = p->exec.index;
+	u32 index = p->exec.index - 2;
 	do {
 		index = bc_scan(p->exec.code, index + 2, BC_OPERATOR);
 	} while (index != BC_SCAN_NOT_FOUND && p->exec.code.data[index+1] != OP_ASSIGN);
-//	iprintf("\nIndex of OP_ASSIGN: %ld", index);
+//	iprintf("\nIndex of OP_ASSIGN: %u", index);
 	if (index == BC_SCAN_NOT_FOUND){
 		p->exec.error = ERR_MISSING_OP_ASSIGN_FOR;
 		return;
 	}
 	
-	if (p->calls.stack_i == CALL_STACK_MAX-1){
+	if (p->calls.stack_i == CALL_STACK_SIZE-1){
 		ERROR(ERR_OUT_OF_MEMORY);
 	}
 	// Note: instruction index is limited to [0,MAX_SOURCE_SIZE) currently
@@ -75,7 +78,7 @@ void cmd_next(struct ptc* p){
 	
 	// get call stack top / number of elements
 	s32 stack_i = p->calls.stack_i;
-	if (!stack_i){
+	if (stack_i <= 0){
 		// empty stack
 		p->exec.error = ERR_NEXT_WITHOUT_FOR;
 		return;
@@ -87,10 +90,9 @@ void cmd_next(struct ptc* p){
 				break;
 			}
 		}
-		if (stack_i < 0){
+		if (stack_i <= 0){
 			// did not find FOR anywhere in stack
-			p->exec.error = ERR_NEXT_WITHOUT_FOR;
-			return;
+			ERROR(ERR_NEXT_WITHOUT_FOR);
 		}
 	}
 	// this is the FOR call we are processing.
@@ -105,7 +107,7 @@ void cmd_next(struct ptc* p){
 	// addr points to loop condition setup
 	struct bytecode for_condition;
 	for_condition.size = to_size;
-	for_condition.data = &code.data[to_start];
+	for_condition.data = code.data + to_start;
 	run(for_condition, p);
 	p->exec = temp; //restore program state
 	
@@ -229,7 +231,7 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	u32 index = search_label(p, label);
 	
 	if (push_return){
-		if (p->calls.stack_i == CALL_STACK_MAX-1){
+		if (p->calls.stack_i == CALL_STACK_SIZE-1){
 			ERROR(ERR_OUT_OF_MEMORY);
 		}
 		p->calls.entry[p->calls.stack_i].type = CALL_GOSUB;

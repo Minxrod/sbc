@@ -44,11 +44,13 @@ void con_newline(struct console* c, bool scroll){
 	if (scroll) con_scroll(c);
 }
 
-struct console* init_console(void){
-	struct console* c = calloc_log("init_console", sizeof(struct console), 1);
+struct console* alloc_console(void){
+	return calloc_log("init_console", sizeof(struct console), 1);
+}
+
+void init_console(struct console* c){
 	c->sys_tabstep = INT_TO_FP(4);
 	c->tabstep = 4;
-	return c;
 }
 
 void free_console(struct console* c){
@@ -208,9 +210,9 @@ u16* shared_input(struct ptc* p){
 		int t = get_time(&p->time);
 		// This test_mode check isn't ideal, but it allows test
 		// cases to run without waiting for an update from another thread
-		inkey = get_inkey(&p->input); // these are buffered so can be placed before
+		inkey = get_inkey(&p->input);
 		keyboard = get_pressed_key(p);
-		while (!inkey && !con->test_mode && t == get_time(&p->time)){
+		while (!inkey && !con->test_mode && t == get_time(&p->time) && !p->exec.error){
 			// sleep for user input
 			struct timespec tspec = {.tv_nsec=FRAME_TENTH_NS};
 			thrd_sleep(&tspec, NULL);
@@ -261,7 +263,7 @@ u16* shared_input(struct ptc* p){
 			out_index += out_index < out_index_max;
 		}
 		p->console.x = out_index;
-	} while (p->exec.error == ERR_NONE && inkey != '\r'
+	} while (!p->exec.error && inkey != '\r'
 			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
 	p->panel.type = old_panel;
 	p->console.cursor_visible = false;

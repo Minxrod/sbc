@@ -20,7 +20,7 @@
 	reset_memory();\
 } while(0);
 
-#endif
+#endif // PC
 
 #ifdef ARM9
 #define MEM_CASE
@@ -73,6 +73,8 @@
 /*	iprintf("check=%s\n", (char*)str_at(test_var(&p->vars, var, VAR_STRING)->value.ptr, 0));*/\
 	ASSERT(str_comp(test_var(&p->vars, var, VAR_STRING)->value.ptr, str), var" == "#str);\
 }
+
+#define TEST_SEARCH_PATH "tests/data/"
 
 extern int check_fail;
 

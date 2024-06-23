@@ -71,4 +71,6 @@ const char * error_messages[] = {
 	"Entered BC_BEGIN_LOOP with no TO value!",
 	"GPAINT stack overflow",
 	"FOR command has no matching BC_BEGIN_LOOP",
+	"Sorting 2D array not allowed!",
+	"Shutdown started",
 };

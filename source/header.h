@@ -5,6 +5,7 @@
 ///
 #include "common.h"
 
+#define HEADER_TYPE_STR_SIZE 12
 #define HEADER_SIZE 48
 #define PRG_HEADER_SIZE 60
 
@@ -24,7 +25,7 @@ struct ptc_header {
 	/// MD5 (exactly)
 	char md5[16];
 	/// Type string (of form PETC0*00R***
-	char type_str[12];
+	char type_str[HEADER_TYPE_STR_SIZE];
 	/// Package bits (used for programs)
 	u32 package_high;
 	/// More package bits (used for programs)

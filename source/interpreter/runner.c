@@ -1,4 +1,5 @@
 #include "runner.h"
+#include "common.h"
 #include "system.h"
 
 #include "operators.h"
@@ -64,7 +65,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, //BGMVOL
 	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
 	cmd_chrset, cmd_clear, cmd_colinit, cmd_colread, cmd_colset, ptc_err, //CONT
-	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_gbox, //GBOX
+	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_files, cmd_gbox, //GBOX
 	cmd_gcircle, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
 	cmd_gpage, cmd_gpaint, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
 	cmd_key, ptc_err, cmd_load, cmd_new, //NEW, 
@@ -165,7 +166,7 @@ struct var_name read_var_name(struct bytecode* b, idx index){
 /// @param code Program bytecode struct.
 /// @param p PTC struct containing entire state of interpreter + system
 /// @param init_exec If true, re-initializes more of the execution state.
-void _run(struct bytecode code, struct ptc* p, bool init_exec) {
+void _run(struct bytecode code, struct ptc* p, bool init_exec) ITCM_CODE {
 	struct runner* r = &p->exec;
 	r->code = code;
 	if (init_exec){

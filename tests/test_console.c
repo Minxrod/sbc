@@ -8,33 +8,33 @@
 
 int test_console(void){
 	// Test console creation
-	MEM_CASE {
-		struct console* c = init_console();
+	{
+		struct console c = {0};
+		init_console(&c);
 		
-		ASSERT(c->x == 0, "[console] Correct starting X");
-		ASSERT(c->y == 0, "[console] Correct starting Y");
-		ASSERT(c->col == 0, "[console] Correct starting color");
-		ASSERT(c->tabstep == 4, "[console] Correct starting tabstep");
-		free_console(c);
-	} MEM_CASE_END
+		ASSERT(c.x == 0, "[console] Correct starting X");
+		ASSERT(c.y == 0, "[console] Correct starting Y");
+		ASSERT(c.col == 0, "[console] Correct starting color");
+		ASSERT(c.tabstep == 4, "[console] Correct starting tabstep");
+	}
 	
 	// Test console puts
-	MEM_CASE {
-		struct console* c = init_console();
+	{
+		struct console c = {0};
+		init_console(&c);
+
+		con_puts(&c, "S\006ABC123");
 		
-		con_puts(c, "S\006ABC123");
+		ASSERT(con_text_getc(&c, 0, 0) == to_wide('A'), "[console] Console contents");
+		ASSERT(con_text_getc(&c, 1, 0) == to_wide('B'), "[console] Console contents");
+		ASSERT(con_text_getc(&c, 2, 0) == to_wide('C'), "[console] Console contents");
+		ASSERT(con_text_getc(&c, 3, 0) == to_wide('1'), "[console] Console contents");
+		ASSERT(con_text_getc(&c, 4, 0) == to_wide('2'), "[console] Console contents");
+		ASSERT(con_text_getc(&c, 5, 0) == to_wide('3'), "[console] Console contents");
 		
-		ASSERT(con_text_getc(c, 0, 0) == to_wide('A'), "[console] Console contents");
-		ASSERT(con_text_getc(c, 1, 0) == to_wide('B'), "[console] Console contents");
-		ASSERT(con_text_getc(c, 2, 0) == to_wide('C'), "[console] Console contents");
-		ASSERT(con_text_getc(c, 3, 0) == to_wide('1'), "[console] Console contents");
-		ASSERT(con_text_getc(c, 4, 0) == to_wide('2'), "[console] Console contents");
-		ASSERT(con_text_getc(c, 5, 0) == to_wide('3'), "[console] Console contents");
-		
-		ASSERT(c->x == 6, "[console] Correct ending coordinates");
-		ASSERT(c->y == 0, "[console] Correct ending coordinates");
-		free_console(c);
-	} MEM_CASE_END
+		ASSERT(c.x == 6, "[console] Correct ending coordinates");
+		ASSERT(c.y == 0, "[console] Correct ending coordinates");
+	}
 	
 	/*
 	 * Console program tests

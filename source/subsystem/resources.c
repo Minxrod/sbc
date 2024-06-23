@@ -1,41 +1,19 @@
 #include "resources.h"
 
+#include "common.h"
 #include "header.h"
+#include "program.h"
+#include "stack.h"
+#include "strs.h"
 #include "system.h"
 #include "error.h"
 #include "extension/compress.h"
+#include "vars.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-const char* resource_path = "resources/";
-
-int resource_size[6] = {
-	0, CHR_SIZE, SCR_SIZE, GRP_SIZE, MEM_SIZE, COL_SIZE,
-};
-
-/// Load from a file, skipping past part of it if needed and reading only a certain length
-bool load_file(u8* dest, const char* name, int skip, int len){
-	FILE* f = fopen(name, "rb");
-	if (!f){
-		iprintf("Failed to load file: %s\n", name);
-		return false;
-	}
-	if (fseek(f, skip, SEEK_SET) == -1){
-		fclose(f);
-		iprintf("Failed to fseek to %d within %s\n", skip, name);
-		return false;
-	}
-	fread(dest, sizeof(u8), len, f);
-	if (ferror(f)){
-		fclose(f);
-		iprintf("Failed to read file %s\n", name);
-		return false;
-	}
-	fclose(f);
-	return true;
-}
 
 #define FILE_ERROR(msg) do {\
 	iprintf(msg " [path=%s]\n", path);\
@@ -59,7 +37,9 @@ if (ferror(f)){\
 	FILE_CLOSE(msg);\
 } } while(0)
 
-char* internal_type_str[] = {
+const char* resource_path = "resources/";
+
+const char* internal_type_str[] = {
 	"PETC0300RPRG",
 	"PETC0100RCHR",
 	"PETC0100RSCR",
@@ -67,6 +47,85 @@ char* internal_type_str[] = {
 	"PETC0200RMEM",
 	"PETC0100RCOL",
 };
+
+bool verify_file_type(const char* path, const int type){
+	FILE* f = fopen(path, "rb");
+	if (!f){
+		FILE_ERROR("Failed to load file");
+	}
+	char check_type[4];
+	fread(check_type, sizeof(char), 4, f);
+	CHECK_FILE_ERROR("Failed to read file magic ID");
+	fseek(f, 0, SEEK_SET);
+	CHECK_FILE_ERROR("Failed to seek to file start");
+
+	int size_read;
+	if (!strncmp(check_type, "PX01", 4)){
+		struct ptc_header h;
+
+		assert(LITTLE_ENDIAN);
+		// only works on little-endian devices...
+		// (reading into header memory directly)
+		int size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
+		CHECK_FILE_ERROR("Could not read header correctly");
+		if (size_read < PRG_HEADER_SIZE){
+			FILE_CLOSE("Could not read full header");
+		}
+		fclose(f);
+		return !strncmp(h.type_str, internal_type_str[type], HEADER_TYPE_STR_SIZE);
+	}
+	if (!strncmp(check_type, "PETC", 4)){
+		// internal format
+		if (fseek(f, 0, SEEK_SET)){
+			FILE_CLOSE("Failed to seek to internal type");
+		}
+		// read header
+		char header_type[HEADER_TYPE_STR_SIZE];
+		size_read = fread(header_type, sizeof(char), HEADER_TYPE_STR_SIZE, f);
+		CHECK_FILE_ERROR("Could not read program header");
+		if (size_read < HEADER_TYPE_STR_SIZE){
+			FILE_CLOSE("Could not read complete program header");
+		}
+		fclose(f);
+		return !strncmp(header_type, internal_type_str[type], HEADER_TYPE_STR_SIZE);
+	}
+	if (!strncmp(check_type, "SBCC", 4)){
+		fclose(f);
+		return true; // assume correct if in use (doesn't store type info)
+	}
+	FILE_CLOSE("Unknown PRG file format");
+}
+
+bool verify_search_file_type(const char* search_path, const char* name, int type){
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (strlen(search_path) + strlen(name) >= MAX_FILEPATH_LENGTH-4){
+		FILE_ERROR("File name too long");
+	}
+	strcpy(path, search_path);
+	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
+	strcpy(path + strlen(search_path) + strlen(name), ".PTC"); // always add extension
+
+	return verify_file_type(path, type);
+}
+
+int resource_size[6] = {
+	0, CHR_SIZE, SCR_SIZE, GRP_SIZE, MEM_SIZE, COL_SIZE,
+};
+
+/// Load from a file, skipping past part of it if needed and reading only a certain length
+int load_file(u8* dest, const char* path, int skip, int len){
+	FILE* f = fopen(path, "rb");
+	if (!f){
+		FILE_ERROR("Failed to load file");
+	}
+	if (fseek(f, skip, SEEK_SET) == -1){
+		FILE_CLOSE("Failed to fseek (skip)");
+	}
+	int read = fread(dest, sizeof(u8), len, f);
+	CHECK_FILE_ERROR("Failed to fread file");
+	fclose(f);
+	return read;
+}
 
 int check_save_res(void* src, const char* search_path, const char* name, int type){
 	int size_read;
@@ -289,14 +348,14 @@ bool load_grp(u8* dest, const char* path, const char* name){
 
 void init_col(struct resources* r){
 	char name[] = "COLX.PTC";
-	for (int i = 0; i < 2 * COL_BANKS; ++i){
-		name[3] = '0' + (i % 3); // col_files[4*i+3];
+	for (int i = 0; i < SCREEN_COUNT * COL_BANKS; ++i){
+		name[3] = '0' + (i % COL_BANKS); // col_files[4*i+3];
 		load_col((u8*)r->col[i], resource_path, name);
 	}
 }
 
 void init_resource(struct resources* r){
-	static_assert(sizeof(r->mem) == MEM_SIZE);
+	static_assert(sizeof(r->mem) == MEM_SIZE, "MEM data must be able to store entire file contents");
 	
 	r->search_path = "programs/"; // Program resource search path
 #ifdef ARM9
@@ -319,8 +378,8 @@ void init_resource(struct resources* r){
 #ifdef PC
 	// allocate memory for resources (needs ~512K)
 	// this will serve as "emulated VRAM"
-	r->all_banks = calloc_log("init_resource all_banks", CHR_SIZE, CHR_BANKS * 2);
-	r->col_banks = calloc_log("init_resource col_banks", COL_SIZE, 6); //COL[0-2][U-L]
+	r->all_banks = calloc_log("init_resource all_banks", CHR_SIZE, CHR_BANKS * SCREEN_COUNT);
+	r->col_banks = calloc_log("init_resource col_banks", COL_SIZE, COL_BANKS * SCREEN_COUNT); //COL[0-2][U-L]
 	// guarantee contiguous regions (useful for generating textures)
 	for (int lower = 0; lower <= 1; ++lower){
 		for (int i = 0; i < CHR_BANKS; ++i){
@@ -393,6 +452,8 @@ void init_resource(struct resources* r){
 	r->mem_ptr = &r->mem_str;
 	// Initialize RESULT
 	r->result = 1;
+	// Initialize VISIBLE status
+	r->visible = VISIBLE_ALL;
 }
 
 void free_resource(struct resources* r){
@@ -413,23 +474,209 @@ void free_resource(struct resources* r){
 	}
 }
 
+// Format of validation string is [resource string][maximum index][page status]
+// resource string should match exactly.
+// Any number between 0 and maximum index should be accepted.
+// If maximum index is unspecified, then anything is permitted past the resource string.
+//
+// If page status is...
+// - P, then both U and L are accepted.
+// - U or L, then page must match U or L, or be unspecified
+// - unspecified, then anything can follow.
+// To unlock extra resources normally inaccessible in PTC, uncomment last line.
+const char* valid_resource_types[] = {
+	"PRG",
+	"MEM",
+	"BGU3P", "BGD1P", "BGF0P", "SPU7U", "SPS1P", "SPD3L",
+	"COL2P",
+	"SCU1P",
+	"GRP3",
+//	"SPK3L", "BGD3P", "BGF3P",
+	NULL,
+};
+
+/// Validates a resource type string.
+///
+/// Checks that a resource type string is one of the expected values.
+/// This includes all variations of valid resources, such as BGU0, GRP, SPS0L, etc.
+/// The resource type string is expected to be terminated by a colon or (if part of a larger string) or a null-terminator (if standalone).
+bool verify_resource_type(const char* resource_type){
+	char* separator = strchr(resource_type, RESOURCE_SEPARATOR);
+	if (separator && separator - resource_type > MAX_RESOURCE_TYPE_LENGTH){
+		return false; // resource type is too long; always invalid
+	}
+	if (!separator && strlen(resource_type) > MAX_RESOURCE_TYPE_LENGTH){
+		return false;
+	}
+	// Verify type component
+	// resource type string must be validated
+	bool valid = false;
+	for (const char** valid_str_ptr = valid_resource_types; *valid_str_ptr != NULL; ++valid_str_ptr){
+		const char* valid_str = *valid_str_ptr;
+		if (strncmp(valid_str, resource_type, 3)) {
+			continue; // base string doesn't match
+		}
+		if (valid_str[3] == '\0'){
+			valid = true; // MEM or PRG allow nearly anything to follow
+			break;
+		}
+		char index = resource_type[3];
+		if (index == RESOURCE_SEPARATOR || index == '\0'){
+			valid = true;
+			break; // No index specified - this is fine and means string is completely verified
+		}
+		if ('0' > index || index > valid_str[3]){
+			continue; // index is out of valid range
+		}
+		char page = resource_type[4];
+		if (page == RESOURCE_SEPARATOR || page == '\0'){
+			valid = true;
+			break; // page can be omitted safely for any resource
+		}
+		if (valid_str[4] == '\0'){
+			valid = true;
+			break; // no page specification - anything is allowed, including pages that aren't defined
+		}
+		if (valid_str[4] == 'P'){
+			if (page != 'L' && page != 'U'){
+				continue; // neither valid page was specified
+			}
+			valid = true;
+			break;
+		}
+		if (valid_str[4] != page){
+			continue; // does not match valid page specification
+		}
+		// all checks passed
+		valid = true;
+		break;
+	}
+	return valid;
+}
+
+// Convenience wrapper to verify a resource in SBC string form by hiding the conversion to char[]
+bool verify_resource_type_str(const void* res){
+	if (str_len(res) > MAX_RESOURCE_TYPE_LENGTH){
+		return false;
+	}
+
+	char res_str[MAX_RESOURCE_TYPE_LENGTH+1] = {0};
+
+	str_char_copy(res, (u8*)res_str);
+	return verify_resource_type(res_str);
+}
+
+/// Validates a resource string.
+/// This checks for a valid resource type if specified, and checks that the resource name is valid.
+/// @note This function does NOT check for the existence of the resource file.
+///
+/// @param resource_name Resource name, provided as null-terminated string
+/// @return true if resource name is valid, false otherwise
+bool verify_resource_name(const char* resource_name){
+	// Check if name has a type component
+	bool valid = false;
+	const char* separator = strchr(resource_name, RESOURCE_SEPARATOR);
+	const char* name = separator ? separator + 1 : resource_name;
+	if (separator){
+		valid = verify_resource_type(resource_name);
+		if (!valid) return valid; // resource type invalid
+	}
+
+	int name_len = strlen(name);
+	if (!name_len || name_len > MAX_RESOURCE_NAME_LENGTH){
+		return false; // to long or has no name
+	}
+	for (int i = 0; i < name_len; ++i){
+		if (!is_name(name[i])){
+			return false; // invalid character
+		}
+	}
+	return true;
+}
+
+#define RESOURCE_TYPE_BASE_LENGTH 3
+#define RESOURCE_TYPE_BANK_OFS RESOURCE_TYPE_BASE_LENGTH
+#define RESOURCE_TYPE_SCREEN_OFS RESOURCE_TYPE_BANK_OFS + 1
+
+// Resource type can be null-terminated or end with RESOURCE_SEPARATOR as part of a complete resource name.
+// @note Assumes resource name to be valid, as validated by verify_resource_name.
+void* get_resource_ptr(struct ptc* p, const char* resource_type){
+	assert(resource_type);
+	void* resource_ptr = NULL;
+
+	char res_type_index = resource_type[RESOURCE_TYPE_BANK_OFS];
+	int bank = 0;
+	int screen = 0;
+	if (res_type_index == '\0' || res_type_index == RESOURCE_SEPARATOR){
+		bank = 0;
+	} else {
+		bank = res_type_index - '0';
+		char res_type_screen = resource_type[RESOURCE_TYPE_SCREEN_OFS];
+		if (res_type_screen == '\0' || res_type_screen == RESOURCE_SEPARATOR){
+			screen = -1;
+		} else {
+			screen = res_type_screen == 'L';
+		}
+	}
+
+	if (!strncmp("BGU", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		screen = screen < 0 ? p->background.page : screen;
+		resource_ptr = p->res.chr + 8 + CHR_BANKS * screen + bank;
+	} else if (!strncmp("BGF", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		screen = screen < 0 ? p->background.page : screen;
+		resource_ptr = p->res.chr + 0 + CHR_BANKS * screen + bank;
+	} else if (!strncmp("BGD", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		screen = screen < 0 ? p->background.page : screen;
+		resource_ptr = p->res.chr + 4 + CHR_BANKS * screen + bank;
+	} else if (!strncmp("SPD", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		resource_ptr = p->res.chr + 12 + CHR_BANKS + bank;
+	} else if (!strncmp("SPK", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		resource_ptr = p->res.chr + 16 + CHR_BANKS + bank;
+	} else if (!strncmp("SPS", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		screen = screen < 0 ? p->sprites.page : screen;
+		resource_ptr = p->res.chr + 20 + CHR_BANKS * screen + bank;
+	} else if (!strncmp("SPU", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		resource_ptr = p->res.chr + 12 + bank;
+	} else if (!strncmp("SCU", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		screen = screen < 0 ? p->background.page : screen;
+		resource_ptr = p->res.scr + SCR_BANKS * screen + 2 + bank;
+	} else if (!strncmp("COL", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		if (bank == 0) screen = screen < 0 ? p->background.page : screen;
+		if (bank == 1) screen = screen < 0 ? p->sprites.page : screen;
+		if (bank == 2) screen = screen < 0 ? p->graphics.screen : screen;
+		resource_ptr = p->res.col + COL_BANKS * screen + bank;
+	} else if (!strncmp("PRG", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		return &p->exec.prg;
+	} else if (!strncmp("MEM", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		return p->res.mem.data;
+	} else {
+		iprintf("Resource type %s is invalid!\n", resource_type);
+		abort();
+	}
+	return *(void**)resource_ptr;
+}
+
+// TODO:CODE:MED Remove all uses of this (replace with get_verified_resource instead)
 void* str_to_resource(struct ptc* p, void* name_str){
 	assert(name_str);
 	assert(str_len(name_str) <= 5);
-	char name_char[5];
+	char name_char[MAX_RESOURCE_TYPE_LENGTH+1] = {0};
 	str_char_copy(name_str, (u8*)name_char);
-	return get_resource(p, name_char, str_len(name_str));
+	return get_resource_ptr(p, name_char);
 }
 
-int get_chr_index(struct ptc* p, char* res){
+int get_chr_index(struct ptc* p, const char* res){
 	int res_len = strlen(res);
 	assert(res_len >= 3 && res_len <= 5);
 	
 	int index = (res_len <= 3) ? 0 : (res[3] - '0');
 	if (res[0] == 'S'){
 		index += 12;
+		if (res[2] == 'D') { return index + CHR_BANKS; } // always lower
+		if (res[2] == 'K') { return index + CHR_BANKS + 4; } // always lower
+		if (res[2] == 'U') { return index; } // always upper
 		index += CHR_BANKS * ((res_len <= 4) ? p->sprites.page : (res[4] == 'L'));
-		index += (res[2] == 'S') ? 8 : 0;
+		index += 8;
 	} else { // B
 		index += 0;
 		index += CHR_BANKS * ((res_len <= 4) ? p->background.page : (res[4] == 'L'));
@@ -437,257 +684,114 @@ int get_chr_index(struct ptc* p, char* res){
 		index += (res[2] == 'U') ? 8 : 0;
 	}
 	
-	iprintf("%s has index %d\n", res, index);
+//	iprintf("%s has index %d\n", res, index);
 	return index;
 }
 
-// Returns a data pointer for the resource
-// Returns NULL, if the resource name was invalid
-void* get_resource(struct ptc* p, const char* name, int len){
-	assert(name);
-	assert(len <= 5);
-	char c = name[0]; //category
-	char id = name[1]; //id help for SCU/SPU
-	char t = name[2]; //type (within category)
-	
-	int bank = 0;
-	int upper = -1;
-	if (len == 5){
-		bank = name[3] - '0';
-		upper = name[4] == 'L';
-	} else if (len == 4){
-		if (name[3] >= '0' && name[3] <= '7'){
-			bank = name[3] - '0';
-		} else {
-			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
-			return NULL;
-		}
-	} else if (len == 3){
-		bank = 0;
-	} else {
-		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
-		return NULL;
+///
+struct res_info {
+	// longest name:
+	// RRRNP:ABCDEFGH
+	char type[MAX_RESOURCE_TYPE_LENGTH+1];
+	char name[MAX_RESOURCE_NAME_LENGTH+1];
+	int type_id;
+	void* data;
+};
+
+/// Verifies that a given resource name is valid and assigns the values
+/// necessary to use it.
+struct res_info get_verified_resource(struct ptc* p, const void* res){
+	struct res_info info = {0};
+	if (str_len(res) > MAX_RESOURCE_STR_LENGTH){
+		p->exec.error = ERR_ILLEGAL_FUNCTION_CALL;
+		return info;
 	}
-	
-	// upper depends on current BGPAGE, SPPAGE, or GPAGE
-	if (upper == -1){
-		if (c == 'B' || (c == 'S' && id == 'C') || (c == 'C' && bank == 0)){
-			// BG resource of some variety
-			// BGF BGU BGD SCU COL0
-			upper = p->background.page;
-		} else if ((c == 'S' && id == 'P') || (c == 'C' && bank == 1)){
-			// SPU SPS SPD COL1
-			upper = p->sprites.page;
-		} else if (c == 'G' || (c == 'C' && bank == 2)){
-			// GRP COL2
-			upper = p->graphics.screen;
-		} else if (c == 'M'){
-			// MEM$ does not require any of this
-		} else {
-			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
-			return NULL;
-		}
+
+	char res_str[MAX_RESOURCE_STR_LENGTH] = {0};
+	str_char_copy(res, (u8*)res_str);
+	if (!verify_resource_name(res_str)){
+		p->exec.error = ERR_ILLEGAL_FUNCTION_CALL;
+		return info;
 	}
-	
-//	iprintf("get_resource %c %c %c %d %d\n", c, id, t, bank, upper);
-	if (c == 'B' && id == 'G'){ //BGU, BGF, BGD
-		if (t == 'U'){
-			return p->res.chr[8+CHR_BANKS*upper+bank];
-		} else if (t == 'F'){
-			return p->res.chr[0+CHR_BANKS*upper+bank];
-		} else if (t == 'D'){
-			return p->res.chr[4+CHR_BANKS*upper+bank];
-		}
-	} else if (c == 'S'){ //SPU, SPS, SPD, SCU
-		if (t == 'U'){
-			if (id == 'C'){
-				return p->res.scr[2+bank+4*upper];
-			} else if (id == 'P'){
-				if (!upper)
-					return p->res.chr[12+bank];
-			}
-		}
-		if (id != 'P'){
-			p->exec.error = ERR_INVALID_RESOURCE_TYPE;
-			return NULL; // name is invalid
-		}
-		if (t == 'S'){
-			return p->res.chr[20+bank+CHR_BANKS*upper];
-		} else if (t == 'D'){
-			return p->res.chr[12+bank+CHR_BANKS*upper];
-		} else if (t == 'K'){ // yeah, this one normally isn't accessible
-			return p->res.chr[16+bank+CHR_BANKS*upper];
-		}
-	} else if (c == 'C' && id == 'O' && t == 'L'){ //COL
-//		iprintf("COLn %d:%p\n", 3*upper + bank, (void*)p->res.col[3*upper+bank]);
-		return p->res.col[bank+COL_BANKS*upper];
-	} else if (c == 'G' && id == 'R' && t == 'P'){ //GRP
-		// TODO:IMPL:LOW Does page matter here?
-		return p->res.grp[(int)bank];
-	} else if (c == 'M' && id == 'E' && t == 'M'){
-		return p->res.mem.data;
-	}
-	p->exec.error = ERR_INVALID_RESOURCE_TYPE;
-	return NULL;
+	const char* sep = strchr(res_str, RESOURCE_SEPARATOR);
+	strncpy(info.type, res_str, sep ? sep - res_str : (int)strlen(res_str));
+	const char* name = sep ? sep + 1 : res_str;
+	strncpy(info.name, name, strlen(name));
+	info.type_id = get_resource_type(res);
+	info.data = get_resource_ptr(p, info.type);
+	iprintf("get_resource of type=%s (%d) name=%s at ptr=%p\n", info.type, (int)strlen(info.type), info.name, info.data);
+
+	return info;
 }
 
 void cmd_load(struct ptc* p){
-	void* res = value_str(ARG(0));
 	// TODO:IMPL:LOW Dialog popups
-	// longest name:
-	// RRRNP:ABCDEFGH
-	char res_str[14+1] = {0}; // null terminated
-	if (str_len(res) > 14){
-		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
-	}
-	str_char_copy(res, (u8*)res_str);
-	int index = -1;
-	for (int i = 0; i <= (int)str_len(res); ++i){
-		if (res_str[i] == ':'){
-			res_str[i] = '\0'; // null-terminated for strlen later on
-			index = i;
-			break;
-		}
-	}
-	if (index == -1 && str_len(res) > 8) {
-		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
-	}
-	
-	char* res_type = (index == -1) ? "PRG" : res_str;
-	char* res_name = (index == -1) ? res_str : &res_str[index+1];
-	void* res_data = (index == -1) ? p->exec.prg.data : get_resource(p, res_type, strlen(res_type));
-	
-	iprintf("Attempting load of type=%s (%d) name=%s at ptr=%p\n", res_type, (int)strlen(res_type), res_name, res_data);
-	if (!res_data) return; // Note: error set in get_resource
-	int resource_type = TYPE_PRG;
-	if (index != -1){
-		resource_type = get_resource_type(res);
-	}
-	switch (resource_type){
+	void* res = value_str(ARG(0));
+	struct res_info info = get_verified_resource(p, res);
+	if (p->exec.error) return; // error condition already met, fail here
+
+	int size = check_load_res(info.data, p->res.search_path, info.name, info.type_id);
+	p->res.result = size != 0;
+
+	switch (info.type_id){
 		case TYPE_PRG:
-			{
-			int size = check_load_res(res_data, p->res.search_path, res_name, resource_type);
-			p->res.result = size != 0;
-			if (size){
-				p->exec.prg.size = size;
-			}
-			}
+			if (size) p->exec.prg.size = size;
 			break;
 			
 		case TYPE_CHR:
-			p->res.result = load_chr(res_data, p->res.search_path, res_name);
-			
-			p->res.regen_chr[get_chr_index(p, res_type)] = true;
+			p->res.regen_chr[get_chr_index(p, info.type)] = true;
 			break;
-			
+
 		case TYPE_COL:
-			p->res.result = load_col(res_data, p->res.search_path, res_name);
-			
 			p->res.regen_col = true;
 			break;
-			
-		case TYPE_GRP:
-			p->res.result = load_grp(res_data, p->res.search_path, res_name);
-			break;
-			
+
 		case TYPE_SCR:
-			p->res.result = load_scr(res_data, p->res.search_path, res_name);
+		case TYPE_GRP:
+			// no special handling
 			break;
-		
+
 		case TYPE_MEM:;
 			assert(LITTLE_ENDIAN);
-			int size = check_load_res(res_data, p->res.search_path, res_name, TYPE_MEM);
 			p->res.mem_str.len = p->res.mem.size;
-			p->res.result = size != 0;
 			break;
 		
 		default:
-			iprintf("Error: Unimplemented/invalid resource type\n %s:%s\n", res_type, res_name);
-			ERROR(ERR_INVALID_RESOURCE_TYPE);
+			iprintf("Error: invalid resource type\n %s:%s\n", info.type, info.name);
+			assert(false);
 	}
 }
 
 void cmd_save(struct ptc* p){
-	void* res = value_str(ARG(0));
 	// TODO:IMPL:LOW Dialog popups
-	// TODO:ERR:LOW Check errors are correct
-	// longest name:
-	// RRRNP:ABCDEFGH
-	char res_str[14+1] = {0}; // null terminated
-	if (str_len(res) > 14){
-		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
-	}
-	str_char_copy(res, (u8*)res_str);
-	int index = -1;
-	for (int i = 0; i <= (int)str_len(res); ++i){
-		if (res_str[i] == ':'){
-			res_str[i] = '\0'; // null-terminated for strlen later on
-			index = i;
-			break;
-		}
-	}
-	if (index == -1 && str_len(res) > 8) {
-		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
-	}
-	
-	char* res_type = (index == -1) ? "PRG" : res_str;
-	char* res_name = (index == -1) ? res_str : &res_str[index+1];
-	void* res_data = (index == -1) ? &p->exec.prg : get_resource(p, res_type, strlen(res_type));
-	
-	iprintf("Saving type=%s (%d) name=%s at ptr=%p\n", res_type, (int)strlen(res_type), res_name, res_data);
-	if (!res_data) return; // Note: error set in get_resource
-	int resource_type = TYPE_PRG;
-	if (index != -1){
-		resource_type = get_resource_type(res);
-	}
-	switch (resource_type){
-		case TYPE_MEM:;
-			assert(LITTLE_ENDIAN);
-			// fallthrough
-		case TYPE_PRG:
-		case TYPE_CHR:
-		case TYPE_COL:
-		case TYPE_GRP:
-		case TYPE_SCR:
-			{
-			int size = check_save_res(res_data, "programs/", res_name, resource_type);
-			p->res.result = size != 0;
-			}
-			break;
-			
-		default:
-			iprintf("Error: Unimplemented/invalid resource type\n %s:%s\n", res_type, res_name);
-			ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
+	void* res = value_str(ARG(0));
+	struct res_info info = get_verified_resource(p, res);
+	if (p->exec.error) return; // error condition already met, fail here
+
+	assert(LITTLE_ENDIAN); // relied on for TYPE_MEM
+	int size = check_save_res(info.data, p->res.search_path, info.name, info.type_id);
+	p->res.result = size != 0;
 }
 
 void cmd_chrinit(struct ptc* p){
 	// CHRINIT resource
 	void* res_str = value_str(ARG(0));
-	int res_str_len = str_len(res_str);
-	u8 res[6] = {0};
-	if (res_str_len > 5) {
-		ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
-	str_char_copy(res_str, res);
-	// res contains at most 5 characters
+	struct res_info info = get_verified_resource(p, res_str);
+	if (p->exec.error) return; // something went wrong
+
 	// check that this is a CHR type resource:
-	// *G*, *P* inclues all valid CHR types.
-	if (res[1] == 'G' || res[1] == 'P'){
+	if (TYPE_CHR == info.type_id){
 		// resource is valid
-		u8* res_data = get_resource(p, (char*)res, res_str_len);
-		if (!res_data) return;
 		char res_name[] = "XXXX.PTC";
 		for (int i = 0; i < 4; ++i){
-			res_name[i] = res[i];
+			res_name[i] = info.type[i];
 		}
-		if (res_str_len == 3){
-			res_name[3] = '0';
-		}
-		if (!load_chr(res_data, resource_path, res_name)){
+		if (info.type[3] == '\0') res_name[3] = '0'; // default bank
+
+		if (!load_chr(info.data, resource_path, res_name)){
 			ERROR(ERR_FILE_LOAD_FAILED);
 		}
-		p->res.regen_chr[get_chr_index(p, (char*)res)] = true;
+		p->res.regen_chr[get_chr_index(p, info.type)] = true;
 	} else {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}
@@ -703,29 +807,17 @@ void cmd_chrread(struct ptc* p){
 	STACK_INT_RANGE(1,0,255,id);
 	void** out = ARG(2)->value.ptr; // pointer to string (which is itself a pointer)
 	
-	int res_str_len = str_len(res_str);
-	u8 res[6] = {0};
-	if (res_str_len > 5) {
-		ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
-	str_char_copy(res_str, res);
-	// res contains at most 5 characters
-	// check that this is a CHR type resource:
-	// *G*, *P* inclues all valid CHR types.
-	if (res[1] == 'G' || res[1] == 'P'){
+	struct res_info info = get_verified_resource(p, res_str);
+	if (p->exec.error) return; // something went wrong
+
+	if (TYPE_CHR == info.type_id){
 		// resource is valid
-		u8* res_data = get_resource(p, (char*)res, res_str_len);
-		if (!res_data) {
-			ERROR(ERR_INVALID_RESOURCE_TYPE);
-		};
-		
-		u8* chr_data = &res_data[32*id];
+		u8* chr_data = (u8*)info.data + 32*id;
 		// convert this to string
 		for (int i = 0; i < 32; ++i){
 			u8 unit = chr_data[i];
-			u8 ul, uh;
-			ul = unit & 0x0f;
-			uh = unit >> 4;
+			u8 ul = unit & 0x0f;
+			u8 uh = unit >> 4;
 			dest->ptr.s[2 * i + 0] = hex_digits[ul];
 			dest->ptr.s[2 * i + 1] = hex_digits[uh];
 		}
@@ -750,18 +842,12 @@ void cmd_chrset(struct ptc* p){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
 	
-	int res_str_len = str_len(res_str);
-	u8 res[6] = {0};
-	if (res_str_len > 5) {
-		ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
-	str_char_copy(res_str, res);
-	// res contains at most 5 characters
-	// check that this is a CHR type resource:
-	// *G*, *P* inclues all valid CHR types.
-	if (res[1] == 'G' || res[1] == 'P'){
+	struct res_info info = get_verified_resource(p, res_str);
+	if (p->exec.error) return; // something went wrong
+
+	if (TYPE_CHR == info.type_id){
 		// resource is valid
-		u8* res_data = get_resource(p, (char*)res, res_str_len);
+		u8* res_data = get_resource_ptr(p, info.type);
 		if (!res_data) return;
 		
 		u8 chr_data[32];
@@ -780,10 +866,20 @@ void cmd_chrset(struct ptc* p){
 		// NDS: VRAM copy works here because memcpy uses bigger blocks
 		memcpy(&res_data[32*id], chr_data, 32);
 		
-		p->res.regen_chr[get_chr_index(p, (char*)res)] = true;
+		p->res.regen_chr[get_chr_index(p, info.type)] = true;
 	} else {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
 	}
+}
+
+void* get_col_resource(struct ptc* p, const void* res_str){
+	if (str_comp(res_str, "S\2BG")) return get_resource_ptr(p, "COL0");
+	if (str_comp(res_str, "S\2SP")) return get_resource_ptr(p, "COL1");
+	if (str_comp(res_str, "S\3GRP")) return get_resource_ptr(p, "COL2");
+
+	// no match;
+	p->exec.error = ERR_INVALID_RESOURCE_TYPE;
+	return NULL;
 }
 
 void cmd_colinit(struct ptc* p){
@@ -794,34 +890,34 @@ void cmd_colinit(struct ptc* p){
 	} else if (p->stack.stack_i == 1){
 		// COLINIT resource
 		void* res_str = value_str(ARG(0));
-		if (str_comp(res_str, "S\2BG")){
-			load_col(get_resource(p, "COL0", 4), resource_path, "COL0.PTC");
-		} else if (str_comp(res_str, "S\2SP")){
-			load_col(get_resource(p, "COL1", 4), resource_path, "COL1.PTC");
-		} else if (str_comp(res_str, "S\3GRP")){
-			load_col(get_resource(p, "COL2", 4), resource_path, "COL2.PTC");
-		} else {
-			ERROR(ERR_INVALID_RESOURCE_TYPE);
-		}
+		char id = str_at_char(res_str, 0);
+		if (id == 'B') id = '0';
+		if (id == 'S') id = '1';
+		if (id == 'G') id = '2';
+
+		char name[] = "COLX.PTC";
+		name[3] = id;
+
+		u8* col_data = get_col_resource(p, res_str);
+		if (!col_data) return;
+
+		load_col(col_data, resource_path, name);
+		// TODO:CODE:LOW dedup 1-arg and 2-arg
 	} else {
 		// COLINIT resource index
 		void* res_str = value_str(ARG(0));
 		char name[] = "COLX.PTC";
-		int id = 0;
-		// TODO:CODE:NONE dedup with COLINIT resource?
-		if (str_comp(res_str, "S\2BG")){
-			id = 0;
-		} else if (str_comp(res_str, "S\2SP")){
-			id = 1;
-		} else if (str_comp(res_str, "S\3GRP")){
-			id = 2;
-		} else {
-			ERROR(ERR_INVALID_RESOURCE_TYPE);
-		}
-		name[3] = '0' + id;
+		u16* col_data = get_col_resource(p, res_str);
+		if (!col_data) return;
+
+		char id = str_at_char(res_str, 0);
+		if (id == 'B') id = '0';
+		if (id == 'S') id = '1';
+		if (id == 'G') id = '2';
+
+		name[3] = id;
 		// Load from file into memory
 		u16 from_file[256]; // TODO:PERF:LOW loading entire file is slow, store it in-mem?
-		u16* col_data = get_resource(p, name, 4);
 		load_col((u8*)from_file, resource_path, name);
 		// Extract specific color index
 		int index;
@@ -837,21 +933,14 @@ void cmd_colread(struct ptc* p){
 	void* res_str = value_str(ARG(0));
 	int col;
 	STACK_INT_RANGE(1,0,255,col);
-	fixp* r, * g, * b;
-	r = ARG(2)->value.ptr;
-	g = ARG(3)->value.ptr;
-	b = ARG(4)->value.ptr;
+	fixp* r = ARG(2)->value.ptr;
+	fixp* g = ARG(3)->value.ptr;
+	fixp* b = ARG(4)->value.ptr;
 	u16* col_data;
-	if (str_comp(res_str, "S\2BG")){
-		col_data = get_resource(p, "COL0", 4);
-	} else if (str_comp(res_str, "S\2SP")){
-		col_data = get_resource(p, "COL1", 4);
-	} else if (str_comp(res_str, "S\3GRP")){
-		col_data = get_resource(p, "COL2", 4);
-	} else {
-		ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
-	
+
+	col_data = get_col_resource(p, res_str);
+	if (!col_data) return;
+
 	int c = col_data[col];
 	// GGGRRRRR GBBBBBGG
 	// Note: Loading as u16 only works on little endian device
@@ -867,20 +956,14 @@ void cmd_colset(struct ptc* p){
 	STACK_INT_RANGE(1,0,255,col);
 	void* col_str = value_str(ARG(2));
 	u16* col_data;
-	if (str_comp(res_str, "S\2BG")){
-		col_data = get_resource(p, "COL0", 4);
-	} else if (str_comp(res_str, "S\2SP")){
-		col_data = get_resource(p, "COL1", 4);
-	} else if (str_comp(res_str, "S\3GRP")){
-		col_data = get_resource(p, "COL2", 4);
-	} else {
-		ERROR(ERR_INVALID_RESOURCE_TYPE);
-	}
+	col_data = get_col_resource(p, res_str);
+	if (!col_data) return;
+
 	// can't forget this one ;)
 	if (str_len(col_str) != 6){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
-	for (int i = 0; i < 6; ++i){
+	for (int i = 0; i < COL_BANKS*SCREEN_COUNT; ++i){
 		int c = str_at_char(col_str, i);
 		if (!is_number(c) && !(c >= 'A' && c <= 'F')){
 			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
@@ -899,6 +982,7 @@ void cmd_colset(struct ptc* p){
 	
 	// GGGRRRRR GBBBBBGG
 	// Note: Loading as u16 only works on little endian device
+	assert(LITTLE_ENDIAN);
 	// TODO:TEST:MED This loses the lowest bit of green?
 	*col_data = r | (g << 5) | b << 10;
 	p->res.regen_col = true;
@@ -909,11 +993,44 @@ void cmd_new(struct ptc* p){
 }
 
 void cmd_append(struct ptc* p){
-	// TODO:IMPL:LOW
-	(void)p;
+	// APPEND file$
+	void* name = STACK_STR(0);
+	// append behavior:
+	// copies text content of file to end of program memory
+	struct res_info info = get_verified_resource(p, name);
+	if (!info.data) return;
+	if (info.type_id != TYPE_PRG) ERROR(ERR_INVALID_RESOURCE_TYPE);
+
+	// resource type is valid PRG
+	if (!verify_search_file_type(p->res.search_path, info.name, TYPE_PRG)) return; // TODO:ERR:MED What error does this cause? RESULT=0?
+
+	// file identified correctly as PRG, check remaining code size
+	struct program* prg = info.data;
+	assert(prg == &p->exec.prg);
+
+	int remaining = MAX_SOURCE_SIZE - prg->size - 1; // leave room for final newline
+	// if contents larger than remaining space, truncate extra content
+
+	// TODO:CODE:MED dedup with other path-creation steps
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (strlen(p->res.search_path) + strlen(name) >= MAX_FILEPATH_LENGTH-4){
+		iprintf("File name too long! (append)\n");
+		p->res.result = 0;
+		return;
+	}
+	strcpy(path, p->res.search_path);
+	strcpy(path + strlen(p->res.search_path), name); // Note: includes null, overwrites null of search path
+	strcpy(path + strlen(p->res.search_path) + strlen(name), ".PTC"); // always add extension
+
+	// TODO:CODE:HIGH Needs to determine amount to skip forward based on file format
+	// TODO:IMPL:HIGH Needs to determine amount to read based on PRG header to not read package contents/extra nulls
+	int size_read = load_file((u8*)prg->data + prg->size, path, PRG_HEADER_SIZE, remaining);
+	prg->size += size_read;
+	prg->data[prg->size++] = '\r';
 }
 
 void cmd_rename(struct ptc* p){
+	// RENAME oldname$ newname$
 	(void)p;
 }
 

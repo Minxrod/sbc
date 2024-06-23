@@ -27,7 +27,7 @@ const char* commands =
 "BEEP    BGCLIP  BGCLR   BGCOPY  BGFILL  BGMCLEARBGMPLAY BGMPRG  BGMSET  BGMSETD BGMSETV "
 "BGMSTOP BGMVOL  BGOFS   BGPAGE  BGPUT   BGREAD  BREPEAT CHRINIT CHRREAD CHRSET  CLEAR   "
 "COLINIT COLREAD COLSET  CONT    DATA    DELETE  DTREAD  "
-"EXEC    GBOX    GCIRCLE GCLS    GCOLOR  GCOPY   GDRAWMD GFILL   GLINE   "
+"EXEC    FILES   GBOX    GCIRCLE GCLS    GCOLOR  GCOPY   GDRAWMD GFILL   GLINE   "
 "GPAGE   GPAINT  GPSET   GPRIO   GPUTCHR ICONCLR ICONSET "
 "KEY     LIST    LOAD    NEW     PNLSTR  PNLTYPE "
 "READ    REBOOT  RECVFILERENAME  RESTORE RSORT   RUN     SAVE    SENDFILESORT    "
@@ -35,7 +35,6 @@ const char* commands =
 "SPSET   SPSETV  SWAP    TMREAD  "
 // not "supported" really, but some programs still used this to do things like detect region
 "TALK    TALKSTOP"
-// TODO:IMPL:MED Make these optional, in case of name conflicts with existing programs
 "POKE    POKEH   POKEB   MEMCOPY MEMFILL ";
 
 const char* functions =
@@ -45,7 +44,6 @@ const char* functions =
 "SPHITRC SPHITSP SQR     STR$    SUBST$  TAN     VAL     "
 // not implemented but still useful
 "TALKCHK "
-// TODO:IMPL:MED Make these optional, in case of name conflicts with existing programs
 "PEEK    PEEKH   PEEKB   ADDR    PTR$    ";
 
 const char* operations =
@@ -102,13 +100,12 @@ const char* cmd_format[] = {
 	"0","0,N,NN,NNN,NNNN", //BEEP
 	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNS,NNNNNNNNN","0,N", //BGMCLEAR
 	//TODO:TEST:NONE Verify that BGM* functions max out at nine string arguments
-	//TODO:PERF:NONE Replace these expressions with a variable length list
 	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
 	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
 	"NL","NNN","0,N,NN","N,NN", //BGMVOL
 	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
 	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
-	"","","Snnn","S","NNNN,NNNNN", //GBOX
+	"","","Snnn","S","0,S,SS,SSS,SSSS,SSSSS","NNNN,NNNNN", //GBOX
 	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","NN,NNN,NNNN","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
 	"NS","","S,SN","0",//NEW
@@ -117,7 +114,7 @@ const char* cmd_format[] = {
 	"NNN,NNNN","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
 	"NN,NNN,NNNN,NNNNN,NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
 	"Snnn",//TMREAD
-	"S", "0",
+	"S", "0", // TALK, TALKSTOP
 	"NN","NN","NN","NNN","NNN", //MEMFILL
 };
 
@@ -1015,8 +1012,6 @@ void tok_eval(struct tokenizer* state){
 					// Command is FOR: add instruction at end of FOR setup to
 					// properly execute the loop
 					is_for = true;
-					// TODO:PERF:NONE TO and STEP are unneeded instructions after a FOR
-					// Do not compile those
 				} else if (state->tokens[i].cmd == CMD_IF){
 					// Command is IF: add normally, but needs to indicate that
 					// ENDIF should be added once line end is hit
@@ -1042,8 +1037,8 @@ void tok_eval(struct tokenizer* state){
 					// Any other "normal" command
 					is_dim = false;
 					// Note: is_for will not be always be reset because FOR
-					// needs to be kept to the newline, including through other
-					// commands TO and STEP
+					// needs to be kept to the newline/end of FOR/TO/STEP command
+					// including through other commands TO and STEP
 					if (is_for && state->tokens[i].cmd != CMD_TO && state->tokens[i].cmd != CMD_STEP) {
 						e.result[e.result_i++] = (struct token){.type=loop_begin, .ofs=0, .len=1, .prio=0};
 						is_for = false;
