@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 #include "common.h"
 #include "console.h"
 #include "error.h"
+#include "label.h"
 #include "system.h"
 #include "resources.h"
 #include "stack.h"
@@ -18,6 +20,7 @@
 
 #include "interpreter.h"
 #include "program.h"
+#include "tokens.h"
 
 struct ptc* init_system(int var, int str, int arr, bool headless){
 	srand(time(NULL));
@@ -431,9 +434,31 @@ enum launch_state {
 	LAUNCH_PROMPT,
 	LAUNCH_EDIT,
 	LAUNCH_RUN,
-	LAUNCH_BENCH,
 	LAUNCH_AUTOLOAD,
+	LAUNCH_DEBUG,
 };
+
+enum launch_debug {
+	LAUNCH_DEBUG_LABEL,
+	LAUNCH_DEBUG_BENCH,
+};
+
+void system_debug(struct ptc* p, enum launch_debug debug){
+	iprintf("DEUBG type=%d\n", debug);
+	if (debug == LAUNCH_DEBUG_LABEL){
+		iprintf("Wow! %d\n", p->exec.code.labels.label_count);
+		// Print out label table
+		for (int i = 0; i < p->exec.code.labels.label_count; ++i){
+			if (p->exec.code.labels.entry[i].name[0]){
+				iprintf("%d\n", i);
+				debug_print_str(p, (u8*)p->exec.code.labels.entry[i].name);
+			}
+		}
+	} else {
+		iprintf("Unknown debug type %d\n", debug);
+	}
+}
+
 
 /// Tokenizes and executes the program using the current system and options.
 ///
@@ -452,21 +477,9 @@ int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int t
 
 // this is practically the main function, barring some platform-specific intialization
 int launch_system(void* launch_info){
-	u8 err_msg[66] = {STRING_INLINE_CHAR}; // 2 lines + metadata
+	u8 err_msg[CONSOLE_WIDTH*2+2] = {STRING_INLINE_CHAR}; // 2 lines + string metadata (type + length)
 	struct launch_info* info = (struct launch_info*)launch_info;
 	struct ptc* p = info->p;
-	
-	// DIRECT setup
-	struct bytecode prompt_bc = init_bytecode_size(launcher.size, 1, 0); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
-	tokenize_full(&launcher, &prompt_bc, p, TOKOPT_NONE);
-	
-	// editor setup
-	// TODO:PERF:MED Reduce memory fragmentation by loading program into bytecode memory...?
-	struct program editor = {0};
-	load_prg_alloc(&editor, "programs/EDITOR.PTC"); // TODO:CODE:MED move EDITOR to resources
-	struct bytecode editor_bc = init_bytecode_size(editor.size, 500, 64); // TODO:CODE:NONE This isn't guaranteed to be safe, but I'm also not sure if the program can be made easily dangerous
-	tokenize_full(&editor, &editor_bc, p, TOKOPT_VARIABLE_IDS);
-	free_log("editor temp load", editor.data);
 	
 	// for user programs / "RUN" setup
 	struct bytecode bc = init_bytecode_size(MAX_SOURCE_SIZE, MAX_LINES, MAX_LABELS);
@@ -479,13 +492,28 @@ int launch_system(void* launch_info){
 		iprintf("Failed to allocate program...\n");
 		return -1;
 	}
+
+	// Tokenize launcher into big bytecode block
+	struct bytecode_params params = calc_min_bytecode(&p->exec.prg);
+	struct bytecode prompt_bc = init_bytecode_size(2 * launcher.size, params.lines, params.labels);
+
+	// DIRECT setup
+	tokenize_full(&launcher, &prompt_bc, p, TOKOPT_NONE);
 	
+	// editor setup
+	// Reduce memory fragmentation by loading program into existing memory
+	load_prg(&p->exec.prg, "programs/EDITOR.PTC"); // TODO:CODE:MED move EDITOR to resources
+	params = calc_min_bytecode(&p->exec.prg);
+	struct bytecode editor_bc = init_bytecode_size(2 * p->exec.prg.size, params.lines, params.labels);
+	tokenize_full(&p->exec.prg, &editor_bc, p, TOKOPT_VARIABLE_IDS);
+
 	// Setup complete
 	con_puts(&p->console, "S\45Small BASIC Computer            READY");
 	con_newline(&p->console, true);
 	bool running = true;
 	
 	int state = LAUNCH_PROMPT;
+	int debug = 0;
 	if (info->prg_filename){
 		state = LAUNCH_AUTOLOAD;
 	}
@@ -505,10 +533,15 @@ int launch_system(void* launch_info){
 				
 				void* cmd = get_var(&p->vars, "CODE", 4, VAR_STRING)->value.ptr;
 				if (str_comp(cmd, "S\011REM BENCH")){
-					state = LAUNCH_BENCH;
+					state = LAUNCH_DEBUG;
+					debug = LAUNCH_DEBUG_BENCH;
 					break;
 				} else if (str_comp(cmd, "S\3RUN")){
 					state = LAUNCH_RUN;
+					break;
+				} else if (str_comp(cmd, "S\11REM LABEL")){
+					state = LAUNCH_DEBUG;
+					debug = LAUNCH_DEBUG_LABEL;
 					break;
 				}
 				// check status
@@ -520,7 +553,8 @@ int launch_system(void* launch_info){
 					p->exec.error = ERR_NONE; // clear signal
 					p->exec.error_info[0] = 0; // clear signal info
 					break;
-				} else if (p->exec.error == ERR_SHUTDOWN){
+				}
+				if (p->exec.error == ERR_SHUTDOWN){
 					break;
 				}
 				
@@ -539,40 +573,19 @@ int launch_system(void* launch_info){
 				
 			case LAUNCH_EDIT: // EDIT mode
 				p->exec.error = ERR_NONE;
-				get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(0);
 				run(editor_bc, p);
 				int sig = p->exec.error_info[0];
-				// TODO:IMPL:LOW style buttons corrcetly for each mode
-				if (p->exec.error == ERR_BUTTON_SIGNAL){
-					if (sig == 71){ // RUN/DIRECT
-						state = LAUNCH_PROMPT;
-						// copy program to memory
-						p->exec.error = ERR_NONE;
-						p->exec.error_info[0] = 0; // clear signal info
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
-						run(editor_bc, p);
-						// reset screen
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
-						run(editor_bc, p);
-					}
-				} else if (p->exec.error == ERR_USER_SIGNAL){
+				// TODO:IMPL:LOW style buttons correctly for each mode
+				if (p->exec.error == ERR_USER_SIGNAL){
 					if (sig == 1){ // run program
 						state = LAUNCH_RUN;
 						p->exec.error = ERR_NONE;
 						p->exec.error_info[0] = 0; // clear signal info
-						// copy program to memory
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(3);
-						run(editor_bc, p);
-						// reset screen
-						get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(2);
-						run(editor_bc, p);
 					}
 				} else {
 					state = LAUNCH_PROMPT;
 					// crash to console to allow reading error message
 				}
-				// set this to allow EDITOR to be correctly started via LOAD/RUN or EXEC, if wanted
-				get_var(&p->vars, "EDITOR_MAGIC", 12, VAR_NUMBER)->value.number = INT_TO_FP(1);
 				break;
 				
 			case LAUNCH_RUN: // 'RUN' mode
@@ -580,17 +593,17 @@ int launch_system(void* launch_info){
 				state = LAUNCH_PROMPT; // program terminated: return to DIRECT mode
 				break;
 				
-			case LAUNCH_BENCH: // benchmark tests
-				p->exec.code = bc; // ensure it has correct resource
-				sbc_benchmark(launch_info);
-				state = LAUNCH_PROMPT; // return to DIRECT when done
-				break;
-				
 			case LAUNCH_AUTOLOAD: // auto load program
 				load_prg(&p->exec.prg, info->prg_filename);
 				state = LAUNCH_RUN;
 				break;
 				
+			case LAUNCH_DEBUG:
+				p->exec.code = bc;
+				system_debug(p, debug);
+				state = LAUNCH_PROMPT;
+				break;
+
 			default:
 				return p->exec.error;
 		}

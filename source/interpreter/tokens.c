@@ -254,7 +254,7 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 		if (error != ERR_NONE) break;
 
 		if (state.state == TKR_CONVERT){
-			iprintf("line: %.*s\n", (int)state.cursor - state.tokens[0].ofs, &state.source->data[state.tokens[0].ofs]);
+//			iprintf("line: %.*s\n", (int)state.cursor - state.tokens[0].ofs, &state.source->data[state.tokens[0].ofs]);
 //			for (size_t i = 0; i < state.token_i; ++i){
 //				iprintf("[line_token] ");
 //				print_token(&state, state.tokens[i]);

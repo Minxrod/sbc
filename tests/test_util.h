@@ -74,6 +74,39 @@
 	ASSERT(str_comp(test_var(&p->vars, var, VAR_STRING)->value.ptr, str), var" == "#str);\
 }
 
+// check expression result
+#define CHECK_NUM_EXP(c,z) do {\
+	char* code = "A="c"\r";\
+	struct ptc* p = run_code(code);\
+	ASSERT(p->exec.error == ERR_NONE, "[result] No error");\
+	CHECK_VAR_NUM("A",z);\
+	free_code(p);\
+} while(0)
+
+// check expression result
+#define CHECK_INT_EXP(c,z) do {\
+	CHECK_NUM_EXP(c,INT_TO_FP(z));\
+} while(0)
+
+// check string result
+#define CHECK_STR_EXP(c,s) do {\
+	char* code = "A$="c"\r";\
+	struct ptc* p = run_code(code);\
+	ASSERT(p->exec.error == ERR_NONE, "[result] No error");\
+	CHECK_VAR_STR("A",s);\
+	free_code(p);\
+} while(0)
+
+// check that expression causes an error
+#define CHECK_ERR_EXP(c,e) do {\
+	ASSERT(check_code_error("_="c"\r", e), "[error] Error: "#e);\
+} while(0)
+
+// check that a string expression causes an error
+#define CHECK_ERR_STR_EXP(c,e) do {\
+	ASSERT(check_code_error("_$="c"\r", e), "[error] Error: "#e);\
+} while(0)
+
 #define TEST_SEARCH_PATH "tests/data/"
 
 extern int check_fail;

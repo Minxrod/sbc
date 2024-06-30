@@ -47,6 +47,13 @@ struct program init_ptr_prg(char* c);
 bool load_prg_alloc(struct program* p, const char* filename);
 bool load_prg(struct program* p, const char* filename);
 
+struct bytecode_params {
+	int lines;
+	int labels;
+};
+
+struct bytecode_params calc_min_bytecode(struct program* p);
+
 // Scans for location of some instruction starting from index
 // Returns the index of found string
 idx bc_scan(struct bytecode code, idx index, u8 find) ITCM_CODE;

@@ -221,21 +221,24 @@ void cmd_gprio(struct ptc* p){
 void cmd_gputchr(struct ptc* p){
 	// GPUTCHR x,y,resource,chr,pal,size
 	// TODO:PERF:LOW Check performance of this and see if it can be optimized
-	int x_start, y_start, chr, pal, size;
+	int chr;
+	int pal;
+	int size;
 	void* resource;
-	x_start = STACK_INT(0);
-	y_start = STACK_INT(1);
+	int x_start = STACK_INT(0);
+	int y_start = STACK_INT(1);
 	resource = value_str(ARG(2));
 	STACK_INT_RANGE(3,0,255,chr);
 	STACK_INT_RANGE(4,0,15,pal);
 	size = STACK_INT(5);
 	if (size == 1 || size == 2 || size == 4 || size == 8){
 		// TODO:IMPL:MED GPUTCHR copies palette to COL2 memory
+
 		// pointer to base resource
 		u8* src = str_to_resource(p, resource);
 		// pointer to relevant character
 		src = &src[32*chr]; // TODO:CODE:NONE constant for size of one character
-		
+
 		// pointer to destination page
 		u8* dest = grp_drawpage(p);
 		// copy to destination

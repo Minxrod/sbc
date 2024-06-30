@@ -190,7 +190,7 @@ void display_sprite(struct ptc* p, int screen){
 	for (int i = 0; i < SPRITE_COUNT; ++i){
 		oam[i].isRotateScale = false;
 		oam[i].isHidden = true;
-		oam[i].isMosaic = true;
+//		oam[i].isMosaic = true;
 	}
 	// render in display_panel_keys instead
 	if (screen == 1 && p->panel.type >= PNL_KYA) return;

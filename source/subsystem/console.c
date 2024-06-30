@@ -96,6 +96,19 @@ void con_putn_at(struct console* c, int x, int y, fixp n){
 	con_putn(c, n);
 }
 
+void debug_print_str(struct ptc* p, const u8* msg){
+	struct console* c = &p->console;
+	// TODO:CODE:LOW const cast. It's safe but I don't like it
+	struct string s = {
+		.type = STRING_CHAR,
+		.ptr.s = (u8*)msg,
+		.len = strlen((char*)msg),
+	};
+
+	con_puts(c, &s);
+	con_advance(c);
+}
+
 void cmd_print(struct ptc* p){
 	struct console* c = &p->console;
 	
@@ -322,6 +335,7 @@ void cmd_input(struct ptc* p){
 	while (!valid){
 		valid = true;
 		output = shared_input(p);
+		if (p->exec.error) break;
 		// scan commas
 		int commas = 0;
 		for (int x = 0; x < CONSOLE_WIDTH; ++x){
@@ -420,7 +434,8 @@ void cmd_linput(struct ptc* p){
 	con_prompt(con, prompt_str);
 	
 	u16* output = shared_input(p);
-	
+	if (p->exec.error) return;
+
 	// Now store the result to a new string
 	struct string* s = get_new_str(&p->strs);
 	

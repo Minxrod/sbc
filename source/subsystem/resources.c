@@ -641,14 +641,16 @@ void* get_resource_ptr(struct ptc* p, const char* resource_type){
 		screen = screen < 0 ? p->background.page : screen;
 		resource_ptr = p->res.scr + SCR_BANKS * screen + 2 + bank;
 	} else if (!strncmp("COL", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
-		if (bank == 0) screen = screen < 0 ? p->background.page : screen;
-		if (bank == 1) screen = screen < 0 ? p->sprites.page : screen;
-		if (bank == 2) screen = screen < 0 ? p->graphics.screen : screen;
+		if (bank == 0) screen = screen < 0 ? (int)p->background.page : screen;
+		if (bank == 1) screen = screen < 0 ? (int)p->sprites.page : screen;
+		if (bank == 2) screen = screen < 0 ? (int)p->graphics.screen : screen;
 		resource_ptr = p->res.col + COL_BANKS * screen + bank;
 	} else if (!strncmp("PRG", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
-		return &p->exec.prg;
+		return p->exec.prg.data;
 	} else if (!strncmp("MEM", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
 		return p->res.mem.data;
+	} else if (!strncmp("GRP", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
+		return p->res.grp[bank];
 	} else {
 		iprintf("Resource type %s is invalid!\n", resource_type);
 		abort();
@@ -698,6 +700,22 @@ struct res_info {
 	void* data;
 };
 
+struct res_info get_verified_resource_type(struct ptc* p, const void* res){
+	// TODO:ERR:LOW verify correct error codes
+	struct res_info info = {0};
+	if (str_len(res) > MAX_RESOURCE_TYPE_LENGTH){
+		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
+		return info;
+	}
+	if ((info.type_id = get_resource_type(res)) == TYPE_INVALID){
+		p->exec.error = ERR_INVALID_RESOURCE_TYPE;
+		return info;
+	}
+	str_char_copy(res, (u8*)info.type);
+	info.data = get_resource_ptr(p, info.type);
+	return info;
+}
+
 /// Verifies that a given resource name is valid and assigns the values
 /// necessary to use it.
 struct res_info get_verified_resource(struct ptc* p, const void* res){
@@ -713,11 +731,22 @@ struct res_info get_verified_resource(struct ptc* p, const void* res){
 		p->exec.error = ERR_ILLEGAL_FUNCTION_CALL;
 		return info;
 	}
+	// Warning ignored because we zero-initialize info, and thus we don't need to copy the null
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
 	const char* sep = strchr(res_str, RESOURCE_SEPARATOR);
-	strncpy(info.type, res_str, sep ? sep - res_str : (int)strlen(res_str));
-	const char* name = sep ? sep + 1 : res_str;
-	strncpy(info.name, name, strlen(name));
-	info.type_id = get_resource_type(res);
+	if (sep){
+		// Copy from type to separator
+		strncpy(info.type, res_str, sep - res_str);
+		info.type_id = get_resource_type(res);
+		const char* name = sep + 1;
+		strncpy(info.name, name, strlen(name));
+	} else { // Default PRG type
+		strncpy(info.type, "PRG", 3);
+		info.type_id = TYPE_PRG;
+		strncpy(info.name, res_str, strlen(res_str));
+	}
+#pragma GCC diagnostic pop
 	info.data = get_resource_ptr(p, info.type);
 	iprintf("get_resource of type=%s (%d) name=%s at ptr=%p\n", info.type, (int)strlen(info.type), info.name, info.data);
 
@@ -776,7 +805,7 @@ void cmd_save(struct ptc* p){
 void cmd_chrinit(struct ptc* p){
 	// CHRINIT resource
 	void* res_str = value_str(ARG(0));
-	struct res_info info = get_verified_resource(p, res_str);
+	struct res_info info = get_verified_resource_type(p, res_str);
 	if (p->exec.error) return; // something went wrong
 
 	// check that this is a CHR type resource:
@@ -807,7 +836,7 @@ void cmd_chrread(struct ptc* p){
 	STACK_INT_RANGE(1,0,255,id);
 	void** out = ARG(2)->value.ptr; // pointer to string (which is itself a pointer)
 	
-	struct res_info info = get_verified_resource(p, res_str);
+	struct res_info info = get_verified_resource_type(p, res_str);
 	if (p->exec.error) return; // something went wrong
 
 	if (TYPE_CHR == info.type_id){
@@ -842,7 +871,7 @@ void cmd_chrset(struct ptc* p){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
 	
-	struct res_info info = get_verified_resource(p, res_str);
+	struct res_info info = get_verified_resource_type(p, res_str);
 	if (p->exec.error) return; // something went wrong
 
 	if (TYPE_CHR == info.type_id){

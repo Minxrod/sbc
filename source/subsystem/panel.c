@@ -407,10 +407,10 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 			for (int i = 0; i < p->func_keys_len[key]; ++i){
 				set_inkey(&ptc->input, p->func_keys[key][i]);
 			}
-		} else if (pressed_key >= 70 && pressed_key <= 72){
+		}/* else if (pressed_key >= 70 && pressed_key <= 72){
 			ptc->exec.error = ERR_BUTTON_SIGNAL;
 			ptc->exec.error_info[0] = pressed_key;
-		}
+		}*/
 	}
 	
 	if (refresh){

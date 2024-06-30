@@ -422,7 +422,7 @@ void cmd_spangle(struct ptc* p){
 		if (p->stack.stack_i == 4){
 			dir = STACK_INT(3);
 			if (dir != 1 && dir != -1){
-				ERROR(ERR_ILLEGAL_FUNCTION_CALL); // TODO:ERR:LOW Check correct error code
+				ERROR(ERR_OUT_OF_RANGE);
 			}
 		}
 		

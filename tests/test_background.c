@@ -90,5 +90,14 @@ int test_background(void){
 		ASSERT(to_tiledata(1023,15,1,1) == 65535, "[tile] Everything");
 	}
 	
+	// BGREAD on negative coordinates
+	{
+		struct ptc* p = run_code("BGPUT 0,2,1,5:BGREAD(0,-62,-63),T\r");
+
+		CHECK_VAR_INT("T", 5);
+
+		free_code(p);
+	}
+
 	SUCCESS("test_background success");
 }

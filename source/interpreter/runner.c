@@ -166,7 +166,7 @@ struct var_name read_var_name(struct bytecode* b, idx index){
 /// @param code Program bytecode struct.
 /// @param p PTC struct containing entire state of interpreter + system
 /// @param init_exec If true, re-initializes more of the execution state.
-void _run(struct bytecode code, struct ptc* p, bool init_exec) ITCM_CODE {
+ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 	struct runner* r = &p->exec;
 	r->code = code;
 	if (init_exec){
@@ -451,7 +451,7 @@ void _run(struct bytecode code, struct ptc* p, bool init_exec) ITCM_CODE {
 					end = STACK_REL_NUM(-2);
 				}
 				fixp val = *current;
-				iprintf("val:%d end:%d step:%d\n", val, end, step);
+//				iprintf("val:%d end:%d step:%d\n", val, end, step);
 				if ((step < 0 && end > val) || (step >= 0 && end < val)){
 					// if val + step will never reach end, then skip to NEXT
 					// treat valid NEXT as first in a line
@@ -560,7 +560,7 @@ void cmd_exec(struct ptc* p){
 	filename_buf[str_len(filename)] = '\0';
 	
 	// Load program into memory and tokenize into bc
-	iprintf("\nold=%d ", p->exec.code.size);
+//	iprintf("\nold=%d ", p->exec.code.size);
 //	struct program prog = { 0, (char*)&p->exec.code.data[524288] };
 	if (!(p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, filename_buf, TYPE_PRG))){
 		// Failed to load file
@@ -570,7 +570,7 @@ void cmd_exec(struct ptc* p){
 	
 	// tokenize updates all relevant exec.code values
 	p->exec.error = tokenize(&p->exec.prg, &p->exec.code);
-	iprintf("new=%d\n", p->exec.code.size);
+//	iprintf("new=%d\n", p->exec.code.size);
 	// error set if needed; otherwise, execute
 	// EXEC is called from run, so running happens naturally. Just reset the necessary values.
 	p->exec.index = 0; // beginning of program
@@ -584,7 +584,7 @@ void cmd_exec(struct ptc* p){
 void cmd_run(struct ptc* p){
 	// tokenize updates all relevant exec.code values
 	p->exec.error = tokenize_full(&p->exec.prg, &p->exec.code, p, TOKOPT_NONE);
-	iprintf("new=%d\n", p->exec.code.size);
+//	iprintf("new=%d\n", p->exec.code.size);
 	// error set if needed; otherwise, execute
 	// EXEC is called from run, so running happens naturally. Just reset the necessary values.
 	p->exec.index = 0; // beginning of program

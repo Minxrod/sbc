@@ -54,6 +54,33 @@ void free_bytecode(struct bytecode bc){
 	free_labels(bc.labels);
 }
 
+struct bytecode_params calc_min_bytecode(struct program* p){
+	struct bytecode_params params = {0};
+	bool first_of_line = true;
+	for (uint32_t i = 0; i < p->size; ++i){
+		// Count line endings == number of lines
+		if (p->data[i] == '\r'){
+			++params.lines;
+			first_of_line = true;
+		} else if (first_of_line && p->data[i] == '@'){
+			// Count labels (only definable at beginning of line)
+			++params.labels;
+		} else if (p->data[i] != ' '){
+			first_of_line = false;
+		}
+	}
+	// determine necessary labels size
+	params.labels--;
+	params.labels |= params.labels >> 16;
+	params.labels |= params.labels >> 8;
+	params.labels |= params.labels >> 4;
+	params.labels |= params.labels >> 2;
+	params.labels |= params.labels >> 1;
+	params.labels++;
+
+	return params;
+}
+
 // Scans for two instructions, searching for the second and storing the prior one as well
 struct idx_pair bc_scan_pair(struct bytecode code, idx index, u8 find){
 	// search for find in code.data

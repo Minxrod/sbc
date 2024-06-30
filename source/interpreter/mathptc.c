@@ -56,7 +56,7 @@ void func_log(struct ptc* p){
 	if (log_a <= 0){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
-	iprintf("%d\n", log_a);
+//	iprintf("%d\n", log_a);
 	
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_log_internal(log_a)}});
 }
@@ -79,12 +79,12 @@ void func_pow(struct ptc* p){
 	fixp pow_b = VALUE_NUM(b);
 	fixp pow_e = VALUE_NUM(e);
 
-	float f = powf(pow_b/4096.0, pow_e/4096.0);
+	float f = powf(pow_b/4096.0f, pow_e/4096.0f);
+	iprintf("%f", f);
 
-	// TODO:TEST:LOW validate error ranges are correct
 	if (isinf(f)){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
-	} else if (4096*f >= 524288 || 4096*f <= -524288) {
+	} else if (f >= 524288.0f || f <= -524288.0f) {
 		ERROR(ERR_OVERFLOW);
 	}
 	

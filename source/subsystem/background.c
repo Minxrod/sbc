@@ -209,8 +209,11 @@ void cmd_bgread(struct ptc* p){
 	uint_fast8_t layer, x, y;
 	u16 tiledata;
 	STACK_INT_RANGE(0,0,1,layer);
-	x = STACK_INT(1) % BG_WIDTH; //TODO:TEST:MED check that this works for negatives
-	y = STACK_INT(2) % BG_HEIGHT;
+	assert((BG_WIDTH & (BG_WIDTH - 1)) == 0);
+	assert((BG_HEIGHT& (BG_HEIGHT- 1)) == 0);
+
+	x = STACK_INT(1) & (BG_WIDTH - 1);
+	y = STACK_INT(2) & (BG_HEIGHT - 1);
 	
 	u16* bg = bg_page(p, p->background.page, layer);
 	tiledata = bg[bg_index(x,y)];

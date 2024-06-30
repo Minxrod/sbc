@@ -7,7 +7,6 @@
 #include "system.h"
 #include "error.h"
 #include "input.h"
-#include <SFML/Graphics/RenderWindow.h>
 
 // Common main stuff
 
@@ -106,7 +105,7 @@ void frame_update(){
 	KEY(L)
 	KEY(R)
 	
-	set_input(&ptc->input, conv_b);
+	set_input(ptc, conv_b);
 	
 	set_touch(&ptc->input, b & KEY_TOUCH, touch.px, touch.py);
 	press_key(ptc, b & KEY_TOUCH, touch.px, touch.py);
@@ -155,6 +154,7 @@ void v__(void); //prevent empty translation unit
 #include <SFML/System.h>
 #include <SFML/Graphics.h>
 #include <SFML/Window.h>
+#include <SFML/Graphics/RenderWindow.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -98,6 +98,8 @@ struct launch_info {
 
 // This is intended to accept a struct launch_info, but is void* for use in thrd_create
 int launch_system(void*);
+// Run a program on a system
+int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int tokopts);
 
 void cmd_acls(struct ptc*);
 void cmd_visible(struct ptc*);

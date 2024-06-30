@@ -659,6 +659,23 @@ int test_int_code(){
 		free_code(p);
 	}
 
+	// Label bug on collision across programs
+	// Because label reset only reset the first byte, writing a smaller label name
+	// creates a sort of combined name. Ex. GAMEINIT -> \0AMEINIT -> write MAP1 -> MAP1INIT (incorrect)
+	// The fix is to write a null if needed.
+	{
+#define LABEL_COLLISION_PRG_2 "GOTO @MAP1\r@MAP1\r"
+		struct ptc* p = run_code("GOTO @GAMEINIT\r@GAMEINIT\r");
+		ASSERT(p->exec.error == ERR_NONE, "[label] First program works");
+
+		p->exec.prg.size = strlen(LABEL_COLLISION_PRG_2);
+		memcpy(p->exec.prg.data, LABEL_COLLISION_PRG_2, sizeof(LABEL_COLLISION_PRG_2));
+		token_and_run(p, &p->exec.prg, &p->exec.code, 0);
+		ASSERT(p->exec.error == ERR_NONE, "[label] Second program works");
+
+		free_code(p);
+	}
+
 	// TODO:TEST:LOW DATA A DATA B?
 
 	SUCCESS("test_int_code success");

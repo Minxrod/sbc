@@ -69,7 +69,6 @@ void init_display(struct ptc* p){
 	
 	d->graphic = init_graphic(GRP_WIDTH, GRP_HEIGHT);
 	
-	// TODO:PERF:LOW allocate less space?
 	d->background_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
 //	d->foreground_map = init_tilemap(BG_WIDTH, BG_HEIGHT);
 	

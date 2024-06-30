@@ -152,8 +152,10 @@ static const uint32_t endian = 0x01020304;
 #endif
 #else // GCC specific extension endian check (but doesn't waste memory)
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#undef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1
 #else
+#undef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 0
 #endif // __BYTE_ORDER__
 #endif // __GNUC__

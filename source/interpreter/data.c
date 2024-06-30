@@ -95,8 +95,8 @@ void cmd_read(struct ptc* p){
 	// Iterate over variables on stack
 	for (int i = 0; i < p->stack.stack_i; ++i){
 		block_size = data_block[1];
-		iprintf("src=%d size=%d", p->exec.data_index, block_size);
-		iprintf(" data=\"%.*s\"", block_size, &data_block[DATA_DATA_OFS + p->exec.data_offset]);
+//		iprintf("src=%d size=%d", p->exec.data_index, block_size);
+//		iprintf(" data=\"%.*s\"", block_size, &data_block[DATA_DATA_OFS + p->exec.data_offset]);
 		data_src = &data_block[DATA_DATA_OFS + p->exec.data_offset];
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));
@@ -104,11 +104,11 @@ void cmd_read(struct ptc* p){
 			ERROR(ERR_READ_FAILURE);
 		}
 		p->exec.data_offset += read;
-		iprintf(" read:%d", p->exec.data_offset);
+//		iprintf(" read:%d", p->exec.data_offset);
 		if (data_block[2 + p->exec.data_offset] == BC_DATA_DELIM){
 			p->exec.data_offset++;
 		}
-		iprintf(" pos:%d\n", p->exec.data_offset);
+//		iprintf(" pos:%d\n", p->exec.data_offset);
 		if (p->exec.data_offset >= block_size){
 			// search for next data block
 			find_data(p);
@@ -123,5 +123,5 @@ void cmd_restore(struct ptc* p){
 	idx index = search_label(p, label); // sets error on failure
 	p->exec.data_index = bc_scan(p->exec.code, index, BC_DATA);
 	p->exec.data_offset = 0;
-	iprintf("Data at %d: %.*s", index, p->exec.code.data[index+1], &p->exec.code.data[index+2]);
+//	iprintf("Data at %d: %.*s", index, p->exec.code.data[index+1], &p->exec.code.data[index+2]);
 }

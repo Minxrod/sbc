@@ -36,6 +36,7 @@ struct labels {
 struct labels init_labels(int);
 void free_labels(struct labels);
 
+/// @return True if label successfully added.
 bool add_label(struct labels* l, char* name, uint_fast8_t len, idx index);
 
 void reset_label(struct labels* l);

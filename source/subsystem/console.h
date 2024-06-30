@@ -110,6 +110,9 @@ void con_advance(struct console* c);
 /// off the console's edge.
 void con_newline(struct console* c, bool scroll);
 
+// Special debug instruction because strings are inncovenient sometimes
+void debug_print_str(struct ptc* p, const u8* msg);
+
 // PTC commands, etc.
 void cmd_cls(struct ptc* p);
 void cmd_print(struct ptc* p);

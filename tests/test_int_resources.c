@@ -1,4 +1,7 @@
+#include "error.h"
+#include "resources.h"
 #include "test_util.h"
+#include "tokens.h"
 
 #include "system.h"
 
@@ -35,11 +38,16 @@ int test_int_resources(void){
 		ASSERT(get_resource_ptr(p, "COL2L") == p->res.col[5], "[get_resource] Check resource pointers are correct: COL5");
 
 		ASSERT(get_resource_ptr(p, "MEM") == p->res.mem.data, "[get_resource] Check resource pointers are correct: MEM");
-		ASSERT(get_resource_ptr(p, "PRG") == &p->exec.prg, "[get_resource] Check resource pointers are correct: PRG")
+		ASSERT(get_resource_ptr(p, "PRG") == p->exec.prg.data, "[get_resource] Check resource pointers are correct: PRG");
 
-		ASSERT(get_resource_ptr(p, "SCU0U") == p->res.scr[2], "[get_resource] Check resource pointers are correct: SCU0U")
-		ASSERT(get_resource_ptr(p, "SCU0L") == p->res.scr[6], "[get_resource] Check resource pointers are correct: SCU0L")
-		ASSERT(get_resource_ptr(p, "SCU1") == p->res.scr[3], "[get_resource] Check resource pointers are correct: SCU1")
+		ASSERT(get_resource_ptr(p, "SCU0U") == p->res.scr[2], "[get_resource] Check resource pointers are correct: SCU0U");
+		ASSERT(get_resource_ptr(p, "SCU0L") == p->res.scr[6], "[get_resource] Check resource pointers are correct: SCU0L");
+		ASSERT(get_resource_ptr(p, "SCU1") == p->res.scr[3], "[get_resource] Check resource pointers are correct: SCU1");
+
+		ASSERT(get_resource_ptr(p, "GRP0") == p->res.grp[0], "[get_resource] Check resource pointers are correct: GRP0");
+		ASSERT(get_resource_ptr(p, "GRP") == p->res.grp[0], "[get_resource] Check resource pointers are correct: GRP");
+		ASSERT(get_resource_ptr(p, "GRP2") == p->res.grp[2], "[get_resource] Check resource pointers are correct: GRP2");
+		ASSERT(get_resource_ptr(p, "GRP3") == p->res.grp[3], "[get_resource] Check resource pointers are correct: GRP3");
 
 		free_system(p);
 	}
@@ -109,6 +117,48 @@ int test_int_resources(void){
 		struct ptc* p = run_code("LOAD\"BGF0:NOTEXIST\",0\r");
 
 		ASSERT(p->res.result == 0, "[load] RESULT is zero after failed load");
+
+		free_code(p);
+	}
+
+	// Test LOAD of program
+	// Note: Strictly, this shouldn't be allowed in a PTC program, since it would overwrite the running program.
+	// However, SBC compiles the program first, and as such this is safe to do.
+	{
+		struct ptc* p = run_code("LOAD\"PRG:IFELSE\",0\r");
+
+		ASSERT(p->exec.error == ERR_NONE, "[load] Loaded with no error");
+		ASSERT(p->res.result == 1, "[load] RESULT is one after load");
+
+		free_code(p);
+	}
+
+	// Test LOAD with no resource type + execution
+	{
+		struct ptc* p = run_code("LOAD\"IFELSE\",0\r");
+
+		ASSERT(p->exec.error == ERR_NONE, "[load] Loaded with no error");
+		ASSERT(p->res.result == 1, "[load] RESULT is one after load");
+
+		// try to run loaded program to check that it worked
+		token_and_run(p, &p->exec.prg, &p->exec.code, 0);
+
+		CHECK_VAR_INT("TY",13); // indicates program executed correctly
+
+		free_code(p);
+	}
+
+	// Simple test of CHR* commands (CHRSET, CHRREAD, simple CHRINIT)
+	{
+		struct ptc* p = run_code(
+			"CHRSET \"BGF0\",0,\"42\"*32\r"
+			"CHRREAD (\"BGF0\",0),A$\r"
+			"CHRINIT \"BGF0\"\r"
+			"CHRREAD (\"BGF0\",0),B$\r"
+		);
+
+		CHECK_VAR_STR("A","S\1004242424242424242424242424242424242424242424242424242424242424242");
+		CHECK_VAR_STR("B","S\1000000000000000000000000000000000000000000000000000000000000000000");
 
 		free_code(p);
 	}
