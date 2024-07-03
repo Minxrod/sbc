@@ -156,7 +156,6 @@ void func_atan(struct ptc* p){
 	} else {
 		struct stack_entry* x = stack_pop(&p->stack);
 		struct stack_entry* y = stack_pop(&p->stack);
-		// TODO:ERR:MED Check for errors
 		
 		STACK_RETURN_NUM(func_atan2_internal(VALUE_NUM(y), VALUE_NUM(x)));
 	}

@@ -163,6 +163,35 @@ int test_int_resources(void){
 		free_code(p);
 	}
 
+	// Test for precision of COLSET/COLREAD commands
+	{
+		struct ptc* p = run_code(
+			"COLSET \"BG\",0,\"050507\r"
+			"COLREAD(\"BG\",0),R,G,B\r"
+			"COLSET \"BG\",1,\"08090A\r"
+			"COLREAD(\"BG\",1),X,Y,Z\r"
+			"COLSET \"BG\",1,\"808080\r"
+			"COLREAD(\"BG\",1),U,V,W\r"
+			"COLSET \"BG\",1,\"FFFFFF\r"
+			"COLREAD(\"BG\",1),I,J,K\r"
+		);
+
+		CHECK_VAR_INT("R",0);
+		CHECK_VAR_INT("G",4);
+		CHECK_VAR_INT("B",0);
+		CHECK_VAR_INT("X",8);
+		CHECK_VAR_INT("Y",8);
+		CHECK_VAR_INT("Z",8);
+		CHECK_VAR_INT("U",0x84);
+		CHECK_VAR_INT("V",0x82);
+		CHECK_VAR_INT("W",0x84);
+		CHECK_VAR_INT("I",0xff);
+		CHECK_VAR_INT("J",0xff);
+		CHECK_VAR_INT("K",0xff);
+
+		free_code(p);
+	}
+
 	// Test MEM$ saving
 	{
 		// ensure file does not exist

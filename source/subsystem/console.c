@@ -176,6 +176,8 @@ void cmd_locate(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
+
+// TODO:PERF:MED Just memset the entire area...
 void cmd_cls(struct ptc* p){
 	struct console* c = &p->console;
 	for (int i = 0; i < CONSOLE_HEIGHT; ++i){
@@ -201,16 +203,15 @@ void cmd_cls(struct ptc* p){
 
 u16* shared_input(struct ptc* p){
 	// TODO:IMPL:LOW Use BREPEAT values if set
-	// TODO:IMPL:LOW Set color when entering text
-	// TODO:IMPL:LOW Remove color when backspacing
 	// TODO:IMPL:MED Blinking text cursor
-	// TODO:TEST:MED Write tests for these
+	// TODO:TEST:MED Write tests for color while removing characters
 	struct console* con = &p->console;
-	
+
 	uint_fast16_t inkey;
 	uint_fast8_t keyboard;
 	u16* output = con->text[con->y]; // start of current line
-//	u8* outcol = con->color[con->y];
+	u8* outcol = con->color[con->y];
+
 	uint_fast8_t out_index = 0;
 	uint_fast8_t out_index_max = 0;
 	int old_panel = p->panel.type;
@@ -242,6 +243,7 @@ u16* shared_input(struct ptc* p){
 			// Copy characters back
 			if (out_index > 0){
 				for (int i = out_index-1; i < (int)out_index_max; ++i){
+					outcol[i] = outcol[i+1];
 					output[i] = output[i+1];
 				}
 				output[--out_index_max] = 0;
@@ -251,6 +253,7 @@ u16* shared_input(struct ptc* p){
 			// Copy characters back
 			if (out_index < out_index_max){
 				for (int i = out_index; i < (int)out_index_max; ++i){
+					outcol[i] = outcol[i+1];
 					output[i] = output[i+1];
 				}
 				output[--out_index_max] = 0;
@@ -259,14 +262,17 @@ u16* shared_input(struct ptc* p){
 			// don't add this one
 		} else if (inkey && out_index_max < CONSOLE_WIDTH){
 			if ((p->panel.cursor & ~PNL_INSERT)){ // REPLACE mode
+				outcol[out_index] = con->col;
 				output[out_index++] = inkey;
 				if (out_index > out_index_max)
 					++out_index_max;
 			} else { // INSERT mode
 				// Copy characters past insertion point forward
 				for (int i = out_index_max-1; i >= (int)out_index; --i){
+					outcol[i+1] = outcol[i];
 					output[i+1] = output[i];
 				}
+				outcol[out_index] = con->col;
 				output[out_index++] = inkey;
 				++out_index_max;
 			}

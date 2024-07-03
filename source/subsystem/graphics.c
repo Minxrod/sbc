@@ -456,7 +456,6 @@ static inline bool inside(u8* data, int x, int y, int match){
 
 void cmd_gpaint(struct ptc* p){
 	// GPAINT X Y [C [B]]
-	// TODO:ERR:MED determine errors + bounds checks
 	// TODO:IMPL:MED This version runs out of memory too easily. Is there a way to fix this without just allocating a larger stack?
 	// Maybe try a simpler recursive implementation, but periodically filter out already checked pixels to keep border smaller?
 	int x, y;

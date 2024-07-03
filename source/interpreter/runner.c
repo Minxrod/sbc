@@ -22,6 +22,7 @@
 #include "subsystem/resources.h"
 #include "subsystem/sprites.h"
 #include "subsystem/graphics.h"
+#include "subsystem/variables.h"
 #include "vars.h"
 
 #include <stdio.h>

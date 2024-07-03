@@ -1,3 +1,4 @@
+#include "strs.h"
 #include "test_util.h"
 
 #include "common.h"
@@ -324,6 +325,25 @@ int test_console(void){
 		ASSERT(to_wide('6') == con_text_getc(&p->console,  4, 22), "[print] Scrolled long string 6");
 		ASSERT(to_wide('4') == con_text_getc(&p->console,  5, 22), "[print] Scrolled long string 4");
 		
+		free_code(p);
+	}
+
+	// INPUT with COLOR
+	{
+		struct ptc* p = run_code_keys("COLOR 6\rINPUT A$\r", "12A\r", 4);
+
+		ASSERT(to_wide('?') == con_text_getc(&p->console, 0, 0), "[input] Prompt ?");
+		ASSERT(con_col_get(&p->console, 0, 0) == 6, "[input] Color of prompt ?");
+
+		ASSERT(to_wide('1') == con_text_getc(&p->console, 0, 1), "[input] User input text 1");
+		ASSERT(to_wide('2') == con_text_getc(&p->console, 1, 1), "[input] User input text 2");
+		ASSERT(to_wide('A') == con_text_getc(&p->console, 2, 1), "[input] User input text A");
+
+		ASSERT(con_col_get(&p->console, 0, 1) == 6, "[input] Color of input 1");
+		ASSERT(con_col_get(&p->console, 1, 1) == 6, "[input] Color of input 2");
+		ASSERT(con_col_get(&p->console, 2, 1) == 6, "[input] Color of input A");
+		ASSERT(con_col_get(&p->console, 3, 1) == 0, "[input] No color past input");
+
 		free_code(p);
 	}
 	

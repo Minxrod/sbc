@@ -88,11 +88,14 @@ bool is_varname(char c);
 u32 name_hash(const char* name, const u32 len, const u32 hmax);
 bool namecmp(const char* a, const u32 len, const char b[16]);
 
-//Convert char to wide char
+// Convert char to wide char
 u16 to_wide(u8 c);
 
-//Reverse char to wide char
-u8 to_char(u16 w);
+/// Converts a wide character into an 8-bit character
+///
+/// @param w Wide character to convert
+/// @return 8-bit character code, or -1 if wide character is out of range
+int to_char(u16 w);
 
 //Convert a (hex) digit into an integer;
 int digit_value(const u16 c);

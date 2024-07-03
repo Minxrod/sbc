@@ -356,7 +356,8 @@ const u8 katakana[] = "?\x03\x00?????????\x01\x02???????????????????????????????
 "????\x06\x10\x07\x11\x08\x12\t\x13\n\x14\x15?\x16?\x17?\x18?\x19?\x1a?\x1b?\x1c?\x1d?\x1e?\x1f? ?"
 "\x0e!?\"?#?$%&\'()??*??+??,?" /*split trigraph, again*/ "?-??./012\x0b""3\x0c""4\r56789:?;??\x05<???????\x04????";
 
-u8 to_char(u16 w){
+//TODO:TEST:LOW Check that this validates all characters correctly
+int to_char(u16 w){
 	u8 wh = (w & 0xff00) >> 8;
 	u8 wl = w & 0x00ff;
 	if (wh == 0){
@@ -364,39 +365,20 @@ u8 to_char(u16 w){
 	} else if (wh == 0x20){
 		if (wl == 0x1d) return 0x22;
 		if (wl == 0x19) return 0x27;
-		abort();
+		// invalid returns -1
 	} else if (wh == 0xff){
 		if (wl == 0x70) return 0xb0;
 		if (wl == 0xe5) return 0x5c;
-		return wl + 0x20;
+		return wl + 0x20; // TODO:IMPL:LOW returns some false values?
 	} else if (wh == 0x30){
 		return katakana[wl] + 0xa1;
-	} else {
-		//TODO:CODE:LOW Handle invalid characters better?
-		iprintf("Error converting u16 to u8 char (unimplemented): 0x%x\n", w);
-		abort();
 	}
+	iprintf("Error converting u16 to u8 char: 0x%x\n", w);
+	return -1;
 }
 
-bool is_char(u16 w){
-	u8 wh = (w & 0xff00) >> 8;
-	u8 wl = w & 0x00ff;
-	if (wh == 0){
-		return true;
-	} else if (wh == 0x20){
-		if (wl == 0x1d) return true;
-		if (wl == 0x19) return true;
-		return false;
-	} else if (wh == 0xff){
-		if (wl == 0x70) return true;
-		if (wl == 0xe5) return true;
-		return true; // TODO:IMPL:LOW returns some false positives?
-	} else if (wh == 0x30){
-		return katakana[wl] != '?';
-	} else {
-		//TODO:TEST:LOW Check that this validates all characters correctly
-		return false;
-	}
+inline bool is_char(u16 w){
+	return to_char(w) != -1;
 }
 
 /// Copy n characters from source buffer to destination buffer.
@@ -595,13 +577,8 @@ void str_set_len(void* src, int len){
 
 
 bool str_comp(const void* str1, const void* str2){
-	// TODO:PERF:NONE
-	// Check if iterating without a copy is faster (using str_at_wide)
 	assert(str1);
 	assert(str2);
-	
-	u16 cmp1[256];
-	u16 cmp2[256];
 	
 	if (str1 == str2) return true;
 	
@@ -610,13 +587,10 @@ bool str_comp(const void* str1, const void* str2){
 	if (len != str_len(str2)){
 		return false;
 	}
-	
-	str_wide_copy(str1, cmp1);
-	str_wide_copy(str2, cmp2);
-	
+
 	for (u32 i = 0; i < len; ++i){
 //		iprintf("%d==%d\n", cmp1[i], cmp2[i]);
-		if (cmp1[i] != cmp2[i]){
+		if (str_at_wide(str1, i) != str_at_wide(str2, i)){
 			return false;
 		}
 	}

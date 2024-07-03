@@ -106,7 +106,7 @@ idx search_label(struct ptc* p, void* label){
 	// Labels must always be located at the beginning of a line.
 	idx index = 0;
 
-	u8 buf[MAX_LABEL_SIZE];
+	u8 buf[MAX_LABEL_SIZE+1]; // +1 to include the @ symbol in cases of strings
 	char* buf_ptr = (char*)buf;
 	int len = str_len(label);
 	if (*(char*)label == BC_LABEL || *(char*)label == BC_LABEL_STRING){
@@ -114,7 +114,7 @@ idx search_label(struct ptc* p, void* label){
 		str_char_copy(label, buf);
 	} else { // assume regular string
 		assert(len <= 17);
-		str_char_copy(label, buf); // TODO:ERR:MED does this have UB if label is 16 chars?
+		str_char_copy(label, buf);
 		++buf_ptr; // pointer past '@'
 		--len; // remove '@'
 	}

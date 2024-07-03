@@ -11,6 +11,7 @@
 #include "vars.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -970,12 +971,20 @@ void cmd_colread(struct ptc* p){
 	col_data = get_col_resource(p, res_str);
 	if (!col_data) return;
 
-	int c = col_data[col];
-	// GGGRRRRR GBBBBBGG
-	// Note: Loading as u16 only works on little endian device
-	*r = INT_TO_FP(c & 0x1f) << 3;
-	*g = INT_TO_FP(((c >> 5) & 0x1f)) << 3; // TODO:TEST:LOW Is lowest bit readable?
-	*b = INT_TO_FP(((c >> 10) & 0x1f)) << 3; // TODO:TEST:LOW Correct values as they scale?
+	// Note: Loading directly as u16 only works on little endian device
+	assert(LITTLE_ENDIAN);
+	uint_fast16_t c = col_data[col];
+	// 15              0
+	// GBBBBBGG GGGRRRRR
+	uint_fast8_t r_comp = (c & 0x1f) << 3;
+	r_comp += r_comp >> 5; // scaling 0-248 -> 0-255
+ 	uint_fast8_t g_comp = ((((c >> 4) & 0x3e)) | (c >> 15)) << 2;
+	g_comp += g_comp >> 6; // scaling 0-252 -> 0-255
+	uint_fast8_t b_comp = ((c >> 10) & 0x1f) << 3;
+	b_comp += b_comp >> 5;
+	*r = INT_TO_FP(r_comp);
+	*g = INT_TO_FP(g_comp);
+	*b = INT_TO_FP(b_comp);
 }
 
 void cmd_colset(struct ptc* p){
@@ -1001,19 +1010,24 @@ void cmd_colset(struct ptc* p){
 	
 	int r, g, b;
 	r = digit_value(str_at_wide(col_str, 0)) << 1;
-	g = digit_value(str_at_wide(col_str, 2)) << 1;
+	g = digit_value(str_at_wide(col_str, 2)) << 2;
 	b = digit_value(str_at_wide(col_str, 4)) << 1;
 	r |= digit_value(str_at_wide(col_str, 1)) >> 3;
-	g |= digit_value(str_at_wide(col_str, 3)) >> 3;
+	g |= digit_value(str_at_wide(col_str, 3)) >> 2;
 	b |= digit_value(str_at_wide(col_str, 5)) >> 3;
-	
-	col_data = &col_data[col]; // pointer to specific color we will set
-	
-	// GGGRRRRR GBBBBBGG
-	// Note: Loading as u16 only works on little endian device
+//	iprintf("colset with %d,%d,%d\n", r, g, b);
+
+	u16 color = r | (b << 10);
+	color |= ((g >> 1) << 5);
+	color |= (g & 0x1) << 15;
+//	iprintf("%04x", color);
+
+	// 15   10    5    0
+	// GBBBBBGG GGGRRRRR
+	// Note: Loading as u16 directly only works on little endian device
+	// TODO:CODE:LOW implement big-endian store
 	assert(LITTLE_ENDIAN);
-	// TODO:TEST:MED This loses the lowest bit of green?
-	*col_data = r | (g << 5) | b << 10;
+	col_data[col] = color;
 	p->res.regen_col = true;
 }
 

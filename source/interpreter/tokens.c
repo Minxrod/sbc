@@ -99,7 +99,8 @@ const char* cmd_format[] = {
 	"v,S;v","s,S;s", //LINPUT
 	"0","0,N,NN,NNN,NNNN", //BEEP
 	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNS,NNNNNNNNN","0,N", //BGMCLEAR
-	//TODO:TEST:NONE Verify that BGM* functions max out at nine string arguments
+	// BGMPLAY confirmed to max out at nine string arguments
+	// Weird bug: going over causes the MML to be parsed incorrect?
 	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
 	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
 	"NL","NNN","0,N,NN","N,NN", //BGMVOL
