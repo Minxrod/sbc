@@ -73,4 +73,7 @@ const char * error_messages[] = {
 	"FOR command has no matching BC_BEGIN_LOOP",
 	"Sorting 2D array not allowed!",
 	"Shutdown started",
+	"Loaded file type does not match resource type",
+	"File contains invalid data",
+	"File processing internal error",
 };

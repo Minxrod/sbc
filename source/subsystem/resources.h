@@ -161,6 +161,24 @@ struct resources {
 
 struct ptc;
 
+/// Creates a file path from path components.
+///
+/// @param dest Pointer to buffer containing path
+/// @param base Directory file is in (should include '/' last)
+/// @param name C string containing 'simple' name of file (no directory or extensions)
+/// @param ext Intended extension of file (should include '.' first)
+/// @return true if path is created successfully, false if something went wrong (path too long, etc.)
+bool create_path(char dest[MAX_FILEPATH_LENGTH+1], const char* base, const char* name, const char* ext);
+
+/// Creates a path from a SBC string.
+///
+/// @param dest Pointer to buffer containing path
+/// @param base Directory file is in (should include '/' last)
+/// @param name SBC string containing 'simple' name of file (no directory or extensions)
+/// @param ext Intended extension of file (should include '.' first)
+/// @return true if path is created successfully, false if something went wrong (path too long, etc.)
+bool create_path_from_str(char dest[MAX_FILEPATH_LENGTH+1], const char* base, const char* name, const char* ext);
+
 bool verify_resource_type(const char* resource_type);
 bool verify_resource_type_str(const void* res);
 bool verify_resource_name(const char* resource_name);

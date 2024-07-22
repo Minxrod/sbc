@@ -223,6 +223,29 @@ int test_int_resources(void){
 		}
 	}
 
+	// Simple APPEND test
+	{
+		struct ptc* p = run_code("LOAD\"IFELSE\",0\rAPPEND\"IFELSE\"\r");
+
+		ASSERT(p->res.result == 1, "[append] RESULT is one (successful APPEND)");
+
+		int append_dest = p->exec.prg.size / 2;
+		for (int i = 0; i < append_dest; ++i){
+			iprintf("%d=%d?\n", p->exec.prg.data[i], p->exec.prg.data[i+append_dest]);
+			ASSERT(p->exec.prg.data[i] == p->exec.prg.data[i+append_dest], "[append] Data matches");
+		}
+
+		free_code(p);
+	}
+
+	// APPEND on nonexistent file test
+	{
+		struct ptc* p = run_code("APPEND\"IFELSE2\"\r");
+
+		ASSERT(p->res.result == 0, "[append] RESULT is one (successful APPEND)");
+
+		free_code(p);
+	}
 
 	SUCCESS("test_int_resources success");
 }

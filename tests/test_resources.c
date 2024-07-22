@@ -247,24 +247,80 @@ do {\
 		DENY(verify_resource_type_str("S\4BGF4"), "[verify] Invalid type string");
 	}
 
-	// extension:SBCC format
+	// Test file path creation
 	{
-		unsigned char src_dest[8] = {0,0,0,0,0,0,0xf8,0};
-		unsigned char* res = sbc_decompress(src_dest + 6, src_dest, 8, 0);
-		const unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,};
-		for (int i = 0; i < 8; ++i){
-			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
-		}
+		// Simple case
+		char path[MAX_FILEPATH_LENGTH+1];
+		bool res = create_path(path, "test/path/", "filename", ".txt");
+		ASSERT(res, "[create_path] Path creation successful")
+		ASSERT(!strcmp(path, "test/path/filename.txt"), "[create_path] Path is correct");
+
+		// No base
+		res = create_path(path, "", "filename", ".txt");
+		ASSERT(res, "[create_path] Path creation successful")
+		ASSERT(!strcmp(path, "filename.txt"), "[create_path] Path is correct");
+
+		// No extension
+		res = create_path(path, "test/", "filename", "");
+		ASSERT(res, "[create_path] Path creation successful")
+		ASSERT(!strcmp(path, "test/filename"), "[create_path] Path is correct");
+
+		// Maximum length
+		res = create_path(
+			path,
+			"test/"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789/", // 246 chars
+			"long", // 250
+			".test" // 255 (MAX_FILEPATH_LENGTH)
+		);
+		ASSERT(res, "[create_path] Path creation successful")
+		ASSERT(!strcmp(
+			path,
+			"test/"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"/long.test"
+		), "[create_path] Path is correct");
+
+		// Error on larger length
+		res = create_path(
+			path,
+			"test/"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789/", // 246 chars
+			"longer", // 252
+			".tst" // 256 (larger than MAX_FILEPATH_LENGTH)
+		);
+		DENY(res, "[create_path] Error on too-long path")
 	}
-	
-	// simple test 2
+
+	// Test path creation from SBC string
 	{
-		unsigned char src_dest[4] = {0,0,0xf8,0};
-		unsigned char* res = sbc_decompress(src_dest + 2, src_dest, 4, 0);
-		const unsigned char expected[] = {0xf0,0xf0,0xf0,0xf0,};
-		for (int i = 0; i < 4; ++i){
-			ASSERT(res[i] == expected[i], "[decompress] Simple decompression test");
-		}
+		// Simple case
+		char path[MAX_FILEPATH_LENGTH+1];
+		bool res = create_path_from_str(path, "test/path/", "S\10filename", ".txt");
+		ASSERT(res, "[create_path] Path creation successful")
+		ASSERT(!strcmp(path, "test/path/filename.txt"), "[create_path] Path is correct");
+
+		// Error on larger length
+		res = create_path_from_str(
+			path,
+			"test/"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789"
+			"012345678901234567890123456789012345678901234567890123456789/", // 246 chars
+			"S\6longer", // 252
+			".tst" // 256 (larger than MAX_FILEPATH_LENGTH)
+		);
+		DENY(res, "[create_path] Error on too-long path")
 	}
 	
 	SUCCESS("test_resources success");

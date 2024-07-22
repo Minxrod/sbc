@@ -79,6 +79,9 @@ enum err_code {
 	ERR_FOR_MISSING_BEGIN_LOOP,
 	ERR_SORT_2D,
 	ERR_SHUTDOWN,
+	ERR_FILE_TYPE_MISMATCH,
+	ERR_FILE_FORMAT,
+	ERR_FILE_INTERAL,
 };
 
 extern const char * error_messages[];

@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "resources.h"
+#include "stack.h"
 #include "system.h"
 #include "vars.h"
 #include "error.h"
@@ -204,20 +205,22 @@ void cmd_spclr(struct ptc* p){
 }
 
 void cmd_spset(struct ptc* p){
-	fixp id = STACK_INT(0);
-	fixp chr = STACK_INT(1);
-	fixp pal = STACK_INT(2);
+	fixp id, chr, pal;
+	STACK_INT_RANGE(0, 0, 99, id);
+	STACK_INT_RANGE(1, 0, (p->sprites.page ? 117 : 512), chr);
+	STACK_INT_RANGE(2, 0, 15, pal);
 	bool horiz_flip = STACK_INT(3) != 0;
 	bool vert_flip = STACK_INT(4) != 0;
-	fixp prio = STACK_INT(5);
+	fixp prio;
+	STACK_INT_RANGE(5, 0, 3, prio);
 	int width = 16;
 	int height = 16;
 	if (p->stack.stack_i == 8){
 		// spset id,chr,pal,h,v,prio,w,h
+		// TODO:ERR:MED bounds checking
 		width = STACK_INT(6);
 		height = STACK_INT(7);
 	}
-	// TODO:ERR:MED bounds checking
 	// TODO:TEST:MED Validate that this initialization is correct
 	p->sprites.info[p->sprites.page][id] = init_sprite_info(id,chr,pal,horiz_flip,vert_flip,prio,width,height);
 }

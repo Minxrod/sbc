@@ -49,6 +49,26 @@ const char* internal_type_str[] = {
 	"PETC0100RCOL",
 };
 
+bool create_path(char dest[MAX_FILEPATH_LENGTH+1], const char* base, const char* name, const char* ext){
+	if (strlen(base) + strlen(name) + strlen(ext) > MAX_FILEPATH_LENGTH){
+		return false; // name too long
+	}
+	strcpy(dest, base);
+	strcpy(dest + strlen(base), name);
+	strcpy(dest + strlen(base) + strlen(name), ext);
+	return true; // success!
+}
+
+bool create_path_from_str(char dest[MAX_FILEPATH_LENGTH+1], const char* base, const char* name, const char* ext){
+	if (strlen(base) + str_len(name) + strlen(ext) > MAX_FILEPATH_LENGTH){
+		return false; // name too long
+	}
+	strcpy(dest, base);
+	str_char_copy(name, (u8*)dest + strlen(base));
+	strcpy(dest + strlen(base) + str_len(name), ext);
+	return true; // success!
+}
+
 bool verify_file_type(const char* path, const int type){
 	FILE* f = fopen(path, "rb");
 	if (!f){
@@ -90,21 +110,14 @@ bool verify_file_type(const char* path, const int type){
 		fclose(f);
 		return !strncmp(header_type, internal_type_str[type], HEADER_TYPE_STR_SIZE);
 	}
-	if (!strncmp(check_type, "SBCC", 4)){
-		fclose(f);
-		return true; // assume correct if in use (doesn't store type info)
-	}
 	FILE_CLOSE("Unknown PRG file format");
 }
 
 bool verify_search_file_type(const char* search_path, const char* name, int type){
 	char path[MAX_FILEPATH_LENGTH+1] = {0};
-	if (strlen(search_path) + strlen(name) >= MAX_FILEPATH_LENGTH-4){
-		FILE_ERROR("File name too long");
+	if (!create_path(path, search_path, name, ".PTC")){
+		FILE_ERROR("File path too long");
 	}
-	strcpy(path, search_path);
-	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
-	strcpy(path + strlen(search_path) + strlen(name), ".PTC"); // always add extension
 
 	return verify_file_type(path, type);
 }
@@ -130,26 +143,23 @@ int load_file(u8* dest, const char* path, int skip, int len){
 
 int check_save_res(void* src, const char* search_path, const char* name, int type){
 	int size_read;
-	char path[256] = {0};
-	if (strlen(search_path) + strlen(name) >= 252){
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (!create_path(path, search_path, name, ".PTC")){
 		FILE_ERROR("File name too long");
 	}
-	strcpy(path, search_path);
-	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
-	strcpy(path + strlen(search_path) + strlen(name), ".PTC"); // always add extension when saving
-	
+
 	if (type == TYPE_PRG){
 		FILE* f = fopen(path, "wb");
 		if (!f){
 			FILE_ERROR("Could not open file for writing");
 		}
 		struct program prg = *(struct program*)src;
-		
+
 		char data[12] = {0};
 		data[8] = prg.size & 0xff;
 		data[9] = (prg.size >> 8) & 0xff;
 		data[10] = (prg.size >> 16) & 0xff;
-		
+
 		fwrite(internal_type_str[type], 1, 12, f);
 		CHECK_FILE_ERROR("Failed to write file type");
 		fwrite(data, 1, 12, f);
@@ -162,7 +172,7 @@ int check_save_res(void* src, const char* search_path, const char* name, int typ
 		if (!f){
 			FILE_ERROR("Could not open file for writing");
 		}
-		
+
 		fwrite(internal_type_str[type], 1, 12, f);
 		CHECK_FILE_ERROR("Failed to write file type");
 		size_read = fwrite((u8*)src, 1, resource_size[type], f);
@@ -176,34 +186,25 @@ int check_save_res(void* src, const char* search_path, const char* name, int typ
 // TODO:ERR:LOW Add file type validation
 int check_load_res(u8* dest, const char* search_path, const char* name, int type){
 	int size_read;
-	char path[256] = {0};
-	if (strlen(search_path) + strlen(name) >= 252){
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (!create_path(path, search_path, name, ".PTC")){
 		FILE_ERROR("File name too long");
 	}
-	strcpy(path, search_path);
-	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
-	
+
 	if (type == TYPE_PRG){
 		FILE* f = fopen(path, "rb");
 		if (!f){
-			iprintf("Failed to load file (retrying with extension): %s\n", path);
-			// Try with file extension
-			strcpy(path + strlen(search_path) + strlen(name), ".PTC");
-			
-			f = fopen(path, "rb");
-			if (!f){
-				FILE_ERROR("Failed to load file");
-			}
+			FILE_ERROR("Failed to load file");
 		}
 		char check_type[4];
 		fread(check_type, sizeof(char), 4, f);
 		CHECK_FILE_ERROR("Failed to read file magic ID");
 		fseek(f, 0, SEEK_SET);
 		CHECK_FILE_ERROR("Failed to seek to file start");
-		
+
 		if (!strncmp(check_type, "PX01", 4)){
 			struct ptc_header h;
-			
+
 			assert(LITTLE_ENDIAN);
 			// only works on little-endian devices...
 			// (reading into header memory directly)
@@ -230,16 +231,16 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 			// TODO:IMPL:LOW Handle packaged program files
 			// get size from header
 			int prg_size = prg_header[8] | prg_header[9] << 8 | prg_header[10] << 16;
-			
+
 			size_read = fread(dest, sizeof(char), prg_size, f);
 			return size_read;
 		} else {
 			FILE_ERROR("Unknown PRG file format");
 		}
 	} else if (type == TYPE_MEM){
-		return check_load_file(dest, "", path, resource_size[type]);
+		return check_load_file(dest, search_path, name, resource_size[type]);
 	} else if (type >= TYPE_CHR && type <= TYPE_COL){
-		return check_load_file(dest, "", path, resource_size[type]);
+		return check_load_file(dest, search_path, name, resource_size[type]);
 	}
 	FILE_ERROR("Unknown resource type");
 }
@@ -248,23 +249,14 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 // Note: path, name must be null-terminated
 int check_load_file(u8* dest, const char* search_path, const char* name, int size){
 	int size_read;
-	char path[256] = {0};
-	if (strlen(search_path) + strlen(name) >= 252){
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (!create_path(path, search_path, name, ".PTC")){
 		FILE_ERROR("File name too long");
 	}
-	strcpy(path, search_path);
-	strcpy(path + strlen(search_path), name); // Note: includes null, overwrites null of search path
-	
+
 	FILE* f = fopen(path, "rb");
 	if (!f){
-		iprintf("Failed to load file (retrying with extension): %s\n", path);
-		// Try with file extension
-		strcpy(path + strlen(search_path) + strlen(name), ".PTC");
-		
-		f = fopen(path, "rb");
-		if (!f){
-			FILE_ERROR("Failed to load file");
-		}
+		FILE_ERROR("Failed to load file");
 	}
 	char check_type[4] = {0};
 	fread(check_type, sizeof(char), 4, f);
@@ -275,7 +267,7 @@ int check_load_file(u8* dest, const char* search_path, const char* name, int siz
 		if (fseek(f, HEADER_SIZE, SEEK_SET)){
 			FILE_CLOSE("Failed to seek past header");
 		}
-		
+
 		size_read = fread(dest, sizeof(u8), size, f);
 		CHECK_FILE_ERROR("Failed to read file");
 		FILE_OK();
@@ -295,7 +287,7 @@ int check_load_file(u8* dest, const char* search_path, const char* name, int siz
 		u8 header[4];
 		fread(header, sizeof(u8), 4, f);
 		CHECK_FILE_ERROR("Failed to read header");
-		
+
 		// Determine size of file
 		if (fseek(f, 0, SEEK_END)){
 			FILE_CLOSE("Failed to seek to end of file");
@@ -305,20 +297,20 @@ int check_load_file(u8* dest, const char* search_path, const char* name, int siz
 			FILE_CLOSE("Failed to determine file size");
 		}
 		rewind(f); // resets errors apparently
-		
+
 		// Use destination as temporary storage
 		// causes brief artifacting but requires zero extra memory
 		u8* compressed = dest + size - file_size; // places file at end of destination
 		size_read = fread(compressed, sizeof(u8), file_size, f);
 		CHECK_FILE_ERROR("Failed to read file");
 		compressed += 8; // skip header
-		
+
 		int bits = header[0];
 		int expected_size = header[1] | (header[2] << 8) | (header[3] << 16);
 		(void)expected_size; // for when assert fails
 		assert(expected_size == size); // request == expected
 		sbc_decompress(compressed, dest, size, bits);
-		
+
 		FILE_OK();
 	} else {
 		FILE_CLOSE("Failed to load file (Unknown format)");
@@ -357,7 +349,7 @@ void init_col(struct resources* r){
 
 void init_resource(struct resources* r){
 	static_assert(sizeof(r->mem) == MEM_SIZE, "MEM data must be able to store entire file contents");
-	
+
 	r->search_path = "programs/"; // Program resource search path
 #ifdef ARM9
 	// Assign pointers into VRAM as needed
@@ -419,23 +411,23 @@ void init_resource(struct resources* r){
 		48, 48,
 		48, 48,
 	};
-	
+
 	// Load default resource files
-	const char* chr_files = 
+	const char* chr_files =
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
 	"SPU0SPU1SPU2SPU3SPU4SPU5SPU6SPU7SPS0SPS1"
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
 	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
-	
+
 	char name[] = "XXXX.PTC";
-	
+
 	for (int i = 0; i < CHR_BANKS * 2; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[j] = chr_files[4*i+j];
 		}
 		load_chr(r->chr[i], resource_path, name);
 	}
-	
+
 	// Initialize color palettes
 	init_col(r);
 
@@ -671,7 +663,7 @@ void* str_to_resource(struct ptc* p, void* name_str){
 int get_chr_index(struct ptc* p, const char* res){
 	int res_len = strlen(res);
 	assert(res_len >= 3 && res_len <= 5);
-	
+
 	int index = (res_len <= 3) ? 0 : (res[3] - '0');
 	if (res[0] == 'S'){
 		index += 12;
@@ -686,7 +678,7 @@ int get_chr_index(struct ptc* p, const char* res){
 		index += (res[2] == 'D') ? 4 : 0;
 		index += (res[2] == 'U') ? 8 : 0;
 	}
-	
+
 //	iprintf("%s has index %d\n", res, index);
 	return index;
 }
@@ -767,7 +759,7 @@ void cmd_load(struct ptc* p){
 		case TYPE_PRG:
 			if (size) p->exec.prg.size = size;
 			break;
-			
+
 		case TYPE_CHR:
 			p->res.regen_chr[get_chr_index(p, info.type)] = true;
 			break;
@@ -785,7 +777,7 @@ void cmd_load(struct ptc* p){
 			assert(LITTLE_ENDIAN);
 			p->res.mem_str.len = p->res.mem.size;
 			break;
-		
+
 		default:
 			iprintf("Error: invalid resource type\n %s:%s\n", info.type, info.name);
 			assert(false);
@@ -812,7 +804,7 @@ void cmd_chrinit(struct ptc* p){
 	// check that this is a CHR type resource:
 	if (TYPE_CHR == info.type_id){
 		// resource is valid
-		char res_name[] = "XXXX.PTC";
+		char res_name[] = "XXXX";
 		for (int i = 0; i < 4; ++i){
 			res_name[i] = info.type[i];
 		}
@@ -836,7 +828,7 @@ void cmd_chrread(struct ptc* p){
 	int id;
 	STACK_INT_RANGE(1,0,255,id);
 	void** out = ARG(2)->value.ptr; // pointer to string (which is itself a pointer)
-	
+
 	struct res_info info = get_verified_resource_type(p, res_str);
 	if (p->exec.error) return; // something went wrong
 
@@ -871,7 +863,7 @@ void cmd_chrset(struct ptc* p){
 	if (str_len(data) != 64){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	}
-	
+
 	struct res_info info = get_verified_resource_type(p, res_str);
 	if (p->exec.error) return; // something went wrong
 
@@ -879,9 +871,9 @@ void cmd_chrset(struct ptc* p){
 		// resource is valid
 		u8* res_data = get_resource_ptr(p, info.type);
 		if (!res_data) return;
-		
+
 		u8 chr_data[32];
-		
+
 		// convert string to data
 		for (int i = 0; i < 32; ++i){
 			u8 ul = digit_value(str_at_wide(data, 2*i));
@@ -892,10 +884,10 @@ void cmd_chrset(struct ptc* p){
 			u8 unit = (uh << 4) | ul;
 			chr_data[i] = unit;
 		}
-		
+
 		// NDS: VRAM copy works here because memcpy uses bigger blocks
 		memcpy(&res_data[32*id], chr_data, 32);
-		
+
 		p->res.regen_chr[get_chr_index(p, info.type)] = true;
 	} else {
 		ERROR(ERR_INVALID_RESOURCE_TYPE);
@@ -912,6 +904,7 @@ void* get_col_resource(struct ptc* p, const void* res_str){
 	return NULL;
 }
 
+// TODO:TEST:MED needs test
 void cmd_colinit(struct ptc* p){
 	// COLINIT [resource [color]]
 	if (p->stack.stack_i == 0){
@@ -1007,7 +1000,7 @@ void cmd_colset(struct ptc* p){
 			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 		}
 	}
-	
+
 	int r, g, b;
 	r = digit_value(str_at_wide(col_str, 0)) << 1;
 	g = digit_value(str_at_wide(col_str, 2)) << 2;
@@ -1037,6 +1030,7 @@ void cmd_new(struct ptc* p){
 
 void cmd_append(struct ptc* p){
 	// APPEND file$
+	p->res.result = 0; // covers every failure path by setting early
 	void* name = STACK_STR(0);
 	// append behavior:
 	// copies text content of file to end of program memory
@@ -1045,31 +1039,73 @@ void cmd_append(struct ptc* p){
 	if (info.type_id != TYPE_PRG) ERROR(ERR_INVALID_RESOURCE_TYPE);
 
 	// resource type is valid PRG
-	if (!verify_search_file_type(p->res.search_path, info.name, TYPE_PRG)) return; // TODO:ERR:MED What error does this cause? RESULT=0?
-
-	// file identified correctly as PRG, check remaining code size
-	struct program* prg = info.data;
-	assert(prg == &p->exec.prg);
-
-	int remaining = MAX_SOURCE_SIZE - prg->size - 1; // leave room for final newline
-	// if contents larger than remaining space, truncate extra content
-
-	// TODO:CODE:MED dedup with other path-creation steps
-	char path[MAX_FILEPATH_LENGTH+1] = {0};
-	if (strlen(p->res.search_path) + strlen(name) >= MAX_FILEPATH_LENGTH-4){
-		iprintf("File name too long! (append)\n");
-		p->res.result = 0;
+	if (!verify_search_file_type(p->res.search_path, info.name, TYPE_PRG)){
 		return;
 	}
-	strcpy(path, p->res.search_path);
-	strcpy(path + strlen(p->res.search_path), name); // Note: includes null, overwrites null of search path
-	strcpy(path + strlen(p->res.search_path) + strlen(name), ".PTC"); // always add extension
 
-	// TODO:CODE:HIGH Needs to determine amount to skip forward based on file format
-	// TODO:IMPL:HIGH Needs to determine amount to read based on PRG header to not read package contents/extra nulls
-	int size_read = load_file((u8*)prg->data + prg->size, path, PRG_HEADER_SIZE, remaining);
-	prg->size += size_read;
-	prg->data[prg->size++] = '\r';
+	// file identified correctly as PRG, check remaining code size
+	assert(info.data == p->exec.prg.data);
+
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (!create_path(path, p->res.search_path, info.name, ".PTC")){
+		iprintf("File name too long! (append)\n");
+		return;
+	}
+
+	FILE* f;
+	f = fopen(path, "rb");
+	if (!f){
+		iprintf("Failed to open file\n");
+		return;
+	}
+	char magic[4];
+	if (4 != fread(magic, sizeof(char), 4, f)){
+		iprintf("Failed to read magic ID\n");
+		return;
+	}
+
+	int skip;
+	// The check here happens again because in theory the file could've changed
+	// between verification and loading.
+#define PRG_HEADER_OFFSET_PRG_SIZE 8
+	if (!strncmp(magic, "PETC", 4)){
+		// internal format: program header follows PETC type
+		skip = HEADER_TYPE_STR_SIZE + PRG_HEADER_OFFSET_PRG_SIZE;
+	} else if (!strncmp(magic, "PX01", 4)){
+		// sd format: skip common header and PETC type
+		skip = HEADER_SIZE + PRG_HEADER_OFFSET_PRG_SIZE;
+	} else {
+		// unknown format.
+		// Error because it should never happen
+		ERROR(ERR_FILE_FORMAT);
+	}
+
+	if (fseek(f, skip, SEEK_SET)){
+		iprintf("File seek error\n");
+		ERROR(ERR_FILE_INTERAL);
+	}
+	// Offset to useful program info is now known.
+	// Read until offset:
+	static_assert(LITTLE_ENDIAN, "read int directly requires LE format");
+	u32 program_size;
+	if (1 != fread(&program_size, sizeof(u32), 1, f)){
+		// Failed to read program size
+		iprintf("File size read error\n");
+		ERROR(ERR_FILE_INTERAL);
+	}
+
+	// File is at program data and we have size to read.
+	// Determine if enough space is left:
+	u32 remaining = MAX_SOURCE_SIZE - p->exec.prg.size; // leave room for final newline
+	// if contents larger than remaining space, truncate extra content
+	u32 size_to_read = remaining < program_size ? remaining : program_size;
+	if (size_to_read != fread((u8*)info.data + p->exec.prg.size, sizeof(char), size_to_read, f)){
+		// Failed to read program data
+		ERROR(ERR_FILE_FORMAT);
+	}
+	p->exec.prg.size += size_to_read;
+	// Load success!
+	p->res.result = 1;
 }
 
 void cmd_rename(struct ptc* p){
@@ -1083,7 +1119,7 @@ void cmd_delete(struct ptc* p){
 
 void sys_mem(struct ptc* p){
 	struct value_stack* s = &p->stack;
-	
+
 	stack_push(s, (struct stack_entry){VAR_STRING | VAR_VARIABLE, {.ptr = &p->res.mem_ptr}});
 }
 
@@ -1104,7 +1140,7 @@ void syschk_mem(struct ptc* p){
 
 void sys_result(struct ptc* p){
 	struct value_stack* s = &p->stack;
-	
+
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(p->res.result)}});
 }
 

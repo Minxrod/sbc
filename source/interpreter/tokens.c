@@ -97,7 +97,7 @@ const char* cmd_format[] = {
 	"0","0", //STOP
 	"0","*","0","N","N", //WAIT
 	"v,S;v","s,S;s", //LINPUT
-	"0","0,N,NN,NNN,NNNN", //BEEP
+	"S","0,N,NN,NNN,NNNN", //BEEP
 	"NNNN","0,N","NNNNNNN","NNNNNN,NNNNNS,NNNNNNNNN","0,N", //BGMCLEAR
 	// BGMPLAY confirmed to max out at nine string arguments
 	// Weird bug: going over causes the MML to be parsed incorrect?
