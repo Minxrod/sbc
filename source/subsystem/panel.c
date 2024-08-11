@@ -450,3 +450,40 @@ void offset_key(struct ptc* p, int id, int d){
 		}
 	}
 }
+
+void sys_iconpage(struct ptc* p){
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->panel.iconpage});
+}
+
+void sys_iconpmax(struct ptc* p){
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->panel.iconpmax});
+}
+
+void sys_iconpuse(struct ptc* p){
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->panel.iconpuse});
+}
+
+// ICONPUSE is always TRUE or FALSE (1 or 0)
+void syschk_iconpuse(struct ptc* p){
+	p->panel.iconpuse = INT_TO_FP(p->panel.iconpuse != 0);
+}
+
+// ICONPMAX is always positive
+void syschk_iconpmax(struct ptc* p){
+	if (p->panel.iconpmax < 0){
+		p->panel.iconpmax = 0;
+	}
+}
+
+// When set, ICONPAGE can only be modified to within range of [0,ICONPMAX].
+// Note: I suspect this implementation is technically different.
+// PTC behavior for ICONPAGE is to not allow the buttons to modify it
+// if it is outside the valid range. (possibly only if the move places it out of range?)
+// This implementation will reset the value on reads as well though, which it should not.
+void syschk_iconpage(struct ptc* p){
+	if (p->panel.iconpage > p->panel.iconpmax){
+		p->panel.iconpage = p->panel.iconpmax;
+	} else if (p->panel.iconpage < 0){
+		p->panel.iconpage = 0;
+	}
+}

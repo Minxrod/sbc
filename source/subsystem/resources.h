@@ -184,6 +184,19 @@ bool verify_resource_type_str(const void* res);
 bool verify_resource_name(const char* resource_name);
 void* get_resource_ptr(struct ptc* p, const char* resource_type);
 
+/// Information struct for breaking down a resource string
+struct res_info {
+	// longest name:
+	// RRRNP:ABCDEFGH
+	char type[MAX_RESOURCE_TYPE_LENGTH+1];
+	char name[MAX_RESOURCE_NAME_LENGTH+1];
+	int type_id;
+	void* data;
+};
+
+struct res_info get_verified_resource_type(struct ptc* p, const void* res);
+struct res_info get_verified_resource(struct ptc* p, const void* res);
+
 bool verify_file_type(const char* path, int type);
 bool verify_search_file_type(const char* search_path, const char* name, int type);
 int check_load_res(u8* dest, const char* search_path, const char* name, int type);

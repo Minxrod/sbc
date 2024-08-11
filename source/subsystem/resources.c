@@ -340,7 +340,7 @@ bool load_grp(u8* dest, const char* path, const char* name){
 }
 
 void init_col(struct resources* r){
-	char name[] = "COLX.PTC";
+	char name[] = "COLX";
 	for (int i = 0; i < SCREEN_COUNT * COL_BANKS; ++i){
 		name[3] = '0' + (i % COL_BANKS); // col_files[4*i+3];
 		load_col((u8*)r->col[i], resource_path, name);
@@ -419,7 +419,7 @@ void init_resource(struct resources* r){
 	"BGF0BGF1BGF0BGF1BGD0BGD1BGD2BGD3BGU0BGU1BGU2BGU3"
 	"SPD0SPD1SPD2SPD3SPD4SPD5SPD6SPD7SPS0SPS1";
 
-	char name[] = "XXXX.PTC";
+	char name[] = "XXXX";
 
 	for (int i = 0; i < CHR_BANKS * 2; ++i){
 		for (int j = 0; j < 4; ++j){
@@ -683,16 +683,6 @@ int get_chr_index(struct ptc* p, const char* res){
 	return index;
 }
 
-///
-struct res_info {
-	// longest name:
-	// RRRNP:ABCDEFGH
-	char type[MAX_RESOURCE_TYPE_LENGTH+1];
-	char name[MAX_RESOURCE_NAME_LENGTH+1];
-	int type_id;
-	void* data;
-};
-
 struct res_info get_verified_resource_type(struct ptc* p, const void* res){
 	// TODO:ERR:LOW verify correct error codes
 	struct res_info info = {0};
@@ -724,9 +714,6 @@ struct res_info get_verified_resource(struct ptc* p, const void* res){
 		p->exec.error = ERR_ILLEGAL_FUNCTION_CALL;
 		return info;
 	}
-	// Warning ignored because we zero-initialize info, and thus we don't need to copy the null
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-truncation"
 	const char* sep = strchr(res_str, RESOURCE_SEPARATOR);
 	if (sep){
 		// Copy from type to separator
@@ -735,11 +722,10 @@ struct res_info get_verified_resource(struct ptc* p, const void* res){
 		const char* name = sep + 1;
 		strncpy(info.name, name, strlen(name));
 	} else { // Default PRG type
-		strncpy(info.type, "PRG", 3);
+		strcpy(info.type, "PRG");
 		info.type_id = TYPE_PRG;
 		strncpy(info.name, res_str, strlen(res_str));
 	}
-#pragma GCC diagnostic pop
 	info.data = get_resource_ptr(p, info.type);
 	iprintf("get_resource of type=%s (%d) name=%s at ptr=%p\n", info.type, (int)strlen(info.type), info.name, info.data);
 
@@ -910,7 +896,7 @@ void cmd_colinit(struct ptc* p){
 	if (p->stack.stack_i == 0){
 		// reset all colors
 		init_col(&p->res);
-	} else if (p->stack.stack_i == 1){
+	} else {
 		// COLINIT resource
 		void* res_str = value_str(ARG(0));
 		char id = str_at_char(res_str, 0);
@@ -918,34 +904,23 @@ void cmd_colinit(struct ptc* p){
 		if (id == 'S') id = '1';
 		if (id == 'G') id = '2';
 
-		char name[] = "COLX.PTC";
+		char name[] = "COLX";
 		name[3] = id;
 
 		u8* col_data = get_col_resource(p, res_str);
-		if (!col_data) return;
+		if (!col_data) return; // TODO:ERR:LOW can this happen?
 
-		load_col(col_data, resource_path, name);
-		// TODO:CODE:LOW dedup 1-arg and 2-arg
-	} else {
-		// COLINIT resource index
-		void* res_str = value_str(ARG(0));
-		char name[] = "COLX.PTC";
-		u16* col_data = get_col_resource(p, res_str);
-		if (!col_data) return;
+		if (p->stack.stack_i == 1){
+			load_col(col_data, resource_path, name);
+		} else {
+			static_assert(LITTLE_ENDIAN, "load from file requires this");
+			u16 from_file[256]; // TODO:PERF:LOW loading entire file is slow, store it in-mem?
+			load_col((u8*)from_file, resource_path, name);
 
-		char id = str_at_char(res_str, 0);
-		if (id == 'B') id = '0';
-		if (id == 'S') id = '1';
-		if (id == 'G') id = '2';
-
-		name[3] = id;
-		// Load from file into memory
-		u16 from_file[256]; // TODO:PERF:LOW loading entire file is slow, store it in-mem?
-		load_col((u8*)from_file, resource_path, name);
-		// Extract specific color index
-		int index;
-		STACK_INT_RANGE(1,0,255,index);
-		col_data[index] = from_file[index];
+			int index;
+			STACK_INT_RANGE(2,0,255,index);
+			((u16*)col_data)[index] = from_file[index];
+		}
 	}
 	// needed for any combination
 	p->res.regen_col = true;

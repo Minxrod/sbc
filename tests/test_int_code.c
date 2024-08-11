@@ -676,6 +676,22 @@ int test_int_code(){
 		free_code(p);
 	}
 
+	// ON GOTO with empty slots
+	{
+		struct ptc* p;
+		p = run_code("X=0\rON X GOTO @0,@1,,@3,\r@0\r@1\r@3\r");
+		ASSERT(p->exec.error == ERR_NONE, "[on] GOTO @0 success");
+		free_code(p);
+
+		p = run_code("X=2\rON X GOTO @0,@1,,@3,\r@0\r@1\r@3\r");
+		DENY(p->exec.error == ERR_NONE, "[on] GOTO empty slot error");
+		free_code(p);
+
+		p = run_code("X=4\rON X GOTO @0,@1,,@3,\r@0\r@1\r@3\r");
+		DENY(p->exec.error == ERR_NONE, "[on] GOTO empty final slot error");
+		free_code(p);
+	}
+
 	// TODO:TEST:LOW DATA A DATA B?
 
 	SUCCESS("test_int_code success");

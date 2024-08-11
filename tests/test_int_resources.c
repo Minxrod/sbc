@@ -163,6 +163,34 @@ int test_int_resources(void){
 		free_code(p);
 	}
 
+	// Simple test for COL* comands (COLSET, COLREAD, simple COLINIT)
+	{
+		struct ptc* p = run_code(
+			"COLSET \"BG\",0,\"080808\"\r"
+			"COLSET \"SP\",0,\"101010\"\r"
+			"COLREAD(\"BG\",0),BR,BG,BB\r"
+			"COLREAD(\"SP\",0),SR,SG,SB\r"
+			"COLINIT \"BG\"\r"
+			"COLREAD(\"BG\",0),BR2,BG2,BB2\r"
+			"COLREAD(\"SP\",0),SR2,SG2,SB2\r"
+		);
+
+		CHECK_VAR_INT("BG",8);
+		CHECK_VAR_INT("BR",8);
+		CHECK_VAR_INT("BB",8);
+		CHECK_VAR_INT("SR",16);
+		CHECK_VAR_INT("SG",16);
+		CHECK_VAR_INT("SB",16);
+		CHECK_VAR_INT("BG2",0);
+		CHECK_VAR_INT("BR2",0);
+		CHECK_VAR_INT("BB2",0);
+		CHECK_VAR_INT("SR2",16);
+		CHECK_VAR_INT("SG2",16);
+		CHECK_VAR_INT("SB2",16);
+
+		free_code(p);
+	}
+
 	// Test for precision of COLSET/COLREAD commands
 	{
 		struct ptc* p = run_code(

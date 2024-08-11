@@ -439,8 +439,15 @@ int launch_system(void* launch_info){
 				break;
 				
 			case LAUNCH_AUTOLOAD: // auto load program
-				load_prg(&p->exec.prg, info->prg_filename);
-				state = LAUNCH_RUN;
+//				int check_load_res(u8* dest, const char* search_path, const char* name, int type)
+//				load_prg(&p->exec.prg, info->prg_filename);
+				p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, info->prg_filename, TYPE_PRG);
+				if (!p->exec.prg.size){
+					p->exec.error = ERR_FILE_LOAD_FAILED;
+					state = LAUNCH_PROMPT;
+				} else {
+					state = LAUNCH_RUN;
+				}
 				break;
 				
 			case LAUNCH_DEBUG:

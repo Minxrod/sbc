@@ -8,6 +8,7 @@
 #include "error.h"
 
 #include "tokens.h"
+#include "vars.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -222,6 +223,9 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 //		iprintf("%d,%d\n", (int)label_index, (int)p->stack.stack_i);
 		if (label_i < 0 || label_i+1 >= (int)p->stack.stack_i){
 			return; // No jump: number is out of range
+		}
+		if (p->stack.entry[label_i+1].type & STACK_OP){
+			ERROR(ERR_SYNTAX); // label is missing from this slot
 		}
 		label = p->stack.entry[label_i+1].value.ptr;
 	} else {

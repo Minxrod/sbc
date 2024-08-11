@@ -235,7 +235,8 @@ void cmd_gputchr(struct ptc* p){
 		// TODO:IMPL:MED GPUTCHR copies palette to COL2 memory
 
 		// pointer to base resource
-		u8* src = str_to_resource(p, resource);
+		struct res_info i = get_verified_resource_type(p, resource);
+		u8* src = i.data;
 		// pointer to relevant character
 		src = &src[32*chr]; // TODO:CODE:NONE constant for size of one character
 

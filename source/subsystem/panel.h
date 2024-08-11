@@ -66,6 +66,10 @@ struct panel {
 	int shift;
 	/// Value indicating whether text entry is in INSERT or REPLACE mode.
 	int cursor;
+
+	fixp iconpuse;
+	fixp iconpmax;
+	fixp iconpage;
 };
 
 void init_panel(struct ptc*);

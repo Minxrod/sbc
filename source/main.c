@@ -181,13 +181,11 @@ enum emu_key_mode {
 
 int main(int argc, char** argv){
 	init_memory(MAX_MEMORY);
-//	struct program program = {0};
 	
 	char* window_name = "SBC";
 	if (argc >= 2){
 		// Load .PTC file as program
 		window_name = argv[1];
-//		load_prg_alloc(&program, argv[1]);
 	}
 	// Auto-inputs
 	FILE* inputs = NULL;
@@ -195,10 +193,6 @@ int main(int argc, char** argv){
 		inputs = fopen(argv[2], "r");
 	}
 	
-	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
-	
-	// https://gist.github.com/def-/fee8bb041719337c8812
-	// used as convenient reference
 	sfRenderWindow* window;
 	
 	window = sfRenderWindow_create((sfVideoMode){SCREEN_WIDTH*2, SCREEN_HEIGHT*SCREEN_COUNT*2, 32}, window_name, sfResize | sfClose, NULL);
@@ -207,6 +201,8 @@ int main(int argc, char** argv){
 		printf("Failed to create the render window!\n");
 		abort();
 	}
+
+	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
 	ptc->display.rw = window;
 	
 	// THREAD MODEL
@@ -240,6 +236,8 @@ int main(int argc, char** argv){
 		}
 	}
 	
+	// https://gist.github.com/def-/fee8bb041719337c8812
+	// used as convenient reference
 	sfEvent event;
 	while (sfRenderWindow_isOpen(window)){
 		int b = 0; // Button codes (can be modified by some typed sequences)
@@ -298,9 +296,11 @@ int main(int argc, char** argv){
 		if (pos.y >= (int)window_size.y / 2){
 			int tchx = SCREEN_WIDTH * pos.x / window_size.x;
 			int tchy = SCREEN_HEIGHT * pos.y / (window_size.y / 2) - SCREEN_HEIGHT;
-//			iprintf("%d,%d\n", tchx, tchy);
-			set_touch(&ptc->input, sfMouse_isButtonPressed(0), tchx, tchy);
-			press_key(ptc, sfMouse_isButtonPressed(0), tchx, tchy);
+			if (tchx < SCREEN_WIDTH && tchx >= 0 && tchy < SCREEN_HEIGHT && tchy >= 0){
+	//			iprintf("%d,%d\n", tchx, tchy);
+				set_touch(&ptc->input, sfMouse_isButtonPressed(0), tchx, tchy);
+				press_key(ptc, sfMouse_isButtonPressed(0), tchx, tchy);
+			}
 		}
 
 		step_sprites(&ptc->sprites);

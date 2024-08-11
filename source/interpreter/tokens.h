@@ -17,7 +17,7 @@
 /// equivalently that the bytecode will take up less memory than the program
 /// source would if stored in UCS2/UTF16 (which is PTC's in-memory format)
 /// This goal exists to guarantee a reduction in memory usage compared to PTC,
-/// though some specific programs can cause the reduction to be negligibile.
+/// though some specific programs can cause the reduction to be negligible.
 /// Most programs should end up with memory usage of somewhere between the
 /// u8 source file and u16 in-memory versions.
 /// 

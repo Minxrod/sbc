@@ -45,6 +45,8 @@ union value {
 	void* ptr;
 };
 
+#define VAR_NAME_MAX_LENGTH 16
+
 /// Variable table entry. Contains the value directly in the case of numbers,
 /// otherwise contains a pointer to the value. Contains the type to determine
 /// what type of value is contained.
@@ -52,7 +54,7 @@ struct named_var {
 	/// Type of variable stored. See @sa types.
 	uint_fast8_t type;
 	/// The name of this variable. Maxmimum of 16 characters.
-	char name[16];
+	char name[VAR_NAME_MAX_LENGTH];
 	/// The value stored in this variable.
 	union value value;
 };

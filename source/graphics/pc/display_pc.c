@@ -466,7 +466,7 @@ void display_cursor(struct ptc* p){
 }
 
 void display_graphics(struct ptc* p, int screen, int prio){
-	if (screen == 1 && (p->panel.type == PNL_OFF || p->panel.type == PNL_PNL)) return;
+	if (screen == 1 && !(p->panel.type == PNL_OFF || p->panel.type == PNL_PNL)) return;
 	if (screen == 1 && !(p->res.visible & VISIBLE_PANEL)) return;
 	if (!(p->res.visible & VISIBLE_GRAPHICS)) return;
 	

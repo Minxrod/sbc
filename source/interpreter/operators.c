@@ -375,4 +375,3 @@ void op_logical_not(struct ptc* p){
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == 0)}});
 }
-

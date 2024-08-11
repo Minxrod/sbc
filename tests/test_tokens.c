@@ -573,7 +573,7 @@ int test_tokens(void){
 		};
 		ASSERT(
 			token_code(
-				code, bc, 14
+				code, bc, sizeof(bc)
 			), "[tokens] DATA tokenization when DATA occurs beyond index 256"
 		);
 	}
@@ -590,11 +590,28 @@ int test_tokens(void){
 			token_code(
 				"MEM$=\"\"\r",
 				bc,
-				8
+				sizeof(bc)
 			), "[tokens] Sysvar write tokenization"
 		);
 	}
 
-	
+	// Multiple sysvar tokenization
+	{
+		char bc[] = {
+			BC_SYSVAR, SYS_ICONPUSE,
+			BC_SYSVAR, SYS_FALSE,
+			BC_OPERATOR, OP_ASSIGN,
+			BC_SYSVAR_VALIDATE, SYS_ICONPUSE, // there might be some extremely niche cases where this causes problems?
+		};
+		ASSERT(
+			token_code(
+				"ICONPUSE=FALSE\r",
+				bc,
+				sizeof(bc)
+			), "[tokens] Sysvar write tokenization"
+		);
+	}
+
+
 	SUCCESS("test_tokens success");
 }

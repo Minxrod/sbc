@@ -104,7 +104,7 @@ DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_csrx, sys_csry, sys_tabstep,
 	sys_sphitno, ptc_err, ptc_err, ptc_err,
 	sys_keyboard, sys_funcno,
-	ptc_err, ptc_err, ptc_err, // ICONPMAX
+	sys_iconpuse, sys_iconpage, sys_iconpmax, // ICONPMAX
 	ptc_err, ptc_err, // ERR
 	sys_mem,
 	sys_memsafe
@@ -117,7 +117,8 @@ DTCM_DATA const ptc_call ptc_sysvars_valid[] = {
 	NULL, NULL, NULL, NULL, // TCHTIME
 	NULL, NULL, syschk_tabstep,
 	NULL, NULL, NULL, NULL, // SPHITT
-	NULL, NULL, NULL, NULL, NULL, // ICONPMAX
+	NULL, NULL, // FUNCNO
+	syschk_iconpuse, syschk_iconpage, syschk_iconpmax, // ICONPMAX
 	NULL, NULL, // ERR
 	syschk_mem,
 	syschk_memsafe,

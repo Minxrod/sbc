@@ -176,18 +176,14 @@ void cmd_locate(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-
-// TODO:PERF:MED Just memset the entire area...
 void cmd_cls(struct ptc* p){
 	struct console* c = &p->console;
-	for (int i = 0; i < CONSOLE_HEIGHT; ++i){
-		for (int j = 0; j < CONSOLE_WIDTH; ++j){
-			c->text[i][j] = 0;
-			c->color[i][j] = c->col;
-			p->panel.text->text[i][j] = 0; // CLS also clears lower screen
-			p->panel.text->color[i][j] = 0; // CLS also clears lower screen
-		}
-	}
+
+	memset(c->text, 0, CONSOLE_WIDTH * CONSOLE_HEIGHT * sizeof(u16));
+	memset(c->color, c->col, CONSOLE_WIDTH * CONSOLE_HEIGHT * sizeof(u8));
+	memset(p->panel.text->text, 0, CONSOLE_WIDTH * CONSOLE_HEIGHT * sizeof(u16));
+	memset(p->panel.text->color, 0, CONSOLE_WIDTH * CONSOLE_HEIGHT * sizeof(u8));
+
 	c->x = 0;
 	c->y = 0;
 }

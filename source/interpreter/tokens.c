@@ -107,7 +107,7 @@ const char* cmd_format[] = {
 	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
 	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
 	"","","Snnn","S","0,S,SS,SSS,SSSS,SSSSS","NNNN,NNNNN", //GBOX
-	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
+	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNN,NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","NN,NNN,NNNN","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
 	"NS","","S,SN","0",//NEW
 	"NNS,NNSN","S","v","","","SS",//RENAME
@@ -383,7 +383,7 @@ bool check_cmd(const char* stack, int stack_len, const char* valid){
 				break;
 				
 			case 'l':
-				if (s == 'S' || s == 's' || s == 'L') {
+				if (s == 'S' || s == 's' || s == 'L' || s == '<') {
 					valid_i--; // read as many labels as needed
 					break;
 				}
@@ -865,17 +865,20 @@ int tok_code(struct tokenizer* state){
 	}
 	
 tok_code_exit:
-	// Must be placed at end to happen after assignment
-	if (sys_validate & (
-		(1 << SYS_ICONPAGE) |
-		(1 << SYS_ICONPMAX) |
-		(1 << SYS_ICONPUSE) |
-		(1 << SYS_TABSTEP) |
-		(1 << SYS_MEM) |
-		((uint64_t)1 << SYS_MEMSAFE)
-	)){
-		for (int i = 0; i < 32; ++i){
-			if (sys_validate & ((uint64_t)1 << i)){
+	// Validation must be placed at end to happen after assignment
+/// Sysvars that allow assignment (and thus need validation)
+#define SYSVAR_NEEDS_VALIDATE (\
+		(1 << SYS_ICONPAGE) |\
+		(1 << SYS_ICONPMAX) |\
+		(1 << SYS_ICONPUSE) |\
+		(1 << SYS_TABSTEP) |\
+		(1 << SYS_MEM) |\
+		((uint64_t)1 << SYS_MEMSAFE)\
+	)
+
+	if (sys_validate & SYSVAR_NEEDS_VALIDATE){
+		for (int i = 0; i < 64; ++i){
+			if (sys_validate & ((uint64_t)1 << i) & SYSVAR_NEEDS_VALIDATE){
 				data[(*size)++] = BC_SYSVAR_VALIDATE;
 				data[(*size)++] = i;
 			}
