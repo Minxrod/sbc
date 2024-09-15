@@ -67,15 +67,15 @@ int test_int_operator(void){
 	{
 		TEST_BINARY_NUM_OP("divide","/");
 		TEST_BINARY_NUM_OP("modulo","%");
-		TEST_BINARY_NUM_OP("less","<");
-		TEST_BINARY_NUM_OP("greater",">");
-		TEST_BINARY_NUM_OP("lessequal","<=");
-		TEST_BINARY_NUM_OP("greaterequal",">=");
-		TEST_BINARY_DUAL_OP("equal","==");
-		TEST_BINARY_DUAL_OP("inequal","!=");
 		TEST_BINARY_NUM_OP("xor","XOR");
 		TEST_BINARY_NUM_OP("and","AND");
 		TEST_BINARY_NUM_OP("or","OR");
+		TEST_BINARY_DUAL_OP("less","<");
+		TEST_BINARY_DUAL_OP("greater",">");
+		TEST_BINARY_DUAL_OP("lessequal","<=");
+		TEST_BINARY_DUAL_OP("greaterequal",">=");
+		TEST_BINARY_DUAL_OP("equal","==");
+		TEST_BINARY_DUAL_OP("inequal","!=");
 	}
 	
 	// + is special because the return type matches the arguments
@@ -253,6 +253,10 @@ int test_int_operator(void){
 		CHECK_INT_EXP("36 < 72", 1);
 		CHECK_INT_EXP("-12 < 1", 1);
 		CHECK_INT_EXP("0 < 0", 0);
+
+		CHECK_INT_EXP("\"X\" < \"Q\"", 0);
+		CHECK_INT_EXP("\"Q\" < \"X\"", 1);
+		CHECK_INT_EXP("\"X\" < \"X\"", 0);
 	}
 	
 	// less or equal
@@ -264,6 +268,10 @@ int test_int_operator(void){
 		CHECK_INT_EXP("36 <= 72", 1);
 		CHECK_INT_EXP("-12 <= 1", 1);
 		CHECK_INT_EXP("0 <= 0", 1);
+
+		CHECK_INT_EXP("\"X\" <= \"Q\"", 0);
+		CHECK_INT_EXP("\"Q\" <= \"X\"", 1);
+		CHECK_INT_EXP("\"X\" <= \"X\"", 1);
 	}
 	
 	// greater or equal
@@ -275,6 +283,10 @@ int test_int_operator(void){
 		CHECK_INT_EXP("36 >= 72", 0);
 		CHECK_INT_EXP("-12 >= 1", 0);
 		CHECK_INT_EXP("0 >= 0", 1);
+
+		CHECK_INT_EXP("\"X\" >= \"Q\"", 1);
+		CHECK_INT_EXP("\"Q\" >= \"X\"", 0);
+		CHECK_INT_EXP("\"X\" >= \"X\"", 1);
 	}
 	
 	// greater
@@ -286,6 +298,10 @@ int test_int_operator(void){
 		CHECK_INT_EXP("36 > -72", 1);
 		CHECK_INT_EXP("12 > 1", 1);
 		CHECK_INT_EXP("0 > 0", 0);
+
+		CHECK_INT_EXP("\"X\" > \"Q\"", 1);
+		CHECK_INT_EXP("\"Q\" > \"X\"", 0);
+		CHECK_INT_EXP("\"X\" > \"X\"", 0);
 	}
 	
 	// unary ops
@@ -347,5 +363,7 @@ int test_int_operator(void){
 		CHECK_INT_EXP("36.7 XOR -1", (36^0xfffff));
 	}
 	
+	// TODO:TEST:MED test expressions with variables as arguments, not just values?
+
 	SUCCESS("test_int_operator success");
 }

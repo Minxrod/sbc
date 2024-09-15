@@ -102,17 +102,17 @@ const char* cmd_format[] = {
 	// BGMPLAY confirmed to max out at nine string arguments
 	// Weird bug: going over causes the MML to be parsed incorrect?
 	"N,S,NN,SS,NNN,SSS,SSSS,SSSSS,SSSSSS,SSSSSSS,SSSSSSSS,SSSSSSSSS", //BGMPLAY
-	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS",//BGMSET
+	"NS,NNS,NNNNNS,NNNNNNS","NS,NSS,NSSS,NSSSS,NSSSSS,NSSSSSS,NSSSSSSS,NSSSSSSSS,NSSSSSSSS,NSSSSSSSSS",//BGMSET
 	"NL","NNN","0,N,NN","N,NN", //BGMVOL
-	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","NNN","S","SNs", //CHRREAD
+	"NNN,NNNN","N","NNNN,NNNS,NNNNNNN","NNNn,NNNs,NNNnnnn","N,NNN","S","SNs", //CHRREAD
 	"SNS","0","0,S,SN","SNnnn","SNS","0", //CONT
-	"","","Snnn","S","0,S,SS,SSS,SSSS,SSSSS","NNNN,NNNNN", //GBOX
+	"*","S","Snnn","S","0,S,SS,SSS,SSSS,SSSSS","NNNN,NNNNN", //GBOX
 	"NNN,NNNN,NNNNNN","0,N","N","NNNNNNN,NNNNNNNN","N","NNNN,NNNNN","NNNN,NNNNN",//GLINE
 	"N,NNN","NN,NNN,NNNN","NN,NNN","N","NNSNNN","0,N","NN",//ICONSET
 	"NS","","S,SN","0",//NEW
 	"NNS,NNSN","S","v","","","SS",//RENAME
 	"L","NNa","0","S","","NNa","NN,NNN,NNNN",//SPANGLE
-	"NNN,NNNN","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","","NNN","NNN,NNNN","N",//SPPAGE
+	"NNN,NNNN","NN,NNNNNN","0,N","NNNNNN,NNNNNNN","NNN","NNN","NNN,NNNN","N",//SPPAGE
 	"NN,NNN,NNNN,NNNNN,NNNNNN","NN,NNN","NNNNNN,NNNNNNNN","NNN","nn,ss",//SWAP
 	"Snnn",//TMREAD
 	"S", "0", // TALK, TALKSTOP
@@ -124,7 +124,7 @@ const char* func_format[] = {
 	"NN","N","N","N","","N","NN,NNN","N,NN","0",//ICONCHK
 	"0","SS,SSN","SN","S","N","SNN","0","NN","N",//RAD
 	"SN","N","N","N","N","NN","N,NN","",//SPHITRC
-	"","N","N","SNNS","","S",//VAL
+	"NN","N","N","SNNS","","S",//VAL
 	"0",
 	"N","N","N","S,SN","N" // PTR
 };
@@ -140,7 +140,7 @@ const char func_return[] = "NNNNNNNN"
 const char* op_format[] = {
 	"NN,SS","*","NN","NN,SN","NN","*", //;
 	"nN,sS","N", //(-)
-	"NN,SS","NN,SS","NN","NN","NN","NN", //>=
+	"NN,SS","NN,SS","NN,SS","NN,SS","NN,SS","NN,SS", //>=
 	"NN",//%
 	"NN","NN","NN","N","N",//!
 	"*","*","*","*"
@@ -252,16 +252,31 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 	while (state.cursor < state.source->size){
 		old_cursor = state.cursor;
 		error = tok_none(&state);
-		if (error != ERR_NONE) break;
-
+		if (error != ERR_NONE){
+			if (opts & TOKOPT_STRICT_ERROR) break;
+			state.output->data[state.output->size++] = BC_ERROR;
+			state.output->data[state.output->size++] = error;
+			iprintf("Error at: %d\n", state.output->size);
+			while (state.source->data[state.cursor++] != '\r');
+			error = ERR_NONE;
+			state.token_i = 0;
+			continue;
+		}
 		if (state.state == TKR_CONVERT){
-//			iprintf("line: %.*s\n", (int)state.cursor - state.tokens[0].ofs, &state.source->data[state.tokens[0].ofs]);
+			iprintf("line: %.*s\n", (int)state.cursor - state.tokens[0].ofs, &state.source->data[state.tokens[0].ofs]);
 //			for (size_t i = 0; i < state.token_i; ++i){
 //				iprintf("[line_token] ");
 //				print_token(&state, state.tokens[i]);
 //			}
 			error = tok_convert(&state);
-			if (error != ERR_NONE) break;
+			if (error != ERR_NONE){
+				if (opts & TOKOPT_STRICT_ERROR) break;
+				state.output->data[state.output->size++] = BC_ERROR;
+				state.output->data[state.output->size++] = error;
+				error = ERR_NONE;
+				state.token_i = 0;
+				iprintf("Error at: %d\n", state.output->size);
+			}
 		}
 	}
 	if (error) {
@@ -470,6 +485,7 @@ int tok_test(struct tokenizer* state){
 			case command:
 				{
 				u8 cmd = state->tokens[i].cmd;
+				if (cmd == CMD_DATA) break; // parsing is done
 				const char* valid = cmd_format[cmd];
 				if (!check_cmd(stack, stack_i, valid)){
 					// Set error state on invalid command
@@ -635,6 +651,96 @@ int64_t tok_to_num(struct tokenizer* state, struct token* t){
 	return number;
 }
 
+int tok_data(struct tokenizer* state, struct token start_t, char* data, idx* size){
+	// Special rules for DATA: write contents as string of sorts
+	int start = start_t.ofs+4;
+//	while (state->source->data[start] == ' '){
+//		++start;
+//	} // skip to first non-whitespace
+	int end = state->cursor;
+
+	data[(*size)++] = BC_DATA;
+	char* data_size = &data[(*size)++]; // write as copying characters
+	*data_size = 0;
+
+	iprintf("Data [%d,%d)\n", start, end);
+	enum bc_data_state {
+		// Skip spaces until a different character is found
+		BC_DATA_NONE,
+		// Read characters until a comma, space, or newline is found
+		BC_DATA_STRING,
+		// Read characters until a closing quote is found
+		BC_DATA_QUOTED,
+		// Search spaces until delim or EOL
+		BC_DATA_WAIT_NEXT,
+	} data_state = BC_DATA_NONE;
+	for (int j = start; j < end; ++j){
+		char c = state->source->data[j];
+
+		switch (data_state){
+			case BC_DATA_NONE:
+				if (c == '"'){
+					data_state = BC_DATA_QUOTED;
+					continue;
+				}
+				if (c == '\r' || c == ','){
+					c = BC_DATA_DELIM;
+					break;
+				}
+				if (c == ' ') continue; // keep searching
+				data_state = BC_DATA_STRING;
+				break;
+
+			case BC_DATA_QUOTED:
+				if (c == '"'){
+					data_state = BC_DATA_NONE;
+					continue;
+				}
+				if (c == '\r'){
+					c = BC_DATA_DELIM;
+					break;
+				}
+				// Add character to output
+				break;
+
+			case BC_DATA_WAIT_NEXT:
+				if (c == ' ') continue;
+				if (c == ',' || c == '\r'){
+					data_state = BC_DATA_NONE;
+					c = BC_DATA_DELIM;
+					break;
+				}
+				c = BC_DATA_ERROR;
+				break;
+
+			case BC_DATA_STRING:
+				// Unquoted string
+				if (c == ' '){ // String ends
+					data_state = BC_DATA_WAIT_NEXT;
+					continue;
+				}
+				if (c == ',' || c == '\r'){ // String ends
+					data_state = BC_DATA_NONE;
+					c = BC_DATA_DELIM;
+					break;
+				}
+				break;
+		}
+
+		// Add character to output
+		data[(*size)++] = c;
+		(*data_size)++;
+	}
+
+	if (*size % 2){
+		data[(*size)++] = 0; // pad one null to keep instructions aligned
+	}
+
+	state->token_i = 0;
+	return ERR_NONE;
+	// End of DATA special rules
+}
+
 int tok_code(struct tokenizer* state){
 	// assume the order is fixed
 	char* data = (char*)state->output->data;
@@ -648,48 +754,7 @@ int tok_code(struct tokenizer* state){
 				bool first_of_line = state->tokens[i].type == first_of_line_command;
 				state->tokens[i].type = command;
 				if (state->tokens[i].cmd == CMD_DATA){
-					// Special rules for DATA: write token contents as string
-					int start = state->tokens[i].ofs+4;
-					while (state->source->data[start] == ' '){
-						++start;
-					} // skip to first non-whitespace
-					int end = state->cursor;
-					
-					data[(*size)++] = BC_DATA;
-					char* data_size = &data[(*size)++]; // write as copying characters
-					*data_size = 0;
-					
-					iprintf("Data [%d,%d)\n", start, end);
-					bool in_string = false;
-					for (int j = start; j < end; ++j){
-						char c = state->source->data[j];
-						
-						if (c == '"'){
-							in_string = !in_string;
-							continue; // don't write quotes, ever
-						} else if (c == ',' && !in_string){
-							c = BC_DATA_DELIM; // replace commas with delim
-						} else if (c == ' ' && !in_string){
-							continue; // don't write spaces
-						} else if (c == '\r'){
-							// mark end of data with extra delim (this makes empty strings easy to check for)
-							data[(*size)++] = BC_DATA_DELIM;
-							(*data_size)++;
-							break; // don't add this: end here
-						}
-						// TODO:ERR:MED Don't allow whitespace within unquoted DATA strings.
-						// write character
-						data[(*size)++] = c;
-						(*data_size)++;
-					}
-					
-					if (*size % 2){
-						data[(*size)++] = 0; // pad one null to keep instructions aligned
-					}
-					
-					state->token_i = 0;
-					return ERR_NONE;
-					// End of DATA special rules
+					tok_data(state, state->tokens[i], data, size);
 				} else {
 					// convert token to command
 	//				iprintf("command: %d, %d\n", j, state->tokens[i].cmd);
@@ -932,14 +997,14 @@ void tok_eval(struct tokenizer* state){
 	bool implicit_commas = true;
 	
 	iprintf("[tok_eval] Entry with %d unit(s)\n", state->token_i);
-	if (state->token_i && state->tokens[0].type == command && state->tokens[0].cmd == CMD_DATA){
+/*	if (state->token_i && state->tokens[0].type == command && state->tokens[0].cmd == CMD_DATA){
 		iprintf("DATA special case\n");
 		for (size_t j = 0; j < state->token_i; ++j){
 			print_token(state, state->tokens[j]);
 		}
 		state->state = TKR_NONE; // Important: Tells tokenizer to read a new line
 		return;
-	}
+	}*/
 	
 	for (size_t i = 0; i < state->token_i; ++i){
 		int prio = state->tokens[i].prio;
@@ -1037,6 +1102,12 @@ void tok_eval(struct tokenizer* state){
 					// TODO:IMPL:NONE Determine a way to indicate arrays unambiguously (such as "A[]")
 					// and make it an option
 					is_sort = true;
+				} else if (state->tokens[i].cmd == CMD_DATA){
+					// DATA terminates the line - everything after it is parsed differently
+					state->state = TKR_NONE; // Tell tokenizer to start new line
+					tok_eval_clean_stack(&e, 0); // DATA must go after expression, so prior command(s) execute
+					e.result[e.result_i++] = state->tokens[i]; // This marks the start of DATA for tok_code
+					break;
 				} else {
 					// Any other "normal" command
 					is_dim = false;
@@ -1237,7 +1308,7 @@ int tok_none(struct tokenizer* state){
 	}
 	
 	if (is_name_start(c)){
-		tok_name(state);
+		return tok_name(state);
 	} else if (c == '?'){
 //		tok_single(state, command);
 		state->tokens[state->token_i].type = command;
@@ -1286,13 +1357,37 @@ int tok_none(struct tokenizer* state){
 	return ERR_NONE;
 }
 
-void tok_name(struct tokenizer* state){
+int tok_label(struct tokenizer* state){
+	if (state->source->data[state->cursor++] != ' '){
+			return ERR_SYNTAX;
+		}
+		while (state->source->data[state->cursor] == ' '){
+			state->cursor++;
+		}
+		if (!is_name(state->source->data[state->cursor])){
+			return ERR_SYNTAX;
+		}
+		tok_with_condition(state, is_name);
+		state->tokens[state->token_i].type = label;
+		if (state->tokens[state->token_i].len > 16){
+			return ERR_LABEL_TOO_LONG;
+	}
+	return ERR_NONE;
+}
+
+int tok_name(struct tokenizer* state){
 	tok_with_condition(state, is_varname);
 	//additional checking for special strings
 	int index;
+	int err = ERR_NONE;
 	if (0 <= (index = tok_in_str_index(commands, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = command;
 		state->tokens[state->token_i].cmd = index; // overrides len
+		if (index == CMD_DATA){
+			// This runs to the end of the line similar to a comment
+			// (and also has no effect when executed, like a comment)
+			state->is_comment = true;
+		}
 	} else if (0 <= (index = tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = function;
 		state->tokens[state->token_i].cmd = index; // overrides len
@@ -1301,7 +1396,7 @@ void tok_name(struct tokenizer* state){
 		state->tokens[state->token_i].type = operation;
 		state->tokens[state->token_i].cmd = index; // overrides len
 	} else if (0 <= tok_in_str_index(labels, state->source->data, &state->tokens[state->token_i])){
-		state->tokens[state->token_i].type = label;
+		err = tok_label(state);
 	} else if (0 <= tok_in_str_index(comments, state->source->data, &state->tokens[state->token_i])){
 		state->tokens[state->token_i].type = comment;
 		state->is_comment = true;
@@ -1311,6 +1406,7 @@ void tok_name(struct tokenizer* state){
 	}
 	
 	state->token_i++;
+	return err;
 }
 
 void tok_string(struct tokenizer* state){

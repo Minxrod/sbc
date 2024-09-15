@@ -106,18 +106,18 @@ void add_sprite(struct sprite_array sa, struct sprite_info* s){
 	
 //	int va_new_start = sfVertexArray_getVertexCount(va);
 	// Round to integers
-	int xcstep_txi = xcstep_tx >> FIXPOINT;
-	int ycstep_txi = ycstep_tx >> FIXPOINT;
-	int xcstep_tyi = xcstep_ty >> FIXPOINT;
-	int ycstep_tyi = ycstep_ty >> FIXPOINT;
+	int xcstep_txi = xcstep_tx;// >> FIXPOINT;
+	int ycstep_txi = ycstep_tx;// >> FIXPOINT;
+	int xcstep_tyi = xcstep_ty;// >> FIXPOINT;
+	int ycstep_tyi = ycstep_ty;// >> FIXPOINT;
 	for (int ty = 0; ty < s->h/8; ++ty){
 		for (int tx = 0; tx < s->w/8; ++tx){
-			int xci = xc >> FIXPOINT;
-			int yci = yc >> FIXPOINT;
-			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){xci, yci}, c, chr_texCoords2(chr,0,0)});
-			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){xci+xcstep_txi, yci+ycstep_txi}, c, chr_texCoords2(chr,1,0)});
-			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){xci+xcstep_txi+xcstep_tyi, yci+ycstep_txi+ycstep_tyi}, c, chr_texCoords2(chr,1,1)});
-			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){xci+xcstep_tyi, yci+ycstep_tyi}, c, chr_texCoords2(chr,0,1)});
+			int xci = xc;
+			int yci = yc;
+			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){FP_TO_INT(xci), FP_TO_INT(yci)}, c, chr_texCoords2(chr,0,0)});
+			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){FP_TO_INT(xci+xcstep_txi), FP_TO_INT(yci+ycstep_txi)}, c, chr_texCoords2(chr,1,0)});
+			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){FP_TO_INT(xci+xcstep_txi+xcstep_tyi), FP_TO_INT(yci+ycstep_txi+ycstep_tyi)}, c, chr_texCoords2(chr,1,1)});
+			sfVertexArray_append(sa.va, (sfVertex){(sfVector2f){FP_TO_INT(xci+xcstep_tyi), FP_TO_INT(yci+ycstep_tyi)}, c, chr_texCoords2(chr,0,1)});
 			
 			xc += xcstep_tx;
 			yc += ycstep_tx;

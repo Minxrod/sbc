@@ -56,3 +56,4 @@ void cmd_end(struct ptc* p);
 ///
 /// @param p System struct
 void cmd_stop(struct ptc* p);
+void cmd_cont(struct ptc* p);

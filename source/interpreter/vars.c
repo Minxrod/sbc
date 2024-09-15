@@ -58,6 +58,10 @@ struct named_var* test_var(struct variables* v, char* name, enum types type){
 	return get_var(v, name, strlen(name), type);
 }
 
+union value* test_arr(struct variables* v, char* name, int index, enum types type){
+	return get_arr_entry(v, name, strlen(name), type, index, ARR_DIM2_UNUSED);
+}
+
 struct named_var* search_name_type(struct variables* v, char* name, u32 len, enum types type){
 	struct named_var* var = NULL;
 	int hash = name_hash(name, len, v->vars_max);

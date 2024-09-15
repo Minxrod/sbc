@@ -575,7 +575,6 @@ void str_set_len(void* src, int len){
 	}
 }
 
-
 bool str_comp(const void* str1, const void* str2){
 	assert(str1);
 	assert(str2);
@@ -595,6 +594,29 @@ bool str_comp(const void* str1, const void* str2){
 		}
 	}
 	return true;
+}
+
+int str_lex(const void* a, const void* b){
+	int size_a = str_len(a);
+	int size_b = str_len(b);
+	int size = size_a < size_b ? size_a : size_b;
+	for (int i = 0; i < size; ++i){
+		u16 chr_a = str_at_wide(a, i);
+		u16 chr_b = str_at_wide(b, i);
+		if (chr_a < chr_b){
+			return -1;
+		}
+		if (chr_b < chr_a){
+			return 1;
+		}
+	}
+	if (size_a < size_b){
+		return -1;
+	}
+	if (size_b < size_a){
+		return 1;
+	}
+	return 0;
 }
 
 // Copy str1 to str2

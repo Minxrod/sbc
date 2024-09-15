@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include "resources.h"
 #include "system.h"
 
 /// Generates the palette textures used by the shader to simulate color palettes
@@ -335,8 +336,8 @@ void display_background(struct ptc* p, int screen, int layer){
 	
 	// at most 33 tiles can be displayed in x direction
 	// 25 in y direction
-	for (int x = 0; x < 33; ++x){
-		for (int y = 0; y < 25; ++y){
+	for (int x = 0; x < SCREEN_WIDTH / CHR_WIDTH + 1; ++x){
+		for (int y = 0; y < SCREEN_HEIGHT / CHR_HEIGHT + 1; ++y){
 			u16 td = bg_tile(p,screen,layer,(x + start_x) % BG_WIDTH,(y + start_y) % BG_HEIGHT);
 			tile(&d->background_map, x, y, td & 0x3ff, (td & 0x400) >> 10, (td & 0x800) >> 11);
 			palette(&d->background_map, x, y, (td & 0xf000) >> 12);

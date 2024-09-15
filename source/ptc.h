@@ -18,6 +18,7 @@ enum bytecode_ops {
 	BC_COMMAND = 'C',
 	BC_DIM = 'D',
 	BC_DATA = 'd',
+	BC_ERROR = 'E', // compile error deferred to runtime error
 	BC_FUNCTION = 'F',
 	BC_GOTO = 'G',
 	BC_VARIABLE_ID_SMALL = 'i', //for ID based variable system

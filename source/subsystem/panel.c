@@ -3,6 +3,7 @@
 #include "common.h"
 #include "error.h"
 #include "console.h"
+#include "resources.h"
 #include "system.h"
 
 #include <string.h>
@@ -144,22 +145,16 @@ void init_panel(struct ptc* p){
 		p->panel.keys[i].pos.x = x;
 		p->panel.keys[i].pos.y = y;
 		p->panel.keys[i].prio = 1;
-		// Collisions handled by tiles, essentially
-/*		p->panel.keys[i].hit.x = INT_TO_FP(1);
-		p->panel.keys[i].hit.y = INT_TO_FP(1);
-		if (k < 70){
-			p->panel.keys[i].hit.w = INT_TO_FP(14);
-			p->panel.keys[i].hit.h = INT_TO_FP(22);
-		} else if (k >= 70 && k <= 79){
-		} else if (k >= 90 && k <= 99){
-			p->panel.keys[i].hit.w = INT_TO_FP(22);
-		}
-		p->panel.keys[i].hit.h = INT_TO_FP(22);*/
+
 		p->panel.keys[i].vars[0] = k;
 		if (c == -1){
 			p->panel.keys[i].active = false;
 		}
 	}
+	// TODO:CODE:LOW
+	// There's probably a better way to store these without interfering with active state assignment
+	p->panel.keys[89].chr = 316;
+	p->panel.keys[90].chr = 317;
 }
 
 void free_panel(struct ptc* p){
@@ -325,9 +320,9 @@ const char* key_map =
 "\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\74\74\xff\75\75\76\76\77\77\xff\100\100\100\100\101\101\102\102\103\103\104\104\105\105\xff\106\106\107\107\xff\110\110"
 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
-"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
-"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\xff\xff\133\133\133\134\134\134\135\135\135\136\136\136"
+"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\131\131\133\133\133\134\134\134\135\135\135\136\136\136"
+"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\131\131\133\133\133\134\134\134\135\135\135\136\136\136"
+"\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\131\131\133\133\133\134\134\134\135\135\135\136\136\136"
 ;
 
 void press_key(struct ptc* ptc, bool t, int x, int y){
@@ -350,6 +345,9 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 	} else {
 		//press keyboard keys (touching, no previous hold, no previous timer)
 		char c = key_map[x/8 + 32*(y/8)];
+		if (c == '\131' && p->iconpuse && y >= (SCREEN_HEIGHT - 12)){
+			c = '\132'; // icon page down button (the weird height means this had to be a special case)
+		}
 		if (c != '\xff'){
 			p->id_pressed = c;
 			p->key_pressed = p->keys[(int)c].vars[0];
@@ -360,10 +358,15 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 		}
 	}
 	
-	// TODO:IMPL:MED Icon pages (check here before panel check)
+	int pressed_key = get_pressed_key(ptc);
+	if (pressed_key == 80){
+		p->iconpage -= INT_TO_FP(p->iconpage > 0);
+	} else if (pressed_key == 81){
+		p->iconpage += INT_TO_FP(p->iconpage < p->iconpmax);
+	}
+	iprintf("pressed_key=%d\n", pressed_key);
 	if (p->type == PNL_OFF || p->type == PNL_PNL) return;
 	
-	int pressed_key = get_pressed_key(ptc);
 	bool refresh = false;
 	
 	if (pressed_key){
@@ -466,12 +469,17 @@ void sys_iconpuse(struct ptc* p){
 // ICONPUSE is always TRUE or FALSE (1 or 0)
 void syschk_iconpuse(struct ptc* p){
 	p->panel.iconpuse = INT_TO_FP(p->panel.iconpuse != 0);
+
+	p->panel.keys[ICON_PAGE_START].active = p->panel.iconpuse;
+	p->panel.keys[ICON_PAGE_START+1].active = p->panel.iconpuse;
 }
 
 // ICONPMAX is always positive
 void syschk_iconpmax(struct ptc* p){
 	if (p->panel.iconpmax < 0){
 		p->panel.iconpmax = 0;
+	} else {
+		p->panel.iconpmax &= ((uint32_t)-1 << FIXPOINT);
 	}
 }
 
@@ -485,5 +493,7 @@ void syschk_iconpage(struct ptc* p){
 		p->panel.iconpage = p->panel.iconpmax;
 	} else if (p->panel.iconpage < 0){
 		p->panel.iconpage = 0;
+	} else {
+		p->panel.iconpage &= ((uint32_t)-1 << FIXPOINT); // must be integer
 	}
 }

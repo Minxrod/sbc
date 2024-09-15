@@ -165,6 +165,11 @@ void str_set_len(void* src, int len);
 // Compare two strings for equality
 bool str_comp(const void* str1, const void* str2);
 
+/// Compare two strings lexicographically, using UCS2/UTF16 codepoint order
+///
+/// @return -1 if a < b, 1 if a > b, 0 if a == b
+int str_lex(const void* a, const void* b);
+
 /// Copy str1 to str2, reusing str2's existing buffer
 /// @note Sets length of str2 to that of str1
 /// @note Does not modify uses

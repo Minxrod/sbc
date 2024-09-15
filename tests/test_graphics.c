@@ -171,5 +171,19 @@ int test_graphics(void){
 		free_code(p);
 	}*/
 	
+	// GPUTCHR palette update
+	{
+		struct ptc* p = run_code(
+			"GPUTCHR 0,0,\"SPU1\",0,2,1\r"
+			"COLREAD(\"SP\",36),A,B,C\r"
+			"COLREAD(\"GRP\",36),D,E,F\r"
+			"CHK=(A==D)+(B==C)+(E==F)\r"
+		);
+
+		CHECK_VAR_INT("CHK",3);
+
+		free_code(p);
+	}
+
 	SUCCESS("test_graphics success");
 }

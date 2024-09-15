@@ -3,6 +3,17 @@
 /// @file
 /// @brief Defines the resources struct, which contains all graphics resources.
 ///
+/// Manages all of the graphical resource data of SBC. This is character data
+/// and screen metadata, such as enabled systems. For specific subsystems, see
+/// the relevant subsystem files, such as:
+/// - background.h
+/// - sprites.h
+/// - graphics.h
+/// - console.h
+/// - panel.h
+///
+/// This module also contains various file loading resources and commands for
+/// manipulating colors and characters.
 
 #include "common.h"
 #include "header.h"
@@ -23,9 +34,9 @@ extern const char* resource_path;
 #define FRAMERATE 60
 
 /// Width of GRP layer, in pixels.
-#define GRP_WIDTH 256
+#define GRP_WIDTH SCREEN_WIDTH
 /// Height of GRP layer, in pixels.
-#define GRP_HEIGHT 192
+#define GRP_HEIGHT SCREEN_HEIGHT
 /// Width of background layer, in tiles.
 #define BG_WIDTH 64
 /// Height of background layer, in tiles.
@@ -73,6 +84,13 @@ extern const char* resource_path;
 /// Bitmask representing all visual systems being enabled
 #define VISIBLE_ALL 0x3f
 
+/// Maximum length of package string (in binary digits)
+#define PACKAGE_STR_BIN_DIGITS (45)
+/// Length of package string in hex characters
+#define PACKAGE_STR_LENGTH ((PACKAGE_STR_BIN_DIGITS + 3) / 4)
+/// Maximum length of program name string
+#define PRGNAME_STR_LENGTH 8
+
 /// Maximum length of filename (without resource type or extension)
 #define MAX_RESOURCE_NAME_LENGTH 8
 /// Maximum length of resource type string (ex. BGD, SPU, MEM)
@@ -113,6 +131,7 @@ enum resource_type {
 };
 
 extern int resource_size[6];
+extern const char package_resources[];
 
 /// Struct containing resources to use
 /// Some of these are only stored in VRAM on NDS
@@ -126,7 +145,7 @@ struct resources {
 	
 	u16* scr[SCR_BANKS*SCREEN_COUNT]; //8K*4*2 -> 64K (VRAM)
 	
-	u8* grp[4]; //48K*4 -> 192K (RAM) 96K VRAM
+	u8* grp[GRP_BANKS]; //48K*4 -> 192K (RAM) 96K VRAM
 	
 	u16* col[COL_BANKS*SCREEN_COUNT]; //512*6 -> 3K (2K Palette + 1K VRAM) (may need RAM copy)
 	bool regen_col;
@@ -157,6 +176,10 @@ struct resources {
 	
 	/// RESULT sysvar, set by file operations
 	int result;
+	/// PACKAGE$ sysvar, set by LOAD, EXEC (and that might be it?)
+	char package[PACKAGE_STR_LENGTH+1];
+	/// PRGNAME$ sysvar, similarly set by LOAD and EXEC?
+	char prgname[PRGNAME_STR_LENGTH+1];
 };
 
 struct ptc;
@@ -201,6 +224,9 @@ bool verify_file_type(const char* path, int type);
 bool verify_search_file_type(const char* search_path, const char* name, int type);
 int check_load_res(u8* dest, const char* search_path, const char* name, int type);
 int check_load_file(u8* dest, const char* search_path, const char* name, int size);
+
+/// This includes packaged resources.
+int load_program(struct ptc* p, const char* search_path, const char* name);
 
 int load_file(u8* dest, const char* path, int skip, int len);
 bool load_chr(u8* dest, const char* path, const char* name);
@@ -260,8 +286,11 @@ void cmd_append(struct ptc* p);
 void cmd_rename(struct ptc* p);
 void cmd_delete(struct ptc* p);
 
+// Package
+void sys_package(struct ptc* p);
+void sys_prgname(struct ptc* p);
+
 // MEM$
 void sys_mem(struct ptc* p);
 void syschk_mem(struct ptc* p);
 void sys_result(struct ptc* p);
-

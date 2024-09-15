@@ -11,14 +11,7 @@
 
 // Returns number of characters read OR READ_ONE_ERR if an error occurs
 int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* dest){
-	// skip leading spaces
 	size_t i = 0;
-	while (i < len && src[i] == ' '){
-		i++;
-	}
-	if (i >= len){
-		return READ_ONE_ERR;
-	}
 	size_t start = i;
 	if (dest->type == (VAR_VARIABLE | VAR_STRING)){
 		// Create new string
@@ -28,6 +21,9 @@ int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* de
 		
 		// create destination and copy characters
 		for (; i < len && src[i] != BC_DATA_DELIM; ++i){
+			if (src[i] == BC_DATA_ERROR){
+				return READ_ONE_ERR;
+			}
 			s->ptr.s[i - start] = src[i];
 		}
 		s->len = i - start;
@@ -37,7 +33,14 @@ int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* de
 		s->uses = 1;
 	} else if (dest->type == (VAR_VARIABLE | VAR_NUMBER)){
 		u8 conversion[16] = {0}; // this buffer size is very arbitrary
-		
+		// skip leading spaces, but only for numbers
+		// strings may contain spaces when quoted
+		while (i < len && src[i] == ' '){
+			i++;
+		}
+		if (i >= len){
+			return READ_ONE_ERR;
+		}
 		// Read number!
 		for (; i < len && i - start < 16; ++i){
 			u8 c = src[i];
@@ -95,8 +98,8 @@ void cmd_read(struct ptc* p){
 	// Iterate over variables on stack
 	for (int i = 0; i < p->stack.stack_i; ++i){
 		block_size = data_block[1];
-//		iprintf("src=%d size=%d", p->exec.data_index, block_size);
-//		iprintf(" data=\"%.*s\"", block_size, &data_block[DATA_DATA_OFS + p->exec.data_offset]);
+		iprintf("src=%d size=%d", p->exec.data_index, block_size);
+		iprintf(" data=\"%.*s\"", block_size, &data_block[DATA_DATA_OFS + p->exec.data_offset]);
 		data_src = &data_block[DATA_DATA_OFS + p->exec.data_offset];
 		
 		int read = read_one_u8(p, data_src, block_size - p->exec.data_offset, ARG(i));
@@ -104,11 +107,11 @@ void cmd_read(struct ptc* p){
 			ERROR(ERR_READ_FAILURE);
 		}
 		p->exec.data_offset += read;
-//		iprintf(" read:%d", p->exec.data_offset);
+		iprintf(" read:%d", p->exec.data_offset);
 		if (data_block[2 + p->exec.data_offset] == BC_DATA_DELIM){
 			p->exec.data_offset++;
 		}
-//		iprintf(" pos:%d\n", p->exec.data_offset);
+		iprintf(" pos:%d\n", p->exec.data_offset);
 		if (p->exec.data_offset >= block_size){
 			// search for next data block
 			find_data(p);

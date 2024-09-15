@@ -9,6 +9,7 @@
 #include "error.h"
 #include "extension/compress.h"
 #include "vars.h"
+#include "ptc.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -48,6 +49,133 @@ const char* internal_type_str[] = {
 	"PETC0200RMEM",
 	"PETC0100RCOL",
 };
+
+// this ordering taken from the program post here:
+// https://gamefaqs.gamespot.com/boards/663843-petit-computer/69602216
+// credit to @NeatNit for doing the research
+const char package_resources[] =
+// bit 0
+"SPU0\0" "SPU1\0" "SPU2\0" "SPU3\0" "SPU4\0" "SPU5\0" "SPU6\0" "SPU7\0"
+"BGU0U" "BGU1U" "BGU2U" "BGU3U"
+"BGF0U"
+"COL0U" "COL1U" "COL2U"
+// bit 16
+"SCU0U" "SCU1U"
+"GRP0\0" "GRP1\0" "GRP2\0" "GRP3\0"
+"MEM\0\0"
+"SPD0\0" "SPD1\0" "SPD2\0" "SPD3\0"
+"BGU0L" "BGU1L" "BGU2L" "BGU3L"
+"BGF0L"
+// bit 32
+"COL0L" "COL1L" "COL2L"
+"SCU0L" "SCU1L"
+"SPS0U" "SPS1U"
+"BGD0U" "BGD1U"
+"SPS0L" "SPS1L"
+"BGD0L" "BGD1L"
+// bit 44
+;
+
+int load_program(struct ptc* p, const char* search_path, const char* name){
+	int size_read;
+	char path[MAX_FILEPATH_LENGTH+1] = {0};
+	if (!create_path(path, search_path, name, ".PTC")){
+		FILE_ERROR("File name too long");
+	}
+
+	FILE* f = fopen(path, "rb");
+	if (!f){
+		FILE_ERROR("Failed to load file");
+	}
+	struct ptc_header h;
+	fread(h.magic, sizeof(char), 4, f);
+	CHECK_FILE_ERROR("Failed to read file magic ID");
+	fseek(f, 0, SEEK_SET);
+	CHECK_FILE_ERROR("Failed to seek to file start");
+
+	// only works on little-endian devices...
+	// (reading into header struct directly)
+	assert(LITTLE_ENDIAN);
+	if (!strncmp(h.magic, "PX01", 4)){
+		size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
+		CHECK_FILE_ERROR("Could not read header correctly");
+		if (size_read < PRG_HEADER_SIZE){
+			FILE_CLOSE("Could not read full header");
+		}
+	} else if (!strncmp(h.magic, "PETC", 4)){
+		// internal format
+		int internal_header_size = PRG_HEADER_SIZE - HEADER_SIZE + HEADER_TYPE_STR_SIZE;
+		size_read = fread(h.type_str, sizeof(u8), internal_header_size, f);
+		CHECK_FILE_ERROR("Could not read program header");
+		if (size_read < internal_header_size){
+			FILE_CLOSE("Could not read complete program header");
+		}
+	} else {
+		FILE_CLOSE("Unknown PRG file format");
+	}
+
+	// Read program data
+	size_read = fread(get_resource_ptr(p, "PRG"), sizeof(u8), h.prg_size, f);
+	if (size_read < (int)h.prg_size){
+		FILE_CLOSE("Could not read complete program");
+	}
+	p->exec.prg.size = size_read;
+	// 4 -> +0
+	// 1 -> +3
+	// 2 -> +2
+	// 3 -> +1
+	fseek(f, "\0\3\2\1"[h.prg_size & 3], SEEK_CUR);
+	CHECK_FILE_ERROR("Could not seek past program");
+
+	// Copy loaded program name
+	memset(p->res.prgname, '\0', sizeof(p->res.prgname)); // lazy null termination
+	strncpy(p->res.prgname, h.name, PRGNAME_STR_LENGTH);
+
+	// Read packages as specified by package bits
+	uint64_t package = (((uint64_t)h.package_high) << 32) | h.package_low;
+	// Build package string
+	for (uint_fast8_t i = 0; i < PACKAGE_STR_LENGTH; ++i){
+		p->res.package[PACKAGE_STR_LENGTH - i - 1] = hex_digits[(package & (((uint64_t)0xf) << (i * 4))) >> (i * 4)];
+	}
+	iprintf("Package bitmask: %lx ", package);
+	iprintf("string: %s\n", p->res.package);
+
+	for (uint_fast8_t i = 0; i < PACKAGE_STR_BIN_DIGITS; ++i){
+		// Check if resource needs to be loaded
+		if (!(package & ((uint64_t)1<<i))) continue;
+		// Create resource type as SBC string
+		char resource[2+MAX_RESOURCE_TYPE_LENGTH+1] = {BC_STRING, 0};
+		strncpy(resource + 2, package_resources + MAX_RESOURCE_TYPE_LENGTH * i, MAX_RESOURCE_TYPE_LENGTH);
+		resource[1] = strlen(resource + 2);
+		iprintf("res: %d,%d, %.*s", i, resource[1], resource[1], resource+2);
+		// Get destination for this resource index
+		struct res_info info = get_verified_resource_type(p, resource);
+		// Check type string matches
+		char type_str[HEADER_TYPE_STR_SIZE];
+		int read = fread(type_str, sizeof(char), HEADER_TYPE_STR_SIZE, f);
+		if (read != HEADER_TYPE_STR_SIZE){
+			FILE_CLOSE("Failed to skip type string");
+		}
+		iprintf("%d,%12s\n", info.type_id, type_str);
+		if (strncmp(type_str, internal_type_str[info.type_id], HEADER_TYPE_STR_SIZE)){
+			FILE_CLOSE("Internal type string does not match expected type");
+		}
+		// Load resource
+		read = fread(info.data, sizeof(u8), resource_size[info.type_id], f);
+		if (read != resource_size[info.type_id]){
+			FILE_CLOSE("Could not read complete resource");
+		}
+		// Mark as needing refresh
+		if (info.type_id == TYPE_CHR){
+			p->res.regen_chr[get_chr_index(p, info.type)] = true;
+		} else if (info.type_id == TYPE_COL){
+			p->res.regen_col = true;
+		}
+	}
+
+	// This returns the size of the read program data.
+	FILE_OK();
+}
 
 bool create_path(char dest[MAX_FILEPATH_LENGTH+1], const char* base, const char* name, const char* ext){
 	if (strlen(base) + strlen(name) + strlen(ext) > MAX_FILEPATH_LENGTH){
@@ -185,58 +313,13 @@ int check_save_res(void* src, const char* search_path, const char* name, int typ
 
 // TODO:ERR:LOW Add file type validation
 int check_load_res(u8* dest, const char* search_path, const char* name, int type){
-	int size_read;
 	char path[MAX_FILEPATH_LENGTH+1] = {0};
 	if (!create_path(path, search_path, name, ".PTC")){
 		FILE_ERROR("File name too long");
 	}
 
 	if (type == TYPE_PRG){
-		FILE* f = fopen(path, "rb");
-		if (!f){
-			FILE_ERROR("Failed to load file");
-		}
-		char check_type[4];
-		fread(check_type, sizeof(char), 4, f);
-		CHECK_FILE_ERROR("Failed to read file magic ID");
-		fseek(f, 0, SEEK_SET);
-		CHECK_FILE_ERROR("Failed to seek to file start");
-
-		if (!strncmp(check_type, "PX01", 4)){
-			struct ptc_header h;
-
-			assert(LITTLE_ENDIAN);
-			// only works on little-endian devices...
-			// (reading into header memory directly)
-			size_read = fread(&h, sizeof(char), PRG_HEADER_SIZE, f);
-			CHECK_FILE_ERROR("Could not read header correctly");
-			if (size_read < PRG_HEADER_SIZE){
-				FILE_CLOSE("Could not read full header");
-			}
-			// Assumed successful header read - now load file contents into dest
-			size_read = fread(dest, sizeof(char), h.prg_size, f);
-			return size_read;
-		} else if (!strncmp(check_type, "PETC", 4)){
-			// internal format
-			if (fseek(f, 12, SEEK_SET)){
-				FILE_CLOSE("Failed to seek past type");
-			}
-			// read header
-			u8 prg_header[12];
-			size_read = fread(prg_header, sizeof(u8), 12, f);
-			CHECK_FILE_ERROR("Could not read program header");
-			if (size_read < 12){
-				FILE_CLOSE("Could not read complete program header");
-			}
-			// TODO:IMPL:LOW Handle packaged program files
-			// get size from header
-			int prg_size = prg_header[8] | prg_header[9] << 8 | prg_header[10] << 16;
-
-			size_read = fread(dest, sizeof(char), prg_size, f);
-			return size_read;
-		} else {
-			FILE_ERROR("Unknown PRG file format");
-		}
+		return load_program((struct ptc*)dest, search_path, name);
 	} else if (type == TYPE_MEM){
 		return check_load_file(dest, search_path, name, resource_size[type]);
 	} else if (type >= TYPE_CHR && type <= TYPE_COL){
@@ -447,6 +530,11 @@ void init_resource(struct resources* r){
 	r->result = 1;
 	// Initialize VISIBLE status
 	r->visible = VISIBLE_ALL;
+	// Initialize package string
+	for (int i = 0; i < (int)PACKAGE_STR_LENGTH; ++i){
+		r->package[i] = '0';
+	}
+	r->package[PACKAGE_STR_LENGTH] = '\0';
 }
 
 void free_resource(struct resources* r){
@@ -738,14 +826,11 @@ void cmd_load(struct ptc* p){
 	struct res_info info = get_verified_resource(p, res);
 	if (p->exec.error) return; // error condition already met, fail here
 
+	if (info.type_id == TYPE_PRG) info.data = p;
 	int size = check_load_res(info.data, p->res.search_path, info.name, info.type_id);
 	p->res.result = size != 0;
 
 	switch (info.type_id){
-		case TYPE_PRG:
-			if (size) p->exec.prg.size = size;
-			break;
-
 		case TYPE_CHR:
 			p->res.regen_chr[get_chr_index(p, info.type)] = true;
 			break;
@@ -754,6 +839,7 @@ void cmd_load(struct ptc* p){
 			p->res.regen_col = true;
 			break;
 
+		case TYPE_PRG:
 		case TYPE_SCR:
 		case TYPE_GRP:
 			// no special handling
@@ -1036,6 +1122,7 @@ void cmd_append(struct ptc* p){
 	char magic[4];
 	if (4 != fread(magic, sizeof(char), 4, f)){
 		iprintf("Failed to read magic ID\n");
+		fclose(f);
 		return;
 	}
 
@@ -1052,11 +1139,13 @@ void cmd_append(struct ptc* p){
 	} else {
 		// unknown format.
 		// Error because it should never happen
+		fclose(f);
 		ERROR(ERR_FILE_FORMAT);
 	}
 
 	if (fseek(f, skip, SEEK_SET)){
 		iprintf("File seek error\n");
+		fclose(f);
 		ERROR(ERR_FILE_INTERAL);
 	}
 	// Offset to useful program info is now known.
@@ -1066,6 +1155,7 @@ void cmd_append(struct ptc* p){
 	if (1 != fread(&program_size, sizeof(u32), 1, f)){
 		// Failed to read program size
 		iprintf("File size read error\n");
+		fclose(f);
 		ERROR(ERR_FILE_INTERAL);
 	}
 
@@ -1076,8 +1166,10 @@ void cmd_append(struct ptc* p){
 	u32 size_to_read = remaining < program_size ? remaining : program_size;
 	if (size_to_read != fread((u8*)info.data + p->exec.prg.size, sizeof(char), size_to_read, f)){
 		// Failed to read program data
+		fclose(f);
 		ERROR(ERR_FILE_FORMAT);
 	}
+	fclose(f);
 	p->exec.prg.size += size_to_read;
 	// Load success!
 	p->res.result = 1;
@@ -1117,5 +1209,34 @@ void sys_result(struct ptc* p){
 	struct value_stack* s = &p->stack;
 
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(p->res.result)}});
+}
+
+void sys_package(struct ptc* p){
+	struct string* str = get_new_str(&p->strs);
+	str->uses = 1;
+	int i = 0;
+	while (p->res.package[i] == '0'){
+		++i;
+	}
+	if (p->res.package[i] == '\0'){
+		--i;
+	}
+	str->len = PACKAGE_STR_LENGTH - i;
+	str_copy_buf(p->res.package + i, str->ptr.s, STR_COPY_SRC_8 | STR_COPY_DEST_8, str->len);
+
+	iprintf("PACKAGE$=%d, %.*s\n", (int)str->len, (int)str->len, str->ptr.s);
+
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, .value.ptr = str});
+}
+
+void sys_prgname(struct ptc* p){
+	struct string* str = get_new_str(&p->strs);
+	str->uses = 1;
+	str->len = strlen(p->res.prgname);
+	str_copy_buf(p->res.prgname, str->ptr.s, STR_COPY_SRC_8 | STR_COPY_DEST_8, str->len);
+
+	iprintf("PRGNAME$=%d, %.*s\n", (int)str->len, (int)str->len, str->ptr.s);
+
+	stack_push(&p->stack, (struct stack_entry){VAR_STRING, .value.ptr = str});
 }
 

@@ -1,5 +1,6 @@
 #include "runner.h"
 #include "common.h"
+#include "strs.h"
 #include "system.h"
 
 #include "operators.h"
@@ -72,7 +73,7 @@ DTCM_DATA const ptc_call ptc_commands[] = {
 	cmd_key, ptc_err, cmd_load, cmd_new, //NEW, 
 	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
 	cmd_restore, cmd_rsort, cmd_run, cmd_save, ptc_err, cmd_sort, cmd_spangle, //SPANGLE, 
-	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, ptc_err, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
+	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, cmd_spcolvec, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
 	cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv, cmd_swap, //SWAP, 
 	cmd_tmread, //TMREAD,
 	ptc_stub, ptc_stub, // TALKSTOP
@@ -99,13 +100,13 @@ DTCM_DATA const ptc_call ptc_functions[] = {
 DTCM_DATA const ptc_call ptc_sysvars[] = {
 	sys_true, sys_false, sys_cancel, sys_version,
 	sys_time, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
-	sys_freevar, sys_freemem, ptc_err, ptc_err, sys_result, //RESULT
+	sys_freevar, sys_freemem, sys_prgname, sys_package, sys_result, //RESULT
 	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
 	sys_csrx, sys_csry, sys_tabstep,
 	sys_sphitno, ptc_err, ptc_err, ptc_err,
 	sys_keyboard, sys_funcno,
 	sys_iconpuse, sys_iconpage, sys_iconpmax, // ICONPMAX
-	ptc_err, ptc_err, // ERR
+	sys_erl, sys_err, // ERR
 	sys_mem,
 	sys_memsafe
 };
@@ -535,6 +536,11 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 				check_time(&p->time, 11);
 				break;
 				
+			case BC_ERROR:
+				iprintf("Error exec'd at: %d\n", r->index);
+				p->exec.error = data;
+				break;
+
 			default:
 				iprintf("Unknown BC: %c %d", instr, data);
 				r->error = ERR_INVALID_BC;
@@ -556,20 +562,19 @@ void run(struct bytecode code, struct ptc* p){
 
 void cmd_exec(struct ptc* p){
 	// EXEC filename
-	char filename_buf[256+1];
+	char filename_buf[MAX_STRLEN+1];
 	void* filename = value_str(ARG(0));
 	str_char_copy(filename, (u8*)filename_buf);
 	filename_buf[str_len(filename)] = '\0';
 	
-	// Load program into memory and tokenize into bc
-//	iprintf("\nold=%d ", p->exec.code.size);
-//	struct program prog = { 0, (char*)&p->exec.code.data[524288] };
-	if (!(p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, filename_buf, TYPE_PRG))){
+	// Load program into memory and tokenize
+	int size = load_program(p, p->res.search_path, filename_buf);
+	if (!size){
 		// Failed to load file
 		p->res.result = 0;
 		return;
 	}
-	
+
 	// tokenize updates all relevant exec.code values
 	p->exec.error = tokenize(&p->exec.prg, &p->exec.code);
 //	iprintf("new=%d\n", p->exec.code.size);
@@ -593,4 +598,19 @@ void cmd_run(struct ptc* p){
 	p->exec.data_index = 0;
 	p->exec.data_offset = 0;
 	p->exec.argcount = 0;
+}
+
+// For now this is a direct map of internal error codes.
+// Once these errors are reordered this should become more correct.
+// TODO:IMPL:LOW Needs to store last nonzero error code to be useful.
+void sys_err(struct ptc* p){
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, .value.number = p->exec.error});;
+}
+
+// TODO:IMPL:LOW actual implementation
+// I don't know of any programs that use this off the top of my head.
+// I don't know how ERL is useful outside of LIST ERL...
+// ...and right now I haven't implemented LIST either...
+void sys_erl(struct ptc* p){
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, .value.number = FIXP_1});;
 }

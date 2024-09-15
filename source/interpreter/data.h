@@ -8,6 +8,10 @@
 #define READ_ONE_ERR -1
 /// Delimeter for data chunks within a BC_DATA instruction.
 #define BC_DATA_DELIM '\0'
+/// Code to use within DATA to indicate an error when READ is used on it
+/// (since newlines can't be used normally)
+#define BC_DATA_ERROR '\r'
+// I hope there doesn't end up needing to be a third state, I'm out of unique characters...
 
 #include "common.h"
 

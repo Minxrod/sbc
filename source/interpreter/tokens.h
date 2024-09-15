@@ -48,6 +48,7 @@ enum tokenizer_opts {
 	TOKOPT_NONE = 0, // for readability if passing none
 	TOKOPT_NO_LABELS = 1, // Doesn't generate L#... expressions for labels
 	TOKOPT_VARIABLE_IDS = 2, // Generates IDs instead of named variables
+	TOKOPT_STRICT_ERROR = 4, // makes snytax errors happen at compile time
 };
 
 // Optimizations that are allowed without access to a system pointer
@@ -120,7 +121,7 @@ int tokenize_full(struct program* src, struct bytecode* output, void* system, in
 
 int tok_none(struct tokenizer* state);
 
-void tok_name(struct tokenizer* state);
+int tok_name(struct tokenizer* state);
 
 void tok_string(struct tokenizer* state);
 

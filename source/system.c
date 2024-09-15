@@ -295,7 +295,7 @@ void system_debug(struct ptc* p, enum launch_debug debug){
 		// Print out label table
 		for (int i = 0; i < p->exec.code.labels.label_count; ++i){
 			if (p->exec.code.labels.entry[i].name[0]){
-				iprintf("%d\n", i);
+				iprintf("%d %s\n", i, p->exec.code.labels.entry[i].name);
 				debug_print_str(p, (u8*)p->exec.code.labels.entry[i].name);
 			}
 		}
@@ -439,9 +439,8 @@ int launch_system(void* launch_info){
 				break;
 				
 			case LAUNCH_AUTOLOAD: // auto load program
-//				int check_load_res(u8* dest, const char* search_path, const char* name, int type)
-//				load_prg(&p->exec.prg, info->prg_filename);
-				p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, info->prg_filename, TYPE_PRG);
+				load_program(p, p->res.search_path, info->prg_filename);
+//				p->exec.prg.size = check_load_res((u8*)p->exec.prg.data, p->res.search_path, info->prg_filename, TYPE_PRG);
 				if (!p->exec.prg.size){
 					p->exec.error = ERR_FILE_LOAD_FAILED;
 					state = LAUNCH_PROMPT;

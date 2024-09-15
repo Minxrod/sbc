@@ -110,6 +110,8 @@ struct idx_pair bc_scan_pair(struct bytecode code, idx index, u8 find){
 			}
 		} else if (cur == BC_NUMBER){
 			index += BC_NUMBER_SIZE-1; // change if number syntax gets modified?
+		} else if (cur == BC_VARIABLE_ID){
+			index += BC_INSTR_SIZE-1+2;
 		} else {
 			index += BC_INSTR_SIZE-1;
 		}

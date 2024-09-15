@@ -91,6 +91,9 @@ typedef int32_t s32;
 typedef uint32_t idx;
 /// Type to indicate a fixed-point number. This is expected to be 20.12
 typedef int32_t fixp;
+/// Type to hold a double-width fixed point number (for multiplications)
+/// Expected to be 40.24
+typedef int64_t dfixp;
 
 #ifdef EZ80
 #include <debug.h>

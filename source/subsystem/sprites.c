@@ -80,6 +80,7 @@ void step_sprites(struct sprites* s){
 	}
 }
 
+
 // Calculate sprite collisions using the separating axis theorem
 // If you project the sprite's vertices onto the normals of both sprites
 // and they don't overlap, then they aren't colliding. Otherwise, they are.
@@ -91,7 +92,6 @@ bool is_hit(struct sprite_info* a, struct sprite_info* b){
 	if (!(a->hit.mask & b->hit.mask)){
 		return false; //can't hit different groups
 	}
-	// TODO:IMPL:LOW Doesn't implement adjust for scale flag?
 	// Note: These are vectors, so the numeric values shouldn't matter too much
 	fixp normals[3][2] = {
 		{INT_TO_FP(1), 0},
@@ -117,24 +117,36 @@ bool is_hit(struct sprite_info* a, struct sprite_info* b){
 	
 	// TODO:PERF:LOW Check if reducing to regular AABB case is faster for sprites
 	// with only trivial vectors
+
+	// TODO:TEST:MED Verify adjustment for scale flag is correct
+	fixp ahx = ((dfixp)a->hit.x * a->scale.s) >> FIXPOINT;
+	fixp ahy = ((dfixp)a->hit.y * a->scale.s) >> FIXPOINT;
+	fixp ahxw = (((dfixp)a->hit.x + a->hit.w) * a->scale.s) >> FIXPOINT;
+	fixp ahyh = (((dfixp)a->hit.y + a->hit.h) * a->scale.s) >> FIXPOINT;
+
 	fixp a_verts[8][2] = {
 		// vertices of a
-		{a->pos.x + a->hit.x, a->pos.y + a->hit.y},
-		{a->pos.x + a->hit.x + a->hit.w, a->pos.y + a->hit.y},
-		{a->pos.x + a->hit.x + a->hit.w, a->pos.y + a->hit.y + a->hit.h},
-		{a->pos.x + a->hit.x, a->pos.y + a->hit.y + a->hit.h},
+		{a->pos.x + ahx,  a->pos.y + ahy},
+		{a->pos.x + ahxw, a->pos.y + ahy},
+		{a->pos.x + ahxw, a->pos.y + ahyh},
+		{a->pos.x + ahx,  a->pos.y + ahyh},
 		// vertices of a + combined collision vectors of a+b
-		{a->pos.x + a->hit.x + normals[2][1], a->pos.y + a->hit.y - normals[2][0]},
-		{a->pos.x + a->hit.x + a->hit.w + normals[2][1], a->pos.y + a->hit.y - normals[2][0]},
-		{a->pos.x + a->hit.x + a->hit.w + normals[2][1], a->pos.y + a->hit.y + a->hit.h - normals[2][0]},
-		{a->pos.x + a->hit.x + normals[2][1], a->pos.y + a->hit.y + a->hit.h - normals[2][0]},
+		{a->pos.x + ahx + normals[2][1],  a->pos.y + ahy - normals[2][0]},
+		{a->pos.x + ahxw + normals[2][1], a->pos.y + ahy - normals[2][0]},
+		{a->pos.x + ahxw + normals[2][1], a->pos.y + ahyh - normals[2][0]},
+		{a->pos.x + ahx + normals[2][1],  a->pos.y + ahyh - normals[2][0]},
 	};
 	
+	fixp bhx = ((dfixp)b->hit.x * b->scale.s) >> FIXPOINT;
+	fixp bhy = ((dfixp)b->hit.y * b->scale.s) >> FIXPOINT;
+	fixp bhxw = (((dfixp)b->hit.x + b->hit.w) * b->scale.s) >> FIXPOINT;
+	fixp bhyh = (((dfixp)b->hit.y + b->hit.h) * b->scale.s) >> FIXPOINT;
+
 	fixp b_verts[4][2] = {
-		{b->pos.x + b->hit.x, b->pos.y + b->hit.y},
-		{b->pos.x + b->hit.x + b->hit.w, b->pos.y + b->hit.y},
-		{b->pos.x + b->hit.x + b->hit.w, b->pos.y + b->hit.y + b->hit.h},
-		{b->pos.x + b->hit.x, b->pos.y + b->hit.y + b->hit.h},
+		{b->pos.x + bhx,  b->pos.y + bhy},
+		{b->pos.x + bhxw, b->pos.y + bhy},
+		{b->pos.x + bhxw, b->pos.y + bhyh},
+		{b->pos.x + bhx,  b->pos.y + bhyh},
 	};
 	
 	for (idx i = 0; i < sizeof(normals)/sizeof(normals[0]); ++i){
@@ -205,13 +217,15 @@ void cmd_spclr(struct ptc* p){
 }
 
 void cmd_spset(struct ptc* p){
-	fixp id, chr, pal;
+	int id;
+	int chr;
+	int pal;
 	STACK_INT_RANGE(0, 0, 99, id);
 	STACK_INT_RANGE(1, 0, (p->sprites.page ? 117 : 512), chr);
 	STACK_INT_RANGE(2, 0, 15, pal);
 	bool horiz_flip = STACK_INT(3) != 0;
 	bool vert_flip = STACK_INT(4) != 0;
-	fixp prio;
+	int prio;
 	STACK_INT_RANGE(5, 0, 3, prio);
 	int width = 16;
 	int height = 16;
@@ -227,11 +241,12 @@ void cmd_spset(struct ptc* p){
 
 void cmd_spofs(struct ptc* p){
 	int id;
-	fixp x, y;
+	fixp x;
+	fixp y;
 	int time;
 	STACK_INT_RANGE(0,0,99,id);
-	x = STACK_NUM(1) & 0xfffff000; // TODO:TEST:LOW Check that these values are correct
-	y = STACK_NUM(2) & 0xfffff000;
+	x = STACK_NUM(1) & -FIXP_1; // integer only
+	y = STACK_NUM(2) & -FIXP_1;
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
 	if (!s->active) ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 
@@ -247,7 +262,7 @@ void cmd_spofs(struct ptc* p){
 			s->pos.dx = (x - s->pos.x) / time;
 			s->pos.dy = (y - s->pos.y) / time;
 //			iprintf("dx=%d dy=%d\n", s->pos.dx, s->pos.dy);
-			s->pos.time = time - 1; // TODO:CODE:NONE rework step to use time and time == 0 instead?
+			s->pos.time = time - 1;
 		} else {
 			s->pos.x = x;
 			s->pos.y = y;
@@ -258,7 +273,8 @@ void cmd_spofs(struct ptc* p){
 
 void cmd_spsetv(struct ptc* p){
 	// SPSETV id,ix,val
-	int id,ix;
+	int id;
+	int ix;
 	fixp val;
 	STACK_INT_RANGE(0,0,99,id);
 	STACK_INT_RANGE(1,0,7,ix);
@@ -271,7 +287,8 @@ void cmd_spsetv(struct ptc* p){
 
 void func_spgetv(struct ptc* p){
 	// SPGETV id,ix
-	int id,ix;
+	int id;
+	int ix;
 	STACK_REL_INT_RANGE(-2,0,99,id);
 	STACK_REL_INT_RANGE(-1,0,7,ix);
 	p->stack.stack_i -= 2;
@@ -299,7 +316,11 @@ void func_spgetv(struct ptc* p){
 /// 
 /// @param p System struct
 void cmd_spcol(struct ptc* p){
-	int id, x, y, w, h;
+	int id;
+	int x;
+	int y;
+	int w;
+	int h;
 	bool scale;
 	uint_fast8_t group = 0xff;
 	STACK_INT_RANGE(0,0,99,id);
@@ -324,12 +345,28 @@ void cmd_spcol(struct ptc* p){
 	}
 }
 
+void cmd_spcolvec(struct ptc* p){
+	int id;
+	int dx;
+	int dy;
+	STACK_INT_RANGE(0,0,99,id);
+	STACK_INT_RANGE(1,-128,127,dx); // TODO:ERR:MED check valid range
+	STACK_INT_RANGE(2,-128,127,dy);
+
+	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
+	if (!s->active){
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	} else {
+		s->hit.dx = INT_TO_FP(dx);
+		s->hit.dy = INT_TO_FP(dy);
+	}
+}
+
 void cmd_sphome(struct ptc* p){
 	int id;
-	int_fast8_t x, y;
 	STACK_INT_RANGE(0,0,99,id);
-	x = STACK_INT(1) & 0xff; // TODO:TEST:MED check that this is correct
-	y = STACK_INT(2) & 0xff;
+	int x = STACK_INT(1) & 0xff; // TODO:TEST:MED check that this is correct
+	int y = STACK_INT(2) & 0xff;
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
 	if (!s->active){
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
@@ -362,7 +399,8 @@ void cmd_spscale(struct ptc* p){
 }
 
 void func_sphit(struct ptc* p){
-	int id, start;
+	int id;
+	int start;
 	start = 0;
 	if (p->exec.argcount == 1){
 		STACK_REL_INT_RANGE(-1,0,99,id);
@@ -379,33 +417,45 @@ void func_sphit(struct ptc* p){
 		struct sprite_info* other = &p->sprites.info[p->sprites.page][i];
 		if (is_hit(this, other)){
 			hit = i;
+			// TODO:IMPL:LOW interpolation form (nonzero SPHITT)
+			// I don't know a single program that used interpolation so this
+			// is low priority, but I'd love to see it working eventually
 			p->sprites.sphitno = hit;
+			p->sprites.sphitt = 0;
+			p->sprites.sphitx = this->pos.x;
+			p->sprites.sphity = this->pos.y;
 			break;
 		}
 	}
-	// TODO:IMPL:MED SPHITX, SPHITY, SPHITT
+
 	STACK_RETURN_INT(hit != -1);
 }
 
 void func_sphitsp(struct ptc* p){
-	int id, other_id;
+	int id;
+	int other_id;
 	STACK_REL_INT_RANGE(-1,0,99,id);
 	STACK_REL_INT_RANGE(-2,0,99,other_id);
-	
+	p->stack.stack_i -= 2;
+
 	struct sprite_info* this = &p->sprites.info[p->sprites.page][id];
 	struct sprite_info* other = &p->sprites.info[p->sprites.page][other_id];
 	
 	if (is_hit(this, other)){
+		// TODO:IMPL:LOW interpolation form (nonzero SPHITT)
+		// See func_sphit
+		p->sprites.sphitt = 0;
+		p->sprites.sphitx = this->pos.x;
+		p->sprites.sphity = this->pos.y;
 		STACK_RETURN_INT(1);
 	} else {
 		STACK_RETURN_INT(0);
 	}
-	
-	// TODO:TEST:MED SPHITX, SPHITY, SPHITT, SPHITNO affected by this?
 }
 
 void cmd_spangle(struct ptc* p){
-	int id, angle; //, time, direction;
+	int id;
+	int angle;
 	STACK_INT_RANGE(0,0,99,id);
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
 	if (!s->active) {

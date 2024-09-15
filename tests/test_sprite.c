@@ -17,13 +17,15 @@ int test_sprite(){
 		ASSERT(is_hit(&a, &b), "[col] Default sprite collision");
 		
 		a.pos.x = INT_TO_FP(20);
-		
 		DENY(is_hit(&a, &b), "[col] Default sprite no collision");
-		
+
 		b.pos.y = INT_TO_FP(20);
-		
 		DENY(is_hit(&a, &b), "[col] Default sprite no collision 2");
 		
+		a.pos.x = INT_TO_FP(0);
+		b.pos.y = INT_TO_FP(20);
+		DENY(is_hit(&a, &b), "[col] Default sprite no collision 3");
+
 		a.hit.dx = INT_TO_FP(-20);
 		a.hit.dy = INT_TO_FP(20);
 		

@@ -100,7 +100,8 @@ void offset_key(struct ptc* p, int id, int d);
 /// 
 /// The ranges of return values fall into these ranges:
 ///  -   1- 69: Keyboard key, corresponding to the same value of KEYBOARD
-///  -  90- 93: Icon, where 90=icon 0 and so on.
+///  -  80- 81: Icon page buttons
+///  -  90- 93: Icon, where 91=icon 0 and so on.
 ///  - 101-105: Function key, where 101 corresponds to FUNCNO=1 and so on.
 /// 
 /// @param p System struct

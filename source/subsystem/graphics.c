@@ -2,10 +2,12 @@
 
 #include "resources.h"
 #include "stack.h"
+#include "strs.h"
 #include "system.h"
 #include "error.h"
 
 #include <math.h>
+#include <string.h>
 
 void init_graphics(struct graphics* g){
 	g->info[0].drawpage = 0;
@@ -232,13 +234,31 @@ void cmd_gputchr(struct ptc* p){
 	STACK_INT_RANGE(4,0,15,pal);
 	size = STACK_INT(5);
 	if (size == 1 || size == 2 || size == 4 || size == 8){
-		// TODO:IMPL:MED GPUTCHR copies palette to COL2 memory
+		// Copy colors from character resource specified
+		// BG* -> COL0
+		// SP* -> COL1
+		char col_resource[] = "COLX\0";
+		col_resource[3] = str_at_char(resource, 0) == 'B' ? '0' : '1';
+		// take page hint from resource given
+		char maybe_page = str_at_char(resource, str_len(resource) - 1);
+		if (maybe_page == 'L' || maybe_page == 'U'){
+			col_resource[4] = maybe_page;
+		}
+
+		u16* col_src = get_resource_ptr(p, col_resource);
+		u16* col_dest = get_resource_ptr(p, "COL2");
+		memcpy(col_dest + 16 * pal, col_src + 16 * pal, 16 * sizeof(u16));
+		iprintf("GPUTCHR palette copy %s(%p) %s%c(%p)\n", col_resource, (void*)col_src, "COL2", (p->graphics.screen ? 'L' : 'U'), (void*)col_dest);
+		p->res.regen_col = true;
 
 		// pointer to base resource
 		struct res_info i = get_verified_resource_type(p, resource);
 		u8* src = i.data;
+		if (!src){
+			ERROR(ERR_INVALID_RESOURCE_TYPE); // TODO:ERR:MED Check this is correct
+		}
 		// pointer to relevant character
-		src = &src[32*chr]; // TODO:CODE:NONE constant for size of one character
+		src = &src[CHR_UNIT_SIZE * chr];
 
 		// pointer to destination page
 		u8* dest = grp_drawpage(p);

@@ -1,3 +1,4 @@
+#include "error.h"
 #include "test_util.h"
 
 #include "common.h"
@@ -612,6 +613,27 @@ int test_tokens(void){
 		);
 	}
 
+	// LABEL simple validation
+	{
+		char bc[] = {
+			BC_LABEL, 3, 'A', 'B', 'C', '\0'
+		};
+		ASSERT(
+			token_code(
+				"LABEL ABC\r",
+				bc,
+				sizeof(bc)
+			), "[label] Sysvar write tokenization"
+		);
+	}
+
+	// LABEL validation
+	{
+		ASSERT(check_code_error("LABEL+ABC\r", ERR_SYNTAX), "[label] Space separated");
+		ASSERT(check_code_error("LABEL\r", ERR_SYNTAX), "[label] Label exists");
+		ASSERT(check_code_error("LABEL \r", ERR_SYNTAX), "[label] Label exists");
+		ASSERT(check_code_error("LABEL ABCDEFGHIJKLMNOPQ\r", ERR_LABEL_TOO_LONG), "[label] Label maximum length");
+	}
 
 	SUCCESS("test_tokens success");
 }

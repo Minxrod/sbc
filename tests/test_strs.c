@@ -176,6 +176,13 @@ int test_strs(){
 	{
 		ASSERT(to_wide('\x21') == 65281, "[to_wide] 0x21");
 	}
-	
+
+	// Lexicographical compare
+	{
+		ASSERT(str_lex("S\1A","S\1A") == 0, "[str_lex] Compare equal");
+		ASSERT(str_lex("S\0","S\1A") == -1, "[str_lex] First string lex. before");
+		ASSERT(str_lex("S\1A","S\0") == 1, "[str_lex] Second string lex. before");
+	}
+
 	SUCCESS("test_strs success");
 }

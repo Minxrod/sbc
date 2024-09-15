@@ -6,6 +6,7 @@
 
 #include "ptc.h"
 #include "error.h"
+#include "vars.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -689,6 +690,71 @@ int test_int_code(){
 
 		p = run_code("X=4\rON X GOTO @0,@1,,@3,\r@0\r@1\r@3\r");
 		DENY(p->exec.error == ERR_NONE, "[on] GOTO empty final slot error");
+		free_code(p);
+	}
+
+	// DATA with leading spaces within string
+	// (test case from heavily modified UX_CHRED segment)
+	{
+		struct ptc* p = run_code(
+			"DIM A$(7)\r"
+			"FOR I=0 TO 6\r"
+			" READ A$(I)\r"
+			"NEXT\r"
+			"DATA\"AAAA\r"
+			"DATA\"AAAA\r"
+			"DATA\" AAA\r"
+			"DATA\" AAA\r"
+			"DATA\"AAAA\r"
+			"DATA\" AAA\r"
+			"DATA\"AAAA\r"
+		);
+
+		ASSERT(str_comp(test_arr(&p->vars, "A", 0, VAR_STRING | VAR_ARRAY)->ptr, "S\4AAAA"), "[data] UX_CHRED modified segment READ 0");
+		ASSERT(str_comp(test_arr(&p->vars, "A", 1, VAR_STRING | VAR_ARRAY)->ptr, "S\4AAAA"), "[data] UX_CHRED modified segment READ 1");
+		ASSERT(str_comp(test_arr(&p->vars, "A", 2, VAR_STRING | VAR_ARRAY)->ptr, "S\4 AAA"), "[data] UX_CHRED modified segment READ 2");
+		ASSERT(str_comp(test_arr(&p->vars, "A", 3, VAR_STRING | VAR_ARRAY)->ptr, "S\4 AAA"), "[data] UX_CHRED modified segment READ 3");
+		ASSERT(str_comp(test_arr(&p->vars, "A", 4, VAR_STRING | VAR_ARRAY)->ptr, "S\4AAAA"), "[data] UX_CHRED modified segment READ 4");
+		ASSERT(str_comp(test_arr(&p->vars, "A", 5, VAR_STRING | VAR_ARRAY)->ptr, "S\4 AAA"), "[data] UX_CHRED modified segment READ 5");
+		ASSERT(str_comp(test_arr(&p->vars, "A", 6, VAR_STRING | VAR_ARRAY)->ptr, "S\4AAAA"), "[data] UX_CHRED modified segment READ 6");
+
+		free_code(p);
+	}
+
+	// DATA after other command OK
+	{
+		ASSERT(check_code_error("PRINT A:DATA AAA\r", ERR_NONE), "[data] Data after another command");
+	}
+
+	// DATA does not error
+	{
+		ASSERT(check_code_error("DATA \"\x01,\"\x02\"\r", ERR_NONE), "[data] Weird syntax is fine in DATA without READ");
+	}
+
+	// DATA with empty slots
+	{
+		struct ptc* p = run_code(
+			"DATA ,,\r"
+			"READ A$,B$,C$\r"
+		);
+
+		CHECK_VAR_STR("A","S\0");
+		CHECK_VAR_STR("B","S\0");
+		CHECK_VAR_STR("C","S\0");
+
+		free_code(p);
+	}
+
+	// DATA with multiple string (was this missed before??)
+	{
+		struct ptc* p = run_code(
+			"DATA \"'\",\"A\"\r"
+			"READ A$,B$\r"
+		);
+
+		CHECK_VAR_STR("A","S\1'");
+		CHECK_VAR_STR("B","S\1A");
+
 		free_code(p);
 	}
 

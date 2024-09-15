@@ -87,8 +87,9 @@ void free_mem_var(struct variables* v);
 
 // Expects null-terminated name
 struct named_var* test_var(struct variables* v, char*, enum types type);
-// Name and length required
+union value* test_arr(struct variables* v, char*, int index, enum types type);
 
+// Name and length required
 /**
  * Gets a pointer to a variable using the variable name.
  * The name itself does not determine the variable type. It must be passed separately.

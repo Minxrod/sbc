@@ -3,6 +3,8 @@
 #include "system.h"
 #include "ptc.h"
 #include "error.h"
+#include "vars.h"
+#include "variables.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,23 +19,19 @@ void op_add(struct ptc* p){
 	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
 	
 	if (a->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		int64_t z = (int64_t)x + y;
+		fixp x = VALUE_NUM(a);
+		fixp y = VALUE_NUM(b);
+		dfixp z = (dfixp)x + y;
 		if (z < INT_MIN || z > INT_MAX){
 			ERROR(ERR_OVERFLOW);
 		}
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {x + y}});
 	} else {
-		struct string* x, * y, * z;
-		
 		// The value_str function checks uses to get the next string
-		z = get_new_str(&p->strs);
-		x = value_str(a);
-		y = value_str(b);
+		struct string* z = get_new_str(&p->strs);
+		struct string* x = value_str(a);
+		struct string* y = value_str(b);
 		z->uses = 1;
 		
 		if (str_len(x) + str_len(y) > MAX_STRLEN){
@@ -64,24 +62,21 @@ void op_mult(struct ptc* p){
 	struct stack_entry* a = stack_pop(s);
 	
 	if (a->type & b->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
-		int64_t z = (int64_t)x * y >> FIXPOINT;
+		fixp x = VALUE_NUM(a);
+		fixp y = VALUE_NUM(b);
+		dfixp z = (dfixp)x * y >> FIXPOINT;
 		if (z < INT_MIN || z > INT_MAX){
 			ERROR(ERR_OVERFLOW);
 		}
 	
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {z}});
 	} else if (a->type & VAR_STRING && b->type & VAR_NUMBER){
-		s32 count = FP_TO_INT(VALUE_NUM(b));
+		int count = FP_TO_INT(VALUE_NUM(b));
 		if (count < 0) count = 0;
-		struct string* x, * y;
 		
 		// must be done first to keep uses correct
-		y = get_new_str(&p->strs);
-		x = value_str(a);
+		struct string* y = get_new_str(&p->strs);
+		struct string* x = value_str(a);
 		
 		y->uses = 1;
 		y->len = 0; // start empty
@@ -101,13 +96,11 @@ void op_mult(struct ptc* p){
 }
 
 void op_div(struct ptc* p){
-	s32 x, y;
-	
-	x = STACK_REL_NUM(-2);
-	y = STACK_REL_NUM(-1);
+	fixp x = STACK_REL_NUM(-2);
+	fixp y = STACK_REL_NUM(-1);
 	
 	if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
-	int64_t z = ((int64_t)x << FIXPOINT) / y;
+	dfixp z = ((dfixp)x << FIXPOINT) / y;
 	if (z < INT_MIN || z > INT_MAX){
 		ERROR(ERR_OVERFLOW);
 	}
@@ -117,11 +110,9 @@ void op_div(struct ptc* p){
 }
 
 void op_sub(struct ptc* p){
-	s32 x, y;
-	
-	x = STACK_REL_NUM(-2);
-	y = STACK_REL_NUM(-1);
-	int64_t z = (int64_t)x - y;
+	fixp x = STACK_REL_NUM(-2);
+	fixp y = STACK_REL_NUM(-1);
+	dfixp z = (dfixp)x - y;
 	if (z < INT_MIN || z > INT_MAX){
 		ERROR(ERR_OVERFLOW);
 	}
@@ -134,15 +125,9 @@ void op_negate(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	if (a->type & VAR_NUMBER){
-		s32 x;
-		
-		x = VALUE_NUM(a);
-		
-		stack_push(s, (struct stack_entry){VAR_NUMBER, {-x}});
-	} else {
-		p->exec.error = ERR_OP_INVALID_TYPE;
-	}
+	fixp x = VALUE_NUM(a);
+
+	stack_push(s, (struct stack_entry){VAR_NUMBER, {-x}});
 }
 
 void op_assign(struct ptc* p){
@@ -154,9 +139,7 @@ void op_assign(struct ptc* p){
 	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
 	
 	if (a->type & VAR_NUMBER){
-		fixp x = VALUE_NUM(b);
-		
-		*(s32*)a->value.ptr = x;
+		*(fixp*)a->value.ptr = VALUE_NUM(b);
 	} else {
 		// A = variable containing pointer to struct string*
 		struct string** dest = (struct string**)a->value.ptr;
@@ -208,17 +191,13 @@ void op_equal(struct ptc* p){
 	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
 	
 	if (a->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
+		fixp x = VALUE_NUM(a);
+		fixp y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == y)}});
 	} else {
-		struct string* x, * y;
-		
-		x = value_str(a);
-		y = value_str(b);
+		struct string* x = value_str(a);
+		struct string* y = value_str(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_comp(x, y))}});
 	}
@@ -232,14 +211,13 @@ void op_inequal(struct ptc* p){
 	assert(a->type & b->type & (VAR_NUMBER | VAR_STRING)); // must share a type
 	
 	if (a->type & VAR_NUMBER){
-		s32 x, y;
-		
-		x = VALUE_NUM(a);
-		y = VALUE_NUM(b);
+		fixp x = VALUE_NUM(a);
+		fixp y = VALUE_NUM(b);
 		
 		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x != y)}});
 	} else {
-		struct string* x, * y;
+		struct string* x;
+		struct string* y;
 		
 		x = value_str(a);
 		y = value_str(b);
@@ -253,12 +231,11 @@ void op_less(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
-	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x < y)}});
+	if (a->type & VAR_NUMBER){
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(VALUE_NUM(a) < VALUE_NUM(b))}});
+	} else {
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_lex(value_str(a), value_str(b)) < 0)}});
+	}
 }
 
 void op_greater(struct ptc* p){
@@ -266,12 +243,11 @@ void op_greater(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
-	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x > y)}});
+	if (a->type & VAR_NUMBER){
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(VALUE_NUM(a) > VALUE_NUM(b))}});
+	} else {
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_lex(value_str(a), value_str(b)) > 0)}});
+	}
 }
 
 void op_less_equal(struct ptc* p){
@@ -279,12 +255,12 @@ void op_less_equal(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
-	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x <= y)}});
+
+	if (a->type & VAR_NUMBER){
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(VALUE_NUM(a) <= VALUE_NUM(b))}});
+	} else {
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_lex(value_str(a), value_str(b)) <= 0)}});
+	}
 }
 
 void op_greater_equal(struct ptc* p){
@@ -292,23 +268,20 @@ void op_greater_equal(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	s32 x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
-	
-	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x >= y)}});
+	if (a->type & VAR_NUMBER){
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(VALUE_NUM(a) >= VALUE_NUM(b))}});
+	} else {
+		stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_lex(value_str(a), value_str(b)) >= 0)}});
+	}
 }
 
 void op_modulo(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
-	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
+
+	fixp x = VALUE_NUM(a);
+	fixp y = VALUE_NUM(b);
 	
 	if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
 	
@@ -320,10 +293,8 @@ void op_and(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
+	fixp x = VALUE_NUM(a);
+	fixp y = VALUE_NUM(b);
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) & FP_TO_INT(y))}});
 }
@@ -333,11 +304,9 @@ void op_or(struct ptc* p){
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
-	
+	fixp x = VALUE_NUM(a);
+	fixp y = VALUE_NUM(b);
+
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) | FP_TO_INT(y))}});
 }
 
@@ -345,12 +314,10 @@ void op_xor(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
-	
-	fixp x, y;
-	
-	x = VALUE_NUM(a);
-	y = VALUE_NUM(b);
-	
+
+	fixp x = VALUE_NUM(a);
+	fixp y = VALUE_NUM(b);
+
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) ^ FP_TO_INT(y))}});
 }
 
@@ -358,9 +325,7 @@ void op_not(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x;
-	
-	x = VALUE_NUM(a);
+	fixp x = VALUE_NUM(a);
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(~FP_TO_INT(x))}});
 }
@@ -369,9 +334,7 @@ void op_logical_not(struct ptc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
-	fixp x;
-	
-	x = VALUE_NUM(a);
+	fixp x = VALUE_NUM(a);
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == 0)}});
 }

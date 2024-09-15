@@ -30,3 +30,6 @@ void run(struct bytecode code, struct ptc* p) ITCM_CODE;
 
 void cmd_exec(struct ptc* p);
 void cmd_run(struct ptc* p);
+
+void sys_err(struct ptc* p);
+void sys_erl(struct ptc* p);

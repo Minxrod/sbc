@@ -285,5 +285,10 @@ void cmd_end(struct ptc* p){
 }
 
 void cmd_stop(struct ptc* p){
+	p->exec.error = ERR_BREAK;
+}
+
+void cmd_cont(struct ptc* p){
+	// if this is executing, it's from DIRECT mode. how to handle this?
 	(void)p;
 }

@@ -106,7 +106,7 @@ int test_int_resources(void){
 			0xff,0,0,0xf, 0xf,0xf0,0,0xff, 0xf0,0xff,0xf,0xf0, 0,0xff,0xf,0xf0
 		};
 
-		ASSERT(memcmp(expected, p->res.chr[0], sizeof(expected)/sizeof(expected[0])), "[load] Loaded CHR correctly");
+		ASSERT(memcmp(expected, p->res.chr[0], sizeof(expected)), "[load] Loaded CHR correctly");
 		ASSERT(p->res.result == 1, "[load] RESULT set correctly");
 
 		free_code(p);
@@ -271,6 +271,25 @@ int test_int_resources(void){
 		struct ptc* p = run_code("APPEND\"IFELSE2\"\r");
 
 		ASSERT(p->res.result == 0, "[append] RESULT is one (successful APPEND)");
+
+		free_code(p);
+	}
+
+	// Package test
+	{
+		struct ptc* p = run_code("EXEC\"PACKTEST\r");
+
+		char zero[] =
+		"\x00\x00\x00\x00"
+		"\x00\x00\x00\x00"
+		"\x00\x00\x00\x00"
+		"\xf0\xff\xf0\xff"
+		"\xf0\xf0\xf0\xf0"
+		"\xf0\xf0\xf0\xf0"
+		"\xf0\xff\xf0\xff"
+		"\x00\x00\x00\x00";
+		ASSERT(!memcmp(p->res.chr[12], zero, CHR_UNIT_SIZE), "[package] Something loaded (nonzero first CHR)");
+		CHECK_VAR_STR("A","S\0011");
 
 		free_code(p);
 	}

@@ -39,7 +39,9 @@ void set_input(struct ptc* p, int b) {
 		}
 	}
 	// check for SELECT break here
-	// TODO:CODE:MED is this thread-safe?
+	// TODO:CODE:LOW is this thread-safe?
+	// writing to p->exec.error: may be destroyed by a few specific commands?
+	// no issues yet during testing
 	if (i->times[BUTTON_ID_SELECT].frame == 1){
 		p->exec.error = ERR_BREAK;
 	}
@@ -131,13 +133,12 @@ void cmd_brepeat(struct ptc* p){
 	// Apparently 12 is a valid ID, even if it doesn't seem to do anything?
 	int id;
 	STACK_INT_RANGE(0,0,12,id);
-	if (p->stack.stack_i == 0){
-		if (id == 12) return;
+	//TODO:IMPL:NONE Figure out what this does and add it maybe?
+	if (id == 12) return;
+	if (p->stack.stack_i == 1){
 		p->input.times[id].start = 0;
 		p->input.times[id].repeat = 0;
 	} else {
-		//TODO:IMPL:NONE Figure out what this does and add it maybe?
-		if (id == 12) return;
 		STACK_INT_MIN(1,0,p->input.times[id].start);
 		STACK_INT_MIN(2,0,p->input.times[id].repeat);
 	}
