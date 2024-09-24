@@ -64,6 +64,8 @@ struct ptc {
 	// actual system stuff
 	/// The value/variable stack 
 	struct runner exec;
+	/// Previous state of execution (to be used for CONT and ERR/ERL)
+	struct runner exec_old;
 	
 	struct value_stack stack;
 	
@@ -81,7 +83,18 @@ struct ptc {
 	struct memory_api memapi;
 };
 
+/// Inititalizes the system struct. This allocates lots of memory, some of which can be
+/// parameterized. This does NOT include allocations for program code itself.
+///
+/// @param var Number of variables to allocate space for.
+/// @param str Number of strings to allocate space for.
+/// @param arr Memory (in bytes to allocate for arrays.
+/// Note that the allocate amount is higher than this to allow for metadata.
+/// @param headless Set this to true when no display is being used to avoid costs of texture generation.
+/// @return Initialized system.
 struct ptc* init_system(int var, int str, int arr, bool headless);
+
+/// Frees an allocated system.
 void free_system(struct ptc*);
 
 /// Information struct containing program source and the system to run it on.

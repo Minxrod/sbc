@@ -174,17 +174,13 @@ void func_subst(struct ptc* p){
 	dest->uses = 1;
 	if (start + repl_len > MAX_STRLEN) ERROR(ERR_STRING_TOO_LONG);
 
-	// TODO:IMPL:LOW figure out how to support different string types in src/dest
-	if (str_type(str) == STR_COPY_SRC_16) ERROR(ERR_UNIMPLEMENTED);
-	if (str_type(repl) == STR_COPY_SRC_16) ERROR(ERR_UNIMPLEMENTED);
-
-	str_copy_buf(str_at(str, 0), dest->ptr.s, STR_COPY_SRC_8 | STR_COPY_DEST_8, start);
+	str_copy_buf(str_at(str, 0), dest->ptr.s, str_type(str) | (str_type(dest) << STR_COPY_DEST), start);
 //	iprintf("%s\n",dest->ptr.s);
-	str_copy_buf(str_at(repl, 0), &dest->ptr.s[start], STR_COPY_SRC_8 | STR_COPY_DEST_8, str_len(repl));
+	str_copy_buf(str_at(repl, 0), str_at(dest, start), str_type(repl) | (str_type(dest) << STR_COPY_DEST), str_len(repl));
 //	iprintf("%s\n",dest->ptr.s);
 	int remaining = str_len(str)-start-count;
 	if (remaining > 0)
-		str_copy_buf(str_at(str, start+count), &dest->ptr.s[start+str_len(repl)], STR_COPY_SRC_8 | STR_COPY_DEST_8, remaining);
+		str_copy_buf(str_at(str, start+count), str_at(dest, start + str_len(repl)), str_type(str) | (str_type(dest) << STR_COPY_DEST), remaining);
 //	iprintf("%s\n",dest->ptr.s);
 	
 	dest->len = start + str_len(repl) + (remaining > 0 ? remaining : 0);
@@ -266,6 +262,8 @@ void func_hex(struct ptc* p){
 		num &= 0x0fffff >> 4*(5-digits);
 	}
 	int len = 0;
+	// once again we can just force the type to work here. there will always be enough space.
+	dest->type = STRING_CHAR;
 	sprintf((char*)dest->ptr.s, "%0*X%n", digits, num, &len);
 	iprintf("[%d]%0X=%.*s", len, num, len, dest->ptr.s);
 	

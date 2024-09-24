@@ -45,10 +45,10 @@ struct console {
 	///
 	/// This includes both background and foreground colors.
 	/// Use COL_BG_MASK and COL_FG_MASK to extract individual colors.
-	uint_fast8_t col;
+	u8 col;
 	/// The stored text color.
 	/// Each text character has an assigned foreground and background color.
-	uint_fast8_t color[CONSOLE_HEIGHT][CONSOLE_WIDTH];
+	u8 color[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 	/// Enables "test mode," which is intended for automated testing.
 	/// This disables the delay on waiting for characters within `shared_input`.
 	bool test_mode;

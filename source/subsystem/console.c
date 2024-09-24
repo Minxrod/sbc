@@ -446,14 +446,26 @@ void cmd_linput(struct ptc* p){
 	}
 	(*(struct string**)e->value.ptr) = s;
 	
-	// TODO:IMPL:LOW Wide string support?
+	// If string defaulted to STRING_CHAR, promote it to STRING_WIDE as needed
+	// As long as MAX_STRLEN > CONSOLE_WIDTH / sizeof(u16), this is safe,
+	// even when using memory allocated for STRING_CHAR.
+	// If string defaulted to STRING_WIDE, it can stay that way, there's no difference.
 	s->uses = 1;
 	s->len = 0;
 	for (int j = 0; j < CONSOLE_WIDTH; ++j){
-		u8 c = to_char(output[j]);
-		if (!c) break;
-		s->ptr.s[j] = c;
-		s->len++;
+		if (!output[j]) break; // null character == end of string
+		if (!is_char(output[j])){
+			s->type = STRING_WIDE;
+		}
+		s->len += 1;
+	}
+
+	if (s->type == STRING_WIDE){
+		memcpy(s->ptr.w, output, s->len * sizeof(u16));
+	} else {
+		for (int j = 0; j < (int)s->len; ++j){
+			s->ptr.s[j] = to_char(output[j]);
+		}
 	}
 	con_newline(con, true); // from user entering the line successfully.
 }

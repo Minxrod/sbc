@@ -24,7 +24,7 @@ CFLAGS = -std=c11 -Wall -Werror -Wextra -Wpedantic -isystem$(CSFML_INCLUDE) $(fo
 # indicates location of CSFML shared object files
 LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 # All the libraries that need to be linked
-LIBFLAGS = -lm -lcsfml-graphics -lcsfml-window -lcsfml-system
+LIBFLAGS = -lm -lcsfml-audio -lcsfml-graphics -lcsfml-window -lcsfml-system
 
 # Some magic makefile nonsense
 # get source files list 
@@ -60,9 +60,6 @@ test: CFLAGS+=-pg
 #test: LFLAGS+=-lgcov
 compsize: CFLAGS+=-DNDEBUG
 
-$(BUILD)csfml:
-	cd util/external/CSFML/ && cmake . && make
-	echo "built csfml" > $(BUILD)csfml
 
 main_build: $(main_objs) $(BUILD)csfml
 	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o sbc $(LIBFLAGS)
@@ -74,17 +71,21 @@ main_build: $(main_objs) $(BUILD)csfml
 #	$(CC) $(CFLAGS) $(LFLAGS) $(build) compiled_size.c -o test $(LIBFLAGS)
 
 # TODO:CODE:NONE csfml probably shouldn't be a dependency here
-test: $(test_objs) $(BUILD)csfml
+test: $(test_objs) csfml
 	$(CC) $(CFLAGS) $(LFLAGS) $(test_objs) -o test $(LIBFLAGS)
 
 ntr_to_ptc:
 	$(CC) util/ntr_to_ptc.c -o util/ntr_to_ptc
 
-# builds ndstool only if it wasn't build already
-# TODO:CODE:NONE Is there a better way to indicate if a rebuild is needed?
-$(BUILD)ndstool:
+# builds ndstool only if it wasn't built already
+ndstool: util/external/ndstool/ndstool
+util/external/ndstool/ndstool:
 	cd util/external/ndstool/ && ./autogen.sh && ./configure && make
-	echo "built ndstool" > $(BUILD)ndstool
+
+# just check for one of the built libraries
+csfml: util/external/CSFML/lib/libcsfml-system.so
+util/external/CSFML/lib/libcsfml-system.so:
+	cd util/external/CSFML/ && cmake . && make
 
 resource: ntr_to_ptc $(BUILD)ndstool
 	./util/prepare_resource "$(NDS_FILE)" "extract/"
@@ -94,7 +95,6 @@ clean:
 	rm -f test sbc
 	rm -f $(build:%.o=%.d)
 	rm -f util/ntr_to_ptc
-	rm -f $(BUILD)/ndstool $(BUILD)/csfml
 	
 # https://stackoverflow.com/questions/313778/generate-dependencies-for-a-makefile-for-a-project-in-c-c	
 # https://stackoverflow.com/a/10168396

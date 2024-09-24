@@ -238,7 +238,7 @@ void cmd_iconclr(struct ptc* p){
 
 void func_iconchk(struct ptc* p){
 	int icon = get_pressed_key(p);
-	if (icon >= 90 && p->panel.keys[p->panel.id_pressed].active){
+	if (icon >= 90 && icon <= 94 && p->panel.keys[p->panel.id_pressed].active){
 		stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(icon - 90)}});
 	} else {
 		stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {-INT_TO_FP(1)}});

@@ -137,7 +137,7 @@ int load_program(struct ptc* p, const char* search_path, const char* name){
 	for (uint_fast8_t i = 0; i < PACKAGE_STR_LENGTH; ++i){
 		p->res.package[PACKAGE_STR_LENGTH - i - 1] = hex_digits[(package & (((uint64_t)0xf) << (i * 4))) >> (i * 4)];
 	}
-	iprintf("Package bitmask: %lx ", package);
+//	iprintf("Package bitmask: %lx ", package);
 	iprintf("string: %s\n", p->res.package);
 
 	for (uint_fast8_t i = 0; i < PACKAGE_STR_BIN_DIGITS; ++i){
@@ -796,7 +796,7 @@ struct res_info get_verified_resource(struct ptc* p, const void* res){
 		return info;
 	}
 
-	char res_str[MAX_RESOURCE_STR_LENGTH] = {0};
+	char res_str[MAX_RESOURCE_STR_LENGTH+1] = {0};
 	str_char_copy(res, (u8*)res_str);
 	if (!verify_resource_name(res_str)){
 		p->exec.error = ERR_ILLEGAL_FUNCTION_CALL;
@@ -808,11 +808,13 @@ struct res_info get_verified_resource(struct ptc* p, const void* res){
 		strncpy(info.type, res_str, sep - res_str);
 		info.type_id = get_resource_type(res);
 		const char* name = sep + 1;
-		strncpy(info.name, name, strlen(name));
+		strcpy(info.name, name);
+//		strncpy(info.name, name, strlen(name));
 	} else { // Default PRG type
 		strcpy(info.type, "PRG");
 		info.type_id = TYPE_PRG;
-		strncpy(info.name, res_str, strlen(res_str));
+//		strncpy(info.name, res_str, strlen(res_str));
+		strcpy(info.name, res_str);
 	}
 	info.data = get_resource_ptr(p, info.type);
 	iprintf("get_resource of type=%s (%d) name=%s at ptr=%p\n", info.type, (int)strlen(info.type), info.name, info.data);
@@ -915,6 +917,7 @@ void cmd_chrread(struct ptc* p){
 			dest->ptr.s[2 * i + 0] = hex_digits[ul];
 			dest->ptr.s[2 * i + 1] = hex_digits[uh];
 		}
+		dest->type = STRING_CHAR; // force smaller type is always safe
 		dest->len = 64;
 		dest->uses = 1;
 		*out = dest;
@@ -1213,6 +1216,7 @@ void sys_result(struct ptc* p){
 
 void sys_package(struct ptc* p){
 	struct string* str = get_new_str(&p->strs);
+	str->type = STRING_CHAR;
 	str->uses = 1;
 	int i = 0;
 	while (p->res.package[i] == '0'){
@@ -1231,6 +1235,7 @@ void sys_package(struct ptc* p){
 
 void sys_prgname(struct ptc* p){
 	struct string* str = get_new_str(&p->strs);
+	str->type = STRING_CHAR;
 	str->uses = 1;
 	str->len = strlen(p->res.prgname);
 	str_copy_buf(p->res.prgname, str->ptr.s, STR_COPY_SRC_8 | STR_COPY_DEST_8, str->len);

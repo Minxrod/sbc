@@ -227,8 +227,8 @@ int64_t u8_to_num(u8* data, const idx len){
 	return u8_to_number(data, len, 10, true);
 }
 
-// Returns STR_COPY_SRC_8 if string is u8 type
-// Returns STR_COPY_SRC_16 if string is u16 type
+// Returns STR_TYPE_8 if string is u8 type
+// Returns STR_TYPE_16 if string is u16 type
 int str_type(const void* str){
 	assert(str);
 	
@@ -238,11 +238,11 @@ int str_type(const void* str){
 		case BC_LABEL:
 		case BC_STRING:
 		case STRING_INLINE_CHAR:
-			return STR_COPY_SRC_8;
+			return STR_TYPE_8;
 		case BC_WIDE_STRING:
 		case STRING_WIDE:
 		case STRING_INLINE_WIDE:
-			return STR_COPY_SRC_16;
+			return STR_TYPE_16;
 		default:
 			iprintf("Unimplemented/Not a valid string type! (String type)\n");
 			abort();
@@ -250,13 +250,14 @@ int str_type(const void* str){
 }
 
 void fixp_to_str(const fixp num, void* dest){
-	if (str_type(dest) == STR_COPY_SRC_16){
-		iprintf("Unimplemented: fixp_to_str wide destination");
-		abort();
-	} else {
-		fixp_to_char(num, (u8*)str_at(dest, 0));
-		str_set_len(dest, strlen((char*)str_at(dest, 0)));
+	if (str_type(dest) == STR_TYPE_16){
+		// this is a bit stupid, but we can just...
+		// change the string type to the smaller one.
+		// there's guaranteed to be enough space, after all.
+		((struct string*)dest)->type = STRING_CHAR;
 	}
+	fixp_to_char(num, (u8*)str_at(dest, 0));
+	str_set_len(dest, strlen((char*)str_at(dest, 0)));
 }
 
 // Convert 20.12 fixed point number to string
@@ -470,13 +471,17 @@ void* str_at(const void* src, const u16 index){
 	
 	switch (*(char*)src){
 		case STRING_CHAR:
-			return &s->ptr.s[index];
+			return s->ptr.s + index;
+		case STRING_WIDE:
+			return s->ptr.w + index;
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
 		case STRING_INLINE_CHAR:
-			return &((u8*)src)[2+index];
+			return ((u8*)src) + 2 + index;
+		case BC_WIDE_STRING:
 		case STRING_INLINE_WIDE:
+			return ((u16*)src) + 1 + index;
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at)\n");
 			abort();
@@ -516,13 +521,15 @@ u16 str_at_char(const void* src, const u16 index){
 	switch (*(char*)src){
 		case STRING_CHAR:
 			return s->ptr.s[index];
+		case STRING_WIDE:
+			return s->ptr.w[index];
 		case BC_LABEL_STRING:
 		case BC_LABEL:
 		case BC_STRING:
 		case STRING_INLINE_CHAR:
 			return ((u8*)src)[2+index];
 		case STRING_INLINE_WIDE:
-		case STRING_WIDE:
+			return ((u16*)src)[1+index];
 		default:
 			iprintf("Unimplemented/Not a valid string type! (str_at_char)\n");
 			abort();
@@ -667,8 +674,9 @@ bool str_concat(const void* src1, const void* src2, void* dest){
 		d->len = str_len(src1) + str_len(src2);
 		return true;
 	} else if (d->type == STRING_WIDE){
-		iprintf("Unimplemented: Wide string destination\n");
-		abort();
+		str_wide_copy(src2, &(d->ptr.w[str_len(src1)]));
+		d->len = str_len(src1) + str_len(src2);
+		return true;
 	} else {
 		iprintf("Error: Invalid destination type\n");
 		abort();

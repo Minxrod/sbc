@@ -256,14 +256,14 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 			if (opts & TOKOPT_STRICT_ERROR) break;
 			state.output->data[state.output->size++] = BC_ERROR;
 			state.output->data[state.output->size++] = error;
-			iprintf("Error at: %d\n", state.output->size);
+			iprintf("Error at: %d\n", (int)state.output->size);
 			while (state.source->data[state.cursor++] != '\r');
 			error = ERR_NONE;
 			state.token_i = 0;
 			continue;
 		}
 		if (state.state == TKR_CONVERT){
-			iprintf("line: %.*s\n", (int)state.cursor - state.tokens[0].ofs, &state.source->data[state.tokens[0].ofs]);
+			iprintf("line: %.*s\n", (int)(state.cursor - state.tokens[0].ofs), &state.source->data[state.tokens[0].ofs]);
 //			for (size_t i = 0; i < state.token_i; ++i){
 //				iprintf("[line_token] ");
 //				print_token(&state, state.tokens[i]);
@@ -275,7 +275,7 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 				state.output->data[state.output->size++] = error;
 				error = ERR_NONE;
 				state.token_i = 0;
-				iprintf("Error at: %d\n", state.output->size);
+				iprintf("Error at: %d\n", (int)state.output->size);
 			}
 		}
 	}
@@ -332,7 +332,7 @@ int tok_convert(struct tokenizer* state){
 	int line_end = state->output->size;
 	int line_length = line_end - line_begin;
 	state->output->line_length[state->lines_processed++] = line_length;
-	
+
 	return ERR_NONE;
 }
 
@@ -456,10 +456,6 @@ int tok_test(struct tokenizer* state){
 	
 	const char* valid; // Local used for some cases
 	bool is_valid; // Used by some cases
-	
-	if (state->token_i && (state->tokens[0].type == command || state->tokens[0].type == first_of_line_command) && state->tokens[0].cmd == CMD_DATA)
-		return ERR_NONE; // assumed valid
-	// TODO:CODE:MED Move to tok_name/tok_data or something for validation instead of these special cases
 	
 	iprintf("Validation:\n");
 	for (u8 i = 0; i < state->token_i; ++i){

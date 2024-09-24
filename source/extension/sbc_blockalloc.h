@@ -1,8 +1,10 @@
 #pragma once
 
 /// Maximum allowed memory allocation (PC)
-/// Set to 6MB to allow 4MB RAM + ~660KB VRAM + extra for 64-bit pointers
-#define MAX_MEMORY (6*1024*1024)
+/// Set to 8MB to allow 4MB RAM + ~660KB VRAM + extra for 64-bit pointers
+/// Extra room allows for STRING_WIDE to be enabled easily
+// TODO:IMPL:NONE make this configurable?
+#define MAX_MEMORY (8*1024*1024)
 
 // extern so sbc_memory can access value
 extern void* sbc_membase;

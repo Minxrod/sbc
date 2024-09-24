@@ -1,5 +1,6 @@
 #include "operators.h"
 
+#include "strs.h"
 #include "system.h"
 #include "ptc.h"
 #include "error.h"
@@ -148,9 +149,9 @@ void op_assign(struct ptc* p){
 		struct string* src = value_str(b);
 		assert(dest); // var must exist
 		assert(*dest); // must contain a valid string already
-		char dest_old_type = (*dest)->type;
+		// char dest_old_type = (*dest)->type;
 		
-		if (dest_old_type == STRING_CHAR || dest_old_type == STRING_WIDE){
+		if (is_dyn_str(*dest)){
 			// dest is dynamic: we replace it here, so reduce uses count
 			(*dest)->uses--;
 		}

@@ -381,9 +381,6 @@ int launch_system(void* launch_info){
 					state = LAUNCH_DEBUG;
 					debug = LAUNCH_DEBUG_BENCH;
 					break;
-				} else if (str_comp(cmd, "S\3RUN")){
-					state = LAUNCH_RUN;
-					break;
 				} else if (str_comp(cmd, "S\11REM LABEL")){
 					state = LAUNCH_DEBUG;
 					debug = LAUNCH_DEBUG_LABEL;

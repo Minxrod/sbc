@@ -68,6 +68,11 @@ void free_mem_str(struct strings* s);
 
 struct string* get_new_str(struct strings* s);
 
+/// Check if a string is a dynamic string (within str_data) or not
+static inline bool is_dyn_str(struct string* s){
+	return s->type == STRING_CHAR || s->type == STRING_WIDE;
+}
+
 /// Checks if character is a lowercase letter ('a'-'z')
 bool is_lower(char c);
 /// Checks if character is an uppercase letter ('A'-'Z')
@@ -121,14 +126,20 @@ int64_t u8_to_num(u8* data, idx len);
 // Constants for types mask
 // If set true, use u16, else u8 characters
 
+#define STR_TYPE_8 0
+#define STR_TYPE_16 1
 /// Parameter to str_copy_buf that denotes the source as u8*
-#define STR_COPY_SRC_8 0
-/// Parameter to str_copy_buf that denotes the destination as u8*
-#define STR_COPY_DEST_8 0
+#define STR_COPY_SRC_8 STR_TYPE_8
 /// Parameter to str_copy_buf that denotes the source as u16*
-#define STR_COPY_SRC_16 1
+#define STR_COPY_SRC_16 STR_TYPE_16
+/// Amount to shift left by to convert SRC to DEST
+#define STR_COPY_DEST 1
+/// Parameter to str_copy_buf that denotes the destination as u8*
+#define STR_COPY_DEST_8 (STR_TYPE_8 << STR_COPY_DEST)
 /// Parameter to str_copy_buf that denotes the destination as u16*
-#define STR_COPY_DEST_16 2
+#define STR_COPY_DEST_16 (STR_TYPE_16 << STR_COPY_DEST)
+
+
 
 // Copy from src buffer to destination buffer
 void str_copy_buf(const void* src, void* dest, u8 types, u16 count);

@@ -1,5 +1,6 @@
 #include "sysvars.h"
 
+#include "strs.h"
 #include "system.h"
 #include "interpreter/stack.h"
 
@@ -46,6 +47,7 @@ void sys_date(struct ptc* p){
 	int year = tm->tm_year + 1900;
 	
 	struct string* str = get_new_str(&p->strs);
+	str->type = STRING_CHAR;
 	str->uses = 1;
 	str->len = 10;
 	
@@ -73,6 +75,7 @@ void sys_time(struct ptc* p){
 	int sec = tm->tm_sec;
 	
 	struct string* str = get_new_str(&p->strs);
+	str->type = STRING_CHAR;
 	str->uses = 1;
 	str->len = 8;
 	

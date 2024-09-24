@@ -61,7 +61,7 @@ static inline void* value_str(struct stack_entry* e){
 	// If the value is alloc'd and being read here, reduce usages as it was
 	// removed from the stack.
 	assert(value);
-	if (e->type == VAR_STRING && ((struct string*)value)->type == STRING_CHAR){
+	if (e->type == VAR_STRING && is_dyn_str((struct string*)value)){
 		assert(((struct string*)value)->uses > 0);
 		((struct string*)value)->uses--;
 	}

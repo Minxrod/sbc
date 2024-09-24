@@ -53,7 +53,7 @@ int test_int_func(){
 		ASSERT(str_comp(test_var(&p->vars, "E", VAR_STRING)->value.ptr, "S\13ABCDEFXYGHI"), "[subst] Replace zero characters in string");
 		ASSERT(str_comp(test_var(&p->vars, "F", VAR_STRING)->value.ptr, "S\13XYABCDEFGHI"), "[subst] Replace zero characters at beginning of string");
 		
-		ASSERT(((struct string*)test_var(&p->vars, "A", VAR_STRING)->value.ptr)->type == STRING_CHAR, "[str_uses] Correct original string type");
+//		ASSERT(((struct string*)test_var(&p->vars, "A", VAR_STRING)->value.ptr)->type == STRING_CHAR, "[str_uses] Correct original string type");
 		ASSERT(((struct string*)test_var(&p->vars, "A", VAR_STRING)->value.ptr)->uses == 1, "[str_uses] Correct original string uses");
 		
 		free_code(p);

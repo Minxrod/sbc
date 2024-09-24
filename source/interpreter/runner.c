@@ -192,7 +192,7 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 		switch (instr){
 			case BC_SMALL_NUMBER:
 				iprintf("val=%d", data);
-				// TODO:IMPL:LOW small decimals should also be of this form?
+				// TODO:PERF:LOW small decimals should also be of this form?
 				if ((u8)data <= 99){
 					p->stack.entry[p->stack.stack_i++] = (struct stack_entry){VAR_NUMBER, {((u32)data) << FIXPOINT}};
 				} else {
@@ -537,7 +537,7 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 				break;
 				
 			case BC_ERROR:
-				iprintf("Error exec'd at: %d\n", r->index);
+				iprintf("Error exec'd at: %d\n", (int)r->index);
 				p->exec.error = data;
 				break;
 
@@ -554,6 +554,10 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 		
 		iprintf("\n");
 	}
+
+	// store copy of exec state at exit
+	if (p->exec.error)
+		p->exec_old = p->exec;
 }
 
 void run(struct bytecode code, struct ptc* p){
@@ -601,10 +605,10 @@ void cmd_run(struct ptc* p){
 }
 
 // For now this is a direct map of internal error codes.
-// Once these errors are reordered this should become more correct.
-// TODO:IMPL:LOW Needs to store last nonzero error code to be useful.
+// Once the errors are reordered to place PTC errors in the usual spots
+// this will become more correct.
 void sys_err(struct ptc* p){
-	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, .value.number = p->exec.error});;
+	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(p->exec_old.error)});;
 }
 
 // TODO:IMPL:LOW actual implementation

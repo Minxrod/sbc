@@ -24,8 +24,8 @@ int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* de
 			if (src[i] == BC_DATA_ERROR){
 				return READ_ONE_ERR;
 			}
-			s->ptr.s[i - start] = src[i];
 		}
+		str_copy_buf(src, (void*)s->ptr.s, STR_COPY_SRC_8 | (str_type(s) << STR_COPY_DEST), i - start);
 		s->len = i - start;
 		
 		// Assign new string to variable
@@ -98,7 +98,7 @@ void cmd_read(struct ptc* p){
 	// Iterate over variables on stack
 	for (int i = 0; i < p->stack.stack_i; ++i){
 		block_size = data_block[1];
-		iprintf("src=%d size=%d", p->exec.data_index, block_size);
+		iprintf("src=%d size=%d", (int)p->exec.data_index, block_size);
 		iprintf(" data=\"%.*s\"", block_size, &data_block[DATA_DATA_OFS + p->exec.data_offset]);
 		data_src = &data_block[DATA_DATA_OFS + p->exec.data_offset];
 		
@@ -107,11 +107,11 @@ void cmd_read(struct ptc* p){
 			ERROR(ERR_READ_FAILURE);
 		}
 		p->exec.data_offset += read;
-		iprintf(" read:%d", p->exec.data_offset);
+		iprintf(" read:%d", (int)p->exec.data_offset);
 		if (data_block[2 + p->exec.data_offset] == BC_DATA_DELIM){
 			p->exec.data_offset++;
 		}
-		iprintf(" pos:%d\n", p->exec.data_offset);
+		iprintf(" pos:%d\n", (int)p->exec.data_offset);
 		if (p->exec.data_offset >= block_size){
 			// search for next data block
 			find_data(p);
