@@ -18,6 +18,7 @@
 #include "common.h"
 #include "header.h"
 
+#include <assert.h>
 #include <string.h>
 
 #include "strs.h"
@@ -25,11 +26,12 @@
 extern const char* resource_path;
 
 /// Number of screens supported by the interpreter.
+/// @note Known values that work are 1 and 2.
 #define SCREEN_COUNT 2
 /// Width of the screen, in pixels
-#define SCREEN_WIDTH 256
+#define SCREEN_WIDTH (256)
 /// Height of the screen, in pixels
-#define SCREEN_HEIGHT 192
+#define SCREEN_HEIGHT (192)
 /// Expected framerate (frames/second)
 #define FRAMERATE 60
 
@@ -47,6 +49,9 @@ extern const char* resource_path;
 #define CHR_HEIGHT 8
 /// Size of a CHR tile, in bytes.
 #define CHR_UNIT_SIZE (CHR_WIDTH * CHR_HEIGHT / 2)
+
+static_assert(GRP_WIDTH % 64 == 0, "GRP chunks should fill screen width to avoid indexing issues");
+static_assert(GRP_HEIGHT % 64 == 0, "GRP chunks should fill screen height to avoid indexing issues");
 
 // Format: width*height*unit_size
 /// Size of one CHR bank, in bytes

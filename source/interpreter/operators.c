@@ -101,7 +101,7 @@ void op_div(struct ptc* p){
 	fixp y = STACK_REL_NUM(-1);
 	
 	if (y == 0) ERROR(ERR_DIVIDE_BY_ZERO);
-	dfixp z = ((dfixp)x << FIXPOINT) / y;
+	dfixp z = ((dfixp)((uint64_t)x << FIXPOINT)) / y;
 	if (z < INT_MIN || z > INT_MAX){
 		ERROR(ERR_OVERFLOW);
 	}
@@ -157,17 +157,17 @@ void op_assign(struct ptc* p){
 		}
 		// TODO:IMPL:LOW TOKOPT for storing read-only BC_STRING
 		// (saves memory but breaks on bytecode replacement)
-		if (src->type == STRING_CHAR){
+		if (*(char*)src == STRING_CHAR){
 			*dest = src;
 			(*dest)->uses++;
-		} else if (src->type == BC_STRING){
+		} else if (*(char*)src == BC_STRING){
 			if (!new_alloc) {
 				ERROR(ERR_OUT_OF_MEMORY); // failed to alloc string
 			}
 			str_copy(src, new_alloc);
 			++new_alloc->uses;
 			*dest = new_alloc;
-		} else if (src->type == STRING_WIDE){
+		} else if (*(char*)src == STRING_WIDE){
 			if (src == &p->res.mem_str){
 				// For MEM specifically, we need to copy the characters to a new string
 				// TODO:IMPL:LOW Handle extra characters better

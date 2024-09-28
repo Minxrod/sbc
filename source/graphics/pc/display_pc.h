@@ -33,31 +33,7 @@ struct display {
 	struct sfTexture* col_tex;
 };
 
-/// Texture indices for CHR resources
-enum sbc_tex {
-	SBC_TEX_BGF_UPPER,
-	SBC_TEX_BGD_UPPER,
-	SBC_TEX_BGU_UPPER,
-	SBC_TEX_SPU_UPPER,
-	SBC_TEX_SPS_UPPER,
-	SBC_TEX_BGF_LOWER,
-	SBC_TEX_BGD_LOWER,
-	SBC_TEX_BGU_LOWER,
-	SBC_TEX_SPD_LOWER,
-	SBC_TEX_SPS_LOWER,
-};
-
-/// Color palette index into col_tex
-enum sbc_col {
-	SBC_COL_BG_UPPER,
-	SBC_COL_SPR_UPPER,
-	SBC_COL_GRP_UPPER,
-	SBC_COL_BG_LOWER,
-	SBC_COL_SPR_LOWER,
-	SBC_COL_GRP_LOWER,
-};
-
-void init_display(struct ptc*);
+/*void init_display(struct ptc*);
 void free_display(struct display*);
 
 void display_draw_all(struct ptc* p);
@@ -70,6 +46,6 @@ void display_sprite(struct ptc* p, int screen, int prio);
 void display_panel_keys(struct ptc* p);
 void display_icon(struct ptc* p);
 void display_cursor(struct ptc* p);
-void display_graphics(struct ptc* p, int screen, int prio);
+void display_graphics(struct ptc* p, int screen, int prio);*/
 
 #endif

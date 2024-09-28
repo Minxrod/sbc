@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include "compress.h"
 #include "resources.h"
 #include "system.h"
 
@@ -77,8 +78,8 @@ void init_display(struct ptc* p){
 //	d->panel_keys = init_sprite_array();
 	
 	// SFML stuff
-	d->view = sfView_createFromRect((sfFloatRect){0, 0, 256, 192});
-	sfView_setViewport(d->view, (sfFloatRect){0, 0, 1, 0.5f});
+	d->view = sfView_createFromRect((sfFloatRect){0, 0, SCREEN_WIDTH, SCREEN_HEIGHT});
+	sfView_setViewport(d->view, (sfFloatRect){0, 0, 1, 1.0 / SCREEN_COUNT});
 	
 	// actual draw commands
 	d->rs = sfRenderStates_default();
@@ -93,7 +94,7 @@ void init_display(struct ptc* p){
 	}
 	
 	// Generate PC textures here
-	for (int page = 0; page <= 1; ++page){
+	for (int page = 0; page < SCREEN_COUNT; ++page){
 		d->chr_tex[0+5*page] = gen_chr_texture(r->chr[0+CHR_BANKS*page], 512); //BGF
 		d->chr_tex[1+5*page] = gen_chr_texture(r->chr[4+CHR_BANKS*page], 1024); //BGD
 		d->chr_tex[2+5*page] = gen_chr_texture(r->chr[8+CHR_BANKS*page], 1024); //BGU
@@ -147,7 +148,7 @@ void display_draw_all(struct ptc* p){
 	sfRenderWindow_clear(d->rw, sfBlack);
 	
 	// TODO:PERF:MED Reuse texture memory instead of destroying and regenerating
-	for (int page = 0; page <= 1; ++page){
+	for (int page = 0; page < SCREEN_COUNT; ++page){
 		if (r->regen_chr[0 + CHR_BANKS * page] || r->regen_chr[1 + CHR_BANKS * page]){
 			sfTexture_destroy(d->chr_tex[0+5*page]);
 			d->chr_tex[0+5*page] = gen_chr_texture(r->chr[0+CHR_BANKS*page], 512); //BGF
@@ -220,7 +221,7 @@ void display_draw_all(struct ptc* p){
 	// =============
 	// Upper screen
 	// =============
-	sfView_setViewport(d->view, (sfFloatRect){0, 0, 1, 0.5f});
+	sfView_setViewport(d->view, (sfFloatRect){0, 0, 1, 1.0 / SCREEN_COUNT});
 	sfRenderWindow_setView(d->rw, d->view);
 	
 	// lowest prio
@@ -241,7 +242,7 @@ void display_draw_all(struct ptc* p){
 	// =============
 	// Lower screen
 	// =============
-	sfView_setViewport(d->view, (sfFloatRect){0, 0.5f, 1, 0.5f});
+	sfView_setViewport(d->view, (sfFloatRect){0,  1.0 / SCREEN_COUNT, 1,  1.0 / SCREEN_COUNT});
 	sfRenderWindow_setView(d->rw, d->view);
 	// lowest prio
 	
@@ -356,6 +357,7 @@ void display_background(struct ptc* p, int screen, int layer){
 }
 
 void display_panel_background(struct ptc* p){
+	if (SCREEN_COUNT < 2) return;
 	struct display* d = &p->display;
 	if (p->panel.type == PNL_OFF) return;
 	if (!(p->res.visible & VISIBLE_PANEL)) return;
@@ -396,6 +398,7 @@ void display_sprite(struct ptc* p, int screen, int prio){
 }
 
 void display_panel_keys(struct ptc* p){
+	if (SCREEN_COUNT < 2) return;
 	// Only render keyboard when enabled
 	if (p->panel.type == PNL_OFF || p->panel.type == PNL_PNL) return;
 	if (!(p->res.visible & VISIBLE_PANEL)) return;
@@ -452,6 +455,7 @@ void display_icon(struct ptc* p){
 
 void display_cursor(struct ptc* p){
 	if (!p->console.cursor_visible) return;
+	if (p->time.time % FRAMERATE > (FRAMERATE / 2)) return;
 	struct display* d = &p->display;
 	
 	struct sprite_array cursor_sprite = init_sprite_array();

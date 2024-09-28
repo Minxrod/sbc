@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int test_int_code(){
+int test_int_code(void){
 	// Code searching
 	MEM_CASE {
 		char* code = "FOR I=0 TO 9\r\rNEXT\r";

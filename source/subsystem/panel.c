@@ -109,8 +109,8 @@ const s16 keyboard_pos[][6]={
 	{88, 168, 16, 32, 262, 72}, // EDIT Key Left
 	{104, 168, 32, 32, 264, 72}, // EDIT Key Right (sprite 88)
 // Icon (index=90)
-	{144, 168, 16, 16, -1, 80}, // Icon page up (316) (sprite 89)
-	{144, 180, 16, 16, -1, 81}, // Icon page down (317)
+	{144, 168, 16, 16, -316, 80}, // Icon page up (316) (sprite 89)
+	{144, 180, 16, 16, -317, 81}, // Icon page down (317)
 	{160, 168, 32, 32, -1, 90}, // Icon 0 (sprite 91)
 	{184, 168, 32, 32, -1, 91}, // Icon 1
 	{208, 168, 32, 32, -1, 92}, // Icon 2
@@ -133,13 +133,12 @@ void init_panel(struct ptc* p){
 	
 	// Set sprites locations
 	for (idx i = 0; i < sizeof(keyboard_pos) / sizeof(keyboard_pos[0]); ++i){
-		int x,y,w,h,c,k;
-		x = INT_TO_FP(keyboard_pos[i][0]);
-		y = INT_TO_FP(keyboard_pos[i][1]);
-		w = keyboard_pos[i][2];
-		h = keyboard_pos[i][3];
-		c = keyboard_pos[i][4];
-		k = keyboard_pos[i][5];
+		int x = INT_TO_FP(keyboard_pos[i][0]);
+		int y = INT_TO_FP(keyboard_pos[i][1]);
+		int w = keyboard_pos[i][2];
+		int h = keyboard_pos[i][3];
+		int c = keyboard_pos[i][4];
+		int k = keyboard_pos[i][5];
 		
 		p->panel.keys[i] = init_sprite_info(i,c,0,0,0,0,w,h);
 		p->panel.keys[i].pos.x = x;
@@ -147,14 +146,11 @@ void init_panel(struct ptc* p){
 		p->panel.keys[i].prio = 1;
 
 		p->panel.keys[i].vars[0] = k;
-		if (c == -1){
+		if (c < 0){
 			p->panel.keys[i].active = false;
+			p->panel.keys[i].chr = -c;
 		}
 	}
-	// TODO:CODE:LOW
-	// There's probably a better way to store these without interfering with active state assignment
-	p->panel.keys[89].chr = 316;
-	p->panel.keys[90].chr = 317;
 }
 
 void free_panel(struct ptc* p){
@@ -163,6 +159,7 @@ void free_panel(struct ptc* p){
 }
 
 void cmd_pnltype(struct ptc* p){
+	if (SCREEN_COUNT < 2) return; // panel disabled for one screen.
 	void* type = value_str(ARG(0));
 	
 	enum pnltype old_type = p->panel.type;
@@ -187,7 +184,8 @@ void cmd_pnltype(struct ptc* p){
 
 // TODO:TEST:MED Test this function, specifically edge behavior
 void cmd_pnlstr(struct ptc* p){
-	unsigned int x, y;
+	int x;
+	int y;
 	STACK_INT_RANGE_SILENT(0,0,CONSOLE_WIDTH-1,x);
 	STACK_INT_RANGE_SILENT(1,0,CONSOLE_HEIGHT-1,y);
 	void* str = value_str(ARG(2));
@@ -263,6 +261,8 @@ char* keyboard_chr[6]={
 };
 
 void set_panel_bg(struct ptc* p, enum pnltype type){
+	// TODO:CODE:LOW Is there a better way to enable/disable panel when configuring displays?
+	if (SCREEN_COUNT < 2) return; // panel disabled for one screen.
 	// Set BG layout (load layout)
 	// Note that only a portion of the grid is ever needed
 	u16* panel_bg = p->res.scr[SCR_BANKS+1];
@@ -326,6 +326,7 @@ const char* key_map =
 ;
 
 void press_key(struct ptc* ptc, bool t, int x, int y){
+	if (SCREEN_COUNT < 2) return; // panel disabled for one screen.
 	struct panel* p = &ptc->panel;
 	if (!t){
 		p->key_pressed = 0;
@@ -422,6 +423,7 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 }
 
 void refresh_panel(struct ptc* ptc){
+	if (SCREEN_COUNT < 2) return;
 	struct panel* p = &ptc->panel;
 	int shift = !!(p->shift & PNL_SHIFT) ^ !!(p->shift & PNL_CAPS_LOCK);
 	int source_key_chr = (2 * (p->type - 2) + shift) * 2;

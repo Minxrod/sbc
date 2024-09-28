@@ -2,7 +2,7 @@
 
 #include "mathptc.h"
 
-int test_math(){
+int test_math(void){
 	// Test sine function
 	{
 		const fixp angle[] = {

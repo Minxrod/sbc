@@ -356,7 +356,7 @@ int test_tokens(void){
 		ASSERT(
 			token_code(
 				"DATA 0,AA , BCdef   \rDATA \" G H \"\r",
-				bc, 24
+				bc, sizeof(bc)
 			), "[tokens] DATA tokenization"
 		);
 	}

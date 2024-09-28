@@ -195,7 +195,7 @@ int main(int argc, char** argv){
 	
 	sfRenderWindow* window;
 	
-	window = sfRenderWindow_create((sfVideoMode){SCREEN_WIDTH*2, SCREEN_HEIGHT*SCREEN_COUNT*2, 32}, window_name, sfResize | sfClose, NULL);
+	window = sfRenderWindow_create((sfVideoMode){SCREEN_WIDTH, SCREEN_HEIGHT*SCREEN_COUNT, 32}, window_name, sfResize | sfClose, NULL);
 	sfRenderWindow_setFramerateLimit(window, FRAMERATE);
 	if (!window){
 		printf("Failed to create the render window!\n");
@@ -239,7 +239,7 @@ int main(int argc, char** argv){
 	// https://gist.github.com/def-/fee8bb041719337c8812
 	// used as convenient reference
 	sfEvent event;
-	while (sfRenderWindow_isOpen(window)){
+	while (sfRenderWindow_isOpen(window) && ptc->exec.error != ERR_SHUTDOWN){
 		int b = 0; // Button codes (can be modified by some typed sequences)
 		while (sfRenderWindow_pollEvent(window, &event)){
 			if (event.type == sfEvtClosed){
@@ -294,8 +294,11 @@ int main(int argc, char** argv){
 		sfVector2i pos = sfMouse_getPosition((sfWindow*)window);
 		sfVector2u window_size = sfRenderWindow_getSize(window);
 		if (pos.y >= (int)window_size.y / 2){
+			// TODO:IMPL:LOW this code supposes the panel size matches the screen size. How to decouple this?
+			// TODO:CODE:LOW detecting what screen is used could be better.
+			// Need a mapping from window coordinates into touch coordinates.
 			int tchx = SCREEN_WIDTH * pos.x / window_size.x;
-			int tchy = SCREEN_HEIGHT * pos.y / (window_size.y / 2) - SCREEN_HEIGHT;
+			int tchy = SCREEN_HEIGHT * pos.y / (window_size.y / SCREEN_COUNT) - SCREEN_HEIGHT * (SCREEN_COUNT - 1);
 			if (tchx < SCREEN_WIDTH && tchx >= 0 && tchy < SCREEN_HEIGHT && tchy >= 0){
 	//			iprintf("%d,%d\n", tchx, tchy);
 				set_touch(&ptc->input, sfMouse_isButtonPressed(0), tchx, tchy);

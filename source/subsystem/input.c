@@ -93,7 +93,7 @@ u16 get_inkey(struct input* i){
 }
 
 // Should also set keyboard, inkey!
-void set_touch(struct input* i, bool t, u8 x, u8 y){
+void set_touch(struct input* i, bool t, int x, int y){
 #ifdef PC
 	if (mtx_lock(&i->touch_mtx) == thrd_error){
 		ABORT("set_touch mutex lock failure!");

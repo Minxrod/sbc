@@ -2,6 +2,7 @@
 
 #include "common.h" // debug logs + types
 
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 
@@ -34,6 +35,9 @@ void* sbc_malloc(int size){
 	assert(sbc_memnext);
 	void* alloc = sbc_memnext; // current alloc goes here
 	sbc_memnext += size; // advance by size bytes
+	// I entirely forgot about alignment when I first implemented this.
+	// This is a fix.
+	sbc_memnext += (((intptr_t)sbc_memnext & 0xf) ^ 0xf) + 1;
 	iprintf("sbc_malloc'd %d at %p\n", size, alloc);
 	return alloc;
 }
@@ -44,6 +48,7 @@ void* sbc_calloc(int count, int size){
 	int alloc_size = count * size;
 	void* alloc = sbc_memnext; // current alloc goes here
 	sbc_memnext += alloc_size; // advance by size bytes
+	sbc_memnext += (((intptr_t)sbc_memnext & 0xf) ^ 0xf) + 1;
 	memset(alloc, 0, alloc_size); // zero out memory
 	iprintf("sbc_calloc'd %d(%d*%d) at %p\n", count*size, count, size, alloc);
 	return alloc;

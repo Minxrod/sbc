@@ -3,7 +3,7 @@
 
 #include "system.h"
 
-int test_int_func(){
+int test_int_func(void){
 	// FLOOR
 	{
 		char* code = "A=FLOOR(3.5)\rB=FLOOR(4.67)\rC=FLOOR(2)\rD=FLOOR(-1.3)\rE=FLOOR(-2)\r";

@@ -45,7 +45,7 @@ u16* bg_page(struct ptc* p, u8 page, u8 layer){
 #define BG_CHUNK_HEIGHT 32
 #define BG_CHUNK_SIZE (BG_CHUNK_WIDTH * BG_CHUNK_HEIGHT)
 
-u16 bg_index(uint_fast8_t x, uint_fast8_t y){
+int bg_index(uint_fast8_t x, uint_fast8_t y){
 	int_fast8_t cx = x / BG_CHUNK_WIDTH;
 	int_fast8_t cy = y / BG_CHUNK_HEIGHT;
 	int_fast8_t tx = x % BG_CHUNK_WIDTH;
@@ -117,13 +117,13 @@ void cmd_bgput(struct ptc* p){
 //BGFILL layer, x1, y1, x2, y2, tile$
 void cmd_bgfill(struct ptc* p){
 	uint_fast8_t layer;
-	int x1, x2, y1, y2, temp;
+	int temp;
 	u16 tiledata;
 	STACK_INT_RANGE(0,0,1,layer);
-	x1 = STACK_INT(1);
-	y1 = STACK_INT(2);
-	x2 = STACK_INT(3);
-	y2 = STACK_INT(4);
+	int x1 = STACK_INT(1);
+	int y1 = STACK_INT(2);
+	int x2 = STACK_INT(3);
+	int y2 = STACK_INT(4);
 	if (p->stack.stack_i == 6){
 		if (ARG(5)->type & VAR_NUMBER){
 			tiledata = STACK_INT(5) & 0xffff;

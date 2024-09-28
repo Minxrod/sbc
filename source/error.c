@@ -1,5 +1,8 @@
 #include "error.h"
 
+#include <assert.h>
+#include <string.h>
+
 const char * error_messages[] = {
 	"OK",
 	"BC_SMALL_NUMBER data out of range",
@@ -77,3 +80,9 @@ const char * error_messages[] = {
 	"File contains invalid data",
 	"File processing internal error",
 };
+
+void check_error_lengths(void) {
+	for (int i = 0; i < (int)(sizeof(error_messages)/sizeof(error_messages[0])); ++i){
+		assert(strlen(error_messages[i]) < MAX_ERROR_MESSAGE_LENGTH);
+	}
+}

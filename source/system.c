@@ -13,6 +13,8 @@
 #include "console.h"
 #include "error.h"
 #include "label.h"
+#include "sbc_blockalloc.h"
+#include "strs.h"
 #include "system.h"
 #include "resources.h"
 #include "stack.h"
@@ -24,6 +26,7 @@
 
 struct ptc* init_system(int var, int str, int arr, bool headless){
 	srand(time(NULL));
+	check_error_lengths();
 	
 	struct ptc* ptc = calloc_log("init_system", sizeof(struct ptc), 1);
 	if (!ptc){
@@ -271,6 +274,7 @@ int sbc_benchmark(struct launch_info* info){
 // This is the DIRECT mode prompt.
 // Pretty basic, but it works.
 // TODO:IMPL:LOW Redesign to remove prompt symbol
+// TODO:IMPL:LOW program history - must be accessible, persistent across RUN/EXECs
 struct program launcher = {
 	13, "LINPUT CODE$\r"
 };
@@ -338,6 +342,8 @@ int launch_system(void* launch_info){
 		return -1;
 	}
 
+	u8 (** history)[CONSOLE_WIDTH] = sbc_calloc(256, sizeof(**history));
+
 	// Tokenize launcher into big bytecode block
 	struct bytecode_params params = calc_min_bytecode(&p->exec.prg);
 	struct bytecode prompt_bc = init_bytecode_size(2 * launcher.size, params.lines, params.labels);
@@ -353,7 +359,9 @@ int launch_system(void* launch_info){
 	tokenize_full(&p->exec.prg, &editor_bc, p, TOKOPT_VARIABLE_IDS);
 
 	// Setup complete
-	con_puts(&p->console, "S\45Small BASIC Computer            READY");
+	con_puts(&p->console, "S\24Small BASIC Computer");
+	con_newline(&p->console, true);
+	con_puts(&p->console, "S\5READY");
 	con_newline(&p->console, true);
 	bool running = true;
 	
@@ -385,6 +393,9 @@ int launch_system(void* launch_info){
 					state = LAUNCH_DEBUG;
 					debug = LAUNCH_DEBUG_LABEL;
 					break;
+				} else if (str_comp(cmd, "S\4EXIT")){
+					p->exec.error = ERR_SHUTDOWN;
+					break;
 				}
 				// check status
 				if (p->exec.error == ERR_BUTTON_SIGNAL){
@@ -402,7 +413,7 @@ int launch_system(void* launch_info){
 				
 				// execute single line
 				// create small program
-				u8 direct_cmd[32+1] = {0};
+				u8 direct_cmd[CONSOLE_WIDTH+1] = {0};
 				struct program prog = {0, (char*)direct_cmd};
 				str_char_copy(cmd, direct_cmd);
 				prog.size = str_len(cmd);

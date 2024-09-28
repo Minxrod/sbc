@@ -7,11 +7,16 @@
 /// No rendering of any kind is done for the text console here.
 ///
 #include "common.h"
+#include "resources.h"
+#include <assert.h>
 
 /// Width of the console, in text characters
-#define CONSOLE_WIDTH 32
+#define CONSOLE_WIDTH (SCREEN_WIDTH / CHR_WIDTH)
 /// Height of the console, in text characters
-#define CONSOLE_HEIGHT 24
+#define CONSOLE_HEIGHT (SCREEN_HEIGHT / CHR_HEIGHT)
+
+static_assert(CONSOLE_WIDTH <= BG_WIDTH, "Console should fit the width of the SCR page");
+static_assert(CONSOLE_HEIGHT <= BG_HEIGHT, "Console should fit the height of the SCR page");
 
 struct ptc;
 
@@ -29,12 +34,12 @@ struct ptc;
 ///
 struct console {
 	/// The text cursor's x-coordinate.
-	uint_fast8_t x; // range [0,CONSOLE_WIDTH)
+	int x; // range [0,CONSOLE_WIDTH)
 	/// The text cursor's y-coordinate.
-	uint_fast8_t y; // range [0,CONSOLE_HEIGHT)
+	int y; // range [0,CONSOLE_HEIGHT)
 	/// The current width of a tab.
 	/// Updates from sys_tabstep on use.
-	uint_fast8_t tabstep; //valid range is 1-16
+	int tabstep; //valid range is 1-16
 	/// The width of a tab as assigned via system variables.
 	fixp sys_tabstep; // used for actual assignment
 	/// The contents of the text console.

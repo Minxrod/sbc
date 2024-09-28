@@ -36,14 +36,16 @@ struct graphics {
 void init_graphics(struct graphics* g);
 
 /// Convert screen coordinates to GRP coordinates
-static inline u16 grp_index(uint_fast8_t x, uint_fast8_t y){
-	int_fast8_t cx = x / 64;
-	int_fast8_t cy = y / 64;
-	int_fast8_t tx = (x / 8) % 8;
-	int_fast8_t ty = (y / 8) % 8;
-	int_fast8_t px = x % 8;
-	int_fast8_t py = y % 8;
-	return px + py * 8 + tx * 64 + ty * 512 + cx * 4096 + cy * 16384;
+static inline int grp_index(int x, int y){
+	int cx = x / 64;
+	int cy = y / 64;
+	int tx = (x / 8) % 8;
+	int ty = (y / 8) % 8;
+	int px = x % 8;
+	int py = y % 8;
+	int index = px + py * 8 + tx * 64 + ty * 512 + cx * 4096 + cy * (4096 / 64 * GRP_WIDTH);
+	assert(0 <= index && index < GRP_SIZE); // yes this is possible to mess up. never too obvious an assert, huh.
+	return index;
 }
 
 static inline void grp_pixel(u8* page, int x, int y, u8 color, bool drawmode){

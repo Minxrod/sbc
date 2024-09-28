@@ -1,10 +1,12 @@
 #include "console.h"
 
+#include "input.h"
 #include "strs.h"
 #include "system.h"
 #include "ptc.h"
 #include "error.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -197,9 +199,13 @@ void cmd_cls(struct ptc* p){
 
 #define FRAME_TENTH_NS (1000000000/600)
 
+int input_check_pressed(struct input* i, int button_id){
+	if (i->times[button_id].start)
+		return check_pressed(i, button_id);
+	return check_pressed_manual(i, button_id, 15, 4);
+}
+
 u16* shared_input(struct ptc* p){
-	// TODO:IMPL:LOW Use BREPEAT values if set
-	// TODO:IMPL:MED Blinking text cursor
 	// TODO:TEST:MED Write tests for color while removing characters
 	struct console* con = &p->console;
 
@@ -228,14 +234,11 @@ u16* shared_input(struct ptc* p){
 			thrd_sleep(&tspec, NULL);
 		}
 		// Check for special keys
-		// redraw on first frame of hold and first frame of release
-		// TODO:IMPL:LOW Pressing L+R inverts the selection again for the duration held.
-		// it should keep the shift state.
 		if (((p->input.button ^ p->input.old_button) & BUTTON_L) ||
 		    ((p->input.button ^ p->input.old_button) & BUTTON_R)){
-			p->panel.shift ^= PNL_SHIFT;
+			p->panel.shift = (p->input.button & (BUTTON_L | BUTTON_R)) ? PNL_SHIFT : 0;
 			refresh_panel(p);
-		} else if ((keyboard == 15 || check_pressed(&p->input, BUTTON_ID_Y))){
+		} else if ((keyboard == 15 || input_check_pressed(&p->input, BUTTON_ID_Y))){
 			// Copy characters back
 			if (out_index > 0){
 				for (int i = out_index-1; i < (int)out_index_max; ++i){
@@ -272,14 +275,14 @@ u16* shared_input(struct ptc* p){
 				output[out_index++] = inkey;
 				++out_index_max;
 			}
-		} else if (check_pressed(&p->input, BUTTON_ID_LEFT)){
+		} else if (input_check_pressed(&p->input, BUTTON_ID_LEFT)){
 			out_index -= out_index > 0;
-		} else if (check_pressed(&p->input, BUTTON_ID_RIGHT)){
+		} else if (input_check_pressed(&p->input, BUTTON_ID_RIGHT)){
 			out_index += out_index < out_index_max;
 		}
 		p->console.x = out_index;
 	} while (!p->exec.error && inkey != '\r'
-			&& !check_pressed_manual(&p->input, BUTTON_ID_A, 15, 4));
+			&& !input_check_pressed(&p->input, BUTTON_ID_A/*, 15, 4*/));
 	p->panel.type = old_panel;
 	p->console.cursor_visible = false;
 	return output;
@@ -450,6 +453,7 @@ void cmd_linput(struct ptc* p){
 	// As long as MAX_STRLEN > CONSOLE_WIDTH / sizeof(u16), this is safe,
 	// even when using memory allocated for STRING_CHAR.
 	// If string defaulted to STRING_WIDE, it can stay that way, there's no difference.
+	static_assert(MAX_STRLEN / sizeof(u16) > CONSOLE_WIDTH, "Width of console < STRING_WIDE max size within default STRING_CHAR");
 	s->uses = 1;
 	s->len = 0;
 	for (int j = 0; j < CONSOLE_WIDTH; ++j){

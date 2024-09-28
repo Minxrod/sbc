@@ -4,7 +4,7 @@
 #include "error.h"
 #include "system.h"
 
-int test_int_math(){
+int test_int_math(void){
 	// Overflow on simple number
 	{
 		ASSERT(check_code_error("?567855788\r", ERR_OVERFLOW), "[number] Overflow on large number");

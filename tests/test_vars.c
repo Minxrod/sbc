@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-int test_vars(){
+int test_vars(void){
 	
 	/*
 	namecmp tests

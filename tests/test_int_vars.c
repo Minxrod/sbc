@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int test_int_vars(){
+int test_int_vars(void){
 	{
 		char* code = "A=5\rB=8\rC=A+B\r";
 		// run program

@@ -4,7 +4,7 @@
 #include "common.h"
 #include "strs.h"
 
-int test_arrs(){
+int test_arrs(void){
 	// init_mem_arr works as expected
 	MEM_CASE {
 		struct arrays arrs;

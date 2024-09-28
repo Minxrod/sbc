@@ -46,9 +46,6 @@ const char* functions =
 "TALKCHK "
 "PEEK    PEEKH   PEEKB   ADDR    PTR$    ";
 
-const char* operations =
-"AND     OR      XOR     NOT     ";
-
 const char* bc_conv_operations = 
 "+       ,       -       *       /       ;       =       (-)     "
 "==      !=      <       >       <=      >=      "
@@ -257,7 +254,7 @@ int tokenize_full(struct program* src, struct bytecode* out, void* system, int o
 			state.output->data[state.output->size++] = BC_ERROR;
 			state.output->data[state.output->size++] = error;
 			iprintf("Error at: %d\n", (int)state.output->size);
-			while (state.source->data[state.cursor++] != '\r');
+			while (state.cursor < state.source->size && state.source->data[state.cursor++] != '\r');
 			error = ERR_NONE;
 			state.token_i = 0;
 			continue;
@@ -933,7 +930,7 @@ tok_code_exit:
 		(1 << SYS_ICONPMAX) |\
 		(1 << SYS_ICONPUSE) |\
 		(1 << SYS_TABSTEP) |\
-		(1 << SYS_MEM) |\
+		((uint64_t)1 << SYS_MEM) |\
 		((uint64_t)1 << SYS_MEMSAFE)\
 	)
 

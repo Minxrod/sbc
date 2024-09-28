@@ -8,7 +8,7 @@
 
 struct ptc;
 
-int test_sprite(){
+int test_sprite(void){
 	// Test sprite collision
 	{
 		struct sprite_info a = init_sprite_info(0,0,0,0,0,0,16,16);

@@ -295,7 +295,7 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 				{
 				fixp number = 0;
 				
-				number |= (fixp)((unsigned char)r->code.data[r->index++] << 24);
+				number |= (fixp)(((uint32_t)(unsigned char)r->code.data[r->index++]) << 24);
 				number |= (unsigned char)r->code.data[r->index++] << 16;
 				number |= (unsigned char)r->code.data[r->index++] << 8;
 				number |= (unsigned char)r->code.data[r->index++];

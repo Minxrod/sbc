@@ -47,7 +47,7 @@ void cmd_gcls(struct ptc* p){
 	
 	u8* page = grp_drawpage(p);
 	
-	for (u16 i = 0; i < GRP_SIZE; ++i){
+	for (int i = 0; i < GRP_SIZE; ++i){
 		page[i] = color;
 	}
 }
@@ -134,7 +134,7 @@ static inline void draw_line(int x1, int y1, int x2, int y2, u8* page, u8 color,
 		}
 		// Line has horizontal component
 		// x1 -> x2
-		fixp y_slope = ((((int64_t)(y2 - y1) << 32) / (x2 - x1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
+		fixp y_slope = (((dfixp)((uint64_t)(y2 - y1) << 32) / (x2 - x1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
 		// 8.12 FP I guess
 		if (x1 > x2){
 			int temp = y1;
@@ -145,13 +145,13 @@ static inline void draw_line(int x1, int y1, int x2, int y2, u8* page, u8 color,
 			x2 = temp;
 		}
 		for (int x = x1; x <= x2; ++x){
-			int y = FP_TO_INT(y_slope*(x-x1) + (1<<(FIXPOINT-1))) + y1;
+			int y = FP_TO_INT((uint64_t)y_slope*(x-x1) + (1<<(FIXPOINT-1))) + y1;
 			
 			grp_pixel(page,x,y,color,drawmode);
 		}
 	} else {
 		// X-range <= Y-range
-		fixp x_slope = ((((int64_t)(x2 - x1) << 32) / (y2 - y1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
+		fixp x_slope = ((((dfixp)(x2 - x1) << 32) / (y2 - y1)) >> (32 - FIXPOINT)) & 0xFFFFFFFF;
 		// 8.12 FP I guess
 		if (y1 > y2){
 			int temp = y1;

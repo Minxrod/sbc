@@ -63,7 +63,7 @@ struct input {
 		int repeat;
 		/// How long this button has been held for.
 		int frame;
-	} times[12];
+	} times[BUTTON_COUNT];
 	
 	uint_fast16_t tchx, tchy, tchtime;
 	// Derived from tchx,tchy
@@ -90,7 +90,7 @@ bool set_inkey(struct input* i, u16 k);
 u16 get_inkey(struct input* i);
 
 // Should also set keyboard, inkey!
-void set_touch(struct input* i, bool t, u8 x, u8 y);
+void set_touch(struct input* i, bool t, int x, int y);
 
 static inline bool check_repeat(int time, int start, int repeat){
 	if (repeat > 0){ //repeat=0 -> disabled

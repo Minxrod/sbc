@@ -70,7 +70,7 @@ struct string* get_new_str(struct strings* s);
 
 /// Check if a string is a dynamic string (within str_data) or not
 static inline bool is_dyn_str(struct string* s){
-	return s->type == STRING_CHAR || s->type == STRING_WIDE;
+	return *(char*)s == STRING_CHAR || *(char*)s == STRING_WIDE;
 }
 
 /// Checks if character is a lowercase letter ('a'-'z')

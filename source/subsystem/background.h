@@ -39,10 +39,10 @@ struct background {
 	/// 
 	/// Stores the per-screen visible region of the BG layer.
 	struct bg_clip {
-		uint_fast8_t x1;
-		uint_fast8_t y1;
-		uint_fast8_t x2;
-		uint_fast8_t y2;
+		uint_fast16_t x1;
+		uint_fast16_t y1;
+		uint_fast16_t x2;
+		uint_fast16_t y2;
 	} clip[SCREEN_COUNT];
 	
 };
@@ -76,7 +76,7 @@ static inline u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
 /// @param x X-coordiante in range [0,BG_WIDTH)
 /// @param y Y-coordiante in range [0,BG_HEIGHT)
 /// @return Index into a SCR array
-u16 bg_index(uint_fast8_t x, uint_fast8_t y);
+int bg_index(uint_fast8_t x, uint_fast8_t y);
 u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y);
 
 void cmd_bgpage(struct ptc* p);

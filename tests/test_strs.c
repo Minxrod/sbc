@@ -26,10 +26,9 @@ int test_strs(){
 	
 	// Get unused string slots
 	MEM_CASE {
-		struct strings strs;
-		const u32 max = 8;
+		struct strings strs = {0};
 		
-		init_mem_str(&strs, max, STRING_CHAR);
+		init_mem_str(&strs, 8, STRING_CHAR);
 		
 		struct string* new_str = get_new_str(&strs);
 		

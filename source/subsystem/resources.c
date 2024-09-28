@@ -151,7 +151,7 @@ int load_program(struct ptc* p, const char* search_path, const char* name){
 		// Get destination for this resource index
 		struct res_info info = get_verified_resource_type(p, resource);
 		// Check type string matches
-		char type_str[HEADER_TYPE_STR_SIZE];
+		char type_str[HEADER_TYPE_STR_SIZE+1]; // space for null-terminator needed to fix some UB read in orintf
 		int read = fread(type_str, sizeof(char), HEADER_TYPE_STR_SIZE, f);
 		if (read != HEADER_TYPE_STR_SIZE){
 			FILE_CLOSE("Failed to skip type string");
@@ -457,7 +457,7 @@ void init_resource(struct resources* r){
 	r->all_banks = calloc_log("init_resource all_banks", CHR_SIZE, CHR_BANKS * SCREEN_COUNT);
 	r->col_banks = calloc_log("init_resource col_banks", COL_SIZE, COL_BANKS * SCREEN_COUNT); //COL[0-2][U-L]
 	// guarantee contiguous regions (useful for generating textures)
-	for (int lower = 0; lower <= 1; ++lower){
+	for (int lower = 0; lower < SCREEN_COUNT; ++lower){
 		for (int i = 0; i < CHR_BANKS; ++i){
 			r->chr[i + CHR_BANKS * lower] = &r->all_banks[(i + CHR_BANKS * lower) * CHR_SIZE];
 		}
@@ -471,7 +471,7 @@ void init_resource(struct resources* r){
 	}
 #endif //PC
 	// Shared code
-	for (int i = 0; i < 4; ++i){
+	for (int i = 0; i < GRP_BANKS; ++i){
 		r->grp[i] = calloc_log("init_resource grp", GRP_SIZE, 1);
 	}
 	// Store these in memory for faster load times on keyboard switching
@@ -504,7 +504,7 @@ void init_resource(struct resources* r){
 
 	char name[] = "XXXX";
 
-	for (int i = 0; i < CHR_BANKS * 2; ++i){
+	for (int i = 0; i < CHR_BANKS * SCREEN_COUNT; ++i){
 		for (int j = 0; j < 4; ++j){
 			name[j] = chr_files[4*i+j];
 		}
@@ -542,12 +542,12 @@ void free_resource(struct resources* r){
 	// Free memory here
 	free_log("free_resource all_banks", r->all_banks);
 	free_log("free_resource col_banks", r->col_banks);
-	for (int i = 0; i < 2*SCR_BANKS; ++i){
+	for (int i = 0; i < SCREEN_COUNT * SCR_BANKS; ++i){
 		free_log("free_resource scr", r->scr[i]);
 	}
 #endif
 	// Shared code
-	for (int i = 0; i < 4; ++i){
+	for (int i = 0; i < GRP_BANKS; ++i){
 		free_log("free_resource grp", r->grp[i]);
 	}
 	for (int i = 0; i < 12; ++i){
@@ -699,6 +699,7 @@ void* get_resource_ptr(struct ptc* p, const char* resource_type){
 			screen = res_type_screen == 'L';
 		}
 	}
+	assert(screen < SCREEN_COUNT);
 
 	if (!strncmp("BGU", resource_type, RESOURCE_TYPE_BASE_LENGTH)){
 		screen = screen < 0 ? p->background.page : screen;

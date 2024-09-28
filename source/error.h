@@ -6,6 +6,8 @@
 /// Contains all error codes for SBC. Note that this includes a large variety 
 /// of implementation-specific internal errors.
 
+#define MAX_ERROR_MESSAGE_LENGTH 48
+
 enum err_code {
 	ERR_NONE,
 	ERR_NUM_INVALID,
@@ -85,3 +87,5 @@ enum err_code {
 };
 
 extern const char * error_messages[];
+
+void check_error_lengths(void);
