@@ -26,7 +26,7 @@ void init_input(struct input* i){
 	i->current_base = 0;
 }
 
-void set_input(struct ptc* p, int b) {
+void set_input(struct sbc* p, int b) {
 	struct input* i = &p->input;
 	i->old_button = i->button;
 	i->button = b;
@@ -127,7 +127,7 @@ bool check_pressed(struct input* i, int id){
 	return check_repeat(i->times[id].frame, i->times[id].start, i->times[id].repeat);
 }
 
-void cmd_brepeat(struct ptc* p){
+void cmd_brepeat(struct sbc* p){
 	// BREPEAT id[,start,repeat]
 	// https://petitcomputer.fandom.com/wiki/BREPEAT_(Command)
 	// Apparently 12 is a valid ID, even if it doesn't seem to do anything?
@@ -144,7 +144,7 @@ void cmd_brepeat(struct ptc* p){
 	}
 }
 
-void func_btrig(struct ptc* p){
+void func_btrig(struct sbc* p){
 	struct input* i = &p->input;
 	
 	s32 b = 0;
@@ -155,7 +155,7 @@ void func_btrig(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(b)}});
 }
 
-void func_button(struct ptc* p){
+void func_button(struct sbc* p){
 	struct input* i = &p->input;
 	int mode = 0;
 	if (p->exec.argcount == 1){
@@ -191,7 +191,7 @@ void func_button(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(button)}});
 }
 
-void func_inkey(struct ptc* p){
+void func_inkey(struct sbc* p){
 	struct input* i = &p->input;
 	if (p->exec.argcount){
 		p->exec.error = ERR_WRONG_ARG_COUNT;

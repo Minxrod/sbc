@@ -8,63 +8,13 @@
 #include "data.h" // for BC_DATA_DELIM
 
 #include "system.h"
+#include "func_info.h"
 
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
-
-#define MAX_SPECIAL_NAME_SIZE 8
-
-const char* commands =
-"PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    "
-"IF      THEN    ELSE    [ENDIF] GOTO    GOSUB   ON      RETURN  "
-"END     STOP    "
-"CLS     VISIBLE ACLS    VSYNC   WAIT    "
-"INPUT   LINPUT  "
-"APPEND  "
-"BEEP    BGCLIP  BGCLR   BGCOPY  BGFILL  BGMCLEARBGMPLAY BGMPRG  BGMSET  BGMSETD BGMSETV "
-"BGMSTOP BGMVOL  BGOFS   BGPAGE  BGPUT   BGREAD  BREPEAT CHRINIT CHRREAD CHRSET  CLEAR   "
-"COLINIT COLREAD COLSET  CONT    DATA    DELETE  DTREAD  "
-"EXEC    FILES   GBOX    GCIRCLE GCLS    GCOLOR  GCOPY   GDRAWMD GFILL   GLINE   "
-"GPAGE   GPAINT  GPSET   GPRIO   GPUTCHR ICONCLR ICONSET "
-"KEY     LIST    LOAD    NEW     PNLSTR  PNLTYPE "
-"READ    REBOOT  RECVFILERENAME  RESTORE RSORT   RUN     SAVE    SENDFILESORT    "
-"SPANGLE SPANIM  SPCHR   SPCLR   SPCOL   SPCOLVECSPHOME  SPOFS   SPPAGE  SPREAD  SPSCALE "
-"SPSET   SPSETV  SWAP    TMREAD  "
-// not "supported" really, but some programs still used this to do things like detect region
-"TALK    TALKSTOP"
-"POKE    POKEH   POKEB   MEMCOPY MEMFILL ";
-
-const char* functions =
-"ABS     ASC     ATAN    BGCHK   BGMCHK  BGMGETV BTRIG   BUTTON  CHKCHR  CHR$    COS     "
-"DEG     EXP     FLOOR   GSPOIT  HEX$    ICONCHK INKEY$  INSTR   LEFT$   LEN     LOG     "
-"MID$    PI      POW     RAD     RIGHT$  RND     SGN     SIN     SPCHK   SPGETV  SPHIT   "
-"SPHITRC SPHITSP SQR     STR$    SUBST$  TAN     VAL     "
-// not implemented but still useful
-"TALKCHK "
-"PEEK    PEEKH   PEEKB   ADDR    PTR$    ";
-
-const char* bc_conv_operations = 
-"+       ,       -       *       /       ;       =       (-)     "
-"==      !=      <       >       <=      >=      "
-"%       "
-"AND     OR      XOR     NOT     !       "
-"(       )       [       ]       ";
-
-const char* sysvars = 
-"TRUE    FALSE   CANCEL  VERSION "
-"TIME$   DATE$   MAINCNTLMAINCNTH"
-"FREEVAR FREEMEM PRGNAME$PACKAGE$RESULT  "
-"TCHST   TCHX    TCHY    TCHTIME "
-"CSRX    CSRY    TABSTEP "
-"SPHITNO SPHITX  SPHITY  SPHITT  "
-"KEYBOARDFUNCNO  ICONPUSEICONPAGEICONPMAX"
-"ERL     ERR     "
-"MEM$    "
-// extension
-"MEMSAFE ";
 
 const char* labels = "LABEL   ";
 
@@ -201,7 +151,7 @@ void print_token(struct tokenizer* state, struct token t){
 		const char* names = (t.type == command || t.type == first_of_line_command) ? commands : 
 		                     t.type == function ? functions :
 		                     t.type == sysvar ? sysvars :
-		                     bc_conv_operations;
+		                     operators;
 		char name[MAX_SPECIAL_NAME_SIZE+1] = {0};
 		for (size_t i = 0; i < MAX_SPECIAL_NAME_SIZE; ++i){
 			name[i] = names[MAX_SPECIAL_NAME_SIZE*t.cmd + i];
@@ -1322,7 +1272,7 @@ int tok_none(struct tokenizer* state){
 	} else if (c == ',' || c == ';' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
 			c == '(' || c == ')' || c == '[' || c == ']'){
 		tok_single(state, operation);
-		state->tokens[state->token_i-1].cmd = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
+		state->tokens[state->token_i-1].cmd = tok_in_str_index(operators, state->source->data, &state->tokens[state->token_i-1]);
 	} else if (c == '<' || c == '=' || c == '>' || c == '!'){
 		tok_single(state, operation);
 		// check for <= == >= !=
@@ -1330,7 +1280,7 @@ int tok_none(struct tokenizer* state){
 			state->tokens[state->token_i - 1].len++;
 			state->cursor++;
 		}
-		state->tokens[state->token_i-1].cmd = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i-1]);
+		state->tokens[state->token_i-1].cmd = tok_in_str_index(operators, state->source->data, &state->tokens[state->token_i-1]);
 	} else if (c == '@'){
 		state->cursor++;
 		tok_with_condition(state, is_name);
@@ -1384,7 +1334,7 @@ int tok_name(struct tokenizer* state){
 	} else if (0 <= (index = tok_in_str_index(functions, state->source->data, &state->tokens[state->token_i]))){
 		state->tokens[state->token_i].type = function;
 		state->tokens[state->token_i].cmd = index; // overrides len
-	} else if (0 <= (index = tok_in_str_index(bc_conv_operations, state->source->data, &state->tokens[state->token_i]))){
+	} else if (0 <= (index = tok_in_str_index(operators, state->source->data, &state->tokens[state->token_i]))){
 		// note that this is only the bitwise ops
 		state->tokens[state->token_i].type = operation;
 		state->tokens[state->token_i].cmd = index; // overrides len

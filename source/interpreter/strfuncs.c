@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-void func_len(struct ptc* p){
+void func_len(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -16,7 +16,7 @@ void func_len(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(str_len(x))}});
 }
 
-void func_mid(struct ptc* p){
+void func_mid(struct sbc* p){
 	struct value_stack* s = &p->stack;
 //	struct stack_entry* len_e = stack_pop(s);
 //	struct stack_entry* start_e = stack_pop(s);
@@ -50,7 +50,7 @@ void func_mid(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
-void func_val(struct ptc* p){
+void func_val(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -80,7 +80,7 @@ void func_val(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {v}});
 }
 
-void func_str(struct ptc* p){
+void func_str(struct sbc* p){
 	fixp n = STACK_REL_NUM(-1);
 	
 	struct string* s = get_new_str(&p->strs);
@@ -93,7 +93,7 @@ void func_str(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = s}});
 }
 
-void func_instr(struct ptc* p){
+void func_instr(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	int start = 0;
 	if (p->exec.argcount == 3){
@@ -140,7 +140,7 @@ void func_instr(struct ptc* p){
 	}
 }
 
-void func_chr(struct ptc* p){
+void func_chr(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -153,7 +153,7 @@ void func_chr(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_STRING, {.ptr = str}});
 }
 
-void func_subst(struct ptc* p){
+void func_subst(struct sbc* p){
 	// Note: must be allocated here to ensure use count of str, repl are included
 	struct string* dest = get_new_str(&p->strs);
 
@@ -187,7 +187,7 @@ void func_subst(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
-void func_asc(struct ptc* p){
+void func_asc(struct sbc* p){
 	void* str = STACK_REL_STR(-1);
 	p->stack.stack_i -= 1;
 	
@@ -198,7 +198,7 @@ void func_asc(struct ptc* p){
 }
 
 // left or right
-void _func_substring(struct ptc* p, bool right){
+void _func_substring(struct sbc* p, bool right){
 	struct value_stack* s = &p->stack;
 
 	// Must be done first to ensure uses are kept correctly
@@ -229,15 +229,15 @@ void _func_substring(struct ptc* p, bool right){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, {.ptr = dest}});
 }
 
-void func_right(struct ptc* p){
+void func_right(struct sbc* p){
 	_func_substring(p, true);
 }
 
-void func_left(struct ptc* p){
+void func_left(struct sbc* p){
 	_func_substring(p, false);
 }
 
-void func_hex(struct ptc* p){
+void func_hex(struct sbc* p){
 	// HEX$ num
 	// HEX$ num digits
 	
@@ -274,7 +274,7 @@ void func_hex(struct ptc* p){
 }
 #define DATE_STR_LEN 10
 
-void cmd_dtread(struct ptc* p){
+void cmd_dtread(struct sbc* p){
 	// Note: Invalid dates are OK! 9999/99/99 works and gives 9999, 99, 99.
 	void* date_str = value_str(ARG(0));
 	fixp* year = ARG(1)->value.ptr;
@@ -307,7 +307,7 @@ void cmd_dtread(struct ptc* p){
 
 #define TIME_STR_LEN 8
 
-void cmd_tmread(struct ptc* p){
+void cmd_tmread(struct sbc* p){
 	void* time_str = value_str(ARG(0));
 	fixp* hour = ARG(1)->value.ptr;
 	fixp* min = ARG(2)->value.ptr;

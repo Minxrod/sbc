@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void cmd_for(struct ptc* p){
+void cmd_for(struct sbc* p){
 	// current stack consists of one var ptr
 	// Old design: [VAR] [FOR] [START] [ASSIGNMENT]
 	// New design: [VAR] [START] [ASSIGNMENT] [FOR]
@@ -52,11 +52,11 @@ void cmd_for(struct ptc* p){
 	p->calls.stack_i++;
 }
 
-void cmd_to(struct ptc* p){
+void cmd_to(struct sbc* p){
 	(void)p;
 }
 
-void cmd_step(struct ptc* p){
+void cmd_step(struct sbc* p){
 	(void)p;
 }
 
@@ -69,7 +69,7 @@ void cmd_step(struct ptc* p){
 /// * variable - Optional variable for iteration
 /// 
 /// @param a Arguments
-void cmd_next(struct ptc* p){
+void cmd_next(struct sbc* p){
 	// get NEXT variable if needed
 	struct stack_entry* e = NULL;
 	if (p->stack.stack_i){
@@ -145,7 +145,7 @@ void cmd_next(struct ptc* p){
 
 // IF uses the value on the stack to determine where to jump to next, either the
 // THEN/GOTO block or the ELSE block.
-void cmd_if(struct ptc* p){
+void cmd_if(struct sbc* p){
 	// current stack consists of one item (should be numeric)
 	fixp value = STACK_NUM(0);
 //	struct stack_entry* e = stack_pop(&p->stack);
@@ -186,14 +186,14 @@ void cmd_if(struct ptc* p){
 	p->exec.index = index;
 }
 
-void cmd_then(struct ptc* p){
+void cmd_then(struct sbc* p){
 	p->exec.error = ERR_COMMAND_EXISTS;
 }
 
 // When hitting an ELSE instruction (only hit from THEN block)
 // jump to the next ENDIF.
 // TODO:IMPL:LOW Comment style ELSE should not break...
-void cmd_else(struct ptc* p){
+void cmd_else(struct sbc* p){
 	u32 index = p->exec.index - 2; // start from immediately after the else
 	do {
 		index = bc_scan(p->exec.code, index + 2, BC_COMMAND);
@@ -207,11 +207,11 @@ void cmd_else(struct ptc* p){
 	p->exec.index = index;
 }
 
-void cmd_endif(struct ptc* p){
+void cmd_endif(struct sbc* p){
 	(void)p;
 }
 
-void cmd_goto_gosub(struct ptc* p, bool push_return){
+void cmd_goto_gosub(struct sbc* p, bool push_return){
 	// stack should contain pointer to label string (string type, with subtype BC_LABEL_STRING)
 	assert(p->stack.stack_i);
 	struct stack_entry* e = ARG(0);
@@ -246,19 +246,19 @@ void cmd_goto_gosub(struct ptc* p, bool push_return){
 	p->exec.index = index;
 }
 
-void cmd_goto(struct ptc* p){
+void cmd_goto(struct sbc* p){
 	cmd_goto_gosub(p, false);
 }
 
-void cmd_gosub(struct ptc* p){
+void cmd_gosub(struct sbc* p){
 	cmd_goto_gosub(p, true);
 }
 
-void cmd_on(struct ptc* p){
+void cmd_on(struct sbc* p){
 	(void)p;
 }
 
-void cmd_return(struct ptc* p){
+void cmd_return(struct sbc* p){
 	s32 stack_i = p->calls.stack_i;
 	if (!stack_i){
 		// empty stack
@@ -280,15 +280,15 @@ void cmd_return(struct ptc* p){
 	p->calls.stack_i = stack_i; // Reduce stack
 }
 
-void cmd_end(struct ptc* p){
+void cmd_end(struct sbc* p){
 	p->exec.index = p->exec.code.size;
 }
 
-void cmd_stop(struct ptc* p){
+void cmd_stop(struct sbc* p){
 	p->exec.error = ERR_BREAK;
 }
 
-void cmd_cont(struct ptc* p){
+void cmd_cont(struct sbc* p){
 	// if this is executing, it's from DIRECT mode. how to handle this?
 	(void)p;
 }

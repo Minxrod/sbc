@@ -17,12 +17,12 @@ int check_fail;
 /// Can be supplied with memory limits and input sequences.
 /// keys is not null-terminated - length must be provided.
 /// This is because \0 can be typed and is distinct from typing nothing.
-struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int var_limit, int str_limit, int arr_limit, int opts){
+struct sbc* run_code_conditions(char* code, const char* keys, int key_len, int var_limit, int str_limit, int arr_limit, int opts){
 //	assert(strlen(code) < 1024); // prevents exceeding outcode buffer
 //	memset(outcode, 0x0f, 2048); // identify errors of failing to write
 	// init system
 	MEM_CASE // only the start here!
-	struct ptc* ptc = init_system(var_limit, str_limit, arr_limit, true);
+	struct sbc* ptc = init_system(var_limit, str_limit, arr_limit, true);
 	ptc->res.search_path = TEST_SEARCH_PATH; // override with test path
 	ptc->console.test_mode = true;
 	// compile program p into bytecode in o
@@ -49,25 +49,25 @@ struct ptc* run_code_conditions(char* code, const char* keys, int key_len, int v
 }
 
 /// Creates a system with very low memory to test out-of-memory conditions.
-struct ptc* run_code_lowmem(char* code){
+struct sbc* run_code_lowmem(char* code){
 	return run_code_conditions(code, NULL, 0, 4, 2, 4, TOKOPT_NONE);
 }
 
-struct ptc* run_code_keys(char* code, char* keys, int len){
+struct sbc* run_code_keys(char* code, char* keys, int len){
 	return run_code_conditions(code, keys, len, VAR_LIMIT, STR_LIMIT, ARR_LIMIT, TOKOPT_NONE);
 }
 
 // Run program with enabled opts
-struct ptc* run_code_opts(char* code, int opts){
+struct sbc* run_code_opts(char* code, int opts){
 	return run_code_conditions(code, NULL, 0, VAR_LIMIT, STR_LIMIT, ARR_LIMIT, opts);
 }
 
 // reduces duplication to have this
-struct ptc* run_code(char* code){
+struct sbc* run_code(char* code){
 	return run_code_keys(code, NULL, 0);
 }
 
-void free_code(struct ptc* ptc){
+void free_code(struct sbc* ptc){
 	free_bytecode(ptc->exec.code); // must be done here to preserve string memory
 	free_log("free_mem_prg", ptc->exec.prg.data);
 	free_system(ptc);
@@ -76,7 +76,7 @@ void free_code(struct ptc* ptc){
 
 /// @return true if expected error occurs
 bool check_code_error(char* code, enum err_code expected){
-	struct ptc* p = run_code(code);
+	struct sbc* p = run_code(code);
 	
 	bool result = p->exec.error == expected;
 	

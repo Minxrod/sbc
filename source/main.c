@@ -77,7 +77,7 @@ void init(void){
 }
 
 // Global so that it can be used during interrupt
-struct ptc* ptc;
+struct sbc* ptc;
 
 #define KEY(T) if (b & KEY_##T){ conv_b |= BUTTON_##T; }
 
@@ -202,14 +202,14 @@ int main(int argc, char** argv){
 		abort();
 	}
 
-	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
+	struct sbc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
 	ptc->display.rw = window;
 	
 	// THREAD MODEL
 	// WINDOW                    PROGRAM
 	//  Event -> Input ==>        BUTTON, KEYBOARD, etc.
-	//  Stop -> Load Program =>   struct ptc
-	//  Rendering <==             struct ptc ~ display state
+	//  Stop -> Load Program =>   struct sbc
+	//  Rendering <==             struct sbc ~ display state
 	
 	// Launch the program thread
 	struct launch_info info = {ptc, NULL, argc >= 2 ? argv[1] : NULL};

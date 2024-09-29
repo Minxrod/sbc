@@ -10,7 +10,7 @@
 #include "ptc.h"
 
 // Returns number of characters read OR READ_ONE_ERR if an error occurs
-int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* dest){
+int read_one_u8(struct sbc* p, const u8* src, size_t len, struct stack_entry* dest){
 	size_t i = 0;
 	size_t start = i;
 	if (dest->type == (VAR_VARIABLE | VAR_STRING)){
@@ -62,7 +62,7 @@ int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* de
 }
 
 // Finds and sets the data index to the next available slot
-void find_data(struct ptc* p){
+void find_data(struct sbc* p){
 	assert(p->exec.code.data[p->exec.data_index] == BC_DATA); // assumes index already points to valid data
 	int ofs = p->exec.data_offset;
 	// Note: Instruction is of form BC_DATA [length] [`length` characters] [null if length % 2 is odd]
@@ -74,7 +74,7 @@ void find_data(struct ptc* p){
 /// Offset into data block where data actually starts
 #define DATA_DATA_OFS 2
 
-void cmd_read(struct ptc* p){
+void cmd_read(struct sbc* p){
 	// Get variables from stack and call read() into each of them (using DATA string as source)
 	// Get pointer, offset for data
 	if (p->exec.data_index == BC_SCAN_NOT_FOUND){
@@ -121,10 +121,14 @@ void cmd_read(struct ptc* p){
 	iprintf("\n");
 }
 
-void cmd_restore(struct ptc* p){
+void cmd_restore(struct sbc* p){
 	void* label = value_str(ARG(0));
 	idx index = search_label(p, label); // sets error on failure
 	p->exec.data_index = bc_scan(p->exec.code, index, BC_DATA);
 	p->exec.data_offset = 0;
 //	iprintf("Data at %d: %.*s", index, p->exec.code.data[index+1], &p->exec.code.data[index+2]);
+}
+
+void cmd_data(struct sbc* s){
+	(void)s;
 }

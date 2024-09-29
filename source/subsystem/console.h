@@ -18,7 +18,7 @@
 static_assert(CONSOLE_WIDTH <= BG_WIDTH, "Console should fit the width of the SCR page");
 static_assert(CONSOLE_HEIGHT <= BG_HEIGHT, "Console should fit the height of the SCR page");
 
-struct ptc;
+struct sbc;
 
 #define COL_FG_MASK 0x0f
 #define COL_BG_MASK 0xf0
@@ -116,22 +116,22 @@ void con_advance(struct console* c);
 void con_newline(struct console* c, bool scroll);
 
 // Special debug instruction because strings are inncovenient sometimes
-void debug_print_str(struct ptc* p, const u8* msg);
+void debug_print_str(struct sbc* p, const u8* msg);
 
 // PTC commands, etc.
-void cmd_cls(struct ptc* p);
-void cmd_print(struct ptc* p);
-void cmd_color(struct ptc* p);
-void cmd_locate(struct ptc* p);
-void cmd_input(struct ptc* p);
-void cmd_linput(struct ptc* p);
+void cmd_cls(struct sbc* p);
+void cmd_print(struct sbc* p);
+void cmd_color(struct sbc* p);
+void cmd_locate(struct sbc* p);
+void cmd_input(struct sbc* p);
+void cmd_linput(struct sbc* p);
 // PTC functions, etc.
-void func_chkchr(struct ptc* p);
+void func_chkchr(struct sbc* p);
 // PTC sysvars, etc.
-void sys_csrx(struct ptc* p);
-void sys_csry(struct ptc* p);
-void sys_tabstep(struct ptc* p);
-void syschk_tabstep(struct ptc* p);
+void sys_csrx(struct sbc* p);
+void sys_csry(struct sbc* p);
+void sys_tabstep(struct sbc* p);
+void syschk_tabstep(struct sbc* p);
 
 
 static inline u16 con_text_getc(struct console* c, u32 x, u32 y){

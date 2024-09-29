@@ -37,7 +37,7 @@
 /// The system struct. This contains the entire interpreter state.
 ///
 // TODO:CODE:LOW change name to sbc at some point?
-struct ptc {
+struct sbc {
 	// upper screen stuff
 	struct console console;
 	// background stuff
@@ -87,17 +87,17 @@ struct ptc {
 /// Note that the allocate amount is higher than this to allow for metadata.
 /// @param headless Set this to true when no display is being used to avoid costs of texture generation.
 /// @return Initialized system.
-struct ptc* init_system(int var, int str, int arr, bool headless);
+struct sbc* init_system(int var, int str, int arr, bool headless);
 
 /// Frees an allocated system.
-void free_system(struct ptc*);
+void free_system(struct sbc*);
 
 /// Information struct containing program source and the system to run it on.
 ///
 /// Used for launching the main thread on PC.
 struct launch_info {
 	/// Pointer to system struct
-	struct ptc* p;
+	struct sbc* p;
 	/// Pointer to program source.
 	struct program* prg;
 	/// Name of program to autoboot
@@ -107,10 +107,10 @@ struct launch_info {
 // This is intended to accept a struct launch_info, but is void* for use in thrd_create
 int launch_system(void*);
 // Run a program on a system
-int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int tokopts);
+int token_and_run(struct sbc* p, struct program* prg, struct bytecode* bc, int tokopts);
 
-void cmd_acls(struct ptc*);
-void cmd_visible(struct ptc*);
-void cmd_vsync(struct ptc*);
-void cmd_wait(struct ptc*);
-void cmd_files(struct ptc* p);
+void cmd_acls(struct sbc*);
+void cmd_visible(struct sbc*);
+void cmd_vsync(struct sbc*);
+void cmd_wait(struct sbc*);
+void cmd_files(struct sbc* p);

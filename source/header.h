@@ -12,7 +12,7 @@
 /// Represents a PTC SD file format header. Should correspond directly
 /// to the byte representation of the header; however, this is only usable
 /// directly on little-endian platforms.
-struct ptc_header {
+struct sbc_header {
 	/// Valid files will contain magic string "PX01"
 	char magic[4];
 	/// Size of file after MD5 (includes type string and data)

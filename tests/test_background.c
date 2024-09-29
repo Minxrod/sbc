@@ -25,7 +25,7 @@ int test_background(void){
 	
 	// Basic BGPAGE
 	{
-		struct ptc* p = run_code("BGPAGE 1\r");
+		struct sbc* p = run_code("BGPAGE 1\r");
 		
 		ASSERT(p->background.page == 1, "[bg] BGPAGE is set correctly");
 		
@@ -34,7 +34,7 @@ int test_background(void){
 	
 	// Simple tiledata BGPUT
 	{
-		struct ptc* p = run_code("BGPUT 0,1,2,3456\rBGPUT 1,33,34,1235\r");
+		struct sbc* p = run_code("BGPUT 0,1,2,3456\rBGPUT 1,33,34,1235\r");
 		
 		ASSERT(p->res.scr[2][bg_index(1,2)] == 3456, "[bg] BGPUT tiledata test");
 		ASSERT(p->res.scr[3][bg_index(33,34)] == 1235, "[bg] BGPUT tiledata test II");
@@ -44,7 +44,7 @@ int test_background(void){
 	
 	// Simple BGCLR
 	{
-		struct ptc* p = run_code("BGPUT 0,1,2,3456\rBGPUT 1,33,34,1235\rBGCLR\r");
+		struct sbc* p = run_code("BGPUT 0,1,2,3456\rBGPUT 1,33,34,1235\rBGCLR\r");
 		
 		ASSERT(p->res.scr[2][bg_index(1,2)] == 0, "[bg] BGCLR test");
 		ASSERT(p->res.scr[3][bg_index(33,34)] == 0, "[bg] BGCLR test II");
@@ -55,7 +55,7 @@ int test_background(void){
 	
 	// Simple BGFILL
 	{
-		struct ptc* p = run_code("BGFILL 1,3,4,36,37,1024\r");
+		struct sbc* p = run_code("BGFILL 1,3,4,36,37,1024\r");
 		
 		ASSERT(p->res.scr[3][bg_index(3,4)] == 1024, "[bg] BGFILL test");
 		ASSERT(p->res.scr[3][bg_index(36,4)] == 1024, "[bg] BGFILL test");
@@ -92,7 +92,7 @@ int test_background(void){
 	
 	// BGREAD on negative coordinates
 	{
-		struct ptc* p = run_code("BGPUT 0,2,1,5:BGREAD(0,-62,-63),T\r");
+		struct sbc* p = run_code("BGPUT 0,2,1,5:BGREAD(0,-62,-63),T\r");
 
 		CHECK_VAR_INT("T", 5);
 

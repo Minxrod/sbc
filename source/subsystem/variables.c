@@ -1,12 +1,12 @@
 #include "system.h"
 
-void cmd_clear(struct ptc* p){
+void cmd_clear(struct sbc* p){
 	reset_var(&p->vars);
 	reset_str(&p->strs);
 	reset_arr(&p->arrs);
 }
 
-void cmd_swap(struct ptc* p){
+void cmd_swap(struct sbc* p){
 	// Note: Both are variables and types are already the same via tok_test check
 	// Note that swap is swapping values, but those values depend on types
 	struct stack_entry* a = ARG(0);
@@ -107,7 +107,7 @@ void quick_sort(union value* data, union value** extra, int start, int end, comp
 }
 
 /// @note Does not correctly handle permuting the same array as is being sorted!
-void _cmd_sort_shared(struct ptc* p, comparison comp){
+void _cmd_sort_shared(struct sbc* p, comparison comp){
 	int start;
 	int size;
 	union value* extra[MAX_SORT_ARRAYS] = {0};
@@ -146,10 +146,14 @@ void _cmd_sort_shared(struct ptc* p, comparison comp){
 	quick_sort(data+2, extra, start, start + size - 1, comp);
 }
 
-void cmd_sort(struct ptc* p){
+void cmd_sort(struct sbc* p){
 	_cmd_sort_shared(p, ARG(2)->type & VAR_STRING ? str_sort_comp : fixp_sort_comp);
 }
 
-void cmd_rsort(struct ptc* p){
+void cmd_rsort(struct sbc* p){
 	_cmd_sort_shared(p, ARG(2)->type & VAR_STRING ? str_rsort_comp : fixp_rsort_comp);
+}
+
+void cmd_dim(struct sbc* s){
+	(void)s;
 }

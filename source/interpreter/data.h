@@ -15,14 +15,14 @@
 
 #include "common.h"
 
-struct ptc;
+struct sbc;
 struct stack_entry;
 
 /// Reads from data block src up to len characters into dest
 ///
 /// @return Number of characters read, or READ_ONE_ERR on error
-int read_one_u8(struct ptc* p, const u8* src, size_t len, struct stack_entry* dest);
+int read_one_u8(struct sbc* p, const u8* src, size_t len, struct stack_entry* dest);
 
-void cmd_read(struct ptc* p);
-void cmd_restore(struct ptc* p);
+void cmd_read(struct sbc* p);
+void cmd_restore(struct sbc* p);
 

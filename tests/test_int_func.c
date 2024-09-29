@@ -8,7 +8,7 @@ int test_int_func(void){
 	{
 		char* code = "A=FLOOR(3.5)\rB=FLOOR(4.67)\rC=FLOOR(2)\rD=FLOOR(-1.3)\rE=FLOOR(-2)\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(3), "[math] A=FLOOR(3.5)");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(4), "[math] B=FLOOR(4.67)");
@@ -25,7 +25,7 @@ int test_int_func(void){
 		"F=INSTR(A$,\"A\",1)\rG=INSTR(A$,\"HI\")\r"
 		"H=INSTR(\"AABC\",\"AB\")\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[instr] Find string in itself");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(0), "[instr] Find empty string in string");
@@ -44,7 +44,7 @@ int test_int_func(void){
 		// add "" to force string alloc; check usages to ensure stack is not causing copies to live too long
 		char* code = "A$=\"ABCDEFGHI\"+\"\"\rB$=SUBST$(A$,3,2,\"XYZ\")\rC$=SUBST$(A$,0,5,\"XY\")\rD$=SUBST$(A$,9,4,\"XYZW\")\rE$=SUBST$(A$,6,0,\"XY\")\rF$=SUBST$(A$,0,0,\"XY\")\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\11ABCDEFGHI"), "[subst] Original string unmodified");
 		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\12ABCXYZFGHI"), "[subst] Substitute more characters than replaced");
@@ -70,7 +70,7 @@ int test_int_func(void){
 	{
 		char* code = "A=ASC(\"0\")\rB=ASC(\"A\")\rC=ASC(CHR$(0))\rD=ASC(\"abc\")\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(48), "[asc] Value of \"0\" string");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(65), "[asc] Value of \"A\" string");
@@ -91,7 +91,7 @@ int test_int_func(void){
 	{
 		char* code = "A$=CHR$(48)\rB$=CHR$(65)\rC$=CHR$(0)\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1\x30"), "[chr$] \"0\" string");
 		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\1\x41"), "[chr$] \"A\" string");
@@ -103,7 +103,7 @@ int test_int_func(void){
 	// CHR$+ASC inverses
 	{
 		// ASC(CHR$())
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"S=0\r"
 			"FOR I=0 TO 255\r"
 			" IF ASC(CHR$(I))!=I THEN S=S+1\r"
@@ -133,7 +133,7 @@ int test_int_func(void){
 	{
 		char* code = "A$=STR$(7)\rB$=STR$(42.3)\rC$=STR$(-6.9)\rD$=STR$(423786)\rE$=STR$(524287)\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_STR("A", "S\0017");
 		CHECK_VAR_STR("B", "S\00442.3");
@@ -150,7 +150,7 @@ int test_int_func(void){
 		// Check every integer (without overflow) for correct STR$-VAL conversion
 		char* code = "S=1\rFOR I=-524287 TO 524286\rIF VAL(STR$(I))!=I THEN S=0\rNEXT\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_INT("S", 1);
 		
@@ -160,7 +160,7 @@ int test_int_func(void){
 	
 	// RIGHT$
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"A$=\"ABCDEFGHIJKLMNOP\"\r"
 			"B$=RIGHT$(A$,8)\r" // within range
 			"C$=RIGHT$(A$,0)\r" // nothing
@@ -182,7 +182,7 @@ int test_int_func(void){
 	
 	// LEFT$
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"A$=\"ABCDEFGHIJKLMNOP\"\r"
 			"B$=LEFT$(A$,8)\r" // within range
 			"C$=LEFT$(A$,0)\r" // nothing
@@ -204,7 +204,7 @@ int test_int_func(void){
 	
 	// HEX$
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"A$=HEX$(9)\r" // simple
 			"B$=HEX$(29.7)\r" // decimal
 			"C$=HEX$(89.6)\r"
@@ -272,7 +272,7 @@ int test_int_func(void){
 	{
 		char* code = "DTREAD(\"2023/09/19\"),Y,M,D\r";
 
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// Check various substrings
 		CHECK_VAR_INT("Y",2023);
 		CHECK_VAR_INT("M",9);
@@ -283,7 +283,7 @@ int test_int_func(void){
 
 	// DTREAD test II (unrealistic date)
 	{
-		struct ptc* p = run_code("DTREAD(\"6789/00/99\"),Y,M,D\r");
+		struct sbc* p = run_code("DTREAD(\"6789/00/99\"),Y,M,D\r");
 		// Check various substrings
 		CHECK_VAR_INT("Y",6789);
 		CHECK_VAR_INT("M",00);
@@ -302,7 +302,7 @@ int test_int_func(void){
 
 	// TMREAD test I (normal time)
 	{
-		struct ptc* p = run_code("TMREAD(\"19:15:08\"),H,M,S\r");
+		struct sbc* p = run_code("TMREAD(\"19:15:08\"),H,M,S\r");
 		// Check various substrings
 		CHECK_VAR_INT("H",19);
 		CHECK_VAR_INT("M",15);
@@ -312,7 +312,7 @@ int test_int_func(void){
 
 	// TMREAD test II (unrealistic time)
 	{
-		struct ptc* p = run_code("TMREAD(\"27:63:99\"),H,M,S\r");
+		struct sbc* p = run_code("TMREAD(\"27:63:99\"),H,M,S\r");
 		// Check various substrings
 		CHECK_VAR_INT("H",27);
 		CHECK_VAR_INT("M",63);

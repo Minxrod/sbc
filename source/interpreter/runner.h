@@ -9,7 +9,7 @@
 
 #include "program.h"
 
-struct ptc;
+struct sbc;
 
 /**
  * Execution info: current instruction, error status, etc.
@@ -26,10 +26,10 @@ struct runner {
 };
 
 // Gains about 10% speed by being placed in ITCM_CODE
-void run(struct bytecode code, struct ptc* p) ITCM_CODE;
+void run(struct bytecode code, struct sbc* p) ITCM_CODE;
 
-void cmd_exec(struct ptc* p);
-void cmd_run(struct ptc* p);
+void cmd_exec(struct sbc* p);
+void cmd_run(struct sbc* p);
 
-void sys_err(struct ptc* p);
-void sys_erl(struct ptc* p);
+void sys_err(struct sbc* p);
+void sys_erl(struct sbc* p);

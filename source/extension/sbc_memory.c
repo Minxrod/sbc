@@ -44,19 +44,19 @@
 	*(type*)addr = val;\
 }
 
-void cmd_poke(struct ptc* p){
+void cmd_poke(struct sbc* p){
 	SBC_POKE(fixp,0x3,0);
 }
 
-void cmd_pokeh(struct ptc* p){
+void cmd_pokeh(struct sbc* p){
 	SBC_POKE(u16,0x1,FIXPOINT);
 }
 
-void cmd_pokeb(struct ptc* p){
+void cmd_pokeb(struct sbc* p){
 	SBC_POKE(u8,0x0,FIXPOINT);
 }
 
-void cmd_memcopy(struct ptc* p){
+void cmd_memcopy(struct sbc* p){
 	// MEMCOPY dest src size
 	fixp dest_num = STACK_NUM(0);
 	void* dest = FIXP_TO_PTR(dest_num);
@@ -91,7 +91,7 @@ void cmd_memcopy(struct ptc* p){
 	memcpy(dest, src, size);
 }
 
-void cmd_memfill(struct ptc* p){
+void cmd_memfill(struct sbc* p){
 	// MEMFILL dest value size
 	fixp dest_num = STACK_NUM(0);
 	void* dest = FIXP_TO_PTR(dest_num);
@@ -134,15 +134,15 @@ void cmd_memfill(struct ptc* p){
 	STACK_RETURN_NUM(ret);\
 }
 
-void func_peek(struct ptc* p){
+void func_peek(struct sbc* p){
 	SBC_PEEK(fixp,0x3,0);
 }
 
-void func_peekh(struct ptc* p){
+void func_peekh(struct sbc* p){
 	SBC_PEEK(u16,0x1,FIXPOINT);
 }
 
-void func_peekb(struct ptc* p){
+void func_peekb(struct sbc* p){
 	SBC_PEEK(u8,0x0,FIXPOINT);
 }
 
@@ -151,7 +151,7 @@ void func_peekb(struct ptc* p){
 #define FUNC_ADDR_INTERNAL '!'
 #define FUNC_ADDR_DEREF '*'
 
-void func_addr(struct ptc* p){
+void func_addr(struct sbc* p){
 	void* resource;
 	fixp ofs_num;
 	if (p->exec.argcount == 1){
@@ -298,7 +298,7 @@ void func_addr(struct ptc* p){
 	STACK_RETURN_NUM((PTR_TO_FIXP(res_ptr) + ofs));
 }
 
-void func_ptr(struct ptc* p){
+void func_ptr(struct sbc* p){
 	struct string* out_str = get_new_str(&p->strs);
 	
 	fixp ptr = STACK_REL_NUM(-1);
@@ -317,12 +317,12 @@ void func_ptr(struct ptc* p){
 	STACK_RETURN_STR(out_str);
 }
 
-void sys_memsafe(struct ptc* p){
+void sys_memsafe(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->memapi.sys_memsafe});
 }
 
-void syschk_memsafe(struct ptc* p){
+void syschk_memsafe(struct sbc* p){
 	p->memapi.sys_memsafe = INT_TO_FP(!!p->memapi.sys_memsafe);
 }

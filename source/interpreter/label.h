@@ -48,5 +48,5 @@ int find_label_slot(struct labels* l, char* name, uint_fast8_t len);
 
 idx label_index(struct labels* l, char* name, uint_fast8_t len);
 
-struct ptc;
-idx search_label(struct ptc* p, void* label);
+struct sbc;
+idx search_label(struct sbc* p, void* label);

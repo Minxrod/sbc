@@ -19,11 +19,11 @@ void init_graphics(struct graphics* g){
 	g->drawmode = 0;
 }
 
-u8* grp_drawpage(struct ptc* p){
+u8* grp_drawpage(struct sbc* p){
 	return p->res.grp[p->graphics.info[p->graphics.screen].drawpage];
 }
 
-void cmd_gpage(struct ptc* p){
+void cmd_gpage(struct sbc* p){
 	if (p->stack.stack_i == 1){
 		STACK_INT_RANGE(0,0,1,p->graphics.screen);
 	} else {
@@ -33,11 +33,11 @@ void cmd_gpage(struct ptc* p){
 	}
 }
 
-void cmd_gcolor(struct ptc* p){
+void cmd_gcolor(struct sbc* p){
 	STACK_INT_RANGE(0,0,255,p->graphics.color);
 }
 
-void cmd_gcls(struct ptc* p){
+void cmd_gcls(struct sbc* p){
 	u8 color;
 	if (p->stack.stack_i == 1){
 		STACK_INT_RANGE(0,0,255,color);
@@ -52,7 +52,7 @@ void cmd_gcls(struct ptc* p){
 	}
 }
 
-void cmd_gfill(struct ptc* p){
+void cmd_gfill(struct sbc* p){
 	//GFILL x1 y1 x2 y2 [c]
 	//TODO:ERR:LOW Check argument clamping accuracy
 	int x1 = STACK_INT(0);
@@ -82,7 +82,7 @@ void cmd_gfill(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-void cmd_gbox(struct ptc* p){
+void cmd_gbox(struct sbc* p){
 	int x1 = STACK_INT(0);
 	int y1 = STACK_INT(1);
 	int x2 = STACK_INT(2);
@@ -173,7 +173,7 @@ static inline void draw_line(int x1, int y1, int x2, int y2, u8* page, u8 color,
 // oooo        <--this           ooooo
 //     oooo                          ooooo
 //         oooo   not this-->            oooo
-void cmd_gline(struct ptc* p){
+void cmd_gline(struct sbc* p){
 	int x1 = STACK_INT(0);
 	int y1 = STACK_INT(1);
 	int x2 = STACK_INT(2);
@@ -194,7 +194,7 @@ void cmd_gline(struct ptc* p){
 	draw_line(x1, y1, x2, y2, page, color, p->graphics.drawmode);
 }
 
-void cmd_gpset(struct ptc* p){
+void cmd_gpset(struct sbc* p){
 	int x, y;
 	STACK_INT_RANGE_SILENT(0,0,GRP_WIDTH-1,x);
 	STACK_INT_RANGE_SILENT(1,0,GRP_HEIGHT-1,y);
@@ -212,15 +212,15 @@ void cmd_gpset(struct ptc* p){
 	grp_pixel(page,x,y,color,p->graphics.drawmode);
 }
 
-void cmd_gdrawmd(struct ptc* p){
+void cmd_gdrawmd(struct sbc* p){
 	STACK_INT_RANGE(0,0,1,p->graphics.drawmode);
 }
 
-void cmd_gprio(struct ptc* p){
+void cmd_gprio(struct sbc* p){
 	STACK_INT_RANGE(0,0,3,p->graphics.info[p->graphics.screen].prio);
 }
 
-void cmd_gputchr(struct ptc* p){
+void cmd_gputchr(struct sbc* p){
 	// GPUTCHR x,y,resource,chr,pal,size
 	// TODO:PERF:LOW Check performance of this and see if it can be optimized
 	int chr;
@@ -293,7 +293,7 @@ void cmd_gputchr(struct ptc* p){
 	}
 }
 
-void func_gspoit(struct ptc* p){
+void func_gspoit(struct sbc* p){
 	int x, y;
 	u8* dest;
 	if (p->exec.argcount == 2){
@@ -317,7 +317,7 @@ void func_gspoit(struct ptc* p){
 	STACK_RETURN_INT(dest[grp_index(x,y)]);
 }
 
-void cmd_gcopy(struct ptc* p){
+void cmd_gcopy(struct sbc* p){
 	// GCOPY [srcpage] x1 y1 x2 y2 x3 y3 mode
 	int page;
 	u8* src, * dest;
@@ -421,7 +421,7 @@ void cmd_gcopy(struct ptc* p){
 /// Mathematical constant pi (as double)
 #define PI 3.141592653589
 
-void cmd_gcircle(struct ptc* p){
+void cmd_gcircle(struct sbc* p){
 	int x, y, r;
 	u8 color = p->graphics.color;
 	x = STACK_INT(0);
@@ -475,7 +475,7 @@ static inline bool inside(u8* data, int x, int y, int match){
 } while(0)
 
 
-void cmd_gpaint(struct ptc* p){
+void cmd_gpaint(struct sbc* p){
 	// GPAINT X Y [C [B]]
 	// TODO:IMPL:MED This version runs out of memory too easily. Is there a way to fix this without just allocating a larger stack?
 	// Maybe try a simpler recursive implementation, but periodically filter out already checked pixels to keep border smaller?

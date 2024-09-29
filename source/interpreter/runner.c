@@ -1,5 +1,6 @@
 #include "runner.h"
 #include "common.h"
+#include "func_info.h"
 #include "strs.h"
 #include "system.h"
 
@@ -26,92 +27,11 @@
 #include "subsystem/variables.h"
 #include "vars.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef void(*ptc_call)(struct ptc*);
-
-// These are the tables that map command, function, etc. IDs into operations
-// All functions take the ptc struct as an argument and return nothing
-// Arguments are passed via p->stack struct; return values also go here.
-// Errors are indicated via p->exec.error, constants are defined in error.h
-
-void ptc_stub(struct ptc* p){
-	// Stub function consumes all arguments and does nothing
-	p->stack.stack_i = 0;
-}
-
-void ptc_func_stub(struct ptc* p){
-	// Stub function consumes arguments provided and returns zero
-	p->stack.stack_i -= p->exec.argcount;
-	STACK_RETURN_INT(0);
-}
-
-void ptc_err(struct ptc* p){
-	// The "I haven't done this yet" function
-	ERROR(ERR_UNIMPLEMENTED);
-}
-
-const ptc_call ptc_bgmstub = ptc_stub;
-
-DTCM_DATA const ptc_call ptc_commands[] = {
-	cmd_print, cmd_locate, cmd_color, ptc_err, // dim
-	cmd_for, cmd_to, cmd_step, cmd_next,
-	cmd_if, cmd_then, cmd_else, cmd_endif,
-	cmd_goto, cmd_gosub, cmd_on, cmd_return,
-	cmd_end, cmd_stop,
-	cmd_cls, cmd_visible, cmd_acls, cmd_vsync, cmd_wait,
-	cmd_input, cmd_linput,
-	cmd_append, ptc_stub, //BEEP
-	cmd_bgclip, cmd_bgclr, cmd_bgcopy, cmd_bgfill, ptc_bgmstub, //BGMCLEAR 
-	ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, ptc_bgmstub, //BGMVOL
-	cmd_bgofs, cmd_bgpage, cmd_bgput, cmd_bgread, cmd_brepeat, cmd_chrinit, cmd_chrread, //CHRREAD
-	cmd_chrset, cmd_clear, cmd_colinit, cmd_colread, cmd_colset, ptc_err, //CONT
-	ptc_stub, ptc_err, cmd_dtread, cmd_exec, cmd_files, cmd_gbox, //GBOX
-	cmd_gcircle, cmd_gcls, cmd_gcolor, cmd_gcopy, cmd_gdrawmd, cmd_gfill, cmd_gline, // GLINE, 
-	cmd_gpage, cmd_gpaint, cmd_gpset, cmd_gprio, cmd_gputchr, cmd_iconclr, cmd_iconset, //ICONSET, 
-	cmd_key, ptc_err, cmd_load, cmd_new, //NEW, 
-	cmd_pnlstr, cmd_pnltype, cmd_read, ptc_err, ptc_err, ptc_err, //RENAME, 
-	cmd_restore, cmd_rsort, cmd_run, cmd_save, ptc_err, cmd_sort, cmd_spangle, //SPANGLE, 
-	cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, cmd_spcolvec, cmd_sphome, cmd_spofs, cmd_sppage, //SPPAGE,
-	cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv, cmd_swap, //SWAP, 
-	cmd_tmread, //TMREAD,
-	ptc_stub, ptc_stub, // TALKSTOP
-	cmd_poke, cmd_pokeh, cmd_pokeb, cmd_memcopy, cmd_memfill
-};
-
-DTCM_DATA const ptc_call ptc_operators[] = {
-	op_add, op_comma, op_sub, op_mult, op_div, op_semi, op_assign, op_negate,
-	op_equal, op_inequal, op_less, op_greater, op_less_equal, op_greater_equal,
-	op_modulo,
-	op_and, op_or, op_xor, op_not, op_logical_not
-};
-
-DTCM_DATA const ptc_call ptc_functions[] = {
-	func_abs, func_asc, func_atan, func_bgchk, ptc_func_stub, ptc_err, func_btrig, func_button,
-	func_chkchr, func_chr, func_cos, func_deg, func_exp, func_floor, func_gspoit, func_hex, func_iconchk, //FUNC_ICONCHK
-	func_inkey, func_instr, func_left, func_len, func_log, func_mid, func_pi, func_pow, func_rad, //FUNC_RAD
-	func_right, func_rnd, func_sgn, func_sin, func_spchk, func_spgetv, func_sphit, ptc_err, //FUNC_SPHITRC
-	func_sphitsp, func_sqr, func_str, func_subst, func_tan, func_val, //FUNC_VAL
-	ptc_func_stub, // FUNC_TALKCHK
-	func_peek, func_peekh, func_peekb, func_addr, func_ptr, // FUNC_PTR
-};
-
-DTCM_DATA const ptc_call ptc_sysvars[] = {
-	sys_true, sys_false, sys_cancel, sys_version,
-	sys_time, sys_date, sys_maincntl, sys_maincnth, //MAINCNTH
-	sys_freevar, sys_freemem, sys_prgname, sys_package, sys_result, //RESULT
-	sys_tchst, sys_tchx, sys_tchy, sys_tchtime, //TCHTIME
-	sys_csrx, sys_csry, sys_tabstep,
-	sys_sphitno, ptc_err, ptc_err, ptc_err,
-	sys_keyboard, sys_funcno,
-	sys_iconpuse, sys_iconpage, sys_iconpmax, // ICONPMAX
-	sys_erl, sys_err, // ERR
-	sys_mem,
-	sys_memsafe
-};
-
-DTCM_DATA const ptc_call ptc_sysvars_valid[] = {
+DTCM_DATA const sbc_call ptc_sysvars_valid[] = {
 	NULL, NULL, NULL, NULL, // VERSION
 	NULL, NULL, NULL, NULL, // MAINCNTH
 	NULL, NULL, NULL, NULL, NULL, // RESULT
@@ -169,7 +89,7 @@ struct var_name read_var_name(struct bytecode* b, idx index){
 /// @param code Program bytecode struct.
 /// @param p PTC struct containing entire state of interpreter + system
 /// @param init_exec If true, re-initializes more of the execution state.
-ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
+ITCM_CODE void _run(struct bytecode code, struct sbc* p, bool init_exec) {
 	struct runner* r = &p->exec;
 	r->code = code;
 	if (init_exec){
@@ -215,18 +135,12 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 			case BC_COMMAND_FIRST:
 				print_name(commands, data);
 				//run command using current stack
-				if ((u8)data >= sizeof(ptc_commands)/sizeof(ptc_commands[0])){
-					r->error = ERR_PTC_COMMAND_INVALID;
-					break;
-				}
-				if (ptc_commands[(u32)data]){
-					ptc_commands[(u32)data](p);
-//					iprintf("End command; %d?<%d %d ", r->index, r->code.size, (int)r->error);
-					print_name(commands, data);
-				} else {
-					r->error = ERR_UNIMPLEMENTED;
-					break;
-				}
+				assert((u8)data <= sizeof(sbc_commands)/sizeof(sbc_commands[0]));
+				assert(sbc_commands[(u32)data]);
+				sbc_commands[(u32)data](p);
+//				iprintf("End command; %d?<%d %d ", r->index, r->code.size, (int)r->error);
+				print_name(commands, data);
+
 				// FOR,TO,STEP use stack for BC_BEGIN_LOOP so don't clear
 				// ON ignores value to pass it to GOTO/GOSUB, so don't clear
 				if (data != CMD_FOR && data != CMD_TO && data != CMD_STEP && data != CMD_ON)
@@ -235,46 +149,29 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 				break;
 				
 			case BC_OPERATOR:
-				print_name(bc_conv_operations, data);
-				
-				if ((u8)data >= sizeof(ptc_operators)/sizeof(ptc_operators[0])){
-					r->error = ERR_PTC_OPERATOR_INVALID;
-					break;
-				}
-				if (ptc_operators[(u32)data]){
-					ptc_operators[(u32)data](p);
-				} else {
-					r->error = ERR_UNIMPLEMENTED;
-				}
+				print_name(operators, data);
+				assert((u8)data <= sizeof(sbc_operators)/sizeof(sbc_operators[0]));
+				assert(sbc_operators[(u32)data]);
+				sbc_operators[(u32)data](p);
+
 				check_time(&p->time, 3);
 				break;
 				
 			case BC_FUNCTION:
 				print_name(functions, data);
-				
-				if ((u8)data >= sizeof(ptc_functions)/sizeof(ptc_functions[0])){
-					r->error = ERR_PTC_FUNCTION_INVALID;
-					break;
-				}
-				if (ptc_functions[(u32)data]){
-					ptc_functions[(u32)data](p);
-				} else {
-					r->error = ERR_UNIMPLEMENTED;
-				}
+				assert((u8)data <= sizeof(sbc_functions)/sizeof(sbc_functions[0]));
+				assert(sbc_functions[(u32)data]);
+				sbc_functions[(u32)data](p);
+
 				check_time(&p->time, 4);
 				break;
 				
 			case BC_SYSVAR:
 				print_name(sysvars, data);
-				if ((u8)data >= sizeof(ptc_sysvars)/sizeof(ptc_sysvars[0])){
-					r->error = ERR_PTC_SYSVAR_INVALID;
-					break;
-				}
-				if (ptc_sysvars[(u32)data]){
-					ptc_sysvars[(u32)data](p);
-				} else {
-					r->error = ERR_UNIMPLEMENTED;
-				}
+				assert((u8)data <= sizeof(sbc_sysvars)/sizeof(sbc_sysvars[0]));
+				assert(sbc_sysvars[(u32)data]);
+				sbc_sysvars[(u32)data](p);
+
 				check_time(&p->time, 5);
 				break;
 				
@@ -284,11 +181,8 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 					r->error = ERR_PTC_SYSVAR_INVALID;
 					break;
 				}
-				if (ptc_sysvars_valid[(u32)data]){
-					ptc_sysvars_valid[(u32)data](p);
-				} else {
-					r->error = ERR_UNIMPLEMENTED;
-				}
+				assert(ptc_sysvars_valid[(u32)data]);
+				ptc_sysvars_valid[(u32)data](p);
 				break;
 				
 			case BC_NUMBER:
@@ -560,11 +454,11 @@ ITCM_CODE void _run(struct bytecode code, struct ptc* p, bool init_exec) {
 		p->exec_old = p->exec;
 }
 
-void run(struct bytecode code, struct ptc* p){
+void run(struct bytecode code, struct sbc* p){
 	_run(code, p, false);
 }
 
-void cmd_exec(struct ptc* p){
+void cmd_exec(struct sbc* p){
 	// EXEC filename
 	char filename_buf[MAX_STRLEN+1];
 	void* filename = value_str(ARG(0));
@@ -592,7 +486,7 @@ void cmd_exec(struct ptc* p){
 	p->res.result = 1;
 }
 
-void cmd_run(struct ptc* p){
+void cmd_run(struct sbc* p){
 	// tokenize updates all relevant exec.code values
 	p->exec.error = tokenize_full(&p->exec.prg, &p->exec.code, p, TOKOPT_NONE);
 //	iprintf("new=%d\n", p->exec.code.size);
@@ -607,7 +501,7 @@ void cmd_run(struct ptc* p){
 // For now this is a direct map of internal error codes.
 // Once the errors are reordered to place PTC errors in the usual spots
 // this will become more correct.
-void sys_err(struct ptc* p){
+void sys_err(struct sbc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(p->exec_old.error)});;
 }
 
@@ -615,6 +509,6 @@ void sys_err(struct ptc* p){
 // I don't know of any programs that use this off the top of my head.
 // I don't know how ERL is useful outside of LIST ERL...
 // ...and right now I haven't implemented LIST either...
-void sys_erl(struct ptc* p){
+void sys_erl(struct sbc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, .value.number = FIXP_1});;
 }

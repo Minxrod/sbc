@@ -78,12 +78,12 @@ struct input {
 	u16 current_base;
 };
 
-struct ptc;
+struct sbc;
 
 void init_input(struct input* i);
 
 // Uses system struct to set ERR_BREAK on pressing SELECT
-void set_input(struct ptc* p, int b);
+void set_input(struct sbc* p, int b);
 void set_repeat(struct input* i, int button, int start, int repeat);
 
 bool set_inkey(struct input* i, u16 k);
@@ -104,7 +104,7 @@ static inline bool check_repeat(int time, int start, int repeat){
 bool check_pressed(struct input* i, int id);
 bool check_pressed_manual(struct input* i, int id, int start, int repeat);
 
-void cmd_brepeat(struct ptc* p);
-void func_btrig(struct ptc* p);
-void func_button(struct ptc* p);
-void func_inkey(struct ptc* p);
+void cmd_brepeat(struct sbc* p);
+void func_btrig(struct sbc* p);
+void func_button(struct sbc* p);
+void func_inkey(struct sbc* p);

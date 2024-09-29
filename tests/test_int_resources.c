@@ -11,7 +11,7 @@ int test_int_resources(void){
 
 	// get_resource tests
 	{
-		struct ptc* p = init_system(0, 0, 0, true);
+		struct sbc* p = init_system(0, 0, 0, true);
 #define VERIFY_CHR_RESOURCE(str) ASSERT(get_resource_ptr(p, str) == p->res.chr[get_chr_index(p, str)], "[get_resource] Check resource pointers are correct: " str);
 
 		VERIFY_CHR_RESOURCE("BGF0");
@@ -54,7 +54,7 @@ int test_int_resources(void){
 
 	// Test MEM resource loading
 	{
-		struct ptc* p = run_code("LOAD\"MEM:MCHRENC\",0\r");
+		struct sbc* p = run_code("LOAD\"MEM:MCHRENC\",0\r");
 		u8 str[256];
 		for (int i = 0; i < 256; ++i){
 			str[i] = i;
@@ -71,7 +71,7 @@ int test_int_resources(void){
 
 	// Test regular MEM$ assignment
 	{
-		struct ptc* p = run_code("MEM$=\"ABCD\"\r");
+		struct sbc* p = run_code("MEM$=\"ABCD\"\r");
 
 		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] Wrote MEM$ correctly");
 
@@ -80,7 +80,7 @@ int test_int_resources(void){
 
 	// MEM$ reading
 	{
-		struct ptc* p = run_code("MEM$=\"ABCD\"\rA$=MEM$\r");
+		struct sbc* p = run_code("MEM$=\"ABCD\"\rA$=MEM$\r");
 
 		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] Wrote MEM$ correctly");
 		CHECK_VAR_STR("A","S\4ABCD");
@@ -90,7 +90,7 @@ int test_int_resources(void){
 
 	// MEM$ saved past CLEAR
 	{
-		struct ptc* p = run_code("MEM$=\"ABCD\"\rCLEAR\r");
+		struct sbc* p = run_code("MEM$=\"ABCD\"\rCLEAR\r");
 
 		ASSERT(str_comp(&p->res.mem_str, "S\4ABCD"), "[mem] MEM$ is not deleted");
 
@@ -99,7 +99,7 @@ int test_int_resources(void){
 
 	// Test CHR resource loading
 	{
-		struct ptc* p = run_code("LOAD\"BGF0:BGF0\",0\r");
+		struct sbc* p = run_code("LOAD\"BGF0:BGF0\",0\r");
 		u8 expected[] = {
 			0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 			0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -114,7 +114,7 @@ int test_int_resources(void){
 
 	// Test CHR resource load failure (file not found)
 	{
-		struct ptc* p = run_code("LOAD\"BGF0:NOTEXIST\",0\r");
+		struct sbc* p = run_code("LOAD\"BGF0:NOTEXIST\",0\r");
 
 		ASSERT(p->res.result == 0, "[load] RESULT is zero after failed load");
 
@@ -125,7 +125,7 @@ int test_int_resources(void){
 	// Note: Strictly, this shouldn't be allowed in a PTC program, since it would overwrite the running program.
 	// However, SBC compiles the program first, and as such this is safe to do.
 	{
-		struct ptc* p = run_code("LOAD\"PRG:IFELSE\",0\r");
+		struct sbc* p = run_code("LOAD\"PRG:IFELSE\",0\r");
 
 		ASSERT(p->exec.error == ERR_NONE, "[load] Loaded with no error");
 		ASSERT(p->res.result == 1, "[load] RESULT is one after load");
@@ -135,7 +135,7 @@ int test_int_resources(void){
 
 	// Test LOAD with no resource type + execution
 	{
-		struct ptc* p = run_code("LOAD\"IFELSE\",0\r");
+		struct sbc* p = run_code("LOAD\"IFELSE\",0\r");
 
 		ASSERT(p->exec.error == ERR_NONE, "[load] Loaded with no error");
 		ASSERT(p->res.result == 1, "[load] RESULT is one after load");
@@ -150,7 +150,7 @@ int test_int_resources(void){
 
 	// Simple test of CHR* commands (CHRSET, CHRREAD, simple CHRINIT)
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"CHRSET \"BGF0\",0,\"42\"*32\r"
 			"CHRREAD (\"BGF0\",0),A$\r"
 			"CHRINIT \"BGF0\"\r"
@@ -165,7 +165,7 @@ int test_int_resources(void){
 
 	// Simple test for COL* comands (COLSET, COLREAD, simple COLINIT)
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"COLSET \"BG\",0,\"080808\"\r"
 			"COLSET \"SP\",0,\"101010\"\r"
 			"COLREAD(\"BG\",0),BR,BG,BB\r"
@@ -193,7 +193,7 @@ int test_int_resources(void){
 
 	// Test for precision of COLSET/COLREAD commands
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"COLSET \"BG\",0,\"050507\r"
 			"COLREAD(\"BG\",0),R,G,B\r"
 			"COLSET \"BG\",1,\"08090A\r"
@@ -229,7 +229,7 @@ int test_int_resources(void){
 			abort(); // note: ENOENT means file did not exist, which is what we want anyways
 		}
 
-		struct ptc* p = run_code("MEM$=\"ABCDEFG\"\rSAVE\"MEM:MSAVTST\"\r");
+		struct sbc* p = run_code("MEM$=\"ABCDEFG\"\rSAVE\"MEM:MSAVTST\"\r");
 		ASSERT(p->res.result == 1, "[save] RESULT is one after correct save");
 		free_code(p);
 
@@ -253,7 +253,7 @@ int test_int_resources(void){
 
 	// Simple APPEND test
 	{
-		struct ptc* p = run_code("LOAD\"IFELSE\",0\rAPPEND\"IFELSE\"\r");
+		struct sbc* p = run_code("LOAD\"IFELSE\",0\rAPPEND\"IFELSE\"\r");
 
 		ASSERT(p->res.result == 1, "[append] RESULT is one (successful APPEND)");
 
@@ -268,7 +268,7 @@ int test_int_resources(void){
 
 	// APPEND on nonexistent file test
 	{
-		struct ptc* p = run_code("APPEND\"IFELSE2\"\r");
+		struct sbc* p = run_code("APPEND\"IFELSE2\"\r");
 
 		ASSERT(p->res.result == 0, "[append] RESULT is one (successful APPEND)");
 
@@ -277,7 +277,7 @@ int test_int_resources(void){
 
 	// Package test
 	{
-		struct ptc* p = run_code("EXEC\"PACKTEST\r");
+		struct sbc* p = run_code("EXEC\"PACKTEST\r");
 
 		char zero[] =
 		"\x00\x00\x00\x00"

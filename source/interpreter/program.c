@@ -147,7 +147,7 @@ bool load_prg_internal(struct program* p, const char* filename, bool alloc){
 		iprintf("File %s load failed!\n", filename);
 		return false;
 	}
-	struct ptc_header h;
+	struct sbc_header h;
 	size_t r;
 	
 	assert(LITTLE_ENDIAN);

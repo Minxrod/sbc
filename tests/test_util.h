@@ -77,7 +77,7 @@
 // check expression result
 #define CHECK_NUM_EXP(c,z) do {\
 	char* code = "A="c"\r";\
-	struct ptc* p = run_code(code);\
+	struct sbc* p = run_code(code);\
 	ASSERT(p->exec.error == ERR_NONE, "[result] No error");\
 	CHECK_VAR_NUM("A",z);\
 	free_code(p);\
@@ -91,7 +91,7 @@
 // check string result
 #define CHECK_STR_EXP(c,s) do {\
 	char* code = "A$="c"\r";\
-	struct ptc* p = run_code(code);\
+	struct sbc* p = run_code(code);\
 	ASSERT(p->exec.error == ERR_NONE, "[result] No error");\
 	CHECK_VAR_STR("A",s);\
 	free_code(p);\
@@ -115,18 +115,18 @@ extern int check_fail;
 //#include "interpreter.h"
 //#include "system.h"
 //#include "program.h"
-struct ptc;
+struct sbc;
 
 #include <string.h>
 #include <stdlib.h>
 
-struct ptc* run_code(char* code);
-struct ptc* run_code_lowmem(char* code);
-struct ptc* run_code_keys(char* code, char* keys, int len);
-struct ptc* run_code_opts(char* code, int opts);
+struct sbc* run_code(char* code);
+struct sbc* run_code_lowmem(char* code);
+struct sbc* run_code_keys(char* code, char* keys, int len);
+struct sbc* run_code_opts(char* code, int opts);
 
 bool check_code_error(char* code, enum err_code expected);
 
-void free_code(struct ptc* ptc);
+void free_code(struct sbc* ptc);
 
 int token_code(char* code, const char* expected, int size);

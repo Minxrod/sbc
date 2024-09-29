@@ -45,7 +45,7 @@ int test_resources(void){
 	
 	{
 		// BG=0, SP=0
-		struct ptc p = {0};
+		struct sbc p = {0};
 		ASSERT(get_chr_index(&p, "BGF0") == 0, "[resource] BGF0 U");
 		ASSERT(get_chr_index(&p, "BGF1") == 1, "[resource] BGF1 U");
 		ASSERT(get_chr_index(&p, "BGD0") == 4, "[resource] BGD0 U");

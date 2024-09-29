@@ -19,7 +19,7 @@ int test_graphics(void){
 	
 	// Simple GPAGE
 	{
-		struct ptc* p = run_code("GPAGE 1\r");
+		struct sbc* p = run_code("GPAGE 1\r");
 		
 		ASSERT(p->graphics.screen == 1, "[graphics] Page set to 1");
 		
@@ -28,7 +28,7 @@ int test_graphics(void){
 	
 	// Simple GPSET
 	{
-		struct ptc* p = run_code("GPSET 0,0,1\rGPSET 8,8,2\rGPSET 16,16,3\r");
+		struct sbc* p = run_code("GPSET 0,0,1\rGPSET 8,8,2\rGPSET 16,16,3\r");
 		
 		ASSERT(p->res.grp[0][0] == 1, "[graphics] 0,0 pixel set to 1");
 		ASSERT(p->res.grp[0][9*64] == 2, "[graphics] First pixel of small block 9 set to 2");
@@ -39,7 +39,7 @@ int test_graphics(void){
 	
 	// GPSET with simple GPAGE
 	{
-		struct ptc* p = run_code("GPAGE 1\rGPSET 0,0,1\rGPSET 8,8,2\rGPAGE 0\rGPSET 16,16,3\r");
+		struct sbc* p = run_code("GPAGE 1\rGPSET 0,0,1\rGPSET 8,8,2\rGPAGE 0\rGPSET 16,16,3\r");
 		
 		ASSERT(p->res.grp[1][0] == 1, "[graphics] GRP1 0,0 pixel set to 1");
 		ASSERT(p->res.grp[1][9*64] == 2, "[graphics] GRP1 pixel of small block 9 set to 2");
@@ -50,7 +50,7 @@ int test_graphics(void){
 	
 	// GLINE tests
 	{
-		struct ptc* p = run_code("GLINE 0,0,7,0,1\rGLINE 0,0,7,7,2\rGLINE 0,0,0,7,3\r");
+		struct sbc* p = run_code("GLINE 0,0,7,0,1\rGLINE 0,0,7,7,2\rGLINE 0,0,0,7,3\r");
 		
 		const u8 match[64] = {
 			3,1,1,1,1,1,1,1,
@@ -76,7 +76,7 @@ int test_graphics(void){
 	
 	// GLINE tests
 	{
-		struct ptc* p = run_code("GLINE 3,7,0,6,1\rGLINE 1,2,3,4,2\rGLINE 0,7,6,3,3\r");
+		struct sbc* p = run_code("GLINE 3,7,0,6,1\rGLINE 1,2,3,4,2\rGLINE 0,7,6,3,3\r");
 		
 		const u8 match[64] = {
 			0,0,0,0,0,0,0,0,
@@ -102,7 +102,7 @@ int test_graphics(void){
 	
 	// GSPOIT test
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"GPSET 0,0,3\rA=GSPOIT(0,0)\r"
 			"GPSET 46,72,81\rB=GSPOIT(46,72)\r"
 			"GPSET 0,0,4\rC=GSPOIT(0,0)\r"
@@ -123,7 +123,7 @@ int test_graphics(void){
 	
 	// GCOPY
 #define GCOPY_TEST(dx,dy,msg) do {\
-		struct ptc* p = run_code(\
+		struct sbc* p = run_code(\
 			"FOR X=0 TO 3\rFOR Y=0 TO 3\rGPSET 1+X,1+Y,X+4*Y\rNEXT\rNEXT\r"\
 			"GCOPY 0,1,1,4,4,"#dx","#dy",1\r"\
 		);\
@@ -149,7 +149,7 @@ int test_graphics(void){
 	
 	// GLINE tests
 /*	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"FOR I=0 TO 3\r"
 			" X1=I*46%256\r"
 			" X2=I*64%256\r"
@@ -173,7 +173,7 @@ int test_graphics(void){
 	
 	// GPUTCHR palette update
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"GPUTCHR 0,0,\"SPU1\",0,2,1\r"
 			"COLREAD(\"SP\",36),A,B,C\r"
 			"COLREAD(\"GRP\",36),D,E,F\r"

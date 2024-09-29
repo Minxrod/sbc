@@ -98,7 +98,7 @@ void con_putn_at(struct console* c, int x, int y, fixp n){
 	con_putn(c, n);
 }
 
-void debug_print_str(struct ptc* p, const u8* msg){
+void debug_print_str(struct sbc* p, const u8* msg){
 	struct console* c = &p->console;
 	// TODO:CODE:LOW const cast. It's safe but I don't like it
 	struct string s = {
@@ -111,7 +111,7 @@ void debug_print_str(struct ptc* p, const u8* msg){
 	con_advance(c);
 }
 
-void cmd_print(struct ptc* p){
+void cmd_print(struct sbc* p){
 	struct console* c = &p->console;
 	
 	u32 i = 0;
@@ -151,7 +151,7 @@ void cmd_print(struct ptc* p){
 	p->stack.stack_i = 0; //PRINT consumes all stack items
 }
 
-void cmd_color(struct ptc* p){
+void cmd_color(struct sbc* p){
 	struct console* c = &p->console;
 	if (p->stack.stack_i == 2){
 		c->col = 0;
@@ -164,7 +164,7 @@ void cmd_color(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-void cmd_locate(struct ptc* p){
+void cmd_locate(struct sbc* p){
 	struct console* c = &p->console;
 	if (p->stack.stack_i == 2){
 		//LOCATE is a silent failure on out of range
@@ -178,7 +178,7 @@ void cmd_locate(struct ptc* p){
 	p->stack.stack_i = 0;
 }
 
-void cmd_cls(struct ptc* p){
+void cmd_cls(struct sbc* p){
 	struct console* c = &p->console;
 
 	memset(c->text, 0, CONSOLE_WIDTH * CONSOLE_HEIGHT * sizeof(u16));
@@ -205,7 +205,7 @@ int input_check_pressed(struct input* i, int button_id){
 	return check_pressed_manual(i, button_id, 15, 4);
 }
 
-u16* shared_input(struct ptc* p){
+u16* shared_input(struct sbc* p){
 	// TODO:TEST:MED Write tests for color while removing characters
 	struct console* con = &p->console;
 
@@ -303,7 +303,7 @@ void con_reprompt(struct console* con, void* prompt_str){
 	con_prompt(con, prompt_str);
 }
 
-void cmd_input(struct ptc* p){
+void cmd_input(struct sbc* p){
 	struct console* con = &p->console;
 	// INPUT [prompt;]var[,var...]
 	// Argument validation here
@@ -423,7 +423,7 @@ void cmd_input(struct ptc* p){
 	con_newline(con, true); // from user entering the line successfully.
 }
 
-void cmd_linput(struct ptc* p){
+void cmd_linput(struct sbc* p){
 	struct console* con = &p->console;
 	// INPUT [prompt;]var$
 	void* prompt_str = NULL;
@@ -474,7 +474,7 @@ void cmd_linput(struct ptc* p){
 	con_newline(con, true); // from user entering the line successfully.
 }
 
-void func_chkchr(struct ptc* p){
+void func_chkchr(struct sbc* p){
 	int x, y;
 	int c = -1;
 	x = STACK_REL_INT(-2);
@@ -488,25 +488,25 @@ void func_chkchr(struct ptc* p){
 	STACK_RETURN_INT(c);
 }
 
-void sys_csrx(struct ptc* p){
+void sys_csrx(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(p->console.x)});
 }
 
-void sys_csry(struct ptc* p){
+void sys_csry(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(p->console.y)});
 }
 
-void sys_tabstep(struct ptc* p){
+void sys_tabstep(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->console.sys_tabstep});
 }
 
-void syschk_tabstep(struct ptc* p){
+void syschk_tabstep(struct sbc* p){
 	int cur_tabstep = FP_TO_INT(p->console.sys_tabstep);
 	if (cur_tabstep < 1) cur_tabstep = 1;
 	if (cur_tabstep > 16) cur_tabstep = 16;

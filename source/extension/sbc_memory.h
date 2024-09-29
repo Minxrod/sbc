@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-struct ptc;
+struct sbc;
 
 /// Struct to contain memory-related values useful to the SBC memory functions.
 /// 
@@ -18,19 +18,19 @@ struct memory_api {
 	fixp sys_memsafe;
 };
 
-void cmd_poke(struct ptc* p);
-void cmd_pokeh(struct ptc* p);
-void cmd_pokeb(struct ptc* p);
+void cmd_poke(struct sbc* p);
+void cmd_pokeh(struct sbc* p);
+void cmd_pokeb(struct sbc* p);
 
-void cmd_memcopy(struct ptc* p);
-void cmd_memfill(struct ptc* p);
+void cmd_memcopy(struct sbc* p);
+void cmd_memfill(struct sbc* p);
 
-void func_peek(struct ptc* p);
-void func_peekh(struct ptc* p);
-void func_peekb(struct ptc* p);
+void func_peek(struct sbc* p);
+void func_peekh(struct sbc* p);
+void func_peekb(struct sbc* p);
 
-void func_addr(struct ptc* p);
-void func_ptr(struct ptc* p);
+void func_addr(struct sbc* p);
+void func_ptr(struct sbc* p);
 
-void sys_memsafe(struct ptc* p);
-void syschk_memsafe(struct ptc* p);
+void sys_memsafe(struct sbc* p);
+void syschk_memsafe(struct sbc* p);

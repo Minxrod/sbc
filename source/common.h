@@ -8,7 +8,7 @@
 /// This file defines macros for fixed-point number usage, error handling,
 /// and argument access.
 /// 
-/// Note that some defines require a `struct ptc* p` to work as expected.
+/// Note that some defines require a `struct sbc* p` to work as expected.
 ///
 /// It also contains typedefs for short fixed-length types
 /// such as u8, u16, etc. for platforms that do not define these by default.
@@ -39,7 +39,7 @@
 #define ABORT(msg) { iprintf(msg"\n"); abort(); }
 
 // The following defines expect to be used within a function that has
-// access to `struct ptc* p`, for error setting and other checks.
+// access to `struct sbc* p`, for error setting and other checks.
 
 /// For errors that can be handled by the interpreter
 #define ERROR(code) do { p->exec.error = code; return; } while (0)

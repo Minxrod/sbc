@@ -24,17 +24,17 @@
 #include "program.h"
 #include "tokens.h"
 
-struct ptc* init_system(int var, int str, int arr, bool headless){
+struct sbc* init_system(int var, int str, int arr, bool headless){
 	srand(time(NULL));
 	check_error_lengths();
 	
-	struct ptc* ptc = calloc_log("init_system", sizeof(struct ptc), 1);
+	struct sbc* ptc = calloc_log("init_system", sizeof(struct sbc), 1);
 	if (!ptc){
 		iprintf("Error allocating memory!\n");
 		abort();
 	}
 	init_resource(&ptc->res);
-//	iprintf("%zd\n", sizeof(struct ptc));
+//	iprintf("%zd\n", sizeof(struct sbc));
 	
 	// init vars memory
 	init_mem_var(&ptc->vars, var);
@@ -62,7 +62,7 @@ struct ptc* init_system(int var, int str, int arr, bool headless){
 	return ptc;
 }
 
-void free_system(struct ptc* p){
+void free_system(struct sbc* p){
 	free_panel(p);
 	free_display(&p->display);
 	free_resource(&p->res);
@@ -90,7 +90,7 @@ u8 acls_bytecode[2*sizeof(acls_code)];
 u8 acls_bc_lines[12];
 struct labels acls_labels = {0};
 
-void cmd_acls(struct ptc* p){
+void cmd_acls(struct sbc* p){
 	// copy vars and use a temp variables for this snippet
 	struct runner cur_exec = p->exec; // copy code state
 	struct variables temp_vars = {0};
@@ -113,7 +113,7 @@ void cmd_acls(struct ptc* p){
 	free_mem_var(&temp_vars);
 }
 
-void cmd_visible(struct ptc* p){
+void cmd_visible(struct sbc* p){
 	if (p->stack.stack_i != 6){
 		ERROR(ERR_SYNTAX);
 	}
@@ -141,7 +141,7 @@ void cmd_visible(struct ptc* p){
 	p->res.visible = visible_flags;
 }
 
-void cmd_vsync(struct ptc* p){
+void cmd_vsync(struct sbc* p){
 	int delay = STACK_INT(0);
 	
 	int64_t start_time = get_time(&p->time);
@@ -151,7 +151,7 @@ void cmd_vsync(struct ptc* p){
 	}
 }
 
-void cmd_wait(struct ptc* p){
+void cmd_wait(struct sbc* p){
 //	int delay = STACK_INT(0);
 	
 	// wait for duration of delay
@@ -171,7 +171,7 @@ void cmd_wait(struct ptc* p){
 	}
 }
 
-void cmd_files(struct ptc* p){
+void cmd_files(struct sbc* p){
 	char filename[32] = {BC_STRING, 0};
 	if (p->exec.argcount){
 		// FILES (type)
@@ -196,6 +196,16 @@ void cmd_files(struct ptc* p){
 		}
 	}
 }
+
+void cmd_list(struct sbc* p){
+	ERROR(ERR_UNIMPLEMENTED);
+}
+
+// how do I implement this?
+void cmd_reboot(struct sbc* p){
+	ERROR(ERR_UNIMPLEMENTED);
+}
+
 
 const char* bench_begin = "ACLS:CLEAR\r";
 const char* bench_mid = "FOR J=1 TO 5\r"
@@ -292,7 +302,7 @@ enum launch_debug {
 	LAUNCH_DEBUG_BENCH,
 };
 
-void system_debug(struct ptc* p, enum launch_debug debug){
+void system_debug(struct sbc* p, enum launch_debug debug){
 	iprintf("DEUBG type=%d\n", debug);
 	if (debug == LAUNCH_DEBUG_LABEL){
 		iprintf("Wow! %d\n", p->exec.code.labels.label_count);
@@ -314,7 +324,7 @@ void system_debug(struct ptc* p, enum launch_debug debug){
 /// Note that this clears the error code and call stack.
 ///
 /// @return Error code of execution
-int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int tokopts){
+int token_and_run(struct sbc* p, struct program* prg, struct bytecode* bc, int tokopts){
 	p->exec.error = ERR_NONE;
 	p->calls.stack_i = 0;
 	p->exec.error = tokenize_full(prg, bc, p, tokopts);
@@ -328,7 +338,7 @@ int token_and_run(struct ptc* p, struct program* prg, struct bytecode* bc, int t
 int launch_system(void* launch_info){
 	u8 err_msg[CONSOLE_WIDTH*2+2] = {STRING_INLINE_CHAR}; // 2 lines + string metadata (type + length)
 	struct launch_info* info = (struct launch_info*)launch_info;
-	struct ptc* p = info->p;
+	struct sbc* p = info->p;
 	
 	// for user programs / "RUN" setup
 	struct bytecode bc = init_bytecode_size(MAX_SOURCE_SIZE, MAX_LINES, MAX_LABELS);

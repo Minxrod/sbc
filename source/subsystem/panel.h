@@ -6,7 +6,7 @@
 ///
 #include "sprites.h"
 
-struct ptc;
+struct sbc;
 struct console;
 
 #define PANEL_WIDTH 32
@@ -72,29 +72,29 @@ struct panel {
 	fixp iconpage;
 };
 
-void init_panel(struct ptc*);
-void free_panel(struct ptc*);
+void init_panel(struct sbc*);
+void free_panel(struct sbc*);
 
-void cmd_pnltype(struct ptc* p);
-void cmd_pnlstr(struct ptc* p);
+void cmd_pnltype(struct sbc* p);
+void cmd_pnlstr(struct sbc* p);
 
-void cmd_key(struct ptc* p);
+void cmd_key(struct sbc* p);
 
-void cmd_iconset(struct ptc* p);
-void cmd_iconclr(struct ptc* p);
-void func_iconchk(struct ptc* p);
-void sys_iconpage(struct ptc* p);
-void sys_iconpmax(struct ptc* p);
-void sys_iconpuse(struct ptc* p);
-void syschk_iconpuse(struct ptc* p);
-void syschk_iconpmax(struct ptc* p);
-void syschk_iconpage(struct ptc* p);
+void cmd_iconset(struct sbc* p);
+void cmd_iconclr(struct sbc* p);
+void func_iconchk(struct sbc* p);
+void sys_iconpage(struct sbc* p);
+void sys_iconpmax(struct sbc* p);
+void sys_iconpuse(struct sbc* p);
+void syschk_iconpuse(struct sbc* p);
+void syschk_iconpmax(struct sbc* p);
+void syschk_iconpage(struct sbc* p);
 
-void refresh_panel(struct ptc*);
-void set_panel_bg(struct ptc* p, enum pnltype type);
-void set_function_key(struct ptc* p, int key, const void* string);
-void press_key(struct ptc* p, bool t, int x, int y);
-void offset_key(struct ptc* p, int id, int d);
+void refresh_panel(struct sbc*);
+void set_panel_bg(struct sbc* p, enum pnltype type);
+void set_function_key(struct sbc* p, int key, const void* string);
+void press_key(struct sbc* p, bool t, int x, int y);
+void offset_key(struct sbc* p, int id, int d);
 
 /// Returns the currently pressed key's key ID.
 /// 
@@ -106,4 +106,4 @@ void offset_key(struct ptc* p, int id, int d);
 /// 
 /// @param p System struct
 /// @return Sprite ID of pressed key.
-int get_pressed_key(struct ptc* p);
+int get_pressed_key(struct sbc* p);

@@ -196,13 +196,13 @@ int get_sprite_chr(struct sprite_info* s){
 	return chr;
 }
 
-void cmd_sppage(struct ptc* p){
+void cmd_sppage(struct sbc* p){
 	int page = STACK_INT(0);
 	
 	p->sprites.page = page;
 }
 
-void cmd_spclr(struct ptc* p){
+void cmd_spclr(struct sbc* p){
 	if (p->stack.stack_i == 1){
 		// SPCLR id
 		int index = STACK_INT(0);
@@ -216,7 +216,7 @@ void cmd_spclr(struct ptc* p){
 	}
 }
 
-void cmd_spset(struct ptc* p){
+void cmd_spset(struct sbc* p){
 	int id;
 	int chr;
 	int pal;
@@ -239,7 +239,7 @@ void cmd_spset(struct ptc* p){
 	p->sprites.info[p->sprites.page][id] = init_sprite_info(id,chr,pal,horiz_flip,vert_flip,prio,width,height);
 }
 
-void cmd_spofs(struct ptc* p){
+void cmd_spofs(struct sbc* p){
 	int id;
 	fixp x;
 	fixp y;
@@ -271,7 +271,7 @@ void cmd_spofs(struct ptc* p){
 	}
 }
 
-void cmd_spsetv(struct ptc* p){
+void cmd_spsetv(struct sbc* p){
 	// SPSETV id,ix,val
 	int id;
 	int ix;
@@ -285,7 +285,7 @@ void cmd_spsetv(struct ptc* p){
 	p->sprites.info[p->sprites.page][id].vars[ix] = val;
 }
 
-void func_spgetv(struct ptc* p){
+void func_spgetv(struct sbc* p){
 	// SPGETV id,ix
 	int id;
 	int ix;
@@ -315,7 +315,7 @@ void func_spgetv(struct ptc* p){
 /// * group: Collision mask
 /// 
 /// @param p System struct
-void cmd_spcol(struct ptc* p){
+void cmd_spcol(struct sbc* p){
 	int id;
 	int x;
 	int y;
@@ -345,7 +345,7 @@ void cmd_spcol(struct ptc* p){
 	}
 }
 
-void cmd_spcolvec(struct ptc* p){
+void cmd_spcolvec(struct sbc* p){
 	int id;
 	int dx;
 	int dy;
@@ -362,7 +362,7 @@ void cmd_spcolvec(struct ptc* p){
 	}
 }
 
-void cmd_sphome(struct ptc* p){
+void cmd_sphome(struct sbc* p){
 	int id;
 	STACK_INT_RANGE(0,0,99,id);
 	int x = STACK_INT(1) & 0xff; // TODO:TEST:MED check that this is correct
@@ -376,7 +376,7 @@ void cmd_sphome(struct ptc* p){
 	}
 }
 
-void cmd_spscale(struct ptc* p){
+void cmd_spscale(struct sbc* p){
 	int id, scale, time;
 	STACK_INT_RANGE(0,0,31,id);
 	STACK_INT_RANGE(1,0,200,scale);
@@ -398,7 +398,7 @@ void cmd_spscale(struct ptc* p){
 	}
 }
 
-void func_sphit(struct ptc* p){
+void func_sphit(struct sbc* p){
 	int id;
 	int start;
 	start = 0;
@@ -431,7 +431,7 @@ void func_sphit(struct ptc* p){
 	STACK_RETURN_INT(hit != -1);
 }
 
-void func_sphitsp(struct ptc* p){
+void func_sphitsp(struct sbc* p){
 	int id;
 	int other_id;
 	STACK_REL_INT_RANGE(-1,0,99,id);
@@ -453,7 +453,13 @@ void func_sphitsp(struct ptc* p){
 	}
 }
 
-void cmd_spangle(struct ptc* p){
+// This one's actually pretty easy to add it just hasn't been needed yet
+void func_sphitrc(struct sbc* p){
+	ERROR(ERR_UNIMPLEMENTED);
+}
+
+
+void cmd_spangle(struct sbc* p){
 	int id;
 	int angle;
 	STACK_INT_RANGE(0,0,99,id);
@@ -496,7 +502,7 @@ void cmd_spangle(struct ptc* p){
 	}
 }
 
-void cmd_spchr(struct ptc* p){
+void cmd_spchr(struct sbc* p){
 	int id, chr;
 	STACK_INT_RANGE(0,0,99,id);
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
@@ -521,7 +527,7 @@ void cmd_spchr(struct ptc* p){
 	}
 }
 
-void func_spchk(struct ptc* p){
+void func_spchk(struct sbc* p){
 	int id;
 	STACK_REL_INT_RANGE(-1,0,99,id);
 	p->stack.stack_i -= 1;
@@ -534,7 +540,7 @@ void func_spchk(struct ptc* p){
 	STACK_RETURN_INT(result);
 }
 
-void cmd_spread(struct ptc* p){
+void cmd_spread(struct sbc* p){
 	int id;
 	STACK_INT_RANGE(0,0,99,id);
 	struct sprite_info* s = &p->sprites.info[p->sprites.page][id];
@@ -562,7 +568,7 @@ void cmd_spread(struct ptc* p){
 	}
 }
 
-void cmd_spanim(struct ptc* p){
+void cmd_spanim(struct sbc* p){
 	// SPANIM id chrs time [loop]
 	int id, chrs, time;
 	// TODO:ERR:LOW Determine errors
@@ -587,7 +593,19 @@ void cmd_spanim(struct ptc* p){
 	}
 }
 
-void sys_sphitno(struct ptc* p){
+void sys_sphitno(struct sbc* p){
 	STACK_RETURN_INT(p->sprites.sphitno);
+}
+
+void sys_sphitt(struct sbc* p){
+	STACK_RETURN_INT(p->sprites.sphitt);
+}
+
+void sys_sphitx(struct sbc* p){
+	STACK_RETURN_INT(p->sprites.sphitx);
+}
+
+void sys_sphity(struct sbc* p){
+	STACK_RETURN_INT(p->sprites.sphity);
 }
 

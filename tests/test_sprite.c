@@ -2,11 +2,9 @@
 
 #include "subsystem/sprites.h"
 #include "system.h" // includes relevant display
-#ifdef PC
 #include "graphics/nds/display_nds.h" // Does not include display struct due to extra header guards
-#endif
 
-struct ptc;
+struct sbc;
 
 int test_sprite(void){
 	// Test sprite collision
@@ -55,7 +53,7 @@ int test_sprite(void){
 	
 	// Simple character test
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"SPSET 0,0,0,0,0,0\r"
 			"SPSET 1,1,1,1,1,1\r"
 		);
@@ -70,7 +68,7 @@ int test_sprite(void){
 	
 	// Simple animation test
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"SPSET 0,0,0,0,0,0\rSPANIM 0,4,1\r"
 		);
 		
@@ -95,7 +93,7 @@ int test_sprite(void){
 	
 	// Simple animation test II
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"SPSET 0,64,0,0,0,0\rSPANIM 0,4,5\r"
 		);
 		
@@ -119,7 +117,7 @@ int test_sprite(void){
 	
 	// Simple animation test III
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"SPSET 0,64,0,0,0,0\rSPANIM 0,4,2,1\r"
 		);
 		
@@ -143,7 +141,7 @@ int test_sprite(void){
 	
 	// Simple interpolated movement test
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"SPSET 0,64,0,0,0,0\rSPOFS 0,64,0,4\r"
 		);
 		

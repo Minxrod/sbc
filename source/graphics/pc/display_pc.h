@@ -33,19 +33,19 @@ struct display {
 	struct sfTexture* col_tex;
 };
 
-/*void init_display(struct ptc*);
+/*void init_display(struct sbc*);
 void free_display(struct display*);
 
-void display_draw_all(struct ptc* p);
+void display_draw_all(struct sbc* p);
 
-void display_console(struct ptc* p);
-void display_panel_console(struct ptc* p);
-void display_background(struct ptc* p, int screen, int layer);
-void display_panel_background(struct ptc* p);
-void display_sprite(struct ptc* p, int screen, int prio);
-void display_panel_keys(struct ptc* p);
-void display_icon(struct ptc* p);
-void display_cursor(struct ptc* p);
-void display_graphics(struct ptc* p, int screen, int prio);*/
+void display_console(struct sbc* p);
+void display_panel_console(struct sbc* p);
+void display_background(struct sbc* p, int screen, int layer);
+void display_panel_background(struct sbc* p);
+void display_sprite(struct sbc* p, int screen, int prio);
+void display_panel_keys(struct sbc* p);
+void display_icon(struct sbc* p);
+void display_cursor(struct sbc* p);
+void display_graphics(struct sbc* p, int screen, int prio);*/
 
 #endif

@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <limits.h>
 
-void op_add(struct ptc* p){
+void op_add(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -45,19 +45,19 @@ void op_add(struct ptc* p){
 	}
 }
 
-void op_comma(struct ptc* p){
+void op_comma(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){STACK_OP, {.number = OP_COMMA}});
 }
 
-void op_semi(struct ptc* p){
+void op_semicolon(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){STACK_OP, {.number = OP_SEMICOLON}});
 }
 
-void op_mult(struct ptc* p){
+void op_multiply(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -96,7 +96,7 @@ void op_mult(struct ptc* p){
 	}
 }
 
-void op_div(struct ptc* p){
+void op_divide(struct sbc* p){
 	fixp x = STACK_REL_NUM(-2);
 	fixp y = STACK_REL_NUM(-1);
 	
@@ -110,7 +110,7 @@ void op_div(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {z}});
 }
 
-void op_sub(struct ptc* p){
+void op_subtract(struct sbc* p){
 	fixp x = STACK_REL_NUM(-2);
 	fixp y = STACK_REL_NUM(-1);
 	dfixp z = (dfixp)x - y;
@@ -122,7 +122,7 @@ void op_sub(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {x - y}});
 }
 
-void op_negate(struct ptc* p){
+void op_negate(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -131,7 +131,7 @@ void op_negate(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {-x}});
 }
 
-void op_assign(struct ptc* p){
+void op_assign(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -184,7 +184,7 @@ void op_assign(struct ptc* p){
 	}
 }
 
-void op_equal(struct ptc* p){
+void op_equal(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -204,7 +204,7 @@ void op_equal(struct ptc* p){
 	}
 }
 
-void op_inequal(struct ptc* p){
+void op_not_equal(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -227,7 +227,7 @@ void op_inequal(struct ptc* p){
 	}
 }
 
-void op_less(struct ptc* p){
+void op_less(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -239,7 +239,7 @@ void op_less(struct ptc* p){
 	}
 }
 
-void op_greater(struct ptc* p){
+void op_greater(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -251,7 +251,7 @@ void op_greater(struct ptc* p){
 	}
 }
 
-void op_less_equal(struct ptc* p){
+void op_less_equal(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -264,7 +264,7 @@ void op_less_equal(struct ptc* p){
 	}
 }
 
-void op_greater_equal(struct ptc* p){
+void op_greater_equal(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -276,7 +276,7 @@ void op_greater_equal(struct ptc* p){
 	}
 }
 
-void op_modulo(struct ptc* p){
+void op_modulo(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -289,7 +289,7 @@ void op_modulo(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {x % y}});
 }
 
-void op_and(struct ptc* p){
+void op_and(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -300,7 +300,7 @@ void op_and(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) & FP_TO_INT(y))}});
 }
 
-void op_or(struct ptc* p){
+void op_or(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -311,7 +311,7 @@ void op_or(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) | FP_TO_INT(y))}});
 }
 
-void op_xor(struct ptc* p){
+void op_xor(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* b = stack_pop(s);
 	struct stack_entry* a = stack_pop(s);
@@ -322,7 +322,7 @@ void op_xor(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(FP_TO_INT(x) ^ FP_TO_INT(y))}});
 }
 
-void op_not(struct ptc* p){
+void op_not(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -331,11 +331,27 @@ void op_not(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(~FP_TO_INT(x))}});
 }
 
-void op_logical_not(struct ptc* p){
+void op_logical_not(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
 	fixp x = VALUE_NUM(a);
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(x == 0)}});
+}
+
+void op_open_paren(struct sbc* p){
+	(void)p;
+}
+
+void op_open_bracket(struct sbc* p){
+	(void)p;
+}
+
+void op_close_paren(struct sbc* p){
+	(void)p;
+}
+
+void op_close_bracket(struct sbc* p){
+	(void)p;
 }

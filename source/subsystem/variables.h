@@ -1,8 +1,8 @@
 #pragma once
 
-struct ptc;
+struct sbc;
 
-void cmd_clear(struct ptc*);
-void cmd_swap(struct ptc*);
-void cmd_sort(struct ptc* p);
-void cmd_rsort(struct ptc* p);
+void cmd_clear(struct sbc*);
+void cmd_swap(struct sbc*);
+void cmd_sort(struct sbc* p);
+void cmd_rsort(struct sbc* p);

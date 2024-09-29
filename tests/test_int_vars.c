@@ -15,7 +15,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=5\rB=8\rC=A+B\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(5), "[assign] A=5");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(8), "[assign] B=8");
@@ -28,7 +28,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=1.36\rB=2.78\rC=0.001\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 5570, "[decimal] A=1.36");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 11386, "[decimal] B=2.78");
@@ -41,7 +41,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=8.979\rB=9.24\rC=18.186\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == 36777, "[decimal] A=8.979");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == 37847, "[decimal] B=9.24");
@@ -54,7 +54,7 @@ int test_int_vars(void){
 		char* code = "A$=\"~Wow!~\"\r";
 		char* str2 = "S\006~Wow!~";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		struct named_var* v = get_var(&p->vars, "A", 1, VAR_STRING);
 		char* s = (char*)v->value.ptr;
@@ -70,7 +70,7 @@ int test_int_vars(void){
 		char* code = "A$=\"ABC\"+\"DEFGH\"\rB$=\"DEFGH\"\r?A$,B$\r";
 		char* str2 = "S\010ABCDEFGH";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		struct named_var* v = get_var(&p->vars, "A", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
@@ -94,7 +94,7 @@ int test_int_vars(void){
 		"?B$,\"1234\"\r";
 		char* str2 = "S\006AbcdeF";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		struct named_var* v = get_var(&p->vars, "B", 1, VAR_STRING);
 		struct string* s = (struct string*)v->value.ptr;
@@ -111,7 +111,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=-1\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
 		
@@ -122,7 +122,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=---1+--1+-1\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1");
 		
@@ -133,7 +133,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=-(-(-1))+(--1+-1*--1)\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -4096, "[decimal] A=-1 (but more complicated)");
 		
@@ -144,7 +144,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=---1-(----1)\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -8192, "[decimal] A=-2");
 		
@@ -155,7 +155,7 @@ int test_int_vars(void){
 	{
 		char* code = "A=2-3-5-8\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -INT_TO_FP(14), "[decimal] A=-14");
 		
@@ -166,7 +166,7 @@ int test_int_vars(void){
 	{
 		char* code = "DIM A[16]\rDIM B[4,4]\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		// check result for correctness
 		struct named_var* a = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY);
@@ -189,7 +189,7 @@ int test_int_vars(void){
 	{
 		char* code = "DIM A[3]\rA[0]=7\rA(1)=8\rA[2)=9\rA=4\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check DIM for correctness
 		struct named_var* a = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
@@ -209,7 +209,7 @@ int test_int_vars(void){
 	{
 		char* code = "DIM A[2,2]\rA[0,0]=7\rA(1,0)=8\rA[0,1)=9\rA(1,1]=10\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check DIM for correctness
 		struct named_var* a = test_var(&p->vars, "A", VAR_NUMBER | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
@@ -233,7 +233,7 @@ int test_int_vars(void){
 		char* strBA = "S\002BA";
 		
 		// run code
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check results
 		struct named_var* a = test_var(&p->vars, "A", VAR_STRING | VAR_ARRAY);
 		ASSERT(a != NULL, "[dim] A exists");
@@ -270,7 +270,7 @@ int test_int_vars(void){
 		char* strA = "S\001A";
 		
 		// run code
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check results
 		struct named_var* a = test_var(&p->vars, "A", VAR_STRING);
 		struct named_var* d = test_var(&p->vars, "D", VAR_STRING);
@@ -299,7 +299,7 @@ int test_int_vars(void){
 	
 	{
 		char* code = "A=5\rDIM B[7]\rB[3]=6\rC$=\"ABCDEF\"\rCLEAR\r";
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[clear] Clears variable A correctly");
 		ASSERT(get_arr_entry(&p->vars, "B", 1, VAR_NUMBER | VAR_ARRAY, 3, ARR_DIM2_UNUSED)->number == INT_TO_FP(0), "[clear] Clears variable B[] correctly");
@@ -313,7 +313,7 @@ int test_int_vars(void){
 		char* code = "SPC = 8\rDAYW = 8:DRAWD = 30\r"
 		"BGL = (256 - (DRAWD - 1) * DAYW - SPC * 2) / 2\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		ASSERT(test_var(&p->vars, "SPC", VAR_NUMBER)->value.number == INT_TO_FP(8), "[vars] SPC=8");
 		ASSERT(test_var(&p->vars, "DAYW", VAR_NUMBER)->value.number == INT_TO_FP(8), "[vars] DAYW=8");
@@ -331,12 +331,12 @@ int test_int_vars(void){
 	// Out of memory (variable creation)
 	{
 		{
-			struct ptc* p = run_code_lowmem("A=0\rB=1\rC=2\rD=3\r");
+			struct sbc* p = run_code_lowmem("A=0\rB=1\rC=2\rD=3\r");
 			ASSERT(p->exec.error == ERR_NONE, "[vars] Variables created successfully");
 			free_code(p);
 		}
 		{
-			struct ptc* p = run_code_lowmem("A=0\rB=1\rC=2\rD=3\rE=4\r");
+			struct sbc* p = run_code_lowmem("A=0\rB=1\rC=2\rD=3\rE=4\r");
 			ASSERT(p->exec.error == ERR_OUT_OF_MEMORY, "[vars] Variable creation error when out of memory");
 			free_code(p);
 		}
@@ -344,7 +344,7 @@ int test_int_vars(void){
 	
 	// Constant sysvars
 	{
-		struct ptc* p = run_code("A=TRUE\rB=FALSE\rC=CANCEL\rD=VERSION\r");
+		struct sbc* p = run_code("A=TRUE\rB=FALSE\rC=CANCEL\rD=VERSION\r");
 		
 		CHECK_VAR_INT("A",1);
 		CHECK_VAR_INT("B",0);
@@ -356,7 +356,7 @@ int test_int_vars(void){
 	
 	// 1D Array accesses (normal)
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"DIM NUM[20]\r"
 			"DIM ST$[20]\r"
 			"NUM[7]=36\r"
@@ -399,7 +399,7 @@ int test_int_vars(void){
 	
 	// Variable optimization test (simple; numbers, strings)
 	{
-		struct ptc* p = run_code_opts("A=3\rB=6\rC=A+B\rA$=\"ABC\"\rB$=\"DEF\"\rC$=A$+B$\r", TOKOPT_VARIABLE_IDS);
+		struct sbc* p = run_code_opts("A=3\rB=6\rC=A+B\rA$=\"ABC\"\rB$=\"DEF\"\rC$=A$+B$\r", TOKOPT_VARIABLE_IDS);
 		
 		// Name access should still work
 		CHECK_VAR_INT("A",3);
@@ -415,7 +415,7 @@ int test_int_vars(void){
 	
 	// Variable optimization test (works with CLEAR)
 	{
-		struct ptc* p = run_code_opts("CLEAR\rA=3\rCLEAR\rB=6\rC=A+B\rA$=\"ABC\"\rB$=\"DEF\"\rC$=A$+B$\r", TOKOPT_VARIABLE_IDS);
+		struct sbc* p = run_code_opts("CLEAR\rA=3\rCLEAR\rB=6\rC=A+B\rA$=\"ABC\"\rB$=\"DEF\"\rC$=A$+B$\r", TOKOPT_VARIABLE_IDS);
 		
 		// Name access should still work
 		CHECK_VAR_INT("A",0);
@@ -431,7 +431,7 @@ int test_int_vars(void){
 	
 	// Variable optimization test (array support)
 	{
-		struct ptc* p = run_code_opts(
+		struct sbc* p = run_code_opts(
 			"CLEAR\rDIM A[20]\r"
 			"FOR I=0 TO 19\r"
 			" A[I]=I*4\r"
@@ -447,7 +447,7 @@ int test_int_vars(void){
 	
 	// Sysvar write validation
 	{
-		struct ptc* p = run_code_opts(
+		struct sbc* p = run_code_opts(
 			"TABSTEP=30\r",
 			TOKOPT_VARIABLE_IDS
 		);
@@ -459,7 +459,7 @@ int test_int_vars(void){
 	
 	// SORT
 	{
-		struct ptc* p = run_code_opts(
+		struct sbc* p = run_code_opts(
 			"DIM A[20]\rFOR I=0 TO 19\rA[I]=-I\rNEXT\rSORT 0,20,A\r",
 			TOKOPT_NONE
 		);
@@ -480,7 +480,7 @@ int test_int_vars(void){
 	
 	// with variable optimization
 	{
-		struct ptc* p = run_code_opts(
+		struct sbc* p = run_code_opts(
 			"DIM A[20]\rFOR I=0 TO 19\rA[I]=-I\rNEXT\rSORT 0,20,A\r",
 			TOKOPT_VARIABLE_IDS
 		);
@@ -501,7 +501,7 @@ int test_int_vars(void){
 	
 	// string sort with variable optimization
 	{
-		struct ptc* p = run_code_opts(
+		struct sbc* p = run_code_opts(
 			"A$[0]=\"A\"\rA$[1]=\"AA\"\rA$[2]=\"B\"\rSORT 0,10,A$\r",
 			TOKOPT_VARIABLE_IDS
 		);

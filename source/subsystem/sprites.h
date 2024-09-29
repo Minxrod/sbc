@@ -145,7 +145,7 @@ void step_sprites(struct sprites* s);
 bool is_hit(struct sprite_info* a, struct sprite_info* b);
 int get_sprite_chr(struct sprite_info* s);
 
-struct ptc;
+struct sbc;
 
 /// Implements the SPPAGE function of PTC.
 ///
@@ -154,7 +154,7 @@ struct ptc;
 /// Syntax: `SPPAGE screen`
 ///
 /// @param p System struct
-void cmd_sppage(struct ptc* p);
+void cmd_sppage(struct sbc* p);
 
 /// Implements the SPSET function of PTC.
 ///
@@ -163,28 +163,28 @@ void cmd_sppage(struct ptc* p);
 /// Syntax: `SPSET id, chr, pal, h, v, prio {, width, height}`
 ///
 /// @param p System struct
-void cmd_spset(struct ptc* p);
-void cmd_spclr(struct ptc* p);
-void cmd_sphome(struct ptc* p);
+void cmd_spset(struct sbc* p);
+void cmd_spclr(struct sbc* p);
+void cmd_sphome(struct sbc* p);
 
-void cmd_spofs(struct ptc* p);
-void cmd_spchr(struct ptc* p);
-void cmd_spanim(struct ptc* p);
-void cmd_spangle(struct ptc* p);
-void cmd_spscale(struct ptc* p);
+void cmd_spofs(struct sbc* p);
+void cmd_spchr(struct sbc* p);
+void cmd_spanim(struct sbc* p);
+void cmd_spangle(struct sbc* p);
+void cmd_spscale(struct sbc* p);
 
-void cmd_spread(struct ptc* p);
-void cmd_spsetv(struct ptc* p);
-void func_spgetv(struct ptc* p);
-void func_spchk(struct ptc* p);
+void cmd_spread(struct sbc* p);
+void cmd_spsetv(struct sbc* p);
+void func_spgetv(struct sbc* p);
+void func_spchk(struct sbc* p);
 
-void cmd_spcol(struct ptc* p);
-void cmd_spcolvec(struct ptc* p);
-void func_sphit(struct ptc* p);
-void func_sphitsp(struct ptc* p);
-void func_sphitrc(struct ptc* p);
+void cmd_spcol(struct sbc* p);
+void cmd_spcolvec(struct sbc* p);
+void func_sphit(struct sbc* p);
+void func_sphitsp(struct sbc* p);
+void func_sphitrc(struct sbc* p);
 
-void sys_sphitno(struct ptc* p);
-void sys_sphitx(struct ptc* p);
-void sys_sphity(struct ptc* p);
-void sys_sphitt(struct ptc* p);
+void sys_sphitno(struct sbc* p);
+void sys_sphitx(struct sbc* p);
+void sys_sphity(struct sbc* p);
+void sys_sphitt(struct sbc* p);

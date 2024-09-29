@@ -9,19 +9,19 @@
 // To create a read-only entry:
 // Push only a literal value to the stack
 // To create a writable entry: Push a VAR_VARIABLE type entry
-void sys_true(struct ptc* p){
+void sys_true(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(1)});
 }
 
-void sys_false(struct ptc* p){
+void sys_false(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(0)});
 }
 
-void sys_cancel(struct ptc* p){
+void sys_cancel(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = -INT_TO_FP(1)});
@@ -31,13 +31,13 @@ void sys_cancel(struct ptc* p){
 // Thus the VERSION returned will be 2.2, unless I ever find an alternate
 // version to test against. Most behavior should be identical anyways, and
 // realistically I dont think most programs used this.
-void sys_version(struct ptc* p){
+void sys_version(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(0x2020)});
 }
 
-void sys_date(struct ptc* p){
+void sys_date(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	time_t t = time(NULL);
 	struct tm* tm = localtime(&t);
@@ -65,7 +65,7 @@ void sys_date(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_STRING, .value.ptr = str});
 }
 
-void sys_time(struct ptc* p){
+void sys_time(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	time_t t = time(NULL);
 	struct tm* tm = localtime(&t);
@@ -108,7 +108,7 @@ void sys_time(struct ptc* p){
 #define UNLOCK_TOUCH_MTX(msg)
 #endif
 
-void sys_tchst(struct ptc* p){
+void sys_tchst(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	LOCK_TOUCH_MTX("sys_tchst");
@@ -118,7 +118,7 @@ void sys_tchst(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchst)});
 }
 
-void sys_tchtime(struct ptc* p){
+void sys_tchtime(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	LOCK_TOUCH_MTX("sys_tchtime");
@@ -128,7 +128,7 @@ void sys_tchtime(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchtime)});
 }
 
-void sys_tchx(struct ptc* p){
+void sys_tchx(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	LOCK_TOUCH_MTX("sys_tchx");
@@ -138,7 +138,7 @@ void sys_tchx(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchx)});
 }
 
-void sys_tchy(struct ptc* p){
+void sys_tchy(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	LOCK_TOUCH_MTX("sys_tchy");
@@ -148,34 +148,34 @@ void sys_tchy(struct ptc* p){
 	stack_push(s, (struct stack_entry){VAR_NUMBER, .value.number = INT_TO_FP(tchy)});
 }
 
-void sys_maincntl(struct ptc* p){
+void sys_maincntl(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((get_time(&p->time) & 0xfffff))}});
 }
 
-void sys_maincnth(struct ptc* p){
+void sys_maincnth(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP((get_time(&p->time) & 0xfffff00000) >> 20)}});
 }
 
-void sys_freemem(struct ptc* p){
+void sys_freemem(struct sbc* p){
 	int freemem_kb = (p->arrs.arr_data_size - p->arrs.arr_data_next) * sizeof(union value) / 1024; // number of elements remaining * size of elements remaining
 	
 	STACK_RETURN_INT(freemem_kb);
 }
 
-void sys_freevar(struct ptc* p){
+void sys_freevar(struct sbc* p){
 	STACK_RETURN_INT(p->vars.vars_max - p->vars.var_count);
 }
 
-void sys_keyboard(struct ptc* p){
+void sys_keyboard(struct sbc* p){
 	int k = get_pressed_key(p);
 	STACK_RETURN_INT(k <= 69 ? k : 0);
 }
 
-void sys_funcno(struct ptc* p){
+void sys_funcno(struct sbc* p){
 	int k = get_pressed_key(p);
 	
 	STACK_RETURN_INT(k >= 101 && k <= 105 ? k - 100 : 0);

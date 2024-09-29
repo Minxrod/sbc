@@ -13,7 +13,7 @@ int test_int_math(void){
 	
 	// ABS works as expected
 	{
-		struct ptc* p = run_code("A=ABS(36)\rB=ABS(0)\rC=ABS(-36)\rD=ABS(-524287.999994)\rE=ABS(524287.999994)\rF=&H80000\rG=ABS(F)\r");
+		struct sbc* p = run_code("A=ABS(36)\rB=ABS(0)\rC=ABS(-36)\rD=ABS(-524287.999994)\rE=ABS(524287.999994)\rF=&H80000\rG=ABS(F)\r");
 		
 		CHECK_VAR_NUM("A", INT_TO_FP(36));
 		CHECK_VAR_NUM("B", 0);
@@ -35,7 +35,7 @@ int test_int_math(void){
 	
 	// SGN works as expected
 	{
-		struct ptc* p = run_code("A=SGN(0)\rB=SGN(-1)\rC=SGN(1)\rD=SGN(524287.999994)\rE=SGN(&H80000)\r");
+		struct sbc* p = run_code("A=SGN(0)\rB=SGN(-1)\rC=SGN(1)\rD=SGN(524287.999994)\rE=SGN(&H80000)\r");
 		
 		CHECK_VAR_NUM("A", 0);
 		CHECK_VAR_NUM("B", -INT_TO_FP(1));

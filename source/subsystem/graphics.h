@@ -8,7 +8,7 @@
 
 #include <assert.h>
 
-struct ptc;
+struct sbc;
 
 /// Graphics struct.
 /// 
@@ -66,17 +66,17 @@ static inline void grp_pixel(u8* page, int x, int y, u8 color, bool drawmode){
 // Need tests in general for edge cases of
 // TODO:TEST:MED GBOX
 // TODO:TEST:MED GFILL
-void cmd_gpage(struct ptc* p);
-void cmd_gcolor(struct ptc* p);
-void cmd_gcls(struct ptc* p);
-void cmd_gfill(struct ptc* p);
-void cmd_gbox(struct ptc* p);
-void cmd_gline(struct ptc* p);
-void cmd_gpset(struct ptc* p);
-void cmd_gdrawmd(struct ptc* p);
-void cmd_gcircle(struct ptc* p);
-void cmd_gprio(struct ptc* p);
-void cmd_gputchr(struct ptc* p);
+void cmd_gpage(struct sbc* p);
+void cmd_gcolor(struct sbc* p);
+void cmd_gcls(struct sbc* p);
+void cmd_gfill(struct sbc* p);
+void cmd_gbox(struct sbc* p);
+void cmd_gline(struct sbc* p);
+void cmd_gpset(struct sbc* p);
+void cmd_gdrawmd(struct sbc* p);
+void cmd_gcircle(struct sbc* p);
+void cmd_gprio(struct sbc* p);
+void cmd_gputchr(struct sbc* p);
 
 /// Implements the `GCOPY` function of PTC.
 ///
@@ -85,7 +85,7 @@ void cmd_gputchr(struct ptc* p);
 /// Syntax: `GCOPY [source_page,] x1, y1, x2, y2, x3, y3, mode
 ///
 /// @param p System struct
-void cmd_gcopy(struct ptc* p);
+void cmd_gcopy(struct sbc* p);
 
 /// Implements the `GPAINT` function of PTC.
 ///
@@ -94,7 +94,7 @@ void cmd_gcopy(struct ptc* p);
 /// Syntax: `GPAINT x, y[, color[, border]]`
 ///
 /// @param p System struct
-void cmd_gpaint(struct ptc* p);
+void cmd_gpaint(struct sbc* p);
 
 /// Implements the `GSPOIT` function of PTC.
 ///
@@ -103,4 +103,4 @@ void cmd_gpaint(struct ptc* p);
 /// Syntax: `GSPOIT([page,] x, y)`
 ///
 /// @param p System struct
-void func_gspoit(struct ptc* p);
+void func_gspoit(struct sbc* p);

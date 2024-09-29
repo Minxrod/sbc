@@ -4,7 +4,7 @@
 /// @brief Various PTC operator functions. Arithmetic, comparison, etc.
 /// 
 
-struct ptc;
+struct sbc;
 
 /// Implements the addition operation of PTC.
 /// 
@@ -14,7 +14,7 @@ struct ptc;
 /// On errors such as overflow, sets the system error code in `p`.
 /// 
 /// @param p System struct
-void op_add(struct ptc* p);
+void op_add(struct sbc* p);
 
 /// Implements the subtraction operation of PTC.
 /// 
@@ -23,7 +23,7 @@ void op_add(struct ptc* p);
 /// On errors such as overflow, sets the system error code in `p`.
 /// 
 /// @param p System struct
-void op_sub(struct ptc* p);
+void op_subtract(struct sbc* p);
 
 /// Implements the multiplication operation of PTC.
 /// 
@@ -33,7 +33,7 @@ void op_sub(struct ptc* p);
 /// On errors such as overflow, sets the system error code in `p`.
 /// 
 /// @param p System struct
-void op_mult(struct ptc* p);
+void op_multiply(struct sbc* p);
 
 /// Implements the division operation of PTC.
 /// 
@@ -43,26 +43,26 @@ void op_mult(struct ptc* p);
 /// sets the system error code in `p`.
 /// 
 /// @param p System struct
-void op_div(struct ptc* p);
-void op_modulo(struct ptc* p);
+void op_divide(struct sbc* p);
+void op_modulo(struct sbc* p);
 
-void op_assign(struct ptc* p);
+void op_assign(struct sbc* p);
 
-void op_comma(struct ptc* p);
-void op_semi(struct ptc* p);
+void op_comma(struct sbc* p);
+void op_semicolon(struct sbc* p);
 
-void op_negate(struct ptc* p);
+void op_negate(struct sbc* p);
 
-void op_equal(struct ptc* p);
-void op_inequal(struct ptc* p);
-void op_less(struct ptc* p);
-void op_greater(struct ptc* p);
-void op_less_equal(struct ptc* p);
-void op_greater_equal(struct ptc* p);
+void op_equal(struct sbc* p);
+void op_not_equal(struct sbc* p);
+void op_less(struct sbc* p);
+void op_greater(struct sbc* p);
+void op_less_equal(struct sbc* p);
+void op_greater_equal(struct sbc* p);
 
-void op_and(struct ptc* p);
-void op_or(struct ptc* p);
-void op_xor(struct ptc* p);
-void op_not(struct ptc* p);
-void op_logical_not(struct ptc* p);
+void op_and(struct sbc* p);
+void op_or(struct sbc* p);
+void op_xor(struct sbc* p);
+void op_not(struct sbc* p);
+void op_logical_not(struct sbc* p);
 

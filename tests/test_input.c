@@ -15,7 +15,7 @@ int test_input(void){
 	
 	// Set single frame
 	{
-		struct ptc p = {0};
+		struct sbc p = {0};
 		struct input* in = &p.input;
 
 		set_input(&p, BUTTON_A);
@@ -26,7 +26,7 @@ int test_input(void){
 	
 	// Set two frames
 	{
-		struct ptc p = {0};
+		struct sbc p = {0};
 		struct input* in = &p.input;
 		
 		set_input(&p, BUTTON_A);
@@ -41,7 +41,7 @@ int test_input(void){
 	
 	// Check repeat
 	{
-		struct ptc p = {0};
+		struct sbc p = {0};
 		struct input* in = &p.input;
 		
 		set_repeat(in, BUTTON_ID_X, 0, 2);

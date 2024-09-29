@@ -87,7 +87,7 @@ struct token {
 };
 
 //struct program;
-//struct ptc;
+//struct sbc;
 
 struct tokenizer {
 	// Flags for the optimizer
@@ -112,7 +112,7 @@ struct tokenizer {
 	// Line count
 	uint_fast16_t lines_processed;
 	// System pointer
-	struct ptc* system;
+	struct sbc* system;
 };
 
 int tokenize(struct program* src, struct bytecode* output);

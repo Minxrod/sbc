@@ -76,7 +76,7 @@ const char package_resources[] =
 // bit 44
 ;
 
-int load_program(struct ptc* p, const char* search_path, const char* name){
+int load_program(struct sbc* p, const char* search_path, const char* name){
 	int size_read;
 	char path[MAX_FILEPATH_LENGTH+1] = {0};
 	if (!create_path(path, search_path, name, ".PTC")){
@@ -87,7 +87,7 @@ int load_program(struct ptc* p, const char* search_path, const char* name){
 	if (!f){
 		FILE_ERROR("Failed to load file");
 	}
-	struct ptc_header h;
+	struct sbc_header h;
 	fread(h.magic, sizeof(char), 4, f);
 	CHECK_FILE_ERROR("Failed to read file magic ID");
 	fseek(f, 0, SEEK_SET);
@@ -210,7 +210,7 @@ bool verify_file_type(const char* path, const int type){
 
 	int size_read;
 	if (!strncmp(check_type, "PX01", 4)){
-		struct ptc_header h;
+		struct sbc_header h;
 
 		assert(LITTLE_ENDIAN);
 		// only works on little-endian devices...
@@ -319,7 +319,7 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 	}
 
 	if (type == TYPE_PRG){
-		return load_program((struct ptc*)dest, search_path, name);
+		return load_program((struct sbc*)dest, search_path, name);
 	} else if (type == TYPE_MEM){
 		return check_load_file(dest, search_path, name, resource_size[type]);
 	} else if (type >= TYPE_CHR && type <= TYPE_COL){
@@ -681,7 +681,7 @@ bool verify_resource_name(const char* resource_name){
 
 // Resource type can be null-terminated or end with RESOURCE_SEPARATOR as part of a complete resource name.
 // @note Assumes resource name to be valid, as validated by verify_resource_name.
-void* get_resource_ptr(struct ptc* p, const char* resource_type){
+void* get_resource_ptr(struct sbc* p, const char* resource_type){
 	assert(resource_type);
 	void* resource_ptr = NULL;
 
@@ -741,7 +741,7 @@ void* get_resource_ptr(struct ptc* p, const char* resource_type){
 }
 
 // TODO:CODE:MED Remove all uses of this (replace with get_verified_resource instead)
-void* str_to_resource(struct ptc* p, void* name_str){
+void* str_to_resource(struct sbc* p, void* name_str){
 	assert(name_str);
 	assert(str_len(name_str) <= 5);
 	char name_char[MAX_RESOURCE_TYPE_LENGTH+1] = {0};
@@ -749,7 +749,7 @@ void* str_to_resource(struct ptc* p, void* name_str){
 	return get_resource_ptr(p, name_char);
 }
 
-int get_chr_index(struct ptc* p, const char* res){
+int get_chr_index(struct sbc* p, const char* res){
 	int res_len = strlen(res);
 	assert(res_len >= 3 && res_len <= 5);
 
@@ -772,7 +772,7 @@ int get_chr_index(struct ptc* p, const char* res){
 	return index;
 }
 
-struct res_info get_verified_resource_type(struct ptc* p, const void* res){
+struct res_info get_verified_resource_type(struct sbc* p, const void* res){
 	// TODO:ERR:LOW verify correct error codes
 	struct res_info info = {0};
 	if (str_len(res) > MAX_RESOURCE_TYPE_LENGTH){
@@ -790,7 +790,7 @@ struct res_info get_verified_resource_type(struct ptc* p, const void* res){
 
 /// Verifies that a given resource name is valid and assigns the values
 /// necessary to use it.
-struct res_info get_verified_resource(struct ptc* p, const void* res){
+struct res_info get_verified_resource(struct sbc* p, const void* res){
 	struct res_info info = {0};
 	if (str_len(res) > MAX_RESOURCE_STR_LENGTH){
 		p->exec.error = ERR_ILLEGAL_FUNCTION_CALL;
@@ -823,7 +823,7 @@ struct res_info get_verified_resource(struct ptc* p, const void* res){
 	return info;
 }
 
-void cmd_load(struct ptc* p){
+void cmd_load(struct sbc* p){
 	// TODO:IMPL:LOW Dialog popups
 	void* res = value_str(ARG(0));
 	struct res_info info = get_verified_resource(p, res);
@@ -859,7 +859,7 @@ void cmd_load(struct ptc* p){
 	}
 }
 
-void cmd_save(struct ptc* p){
+void cmd_save(struct sbc* p){
 	// TODO:IMPL:LOW Dialog popups
 	void* res = value_str(ARG(0));
 	struct res_info info = get_verified_resource(p, res);
@@ -870,7 +870,7 @@ void cmd_save(struct ptc* p){
 	p->res.result = size != 0;
 }
 
-void cmd_chrinit(struct ptc* p){
+void cmd_chrinit(struct sbc* p){
 	// CHRINIT resource
 	void* res_str = value_str(ARG(0));
 	struct res_info info = get_verified_resource_type(p, res_str);
@@ -894,7 +894,7 @@ void cmd_chrinit(struct ptc* p){
 	}
 }
 
-void cmd_chrread(struct ptc* p){
+void cmd_chrread(struct sbc* p){
 	// CHRREAD resource$ id var$
 	struct string* dest = get_new_str(&p->strs);
 	// Note: If uses is never set to 1, then this string is available for taking again
@@ -927,7 +927,7 @@ void cmd_chrread(struct ptc* p){
 	}
 }
 
-void cmd_chrset(struct ptc* p){
+void cmd_chrset(struct sbc* p){
 	// CHRSET resource$ id var$
 	// Note: If uses is never set to 1, then this string is available for taking again
 	// (no resource cleanup needed here)
@@ -970,7 +970,7 @@ void cmd_chrset(struct ptc* p){
 	}
 }
 
-void* get_col_resource(struct ptc* p, const void* res_str){
+void* get_col_resource(struct sbc* p, const void* res_str){
 	if (str_comp(res_str, "S\2BG")) return get_resource_ptr(p, "COL0");
 	if (str_comp(res_str, "S\2SP")) return get_resource_ptr(p, "COL1");
 	if (str_comp(res_str, "S\3GRP")) return get_resource_ptr(p, "COL2");
@@ -981,7 +981,7 @@ void* get_col_resource(struct ptc* p, const void* res_str){
 }
 
 // TODO:TEST:MED needs test
-void cmd_colinit(struct ptc* p){
+void cmd_colinit(struct sbc* p){
 	// COLINIT [resource [color]]
 	if (p->stack.stack_i == 0){
 		// reset all colors
@@ -1016,7 +1016,7 @@ void cmd_colinit(struct ptc* p){
 	p->res.regen_col = true;
 }
 
-void cmd_colread(struct ptc* p){
+void cmd_colread(struct sbc* p){
 	// COLREAD resource color r g b
 	void* res_str = value_str(ARG(0));
 	int col;
@@ -1045,7 +1045,7 @@ void cmd_colread(struct ptc* p){
 	*b = INT_TO_FP(b_comp);
 }
 
-void cmd_colset(struct ptc* p){
+void cmd_colset(struct sbc* p){
 	// COLSET resource$ color color$
 	void* res_str = value_str(ARG(0));
 	int col;
@@ -1089,11 +1089,11 @@ void cmd_colset(struct ptc* p){
 	p->res.regen_col = true;
 }
 
-void cmd_new(struct ptc* p){
+void cmd_new(struct sbc* p){
 	p->exec.prg.size = 0;
 }
 
-void cmd_append(struct ptc* p){
+void cmd_append(struct sbc* p){
 	// APPEND file$
 	p->res.result = 0; // covers every failure path by setting early
 	void* name = STACK_STR(0);
@@ -1179,22 +1179,22 @@ void cmd_append(struct ptc* p){
 	p->res.result = 1;
 }
 
-void cmd_rename(struct ptc* p){
+void cmd_rename(struct sbc* p){
 	// RENAME oldname$ newname$
 	(void)p;
 }
 
-void cmd_delete(struct ptc* p){
+void cmd_delete(struct sbc* p){
 	(void)p;
 }
 
-void sys_mem(struct ptc* p){
+void sys_mem(struct sbc* p){
 	struct value_stack* s = &p->stack;
 
 	stack_push(s, (struct stack_entry){VAR_STRING | VAR_VARIABLE, {.ptr = &p->res.mem_ptr}});
 }
 
-void syschk_mem(struct ptc* p){
+void syschk_mem(struct sbc* p){
 	assert(p->res.mem_ptr);
 	// ensure that pointer assignment is turned into a copy
 	str_copy(p->res.mem_ptr, &p->res.mem_str);
@@ -1209,13 +1209,13 @@ void syschk_mem(struct ptc* p){
 	p->res.mem.size = p->res.mem_str.len;
 }
 
-void sys_result(struct ptc* p){
+void sys_result(struct sbc* p){
 	struct value_stack* s = &p->stack;
 
 	stack_push(s, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(p->res.result)}});
 }
 
-void sys_package(struct ptc* p){
+void sys_package(struct sbc* p){
 	struct string* str = get_new_str(&p->strs);
 	str->type = STRING_CHAR;
 	str->uses = 1;
@@ -1234,7 +1234,7 @@ void sys_package(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, .value.ptr = str});
 }
 
-void sys_prgname(struct ptc* p){
+void sys_prgname(struct sbc* p){
 	struct string* str = get_new_str(&p->strs);
 	str->type = STRING_CHAR;
 	str->uses = 1;
@@ -1246,3 +1246,10 @@ void sys_prgname(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_STRING, .value.ptr = str});
 }
 
+void cmd_sendfile(struct sbc* p){
+	(void)p;
+}
+
+void cmd_recvfile(struct sbc* p){
+	(void)p;
+}

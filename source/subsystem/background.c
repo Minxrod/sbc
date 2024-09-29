@@ -37,7 +37,7 @@ void step_background(struct background* b){
 	}
 }
 
-u16* bg_page(struct ptc* p, u8 page, u8 layer){
+u16* bg_page(struct sbc* p, u8 page, u8 layer){
 	return p->res.scr[SCR_BANKS*page+2+layer];
 }
 
@@ -53,15 +53,15 @@ int bg_index(uint_fast8_t x, uint_fast8_t y){
 	return tx + ty * BG_CHUNK_WIDTH + cx * BG_CHUNK_SIZE + cy * BG_CHUNK_SIZE * (BG_WIDTH / BG_CHUNK_WIDTH);
 }
 
-u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y){
+u16 bg_tile(struct sbc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y){
 	return bg_page(p,page,l)[bg_index(x,y)];
 }
 
-void cmd_bgpage(struct ptc* p){
+void cmd_bgpage(struct sbc* p){
 	STACK_INT_RANGE(0,0,1,p->background.page);
 }
 
-void cmd_bgclr(struct ptc* p){
+void cmd_bgclr(struct sbc* p){
 	if (p->stack.stack_i == 0){
 		// clear both layers on current page
 		for (int l = 0; l < BG_LAYERS; ++l){
@@ -80,7 +80,7 @@ void cmd_bgclr(struct ptc* p){
 // BGPUT l,x,y,td
 // BGPUT l,x,y,td$
 // BGPUT l,x,y,c,p,h,v
-void cmd_bgput(struct ptc* p){
+void cmd_bgput(struct sbc* p){
 	uint_fast8_t layer, x, y;
 	u16 tiledata;
 	STACK_INT_RANGE(0,0,1,layer);
@@ -115,7 +115,7 @@ void cmd_bgput(struct ptc* p){
 //BGFILL layer, x1, y1, x2, y2, chr, pal, h, v
 //BGFILL layer, x1, y1, x2, y2, tile
 //BGFILL layer, x1, y1, x2, y2, tile$
-void cmd_bgfill(struct ptc* p){
+void cmd_bgfill(struct sbc* p){
 	uint_fast8_t layer;
 	int temp;
 	u16 tiledata;
@@ -171,7 +171,7 @@ void cmd_bgfill(struct ptc* p){
 	}
 }
 
-void cmd_bgofs(struct ptc* p){
+void cmd_bgofs(struct sbc* p){
 	int layer, time;
 	fixp x, y;
 	STACK_INT_RANGE(0,0,1,layer);
@@ -196,7 +196,7 @@ void cmd_bgofs(struct ptc* p){
 	}
 }
 
-void cmd_bgclip(struct ptc* p){
+void cmd_bgclip(struct sbc* p){
 	uint_fast8_t x1, y1, x2, y2;
 	STACK_INT_RANGE(0,0,31,x1);
 	STACK_INT_RANGE(1,0,23,y1);
@@ -209,7 +209,7 @@ void cmd_bgclip(struct ptc* p){
 	p->background.clip[p->background.page].y2 = 8 * y2 + 7;
 }
 
-void cmd_bgread(struct ptc* p){
+void cmd_bgread(struct sbc* p){
 	uint_fast8_t layer, x, y;
 	u16 tiledata;
 	STACK_INT_RANGE(0,0,1,layer);
@@ -250,7 +250,7 @@ void cmd_bgread(struct ptc* p){
 	}
 }
 
-void cmd_bgcopy(struct ptc* p){
+void cmd_bgcopy(struct sbc* p){
 	// BGCOPY layer x1 y1 x2 y2 x3 y3
 	uint_fast8_t layer;
 	int x1, x2, y1, y2, x3, y3;
@@ -308,7 +308,7 @@ void cmd_bgcopy(struct ptc* p){
 	}
 }
 
-void func_bgchk(struct ptc* p){
+void func_bgchk(struct sbc* p){
 	int layer;
 	STACK_REL_INT_RANGE(-1,0,1,layer);
 	p->stack.stack_i -= 1;

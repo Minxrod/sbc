@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-void func_rnd(struct ptc* p){
+void func_rnd(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -33,11 +33,11 @@ void func_rnd(struct ptc* p){
 // Approximately 3.141 in 20.12FP
 #define FIXP_PI 12867
 
-void func_pi(struct ptc* p){
+void func_pi(struct sbc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {FIXP_PI}});
 }
 
-void func_floor(struct ptc* p){
+void func_floor(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -48,7 +48,7 @@ fixp func_log_internal(fixp value){
 	return round(4096*log(value/4096.0));
 }
 
-void func_log(struct ptc* p){
+void func_log(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	
@@ -71,7 +71,7 @@ fixp func_atan2_internal(fixp y, fixp x){
 	return res;
 }
 
-void func_pow(struct ptc* p){
+void func_pow(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* e = stack_pop(s);
 	struct stack_entry* b = stack_pop(s);
@@ -99,13 +99,13 @@ fixp func_deg_internal(fixp rad){
 	return (int64_t)rad * INT_TO_FP(180) / FIXP_PI;
 }
 
-void func_rad(struct ptc* p){
+void func_rad(struct sbc* p){
 	struct stack_entry* deg = stack_pop(&p->stack);
 	
 	STACK_RETURN_NUM(func_rad_internal(VALUE_NUM(deg)));
 }
 
-void func_deg(struct ptc* p){
+void func_deg(struct sbc* p){
 	struct stack_entry* rad = stack_pop(&p->stack);
 	
 	STACK_RETURN_NUM(func_deg_internal(VALUE_NUM(rad)));
@@ -128,7 +128,7 @@ fixp func_tan_internal(fixp value){
 	return res;
 }
 
-void func_sin(struct ptc* p){
+void func_sin(struct sbc* p){
 	struct value_stack* s = &p->stack;
 	struct stack_entry* a = stack_pop(s);
 	fixp angle = VALUE_NUM(a);
@@ -136,19 +136,19 @@ void func_sin(struct ptc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {func_sin_internal(angle)}});
 }
 
-void func_cos(struct ptc* p){
+void func_cos(struct sbc* p){
 	struct stack_entry* rad = stack_pop(&p->stack);
 	
 	STACK_RETURN_NUM(func_cos_internal(VALUE_NUM(rad)));
 }
 
-void func_tan(struct ptc* p){
+void func_tan(struct sbc* p){
 	struct stack_entry* rad = stack_pop(&p->stack);
 	
 	STACK_RETURN_NUM(func_tan_internal(VALUE_NUM(rad)));
 }
 
-void func_atan(struct ptc* p){
+void func_atan(struct sbc* p){
 	if (p->exec.argcount == 1){
 		struct stack_entry* ratio = stack_pop(&p->stack);
 		
@@ -161,7 +161,7 @@ void func_atan(struct ptc* p){
 	}
 }
 
-void func_abs(struct ptc* p){
+void func_abs(struct sbc* p){
 	struct stack_entry* num = stack_pop(&p->stack);
 	
 	fixp n = VALUE_NUM(num);
@@ -173,7 +173,7 @@ void func_abs(struct ptc* p){
 	STACK_RETURN_NUM(n);
 }
 
-void func_sgn(struct ptc* p){
+void func_sgn(struct sbc* p){
 	struct stack_entry* num = stack_pop(&p->stack);
 	
 	fixp n = VALUE_NUM(num);
@@ -192,13 +192,13 @@ fixp func_exp_internal(fixp value){
 	return res;
 }
 
-void func_sqr(struct ptc* p){
+void func_sqr(struct sbc* p){
 	struct stack_entry* val = stack_pop(&p->stack);
 	
 	STACK_RETURN_NUM(func_sqr_internal(VALUE_NUM(val)));
 }
 
-void func_exp(struct ptc* p){
+void func_exp(struct sbc* p){
 	struct stack_entry* val = stack_pop(&p->stack);
 	
 	STACK_RETURN_NUM(func_exp_internal(VALUE_NUM(val)));

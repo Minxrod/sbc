@@ -24,7 +24,7 @@ CFLAGS = -std=c11 -Wall -Werror -Wextra -Wpedantic $(foreach srcdir,$(SOURCE) $(
 # indicates location of CSFML shared object files
 # LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
 # All the libraries that need to be linked
-# LIBFLAGS = -lm -lcsfml-audio -lcsfml-graphics -lcsfml-window -lcsfml-system
+LIBFLAGS = -lm
 
 # Some magic makefile nonsense
 # get source files list 
@@ -49,12 +49,12 @@ $(BUILD)%.o: %.c
 
 sfml: CFLAGS += -DSFML -isystem$(CSFML_INCLUDE)
 sfml: LFLAGS += -Wl,-rpath,$(CSFML_LIB) -L$(CSFML_LIB)
-sfml: LIBFLAGS = -lm -lcsfml-audio -lcsfml-graphics -lcsfml-window -lcsfml-system
+sfml: LIBFLAGS += -lcsfml-audio -lcsfml-graphics -lcsfml-window -lcsfml-system
 sfml: main_objs += $(BUILD)source/main.o $(wildcard source/graphics/pc/*.c)
 sfml: $(BUILD)source/main.o $($(wildcard $(source/graphics/pc)/*.c):%.c=$(BUILD)%.o)
 
 sdl2: CFLAGS += -DSDL2
-sdl2: LIBFLAGS = -lm -lSDL2
+sdl2: LIBFLAGS += -lSDL2
 sdl2: main_objs += $(BUILD)source/sdl_main.o $(wildcard source/graphics/sdl2/*.c)
 sdl2: $($(wildcard $(source/graphics/sdl2)/*.c):%.c=$(BUILD)%.o)
 sdl2: $(BUILD)source/sdl_main.o

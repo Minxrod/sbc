@@ -60,7 +60,7 @@ sfTexture* gen_chr_texture(const u8* const src, const size_t size){
 	return tex;
 }
 
-void init_display(struct ptc* p){
+void init_display(struct sbc* p){
 	struct display* d = &p->display;
 	struct resources* r = &p->res;
 	
@@ -129,7 +129,7 @@ void free_display(struct display* d){
 	sfShader_destroy(d->shader);
 }
 
-void display_draw_all(struct ptc* p){
+void display_draw_all(struct sbc* p){
 	// SFML stuff
 	struct display* d = &p->display;
 	struct resources* r = &p->res;
@@ -277,7 +277,7 @@ void draw_va(struct display* d, int col, int tex, sfVertexArray* va){
 ///
 /// Display of the foreground can be toggled with `VISIBLE`.
 /// The color background cannot be disabled.
-void display_console(struct ptc* p){
+void display_console(struct sbc* p){
 	struct display* d = &p->display;
 	// Update the tilemaps
 	for (int x = 0; x < CONSOLE_WIDTH; ++x){
@@ -299,7 +299,7 @@ void display_console(struct ptc* p){
 	}
 }
 
-void display_panel_console(struct ptc* p){
+void display_panel_console(struct sbc* p){
 	struct display* d = &p->display;
 	// Update the tilemaps
 	for (int x = 0; x < CONSOLE_WIDTH; ++x){
@@ -317,7 +317,7 @@ void display_panel_console(struct ptc* p){
 	draw_va(d, SBC_COL_BG_LOWER, SBC_TEX_BGF_LOWER, d->panel_text_map.va);
 }
 
-void display_background(struct ptc* p, int screen, int layer){
+void display_background(struct sbc* p, int screen, int layer){
 	// Check if these should even be rendered
 	if (!(p->res.visible & VISIBLE_BG0) && layer == 0) return;
 	if (!(p->res.visible & VISIBLE_BG1) && layer == 1) return;
@@ -356,7 +356,7 @@ void display_background(struct ptc* p, int screen, int layer){
 	d->rs.transform = sfTransform_Identity;
 }
 
-void display_panel_background(struct ptc* p){
+void display_panel_background(struct sbc* p){
 	if (SCREEN_COUNT < 2) return;
 	struct display* d = &p->display;
 	if (p->panel.type == PNL_OFF) return;
@@ -373,7 +373,7 @@ void display_panel_background(struct ptc* p){
 	draw_va(d, SBC_COL_BG_LOWER, SBC_TEX_BGD_LOWER, d->panel_bg_map.va);
 }
 
-void display_sprite(struct ptc* p, int screen, int prio){
+void display_sprite(struct sbc* p, int screen, int prio){
 	// Don't display over panel
 	if (screen == 1 && (p->panel.type != PNL_OFF || !(p->res.visible & VISIBLE_PANEL))) return;
 	if (!(p->res.visible & VISIBLE_SPRITE)) return;
@@ -397,7 +397,7 @@ void display_sprite(struct ptc* p, int screen, int prio){
 	free_sprite_array(sprites);
 }
 
-void display_panel_keys(struct ptc* p){
+void display_panel_keys(struct sbc* p){
 	if (SCREEN_COUNT < 2) return;
 	// Only render keyboard when enabled
 	if (p->panel.type == PNL_OFF || p->panel.type == PNL_PNL) return;
@@ -428,7 +428,7 @@ void display_panel_keys(struct ptc* p){
 	free_sprite_array(sprites);
 }
 
-void display_icon(struct ptc* p){
+void display_icon(struct sbc* p){
 	struct display* d = &p->display;
 	// Icons are basically always rendered
 	struct sprite_array icon_sprites = init_sprite_array();
@@ -453,7 +453,7 @@ void display_icon(struct ptc* p){
 	free_sprite_array(icon_sprites);
 }
 
-void display_cursor(struct ptc* p){
+void display_cursor(struct sbc* p){
 	if (!p->console.cursor_visible) return;
 	if (p->time.time % FRAMERATE > (FRAMERATE / 2)) return;
 	struct display* d = &p->display;
@@ -470,7 +470,7 @@ void display_cursor(struct ptc* p){
 	free_sprite_array(cursor_sprite);
 }
 
-void display_graphics(struct ptc* p, int screen, int prio){
+void display_graphics(struct sbc* p, int screen, int prio){
 	if (screen == 1 && !(p->panel.type == PNL_OFF || p->panel.type == PNL_PNL)) return;
 	if (screen == 1 && !(p->res.visible & VISIBLE_PANEL)) return;
 	if (!(p->res.visible & VISIBLE_GRAPHICS)) return;

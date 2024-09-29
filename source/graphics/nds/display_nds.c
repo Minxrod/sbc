@@ -5,7 +5,7 @@
 #include <nds/arm9/sprite.h> // For SpriteEntry struct
 #include <nds/arm9/video.h> // For VRAM setup
 
-void init_display(struct ptc* p){
+void init_display(struct sbc* p){
 	p->display.oam_buf = calloc_log("init_display", sizeof(OAMTable), 1);
 }
 
@@ -13,7 +13,7 @@ void free_display(struct display* d){
 	free_log("free_display", d->oam_buf);
 }
 
-void display_draw_all(struct ptc* p){
+void display_draw_all(struct sbc* p){
 //	struct display* d = &p->display;
 //	(void)d;
 #ifdef SBC_PROFILE
@@ -86,7 +86,7 @@ void display_draw_all(struct ptc* p){
 
 }
 
-void display_console(struct ptc* p){
+void display_console(struct sbc* p){
 	struct console* con = &p->console;
 	u16* fg = p->res.scr[0];
 	u16* bg = p->res.scr[1];
@@ -119,7 +119,7 @@ void display_console(struct ptc* p){
 	
 }
 
-void display_panel_console(struct ptc* p){
+void display_panel_console(struct sbc* p){
 	struct console* con;
 	if (p->panel.type >= PNL_KYA){
 		con = p->panel.keys_text;
@@ -137,7 +137,7 @@ void display_panel_console(struct ptc* p){
 	}
 }
 
-void display_background(struct ptc* p, int screen){
+void display_background(struct sbc* p, int screen){
 	bg_scroll* bg = screen ? BG_OFFSET_SUB : BG_OFFSET;
 	// BG0 = 2 BG1 = 3
 	struct bg_clip clip = p->background.clip[screen];
@@ -174,7 +174,7 @@ void display_background(struct ptc* p, int screen){
 	}
 }
 
-void display_panel_background(struct ptc* p){
+void display_panel_background(struct sbc* p){
 	if (p->res.visible & VISIBLE_PANEL){
 		videoBgEnableSub(1);
 	} else {
@@ -184,7 +184,7 @@ void display_panel_background(struct ptc* p){
 	// and the panel background layer never scrolls or anything
 }
 
-void display_sprite(struct ptc* p, int screen){
+void display_sprite(struct sbc* p, int screen){
 	// display_sprites clears OAM buffer
 	SpriteEntry* oam = (SpriteEntry*)p->display.oam_buf;
 	for (int i = 0; i < SPRITE_COUNT; ++i){
@@ -245,7 +245,7 @@ void display_sprite(struct ptc* p, int screen){
 	}
 }
 
-void display_cursor(struct ptc* p){
+void display_cursor(struct sbc* p){
 	if (!p->console.cursor_visible) return;
 	SpriteEntry* oam = (SpriteEntry*)p->display.oam_buf;
 	
@@ -259,7 +259,7 @@ void display_cursor(struct ptc* p){
 	oam[104].shape = OBJSHAPE_SQUARE;
 }
 
-void display_panel_keys(struct ptc* p){
+void display_panel_keys(struct sbc* p){
 	if (p->panel.type == PNL_OFF || p->panel.type == PNL_PNL) return;
 	if (!(p->res.visible & VISIBLE_PANEL)) return;
 	
@@ -292,7 +292,7 @@ void display_panel_keys(struct ptc* p){
 	}
 }
 
-void display_icon(struct ptc* p){
+void display_icon(struct sbc* p){
 	SpriteEntry* oam = (SpriteEntry*)p->display.oam_buf;
 	if (p->panel.key_pressed){
 		offset_key(p, p->panel.id_pressed, INT_TO_FP(1));
@@ -315,7 +315,7 @@ void display_icon(struct ptc* p){
 	}
 }
 
-void display_graphics(struct ptc* p, int screen){
+void display_graphics(struct sbc* p, int screen){
 	if (screen == 1 && !(p->panel.type == PNL_OFF || p->panel.type == PNL_PNL)) return;
 	if (screen == 1 && !(p->res.visible & VISIBLE_PANEL)) return;
 	if (!(p->res.visible & VISIBLE_GRAPHICS)) return;

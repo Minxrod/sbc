@@ -55,7 +55,7 @@ int test_int_code(void){
 	{
 		char* code = "FOR I=0 TO 9\r\rNEXT\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(10), "[for] I=10");
 		
@@ -66,7 +66,7 @@ int test_int_code(void){
 	{
 		char* code = "DIM A[20]\rFOR I=0 TO 19\rA[I]=I\rNEXT\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(20), "[for] I=20");
 		for (int i = 0; i < 20; ++i){
@@ -80,7 +80,7 @@ int test_int_code(void){
 	{
 		char* code = "IF TRUE THEN A=0:B=1 ELSE B=0:A=1\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[if] A=0");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(1), "[if] B=1");
@@ -92,7 +92,7 @@ int test_int_code(void){
 	{
 		char* code = "IF FALSE THEN A=0:B=1 ELSE B=0:A=-1\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == -(INT_TO_FP(1)), "[if] A=1");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(0), "[if] B=0");
@@ -104,7 +104,7 @@ int test_int_code(void){
 	{
 		char* code = "@TEST\rI=I+1\rIF I<5 GOTO @TEST\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(5), "[goto] I=5");
 		free_code(p);
@@ -114,7 +114,7 @@ int test_int_code(void){
 	{
 		char* code = "ON 2 GOTO @1,@2,@3,@4,@5\r@1\rI=I+1\r@2\rI=I+1\r@3\rI=I+1\r@4\rI=I+1\r@5\rI=I+1\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "I", VAR_NUMBER)->value.number == INT_TO_FP(3), "[goto] I=3");
 		free_code(p);
@@ -124,7 +124,7 @@ int test_int_code(void){
 	{
 		char* code = "FOR I=0 TO 3\rGOSUB @TEST\rNEXT\rEND\r@TEST\rJ=J+I+1\rRETURN\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "J", VAR_NUMBER)->value.number == INT_TO_FP(10), "[goto] J=10");
 		free_code(p);
@@ -135,7 +135,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 523\rREAD D\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(523), "[data] D=523");
 		free_code(p);
@@ -145,7 +145,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 532,7\rREAD D,B\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(532), "[data] D=532");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(7), "[data] B=7");
@@ -156,7 +156,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 532,7\rREAD D$\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(str_comp(test_var(&p->vars, "D", VAR_STRING)->value.ptr, "S\003532"), "[data] D$=\"532\"");
 		free_code(p);
@@ -166,7 +166,7 @@ int test_int_code(void){
 	{
 		char* code = "READ D\rDATA 532,7\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(532), "[data] D=532 (DATA past start)");
 		free_code(p);
@@ -174,7 +174,7 @@ int test_int_code(void){
 	
 	// READ string containing comma
 	{
-		struct ptc* p = run_code("READ X$\rDATA \"Hello, world!\"\r");
+		struct sbc* p = run_code("READ X$\rDATA \"Hello, world!\"\r");
 		
 		ASSERT(str_comp(test_var(&p->vars, "X", VAR_STRING)->value.ptr, "S\15Hello, world!"), "[data] Read string containing comma");
 		
@@ -184,7 +184,7 @@ int test_int_code(void){
 	// INKEY$ test
 	{
 		char* code = "A$=INKEY$()\r";
-		struct ptc* p = run_code_keys(code, "B", 1);
+		struct sbc* p = run_code_keys(code, "B", 1);
 		// Check inkey string generation method works
 		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1B"), "[input] A$=\"B\"");
 		free_code(p);
@@ -193,7 +193,7 @@ int test_int_code(void){
 	// LEN tests
 	{
 		char* code = "A=LEN(\"\")\rB=LEN(\"ABC\")\rC=LEN(\"Aaa!\"*8)\rD=LEN(\"@\"*256)\r";
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// Check various lengths
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(0), "[len] Length is 0");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(3), "[len] Length is 3");
@@ -211,7 +211,7 @@ int test_int_code(void){
 		char* d_str= "S\0";
 		char* e_str= "S\0";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// Check various substrings
 		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, a_str), "[mid$] Base string A$");
 		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, b_str), "[mid$] B$");
@@ -230,7 +230,7 @@ int test_int_code(void){
 		"K=VAL(\"&H4FE4HR6 77 6\")\rL=VAL(\"111111 1\")\rM=VAL(\"524287.999994\")\r"
 		"N=VAL(\"-0.0005\")\rO=VAL(\"0.6666\")\rP=VAL(\"MN230\")\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// Check various substrings
 		CHECK_VAR_INT("A",0);
 		CHECK_VAR_INT("B",1);
@@ -256,7 +256,7 @@ int test_int_code(void){
 	{
 		char* code = "FOR I=0 TO 1\rFOR J=0 TO 1\r?I,J\rIF J==0 THEN NEXT J\rNEXT I\rNEXT J\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_INT("I",2); // after FOR ends, this is the result
 		CHECK_VAR_INT("J",2);
@@ -284,7 +284,7 @@ int test_int_code(void){
 		"FOR I = 1 TO DRAWD\r GLINE X, Y, X, Y2\r X = X + DAYW\r"
 		"NEXT\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		// if loop doesn't run I will not be correct here
 		CHECK_VAR_INT("I",31);
@@ -296,7 +296,7 @@ int test_int_code(void){
 	{
 		char code[] = "FOR I=-6 TO 0\rS=S+I\rNEXT\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_NUM("S",-INT_TO_FP(21));
 		
@@ -312,7 +312,7 @@ int test_int_code(void){
 	{
 		char code[] = "FOR I=1 TO -1\rS=3\rNEXT\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_INT("I",1);
 		CHECK_VAR_INT("S",0);
@@ -325,7 +325,7 @@ int test_int_code(void){
 	{
 		char code[] = "FOR I=1 TO -1\rIF I THEN NEXT\rS=3\rNEXT\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_INT("I",1);
 		CHECK_VAR_INT("S",0);
@@ -360,7 +360,7 @@ int test_int_code(void){
 	
 	// Simple IF ELSE check (which broke??)
 	{
-		struct ptc* p = run_code("ST = 1\rTY=69\rIF ST<21 THEN TY=13 ELSE TY=15\r?TY\r");
+		struct sbc* p = run_code("ST = 1\rTY=69\rIF ST<21 THEN TY=13 ELSE TY=15\r?TY\r");
 		
 		ASSERT(p->exec.error == ERR_NONE, "[for] No error involving IF test");
 		CHECK_VAR_INT("ST",1);
@@ -371,7 +371,7 @@ int test_int_code(void){
 	
 	// EXEC simple test
 	{
-		struct ptc* p = run_code("EXEC \"IFELSE\"\r");
+		struct sbc* p = run_code("EXEC \"IFELSE\"\r");
 		ASSERT(p->exec.error == ERR_NONE, "[exec] Program ran with no errors");
 		ASSERT(p->res.result == 1, "[exec] Program did execute, RESULT set");
 		CHECK_VAR_INT("TY",13);
@@ -380,7 +380,7 @@ int test_int_code(void){
 
 	// EXEC simple failure
 	{
-		struct ptc* p = run_code("EXEC \"NOTEXIST\"\r");
+		struct sbc* p = run_code("EXEC \"NOTEXIST\"\r");
 		ASSERT(p->exec.error == ERR_NONE, "[exec] Program did not execute, but no error");
 		ASSERT(p->res.result == 0, "[exec] Program did not execute, but no error");
 		free_code(p);
@@ -391,7 +391,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 523\rDATA 46\rDATA \"389\"\rREAD D,C,B$\r";
 		// run program
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "D", VAR_NUMBER)->value.number == INT_TO_FP(523), "[data] D=523");
 		ASSERT(test_var(&p->vars, "C", VAR_NUMBER)->value.number == INT_TO_FP(46), "[data] C=46");
@@ -406,7 +406,7 @@ int test_int_code(void){
 	
 	// GOSUB after THEN/ELSE
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"IF TRUE THEN GOSUB @L1\r"
 			"IF FALSE THEN GOSUB @LT ELSE GOSUB @LF\r"
 			"END\r"
@@ -439,7 +439,7 @@ int test_int_code(void){
 	
 	// More GOSUB testing
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"IF 1 THEN GOSUB @L1\r"
 			"GOSUB @L1\r"
 			"END\r"
@@ -456,7 +456,7 @@ int test_int_code(void){
 	
 	// GOSUB-IF interaction test
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"IF 0 THEN GOSUB @L\r"
 			"GOSUB @L2\r"
 			"END\r"
@@ -477,7 +477,7 @@ int test_int_code(void){
 	
 	// SWAP
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"A=2990\rB=123\rSWAP A,B\r"
 			"A$=\"Hi\"\rB$=\"Bye\"\rSWAP A$,B$\r"
 		);
@@ -495,7 +495,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 523\rDATA 46\rDATA \"389\"\rREAD D,C,B$\r";
 		// run program
-		struct ptc* p = run_code_opts(code, TOKOPT_VARIABLE_IDS);
+		struct sbc* p = run_code_opts(code, TOKOPT_VARIABLE_IDS);
 		// check output for correctness
 		CHECK_VAR_INT("D", 523);
 		CHECK_VAR_INT("C", 46);
@@ -507,7 +507,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 523\rDATA 46\rDATA \"389\"\rREAD D[0],C[0],B$[0]\rD=D[0]\rC=C[0]\rB$=B$[0]\r";
 		// run program
-		struct ptc* p = run_code_opts(code, TOKOPT_VARIABLE_IDS);
+		struct sbc* p = run_code_opts(code, TOKOPT_VARIABLE_IDS);
 		// check output for correctness
 		CHECK_VAR_INT("D", 523);
 		CHECK_VAR_INT("C", 46);
@@ -520,7 +520,7 @@ int test_int_code(void){
 		char* code = "DIM IN[10]\rFOR I=0 TO 9\rINPUT IN[I]\rNEXT\rA=IN[0]\rB=IN[1]\rC=IN[8]\rD=IN[9]\rE=IN[4]\rF=IN[5]\rG=IN[6]\r";
 		char* input = "12\r23\r34\r45\r524287\r524287.999994\r-524287.999994\r-89\r-90\r-123456\r";
 		
-		struct ptc* p = run_code_keys(code, input, strlen(input));
+		struct sbc* p = run_code_keys(code, input, strlen(input));
 		
 		CHECK_VAR_INT("A", 12);
 		CHECK_VAR_INT("B", 23);
@@ -543,7 +543,7 @@ int test_int_code(void){
 	{
 		char* code = "DATA 523,-1,\"23\"\rDATA 523,-1,\"23\"\rDATA 523,-1,\"23\"\rFOR I=0 TO 2\rREAD D,C,B$\rNEXT\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_INT("D", 523);
 		CHECK_VAR_NUM("C", -INT_TO_FP(1));
@@ -565,7 +565,7 @@ int test_int_code(void){
 			"RESTORE @LABEL1\r"
 			"READ A,B$\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_INT("A", 2);
 		CHECK_VAR_STR("B", "S\0013");
@@ -582,17 +582,17 @@ int test_int_code(void){
 	// VISIBLE tests
 	{
 		{
-			struct ptc* p = run_code("VISIBLE 1,1,1,1,1,1\r");
+			struct sbc* p = run_code("VISIBLE 1,1,1,1,1,1\r");
 			ASSERT(p->res.visible == 63, "[visible] All visible");
 			free_code(p);
 		}
 		{
-			struct ptc* p = run_code("VISIBLE 0,0,0,0,0,0\r");
+			struct sbc* p = run_code("VISIBLE 0,0,0,0,0,0\r");
 			ASSERT(p->res.visible == 0, "[visible] All hidden");
 			free_code(p);
 		}
 		{
-			struct ptc* p = run_code("VISIBLE ,,0,0,1,1\r");
+			struct sbc* p = run_code("VISIBLE ,,0,0,1,1\r");
 			ASSERT(p->res.visible == (48|3), "[visible] Previous state kept on omission");
 			free_code(p);
 		}
@@ -601,7 +601,7 @@ int test_int_code(void){
 	// DATA with decimal, empty string
 	{
 		char* code = "DATA 1.5,2.5,\"\"\rREAD D,C,B$\r";
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		
 		CHECK_VAR_NUM("D", 4096+2048);
 		CHECK_VAR_NUM("C", 8192+2048);
@@ -620,7 +620,7 @@ int test_int_code(void){
 	// NEXT with variable specified (simple)
 	{
 		char* code = "FOR I=0 TO 9\rNEXT I\r";
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		CHECK_VAR_INT("I", 10);
 		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
 		free_code(p);
@@ -629,7 +629,7 @@ int test_int_code(void){
 	// NEXT with variable specified (skip FOR)
 	{
 		char* code = "FOR I=1 TO -1\rNEXT I\r";
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		CHECK_VAR_INT("I", 1);
 		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
 		free_code(p);
@@ -643,7 +643,7 @@ int test_int_code(void){
 	// NEXT with variable specified (skip FOR, skip internal NEXT)
 	{
 		char* code = "FOR I=2 TO -1\rNEXT J\rNEXT I\r";
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		CHECK_VAR_INT("I", 2);
 		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
 		free_code(p);
@@ -655,7 +655,7 @@ int test_int_code(void){
 	// If the source is big enough for the search to continuie, this reads random garbage code from later in the program.
 	// Occasionally this "succeeds" and then jumps to strange locations. (This is now fixed, but I thought it was interesting).
 	{
-		struct ptc* p = run_code("FOR I=SL+V TO 0\rNEXT\r");
+		struct sbc* p = run_code("FOR I=SL+V TO 0\rNEXT\r");
 		ASSERT(p->exec.error == ERR_NONE, "[for] No FOR errors");
 		free_code(p);
 	}
@@ -666,7 +666,7 @@ int test_int_code(void){
 	// The fix is to write a null if needed.
 	{
 #define LABEL_COLLISION_PRG_2 "GOTO @MAP1\r@MAP1\r"
-		struct ptc* p = run_code("GOTO @GAMEINIT\r@GAMEINIT\r");
+		struct sbc* p = run_code("GOTO @GAMEINIT\r@GAMEINIT\r");
 		ASSERT(p->exec.error == ERR_NONE, "[label] First program works");
 
 		p->exec.prg.size = strlen(LABEL_COLLISION_PRG_2);
@@ -679,7 +679,7 @@ int test_int_code(void){
 
 	// ON GOTO with empty slots
 	{
-		struct ptc* p;
+		struct sbc* p;
 		p = run_code("X=0\rON X GOTO @0,@1,,@3,\r@0\r@1\r@3\r");
 		ASSERT(p->exec.error == ERR_NONE, "[on] GOTO @0 success");
 		free_code(p);
@@ -696,7 +696,7 @@ int test_int_code(void){
 	// DATA with leading spaces within string
 	// (test case from heavily modified UX_CHRED segment)
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"DIM A$(7)\r"
 			"FOR I=0 TO 6\r"
 			" READ A$(I)\r"
@@ -733,7 +733,7 @@ int test_int_code(void){
 
 	// DATA with empty slots
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"DATA ,,\r"
 			"READ A$,B$,C$\r"
 		);
@@ -747,7 +747,7 @@ int test_int_code(void){
 
 	// DATA with multiple string (was this missed before??)
 	{
-		struct ptc* p = run_code(
+		struct sbc* p = run_code(
 			"DATA \"'\",\"A\"\r"
 			"READ A$,B$\r"
 		);

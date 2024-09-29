@@ -187,7 +187,7 @@ struct resources {
 	char prgname[PRGNAME_STR_LENGTH+1];
 };
 
-struct ptc;
+struct sbc;
 
 /// Creates a file path from path components.
 ///
@@ -210,7 +210,7 @@ bool create_path_from_str(char dest[MAX_FILEPATH_LENGTH+1], const char* base, co
 bool verify_resource_type(const char* resource_type);
 bool verify_resource_type_str(const void* res);
 bool verify_resource_name(const char* resource_name);
-void* get_resource_ptr(struct ptc* p, const char* resource_type);
+void* get_resource_ptr(struct sbc* p, const char* resource_type);
 
 /// Information struct for breaking down a resource string
 struct res_info {
@@ -222,8 +222,8 @@ struct res_info {
 	void* data;
 };
 
-struct res_info get_verified_resource_type(struct ptc* p, const void* res);
-struct res_info get_verified_resource(struct ptc* p, const void* res);
+struct res_info get_verified_resource_type(struct sbc* p, const void* res);
+struct res_info get_verified_resource(struct sbc* p, const void* res);
 
 bool verify_file_type(const char* path, int type);
 bool verify_search_file_type(const char* search_path, const char* name, int type);
@@ -231,7 +231,7 @@ int check_load_res(u8* dest, const char* search_path, const char* name, int type
 int check_load_file(u8* dest, const char* search_path, const char* name, int size);
 
 /// This includes packaged resources.
-int load_program(struct ptc* p, const char* search_path, const char* name);
+int load_program(struct sbc* p, const char* search_path, const char* name);
 
 int load_file(u8* dest, const char* path, int skip, int len);
 bool load_chr(u8* dest, const char* path, const char* name);
@@ -241,7 +241,7 @@ bool load_scr(u16* dest, const char* path, const char* name);
 void init_resource(struct resources* r);
 void free_resource(struct resources* r);
 
-int get_chr_index(struct ptc* p, const char* res);
+int get_chr_index(struct sbc* p, const char* res);
 
 /// Only works on valid resource names - does only minimal checks to determine type.
 static inline int get_resource_type(const void* res){
@@ -269,33 +269,33 @@ static inline int get_resource_type(const void* res){
 
 /// Returns a data pointer for the resource
 /// Returns NULL, if the resource name was invalid
-void* str_to_resource(struct ptc* p, void* name_str);
+void* str_to_resource(struct sbc* p, void* name_str);
 
 // Character
-void cmd_chrinit(struct ptc* p);
-void cmd_chrset(struct ptc* p);
-void cmd_chrread(struct ptc* p);
+void cmd_chrinit(struct sbc* p);
+void cmd_chrset(struct sbc* p);
+void cmd_chrread(struct sbc* p);
 
 // Color
-void cmd_colinit(struct ptc* p);
-void cmd_colset(struct ptc* p);
-void cmd_colread(struct ptc* p);
+void cmd_colinit(struct sbc* p);
+void cmd_colset(struct sbc* p);
+void cmd_colread(struct sbc* p);
 
 // File
-void cmd_save(struct ptc* p);
-void cmd_load(struct ptc* p);
+void cmd_save(struct sbc* p);
+void cmd_load(struct sbc* p);
 
 // PRG Files
-void cmd_new(struct ptc* p);
-void cmd_append(struct ptc* p);
-void cmd_rename(struct ptc* p);
-void cmd_delete(struct ptc* p);
+void cmd_new(struct sbc* p);
+void cmd_append(struct sbc* p);
+void cmd_rename(struct sbc* p);
+void cmd_delete(struct sbc* p);
 
 // Package
-void sys_package(struct ptc* p);
-void sys_prgname(struct ptc* p);
+void sys_package(struct sbc* p);
+void sys_prgname(struct sbc* p);
 
 // MEM$
-void sys_mem(struct ptc* p);
-void syschk_mem(struct ptc* p);
-void sys_result(struct ptc* p);
+void sys_mem(struct sbc* p);
+void syschk_mem(struct sbc* p);
+void sys_result(struct sbc* p);

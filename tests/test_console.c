@@ -44,7 +44,7 @@ int test_console(void){
 	{
 		char* code = "?A,B,C,\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		struct console* c = &p->console;
 		
 		ASSERT(con_text_getc(c, 0, 0) == to_wide('0'), "[console] Console contents 0");
@@ -59,7 +59,7 @@ int test_console(void){
 	{
 		char* code = "?,,,,,,,,0\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		struct console* c = &p->console;
 		
 		ASSERT(con_text_getc(c, 0, 1) == to_wide('0'), "[console] After 8 tabs 0");
@@ -73,7 +73,7 @@ int test_console(void){
 	{
 		char* code = "PRINT 7,8;9;10,11\r";
 		
-		struct ptc* p = run_code(code);
+		struct sbc* p = run_code(code);
 		struct console* c = &p->console;
 		
 		ASSERT(con_text_getc(c, 0, 0) == to_wide('7'), "[console] 7 at 0,0");
@@ -95,7 +95,7 @@ int test_console(void){
 		char* code = "INPUT A\r";
 		// run program
 		
-		struct ptc* p = run_code_keys(code, "5\r", 2);
+		struct sbc* p = run_code_keys(code, "5\r", 2);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(5), "[input] A=5");
 		free_code(p);
@@ -106,7 +106,7 @@ int test_console(void){
 		char* code = "INPUT A$\r";
 		// run program
 		
-		struct ptc* p = run_code_keys(code, "+\r", 2);
+		struct sbc* p = run_code_keys(code, "+\r", 2);
 		// check output for correctness
 		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1+"), "[input] A$=+");
 		free_code(p);
@@ -117,7 +117,7 @@ int test_console(void){
 		char* code = "INPUT \"Test\";A$\rINPUT \"Test\";A$\r";
 		// run program
 		
-		struct ptc* p = run_code_keys(code, "+\r-\r", 4);
+		struct sbc* p = run_code_keys(code, "+\r-\r", 4);
 		// check output for correctness
 		ASSERT(str_comp(test_var(&p->vars, "A", VAR_STRING)->value.ptr, "S\1-"), "[input] A$=-");
 		free_code(p);
@@ -128,7 +128,7 @@ int test_console(void){
 		char* code = "INPUT A,B,C\r";
 		// run program
 		
-		struct ptc* p = run_code_keys(code, "1,2,3\r", 6);
+		struct sbc* p = run_code_keys(code, "1,2,3\r", 6);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(1), "[input] A=1");
 		ASSERT(test_var(&p->vars, "B", VAR_NUMBER)->value.number == INT_TO_FP(2), "[input] B=2");
@@ -141,7 +141,7 @@ int test_console(void){
 		char* code = "INPUT \"Prompt\";A,B$,C\r";
 		// run program
 		
-		struct ptc* p = run_code_keys(code, "12,ABC ,34\r", 11);
+		struct sbc* p = run_code_keys(code, "12,ABC ,34\r", 11);
 		// check output for correctness
 		ASSERT(test_var(&p->vars, "A", VAR_NUMBER)->value.number == INT_TO_FP(12), "[input] A=12");
 		ASSERT(str_comp(test_var(&p->vars, "B", VAR_STRING)->value.ptr, "S\4ABC "), "[input] B$=\"ABC \"");
@@ -151,7 +151,7 @@ int test_console(void){
 	
 	// Locate silent failure on out of range
 	{
-		struct ptc* p = run_code("LOCATE 3,6\rLOCATE 32,9\r");
+		struct sbc* p = run_code("LOCATE 3,6\rLOCATE 32,9\r");
 		
 		ASSERT(p->console.x == 3, "[locate] CSRX == 3");
 		ASSERT(p->console.y == 6, "[locate] CSRY == 6");
@@ -161,7 +161,7 @@ int test_console(void){
 	
 	// Scrolling
 	{
-		struct ptc* p = run_code("LOCATE 0,23\r?0\r");
+		struct sbc* p = run_code("LOCATE 0,23\r?0\r");
 		
 		ASSERT(to_wide('0') == con_text_getc(&p->console, 0, 22), "[print] Console scrolled up one");
 		
@@ -170,7 +170,7 @@ int test_console(void){
 	
 	// Not scrolling
 	{
-		struct ptc* p = run_code("LOCATE 0,23\r?\"ABC\";\r");
+		struct sbc* p = run_code("LOCATE 0,23\r?\"ABC\";\r");
 		
 		ASSERT(to_wide('A') == con_text_getc(&p->console, 0, 23), "[print] Console does not scroll up (A)");
 		ASSERT(to_wide('B') == con_text_getc(&p->console, 1, 23), "[print] Console does not scroll up (B)");
@@ -181,7 +181,7 @@ int test_console(void){
 	
 	// Not scrolling (the stupid corner)
 	{
-		struct ptc* p = run_code("LOCATE 31,23\r?0;\r");
+		struct sbc* p = run_code("LOCATE 31,23\r?0;\r");
 		
 		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 23), "[print] Console does not scroll up (0)");
 		
@@ -190,7 +190,7 @@ int test_console(void){
 	
 	// Not scrolling (the stupid corner II)
 	{
-		struct ptc* p = run_code("LOCATE 28,23\r?0,\r");
+		struct sbc* p = run_code("LOCATE 28,23\r?0,\r");
 		
 		ASSERT(to_wide('0') == con_text_getc(&p->console, 28, 23), "[print] Console does not scroll up (0)");
 		
@@ -199,7 +199,7 @@ int test_console(void){
 	
 	// COLORing test I (fg only)
 	{
-		struct ptc* p = run_code("COLOR 3\r?\"TEST\"\r");
+		struct sbc* p = run_code("COLOR 3\r?\"TEST\"\r");
 		
 		ASSERT(0x03 == con_col_get(&p->console, 0, 0), "[color] Console contains correct color");
 		ASSERT(0x03 == con_col_get(&p->console, 1, 0), "[color] Console contains correct color");
@@ -212,7 +212,7 @@ int test_console(void){
 	
 	// COLORing test II (fg+bg)
 	{
-		struct ptc* p = run_code("COLOR 3,8\r?\"TEST\"\r");
+		struct sbc* p = run_code("COLOR 3,8\r?\"TEST\"\r");
 		
 		ASSERT(0x83 == con_col_get(&p->console, 0, 0), "[color] Console contains correct colors");
 		ASSERT(0x83 == con_col_get(&p->console, 1, 0), "[color] Console contains correct colors");
@@ -225,7 +225,7 @@ int test_console(void){
 	
 	// COLOR + scrolling test
 	{
-		struct ptc* p = run_code("LOCATE 0,23\rCOLOR 7,2\r?\"TEST\"?\"TEST\"\r");
+		struct sbc* p = run_code("LOCATE 0,23\rCOLOR 7,2\r?\"TEST\"?\"TEST\"\r");
 		
 		const int col = 0x27;
 		ASSERT(col == con_col_get(&p->console, 0, 21), "[color] Scrolled console contains correct colors 0");
@@ -249,7 +249,7 @@ int test_console(void){
 	
 	// COLOR + tab test
 	{
-		struct ptc* p = run_code("COLOR 4,9\r?\"TEST\",\r");
+		struct sbc* p = run_code("COLOR 4,9\r?\"TEST\",\r");
 		
 		const int col = 0x94;
 		ASSERT(col == con_col_get(&p->console, 0, 0), "[color] Correct colors 0");
@@ -266,7 +266,7 @@ int test_console(void){
 	
 	// Scrolling out of the stupid corner
 	{
-		struct ptc* p = run_code("LOCATE 28,23\r?0,\r?1;\r");
+		struct sbc* p = run_code("LOCATE 28,23\r?0,\r?1;\r");
 		
 		for (int y = 20; y < CONSOLE_HEIGHT; ++y){
 			iprintf("%d: ",y);
@@ -284,7 +284,7 @@ int test_console(void){
 	
 	// Scrolling out of the stupid corner II
 	{
-		struct ptc* p = run_code("LOCATE 28,23\r?0,\r?1\r");
+		struct sbc* p = run_code("LOCATE 28,23\r?0,\r?1\r");
 		
 		for (int y = 20; y < CONSOLE_HEIGHT; ++y){
 			iprintf("%d: ",y);
@@ -302,7 +302,7 @@ int test_console(void){
 	
 	// Printing a large string + more
 	{
-		struct ptc* p = run_code("ACLS\rA$=\"0\"*64\r?A$,LEN(A$)\r");
+		struct sbc* p = run_code("ACLS\rA$=\"0\"*64\r?A$,LEN(A$)\r");
 		
 		ASSERT(to_wide('0') == con_text_getc(&p->console, 0, 0), "[print] Long string UL");
 		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 0), "[print] Long string UR");
@@ -316,7 +316,7 @@ int test_console(void){
 	
 	// Scrolling while printing a large string
 	{
-		struct ptc* p = run_code("ACLS\rA$=\"0\"*64\rLOCATE 0,23\r?A$,LEN(A$)\r");
+		struct sbc* p = run_code("ACLS\rA$=\"0\"*64\rLOCATE 0,23\r?A$,LEN(A$)\r");
 		
 		ASSERT(to_wide('0') == con_text_getc(&p->console,  0, 20), "[print] Scrolled long string UL");
 		ASSERT(to_wide('0') == con_text_getc(&p->console, 31, 20), "[print] Scrolled long string UR");
@@ -330,7 +330,7 @@ int test_console(void){
 
 	// INPUT with COLOR
 	{
-		struct ptc* p = run_code_keys("COLOR 6\rINPUT A$\r", "12A\r", 4);
+		struct sbc* p = run_code_keys("COLOR 6\rINPUT A$\r", "12A\r", 4);
 
 		ASSERT(to_wide('?') == con_text_getc(&p->console, 0, 0), "[input] Prompt ?");
 		ASSERT(con_col_get(&p->console, 0, 0) == 6, "[input] Color of prompt ?");

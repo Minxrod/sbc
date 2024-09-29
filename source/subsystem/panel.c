@@ -117,7 +117,7 @@ const s16 keyboard_pos[][6]={
 	{232, 168, 32, 32, -1, 93}, // Icon 3 (sprite 94)
 };
 
-void init_panel(struct ptc* p){
+void init_panel(struct sbc* p){
 	p->panel.type = PNL_KYA;
 	p->panel.text = alloc_console();
 	p->panel.keys_text = alloc_console();
@@ -153,12 +153,12 @@ void init_panel(struct ptc* p){
 	}
 }
 
-void free_panel(struct ptc* p){
+void free_panel(struct sbc* p){
 	free_console(p->panel.text);
 	free_console(p->panel.keys_text);
 }
 
-void cmd_pnltype(struct ptc* p){
+void cmd_pnltype(struct sbc* p){
 	if (SCREEN_COUNT < 2) return; // panel disabled for one screen.
 	void* type = value_str(ARG(0));
 	
@@ -183,7 +183,7 @@ void cmd_pnltype(struct ptc* p){
 }
 
 // TODO:TEST:MED Test this function, specifically edge behavior
-void cmd_pnlstr(struct ptc* p){
+void cmd_pnlstr(struct sbc* p){
 	int x;
 	int y;
 	STACK_INT_RANGE_SILENT(0,0,CONSOLE_WIDTH-1,x);
@@ -203,7 +203,7 @@ void cmd_pnlstr(struct ptc* p){
 	}
 }
 
-void cmd_key(struct ptc* p){
+void cmd_key(struct sbc* p){
 	int key_id;
 	STACK_INT_RANGE(0,1,5,key_id);
 	void* key_str = STACK_STR(1);
@@ -212,7 +212,7 @@ void cmd_key(struct ptc* p){
 	set_function_key(p, key_id, key_str);
 }
 
-void cmd_iconset(struct ptc* p){
+void cmd_iconset(struct sbc* p){
 	// ICONSET id,icon
 	int i, icon;
 	STACK_INT_RANGE(0,0,3,i);
@@ -221,7 +221,7 @@ void cmd_iconset(struct ptc* p){
 	p->panel.keys[ICON_START+i].chr = icon*4;
 }
 
-void cmd_iconclr(struct ptc* p){
+void cmd_iconclr(struct sbc* p){
 	// ICONCLR [id]
 	if (p->stack.stack_i){
 		int id;
@@ -234,7 +234,7 @@ void cmd_iconclr(struct ptc* p){
 	}
 }
 
-void func_iconchk(struct ptc* p){
+void func_iconchk(struct sbc* p){
 	int icon = get_pressed_key(p);
 	if (icon >= 90 && icon <= 94 && p->panel.keys[p->panel.id_pressed].active){
 		stack_push(&p->stack, (struct stack_entry){VAR_NUMBER, {INT_TO_FP(icon - 90)}});
@@ -260,7 +260,7 @@ char* keyboard_chr[6]={
 	"\0 \xC0\xDE\xC1\xDE\xC2\xDE\xC3\xDE\xC4\xDE\x36\0\x37\0\x38\0\x39\0\x30\0\0 \0 \r\0\0 \0 \0 \0  \0\0 \0 \0 " //shift_kana
 };
 
-void set_panel_bg(struct ptc* p, enum pnltype type){
+void set_panel_bg(struct sbc* p, enum pnltype type){
 	// TODO:CODE:LOW Is there a better way to enable/disable panel when configuring displays?
 	if (SCREEN_COUNT < 2) return; // panel disabled for one screen.
 	// Set BG layout (load layout)
@@ -275,7 +275,7 @@ void set_panel_bg(struct ptc* p, enum pnltype type){
 	}
 }
 
-void set_function_key(struct ptc* p, int key, const void* string){
+void set_function_key(struct sbc* p, int key, const void* string){
 	assert(1 <= key && key <= 5);
 	--key;
 	p->panel.func_keys_len[key] = str_len(string);
@@ -325,7 +325,7 @@ const char* key_map =
 "\124\124\124\124\xff\125\125\125\125\126\126\127\127\130\130\130\130\xff\131\131\133\133\133\134\134\134\135\135\135\136\136\136"
 ;
 
-void press_key(struct ptc* ptc, bool t, int x, int y){
+void press_key(struct sbc* ptc, bool t, int x, int y){
 	if (SCREEN_COUNT < 2) return; // panel disabled for one screen.
 	struct panel* p = &ptc->panel;
 	if (!t){
@@ -422,7 +422,7 @@ void press_key(struct ptc* ptc, bool t, int x, int y){
 	}
 }
 
-void refresh_panel(struct ptc* ptc){
+void refresh_panel(struct sbc* ptc){
 	if (SCREEN_COUNT < 2) return;
 	struct panel* p = &ptc->panel;
 	int shift = !!(p->shift & PNL_SHIFT) ^ !!(p->shift & PNL_CAPS_LOCK);
@@ -434,14 +434,14 @@ void refresh_panel(struct ptc* ptc){
 	ptc->res.regen_chr[19+CHR_BANKS] |= true;
 }
 
-int get_pressed_key(struct ptc* ptc){
+int get_pressed_key(struct sbc* ptc){
 	struct panel* p = &ptc->panel;
 	if (!p->key_pressed || !check_repeat(p->pressed_time, 30, 4))
 		return 0;
 	return p->key_pressed;
 }
 
-void offset_key(struct ptc* p, int id, int d){
+void offset_key(struct sbc* p, int id, int d){
 	if (id<PANEL_KEYS){
 		for (int i = id; p->panel.keys[i].vars[0] == p->panel.key_pressed && i<PANEL_KEYS; ++i){
 			p->panel.keys[i].pos.x += d;
@@ -456,20 +456,20 @@ void offset_key(struct ptc* p, int id, int d){
 	}
 }
 
-void sys_iconpage(struct ptc* p){
+void sys_iconpage(struct sbc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->panel.iconpage});
 }
 
-void sys_iconpmax(struct ptc* p){
+void sys_iconpmax(struct sbc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->panel.iconpmax});
 }
 
-void sys_iconpuse(struct ptc* p){
+void sys_iconpuse(struct sbc* p){
 	stack_push(&p->stack, (struct stack_entry){VAR_NUMBER | VAR_VARIABLE, .value.ptr = &p->panel.iconpuse});
 }
 
 // ICONPUSE is always TRUE or FALSE (1 or 0)
-void syschk_iconpuse(struct ptc* p){
+void syschk_iconpuse(struct sbc* p){
 	p->panel.iconpuse = INT_TO_FP(p->panel.iconpuse != 0);
 
 	p->panel.keys[ICON_PAGE_START].active = p->panel.iconpuse;
@@ -477,7 +477,7 @@ void syschk_iconpuse(struct ptc* p){
 }
 
 // ICONPMAX is always positive
-void syschk_iconpmax(struct ptc* p){
+void syschk_iconpmax(struct sbc* p){
 	if (p->panel.iconpmax < 0){
 		p->panel.iconpmax = 0;
 	} else {
@@ -490,7 +490,7 @@ void syschk_iconpmax(struct ptc* p){
 // PTC behavior for ICONPAGE is to not allow the buttons to modify it
 // if it is outside the valid range. (possibly only if the move places it out of range?)
 // This implementation will reset the value on reads as well though, which it should not.
-void syschk_iconpage(struct ptc* p){
+void syschk_iconpage(struct sbc* p){
 	if (p->panel.iconpage > p->panel.iconpmax){
 		p->panel.iconpage = p->panel.iconpmax;
 	} else if (p->panel.iconpage < 0){

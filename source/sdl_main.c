@@ -62,7 +62,7 @@ int main(int argc, char** argv){
 		SDL_ERROR("Failed to get window surface");
 	}
 
-	struct ptc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
+	struct sbc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
 	if (SDL_SetSurfaceBlendMode(window_surface, SDL_BLENDMODE_BLEND)){
 		SDL_ERROR("Failed to set window surface blend mode");
 	}
@@ -73,8 +73,8 @@ int main(int argc, char** argv){
 	// THREAD MODEL
 	// WINDOW                    PROGRAM
 	//  Event -> Input ==>        BUTTON, KEYBOARD, etc.
-	//  Stop -> Load Program =>   struct ptc
-	//  Rendering <==             struct ptc ~ display state
+	//  Stop -> Load Program =>   struct sbc
+	//  Rendering <==             struct sbc ~ display state
 
 	// Launch the program thread
 	struct launch_info info = {ptc, NULL, argc >= 2 ? argv[1] : NULL};

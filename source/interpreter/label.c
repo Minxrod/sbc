@@ -101,7 +101,7 @@ idx label_index(struct labels* l, char* name, uint_fast8_t len){
 	return l->entry[entry_index].index;
 }
 
-idx search_label(struct ptc* p, void* label){
+idx search_label(struct sbc* p, void* label){
 	assert(label); // label must exist
 	// Labels must always be located at the beginning of a line.
 	idx index = 0;

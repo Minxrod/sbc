@@ -5,27 +5,27 @@
 /// 
 #include "common.h"
 
-struct ptc;
+struct sbc;
 
-void func_rnd(struct ptc* p);
+void func_rnd(struct sbc* p);
 
-void func_floor(struct ptc* p);
-void func_sgn(struct ptc* p);
-void func_abs(struct ptc* p);
+void func_floor(struct sbc* p);
+void func_sgn(struct sbc* p);
+void func_abs(struct sbc* p);
 
-void func_pi(struct ptc* p);
-void func_sin(struct ptc* p);
-void func_cos(struct ptc* p);
-void func_tan(struct ptc* p);
-void func_atan(struct ptc* p);
+void func_pi(struct sbc* p);
+void func_sin(struct sbc* p);
+void func_cos(struct sbc* p);
+void func_tan(struct sbc* p);
+void func_atan(struct sbc* p);
 
-void func_log(struct ptc* p);
-void func_pow(struct ptc* p);
-void func_sqr(struct ptc* p);
-void func_exp(struct ptc* p);
+void func_log(struct sbc* p);
+void func_pow(struct sbc* p);
+void func_sqr(struct sbc* p);
+void func_exp(struct sbc* p);
 
-void func_rad(struct ptc* p);
-void func_deg(struct ptc* p);
+void func_rad(struct sbc* p);
+void func_deg(struct sbc* p);
 
 fixp func_sin_internal(fixp);
 fixp func_cos_internal(fixp);

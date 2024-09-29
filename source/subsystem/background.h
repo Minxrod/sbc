@@ -9,7 +9,7 @@
 
 #include <assert.h>
 
-struct ptc;
+struct sbc;
 
 #define BG_LAYERS 2
 
@@ -69,7 +69,7 @@ static inline u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
 	return (chr & 0x3ff) | ((h & 0x1) << 10) | ((v & 0x1) << 11) | ((pal & 0xf) << 12);	
 }
 
-//u16* bg_page(struct ptc* p, u8 page, u8 layer);
+//u16* bg_page(struct sbc* p, u8 page, u8 layer);
 // TODO:PERF:LOW Check if these are better as inlines
 /// Calculates the index into a SCR resource from tile coordinates.
 ///
@@ -77,15 +77,15 @@ static inline u16 to_tiledata(u16 chr, u8 pal, bool h, bool v){
 /// @param y Y-coordiante in range [0,BG_HEIGHT)
 /// @return Index into a SCR array
 int bg_index(uint_fast8_t x, uint_fast8_t y);
-u16 bg_tile(struct ptc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y);
+u16 bg_tile(struct sbc* p, uint_fast8_t page, uint_fast8_t l, uint_fast8_t x, uint_fast8_t y);
 
-void cmd_bgpage(struct ptc* p);
-void cmd_bgclr(struct ptc* p);
-void cmd_bgput(struct ptc* p);
-void cmd_bgfill(struct ptc* p);
-void cmd_bgofs(struct ptc* p);
-void cmd_bgread(struct ptc* p);
-void cmd_bgclip(struct ptc* p);
-void cmd_bgcopy(struct ptc* p);
+void cmd_bgpage(struct sbc* p);
+void cmd_bgclr(struct sbc* p);
+void cmd_bgput(struct sbc* p);
+void cmd_bgfill(struct sbc* p);
+void cmd_bgofs(struct sbc* p);
+void cmd_bgread(struct sbc* p);
+void cmd_bgclip(struct sbc* p);
+void cmd_bgcopy(struct sbc* p);
 
-void func_bgchk(struct ptc* p);
+void func_bgchk(struct sbc* p);

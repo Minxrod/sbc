@@ -26,7 +26,7 @@ void free_graphic(struct graphic* g){
 	sfTexture_destroy(g->texture);
 }
 
-void draw_graphic(struct graphic* g, struct ptc* p, int screen){
+void draw_graphic(struct graphic* g, struct sbc* p, int screen){
 	u8 grp[GRP_SIZE*4];
 	for (int y = 0; y < GRP_HEIGHT; ++y){
 		for (int x = 0; x < GRP_WIDTH; ++x){
