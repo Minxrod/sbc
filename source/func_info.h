@@ -18,7 +18,7 @@ enum bc_commands {
     CMD_SPANIM, CMD_SPCHR, CMD_SPCLR, CMD_SPCOL, CMD_SPCOLVEC, CMD_SPHOME,
     CMD_SPOFS, CMD_SPPAGE, CMD_SPREAD, CMD_SPSCALE, CMD_SPSET, CMD_SPSETV,
     CMD_SWAP, CMD_TMREAD, CMD_TALK, CMD_TALKSTOP, CMD_POKE, CMD_POKEH,
-    CMD_POKEB, CMD_MEMCOPY, CMD_MEMFILL, CMD_TOTAL_COUNT
+    CMD_POKEB, CMD_MEMCOPY, CMD_MEMFILL, CMD_STRNCOPY, CMD_TOTAL_COUNT
 };
 
 enum bc_functions {
@@ -161,6 +161,7 @@ void cmd_pokeh(struct sbc* p);
 void cmd_pokeb(struct sbc* p);
 void cmd_memcopy(struct sbc* p);
 void cmd_memfill(struct sbc* p);
+void cmd_strncopy(struct sbc* p);
 
 void func_abs(struct sbc* p);
 void func_asc(struct sbc* p);

@@ -80,15 +80,16 @@ void cmd_memcopy(struct sbc* p){
 		}
 	}
 	// prevent dest, src overlap
-	if (src <= dest && (u8*)dest <= (u8*)src + size){
+	// actually this is fine for memmove so let's use that!
+/*	if (src <= dest && (u8*)dest <= (u8*)src + size){
 		// destination range lies partially within src range: illegal
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
 	} else if (dest <= src && (u8*)src <= (u8*)dest + size){
 		// src range lies partially within dest range: illegal
 		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
-	}
+	}*/
 	
-	memcpy(dest, src, size);
+	memmove(dest, src, size);
 }
 
 void cmd_memfill(struct sbc* p){
@@ -113,6 +114,40 @@ void cmd_memfill(struct sbc* p){
 	}
 	
 	memset(dest, value, size);
+}
+
+void cmd_strncopy(struct sbc* p){
+	// STRNCOPY dest src n
+	fixp dest_num = STACK_NUM(0);
+	void* dest = FIXP_TO_PTR(dest_num);
+	fixp src_num = STACK_NUM(1);
+	void* src = FIXP_TO_PTR(src_num);
+	iprintf("STRNCOPY from %p to %p\n", src, dest);\
+	if (!dest || !src){
+		ERROR(ERR_NULL_ADDRESS);
+	}
+	int size;
+	STACK_INT_MIN(2,0,size);
+	if (p->memapi.sys_memsafe){
+		if (dest_num < ADDR_MIN || dest_num > ADDR_MAX){
+			ERROR(ERR_ILLEGAL_ADDRESS);
+		} else if (src_num < ADDR_MIN || src_num > ADDR_MAX){
+			ERROR(ERR_ILLEGAL_ADDRESS);
+		} else if (src_num + size >= ADDR_MAX){
+			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+		} else if (dest_num + size >= ADDR_MAX){
+			ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+		}
+	}
+	// prevent dest, src overlap
+	if (src <= dest && (u8*)dest <= (u8*)src + size){
+		// destination range lies partially within src range: illegal
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	} else if (dest <= src && (u8*)src <= (u8*)dest + size){
+		// src range lies partially within dest range: illegal
+		ERROR(ERR_ILLEGAL_FUNCTION_CALL);
+	}
+	strncpy(dest, src, size);
 }
 
 #define SBC_PEEK(type,invalid_align,opt_shift){\

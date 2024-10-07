@@ -14,7 +14,7 @@ void free_display(struct display*);
 
 void display_draw_all(struct sbc* p);
 
-void display_console(struct sbc* p);
+/*void display_console(struct sbc* p);
 void display_panel_console(struct sbc* p);
 void display_background(struct sbc* p, int screen);
 void display_panel_background(struct sbc* p);
@@ -22,7 +22,7 @@ void display_sprite(struct sbc* p, int screen);
 void display_panel_keys(struct sbc* p);
 void display_icon(struct sbc* p);
 void display_cursor(struct sbc* p);
-void display_graphics(struct sbc* p, int screen);
+void display_graphics(struct sbc* p, int screen);*/
 
 #endif
 

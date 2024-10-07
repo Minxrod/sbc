@@ -54,7 +54,7 @@ sfml: main_objs += $(BUILD)source/main.o $(wildcard source/graphics/pc/*.c)
 sfml: $(BUILD)source/main.o $($(wildcard $(source/graphics/pc)/*.c):%.c=$(BUILD)%.o)
 
 sdl2: CFLAGS += -DSDL2
-sdl2: LIBFLAGS += -lSDL2
+sdl2: LIBFLAGS += -lSDL2 -lGL
 sdl2: main_objs += $(BUILD)source/sdl_main.o $(wildcard source/graphics/sdl2/*.c)
 sdl2: $($(wildcard $(source/graphics/sdl2)/*.c):%.c=$(BUILD)%.o)
 sdl2: $(BUILD)source/sdl_main.o
@@ -97,7 +97,7 @@ csfml: util/external/CSFML/lib/libcsfml-system.so
 util/external/CSFML/lib/libcsfml-system.so:
 	cd util/external/CSFML/ && cmake . && make
 
-resource: ntr_to_ptc $(BUILD)ndstool
+resource: ntr_to_ptc util/external/ndstool/ndstool
 	./util/prepare_resource "$(NDS_FILE)" "extract/"
 
 clean:

@@ -101,8 +101,9 @@ int extract_nclr(FILE* f, const char* name){
 	char pltt_header[PLTT_HEADER_SIZE];
 	SAFE_FREAD(pltt_header, sizeof(char), PLTT_HEADER_SIZE, f);
 
-	uint32_t pltt_size = read_u32(pltt_header + CHAR_SIZE_OFS) - CHAR_HEADER_SIZE;
+	uint32_t pltt_size = read_u32(pltt_header + PLTT_SIZE_OFS) - PLTT_HEADER_SIZE;
 	char* pltt_data = malloc(pltt_size);
+	printf("%d\n", pltt_size);
 	SAFE_FREAD(pltt_data, sizeof(char), pltt_size, f);
 	fclose(f); // done reading; data is stored in memory
 

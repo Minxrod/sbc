@@ -28,10 +28,16 @@ extern const char* resource_path;
 /// Number of screens supported by the interpreter.
 /// @note Known values that work are 1 and 2.
 #define SCREEN_COUNT 2
+
+// Note: ARM9 already defines these
+#ifndef SCREEN_WIDTH
 /// Width of the screen, in pixels
 #define SCREEN_WIDTH (256)
+#endif
+#ifndef SCREEN_HEIGHT
 /// Height of the screen, in pixels
 #define SCREEN_HEIGHT (192)
+#endif
 /// Expected framerate (frames/second)
 #define FRAMERATE 60
 

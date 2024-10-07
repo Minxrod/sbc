@@ -1,7 +1,8 @@
 #include "func_info.h"
 
 #include "common.h"
-const char* commands = 
+
+const char* commands =
 "PRINT   LOCATE  COLOR   DIM     FOR     TO      STEP    NEXT    IF      "
 "THEN    ELSE    ENDIF   GOTO    GOSUB   ON      RETURN  END     STOP    "
 "CLS     VISIBLE ACLS    VSYNC   WAIT    INPUT   LINPUT  APPEND  BEEP    "
@@ -14,7 +15,7 @@ const char* commands =
 "RECVFILERENAME  RESTORE RSORT   RUN     SAVE    SENDFILESORT    SPANGLE "
 "SPANIM  SPCHR   SPCLR   SPCOL   SPCOLVECSPHOME  SPOFS   SPPAGE  SPREAD  "
 "SPSCALE SPSET   SPSETV  SWAP    TMREAD  TALK    TALKSTOPPOKE    POKEH   "
-"POKEB   MEMCOPY MEMFILL "
+"POKEB   MEMCOPY MEMFILL STRNCOPY"
 ;
 
 const char* functions = 
@@ -57,7 +58,7 @@ DTCM_DATA const sbc_call sbc_commands[] = {
     cmd_spanim, cmd_spchr, cmd_spclr, cmd_spcol, cmd_spcolvec, cmd_sphome,
     cmd_spofs, cmd_sppage, cmd_spread, cmd_spscale, cmd_spset, cmd_spsetv,
     cmd_swap, cmd_tmread, cmd_talk, cmd_talkstop, cmd_poke, cmd_pokeh,
-    cmd_pokeb, cmd_memcopy, cmd_memfill
+    cmd_pokeb, cmd_memcopy, cmd_memfill, cmd_strncopy,
 };
 
 DTCM_DATA const sbc_call sbc_functions[] = {

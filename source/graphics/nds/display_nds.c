@@ -56,9 +56,11 @@ void display_draw_all(struct sbc* p){
 	// =============
 	// Upper screen
 	// =============
-	display_sprite(p, 0);
-	display_graphics(p, 0);
-	display_background(p, 0);
+	// Note: third arguments ignored, added for PC version interface
+	// TODO:CODE:LOW find a better abstraction for the display code in general
+	display_sprite(p, 0, 0);
+	display_graphics(p, 0, 0);
+	display_background(p, 0, 0);
 	display_console(p);
 	display_cursor(p);
 	
@@ -72,9 +74,9 @@ void display_draw_all(struct sbc* p){
 	#ifndef NDEBUG
 		return; // Allows lower screen to be used for debugging
 	#endif
-	display_sprite(p, 1);
-	display_graphics(p, 1);
-	display_background(p, 1);
+	display_sprite(p, 1, 0);
+	display_graphics(p, 1, 0);
+	display_background(p, 1, 0);
 	display_panel_background(p);
 	display_panel_keys(p);
 	display_panel_console(p);
@@ -137,12 +139,12 @@ void display_panel_console(struct sbc* p){
 	}
 }
 
-void display_background(struct sbc* p, int screen){
+void display_background(struct sbc* p, int screen, int prio){
+	(void)prio;
 	bg_scroll* bg = screen ? BG_OFFSET_SUB : BG_OFFSET;
 	// BG0 = 2 BG1 = 3
 	struct bg_clip clip = p->background.clip[screen];
 	if (screen == 0){
-		// TODO:PERF:NONE write directly to memory here instead of using functions?
 		if (p->res.visible & VISIBLE_BG0){
 			videoBgEnable(2);
 		} else {
@@ -184,7 +186,8 @@ void display_panel_background(struct sbc* p){
 	// and the panel background layer never scrolls or anything
 }
 
-void display_sprite(struct sbc* p, int screen){
+void display_sprite(struct sbc* p, int screen, int prio){
+	(void)prio;
 	// display_sprites clears OAM buffer
 	SpriteEntry* oam = (SpriteEntry*)p->display.oam_buf;
 	for (int i = 0; i < SPRITE_COUNT; ++i){
@@ -315,7 +318,8 @@ void display_icon(struct sbc* p){
 	}
 }
 
-void display_graphics(struct sbc* p, int screen){
+void display_graphics(struct sbc* p, int screen, int prio){
+	(void)prio;
 	if (screen == 1 && !(p->panel.type == PNL_OFF || p->panel.type == PNL_PNL)) return;
 	if (screen == 1 && !(p->res.visible & VISIBLE_PANEL)) return;
 	if (!(p->res.visible & VISIBLE_GRAPHICS)) return;

@@ -7,13 +7,17 @@
 
 #include <dirent.h> // Needed for FILES; not standard library!
 
+// only needed on PC
+//#ifdef PC
+#include "extension/sbc_blockalloc.h"
+//#endif
+
 #include "arrays.h"
 #include "background.h"
 #include "common.h"
 #include "console.h"
 #include "error.h"
 #include "label.h"
-#include "sbc_blockalloc.h"
 #include "strs.h"
 #include "system.h"
 #include "resources.h"
@@ -352,7 +356,7 @@ int launch_system(void* launch_info){
 		return -1;
 	}
 
-	u8 (** history)[CONSOLE_WIDTH] = sbc_calloc(256, sizeof(**history));
+	u8 (** history)[CONSOLE_WIDTH] = calloc_log("console history", 256, sizeof(**history));
 
 	// Tokenize launcher into big bytecode block
 	struct bytecode_params params = calc_min_bytecode(&p->exec.prg);
@@ -380,7 +384,7 @@ int launch_system(void* launch_info){
 	if (info->prg_filename){
 		state = LAUNCH_AUTOLOAD;
 	}
-	
+
 	// TODO:IMPL:LOW Add configuration method for optimizations
 	int opts = TOKOPT_NONE;
 	while (running){

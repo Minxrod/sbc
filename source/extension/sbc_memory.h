@@ -24,6 +24,7 @@ void cmd_pokeb(struct sbc* p);
 
 void cmd_memcopy(struct sbc* p);
 void cmd_memfill(struct sbc* p);
+void cmd_strncopy(struct sbc* p);
 
 void func_peek(struct sbc* p);
 void func_peekh(struct sbc* p);

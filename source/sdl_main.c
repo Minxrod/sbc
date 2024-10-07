@@ -4,10 +4,12 @@
 
 #include "program.h"
 #include "resources.h"
+#include "sdl2/display_sdl.h"
 #include "system.h"
 #include "error.h"
 #include "input.h"
 
+#include <SDL2/SDL_keyboard.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,33 +44,17 @@ int main(int argc, char** argv){
 		SDL_ERROR("Failed to initialze SDL");
 	}
 
-	char* window_name = "SBC";
+/*	char* window_name = "SBC";
 	if (argc >= 2){
 		// Load .PTC file as program
 		window_name = argv[1];
-	}
-
-	// Window + surface
-	SDL_Window* window;
-	SDL_Surface* window_surface;
-
-	window = SDL_CreateWindow(window_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT * 2, 0);
-	if (!window){
-		SDL_ERROR("Failed to create SDL window");
-	}
-
-	window_surface = SDL_GetWindowSurface(window);
-	if (!window_surface){
-		SDL_ERROR("Failed to get window surface");
-	}
+	}*/
 
 	struct sbc* ptc = init_system(VAR_LIMIT, STR_LIMIT, ARR_LIMIT, false);
-	if (SDL_SetSurfaceBlendMode(window_surface, SDL_BLENDMODE_BLEND)){
-		SDL_ERROR("Failed to set window surface blend mode");
-	}
 
-	ptc->display.window = window;
-	ptc->display.window_surface = window_surface;
+	init_gl(&ptc->display);
+	init_display_2(ptc); // has to be after because GL context needs to exist first...
+	// TODO:CODE:LOW ordering is dumb how can I fix this
 
 	// THREAD MODEL
 	// WINDOW                    PROGRAM
@@ -101,6 +87,8 @@ int main(int argc, char** argv){
 		}
 	}
 
+	// TODO:CODE:LOW split this into an update function (one frame) etc.
+	// For emscripten.
 	SDL_Event event;
 	bool running = true;
 	while (running && ptc->exec.error != ERR_SHUTDOWN){
@@ -108,26 +96,24 @@ int main(int argc, char** argv){
 		while (SDL_PollEvent(&event)){
 			if (event.type == SDL_QUIT){
 				running = false;
-			}
-
-/*			if (event.type == sfEvtTextEntered){
-				if (event.text.unicode <= 128 && key_mode == MODE_KEYBOARD){
-					// Note: \x1b = snake, but is also the code for ESC key. In keyboard mode this is still treated as ESC to allow easy program breaks.
-					if (!(event.text.unicode == '\b' || event.text.unicode == '\r' || event.text.unicode == '\x1b'))
-					{
-						set_inkey(&ptc->input, to_wide(event.text.unicode));
-					}
-				} else if (event.text.unicode >= 12289 && event.text.unicode <= 12540){
-					if (to_char(event.text.unicode) >= 0xa1){
-						set_inkey(&ptc->input, event.text.unicode - 12289);
+			} else if (event.type == SDL_KEYDOWN){
+				s32 unicode = event.key.keysym.sym;
+				if (unicode < 0x10000 && is_char(unicode) && !(unicode == '\b' || unicode == '\r' || unicode == '\x1b')){
+					if (unicode < 128){
+						set_inkey(&ptc->input, to_wide(unicode));
+					} else {
+						set_inkey(&ptc->input, unicode);
 					}
 				}
-			}*/
+			}
 		}
 
 		// various frame updates
+		const u8* keyboard = SDL_GetKeyboardState(NULL);
 		for (int i = 0; i < BUTTON_COUNT; ++i){
-//			b |= sfKeyboard_isKeyPressed(keys[key_mode][i]) << i;
+			if (keyboard[keys[key_mode][i]]){
+				b |= 1 << i;
+			}
 		}
 		set_input(ptc, b);
 
@@ -155,13 +141,11 @@ int main(int argc, char** argv){
 		step_background(&ptc->background);
 		inc_time(&ptc->time);
 
-		SDL_FillRect(window_surface, NULL, 0);
 		display_draw_all(ptc);
-		SDL_UpdateWindowSurface( window );
 	}
 
 	// Done with GUI
-	SDL_DestroyWindow(window);
+	SDL_DestroyWindow(ptc->display.window);
 
 	// this causes program to stop execution after instruction finishes
 	ptc->exec.error = ERR_SHUTDOWN;

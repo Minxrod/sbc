@@ -120,6 +120,7 @@ void frame_update(){
 }
 
 int main(void){
+	defaultExceptionHandler();
 	init();
 	fatInitDefault();
 #ifndef NDEBUG
