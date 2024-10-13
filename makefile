@@ -60,12 +60,16 @@ sdl2: $($(wildcard $(source/graphics/sdl2)/*.c):%.c=$(BUILD)%.o)
 sdl2: $(BUILD)source/sdl_main.o
 
 wasm: CC = emcc
-wasm: CFLAGS += --target=wasm32 -s USE_SDL=2
+wasm: CFLAGS += -DSDL2 --target=wasm32 -pthread -s USE_SDL=2 -s USE_PTHREADS=1
+wasm: LFLAGS += -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s PTHREAD_POOL_SIZE=2
+# -s PROXY_TO_PTHREAD=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread
+wasm: main_objs += $(BUILD)source/sdl_main.o $(wildcard source/graphics/sdl2/*.c)
+wasm: $($(wildcard $(source/graphics/sdl2)/*.c):%.c=$(BUILD)%.o)
+wasm: $(BUILD)source/sdl_main.o
 
 # shortcut default target(s)
 # Needs to be after the above setup or else things aren't updated in time
-wasm: sdl2
-sfml sdl2: main
+wasm sfml sdl2: main
 main: debug
 # these are variations of the main project
 profile debug release: main_build

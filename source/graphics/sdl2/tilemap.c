@@ -58,14 +58,14 @@ void draw_tilemap(struct display* d, struct tilemap* map){
 	glEnableVertexAttribArray(d->gl_tex);
 
 	//Set vertex data
-	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+//	glBindBuffer(GL_ARRAY_BUFFER, vertices);
 	glVertexAttribPointer(d->gl_pos, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(VERTEX_X * sizeof(GLfloat)));
 	glVertexAttribPointer(d->gl_col, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(VERTEX_PALETTE * sizeof(GLfloat)));
 	glVertexAttribPointer(d->gl_tex, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(VERTEX_U * sizeof(GLfloat)));
 
 	//Set index data and render
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, indices );
-	glDrawElements( GL_TRIANGLES, INDICES_PER_TILE * map->width * map->height, GL_UNSIGNED_INT, NULL );
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+	glDrawElements(GL_TRIANGLES, INDICES_PER_TILE * map->width * map->height, GL_UNSIGNED_INT, NULL);
 
 	// Cleanup (TODO:CODE:NONE why is this needed?)
 	glDisableVertexAttribArray(d->gl_pos);

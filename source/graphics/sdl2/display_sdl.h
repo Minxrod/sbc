@@ -37,6 +37,7 @@ struct display {
 	// Resource textures
 	GLuint chr_tex[12];
 	GLuint col_tex;
+	GLuint grp_tex;
 
 	GLuint shader;
 
