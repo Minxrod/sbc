@@ -212,14 +212,13 @@ void draw_sprite_array(struct display* d, struct sprite_array* s){
 	glEnableVertexAttribArray(d->gl_tex);
 
 	//Set vertex data
-	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+//	glBindBuffer(GL_ARRAY_BUFFER, vertices);
 	glVertexAttribPointer(d->gl_pos, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(VERTEX_X * sizeof(GLfloat)));
 	glVertexAttribPointer(d->gl_col, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(VERTEX_PALETTE * sizeof(GLfloat)));
 	glVertexAttribPointer(d->gl_tex, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(VERTEX_U * sizeof(GLfloat)));
 
-	//Set index data and render
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, indices );
-	glDrawElements( GL_TRIANGLES, s->size * sizeof(quad), GL_UNSIGNED_INT, NULL );
+	// Render
+	glDrawElements(GL_TRIANGLES, s->size * INDICES_PER_TILE, GL_UNSIGNED_INT, NULL);
 
 	// Cleanup (TODO:CODE:NONE why is this needed?)
 	glDisableVertexAttribArray(d->gl_pos);

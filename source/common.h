@@ -25,6 +25,11 @@
 #include <stdbool.h>
 #include <assert.h>
 
+// Debug tools
+#define LINE(x) LINE_STR(x)
+#define LINE_STR(x) #x
+#define INFO_STR __FILE__":" LINE(__LINE__)
+
 /// Fractional bits in fixed point numbers
 #define FIXPOINT 12
 /// Takes a fixed point number and gets the integer portion
@@ -36,7 +41,7 @@
 
 /// Kills the program with a message
 /// For unrecoverable failures and those that aren't properly handled yet
-#define ABORT(msg) { iprintf(msg"\n"); abort(); }
+#define ABORT(msg) { iprintf(INFO_STR msg"\n"); abort(); }
 
 // The following defines expect to be used within a function that has
 // access to `struct sbc* p`, for error setting and other checks.

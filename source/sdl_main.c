@@ -140,7 +140,7 @@ void main_loop(void){
 	}
 	set_input(ptc, b);
 
-	if (false){// && sfKeyboard_isKeyPressed(keys[key_mode][12])){
+	if (keyboard[keys[key_mode][12]]){
 		// change input mode
 		key_mode = (key_mode + 1) % MODE_COUNT;
 	}

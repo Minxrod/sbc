@@ -9,6 +9,7 @@
 SOURCE = source source/graphics source/interpreter source/subsystem source/extension
 TESTS = tests
 BUILD = build/
+TARGET = sbc
 # Installed as git submodule
 CSFML = util/external/CSFML/
 CSFML_INCLUDE = $(CSFML)include/
@@ -59,9 +60,11 @@ sdl2: main_objs += $(BUILD)source/sdl_main.o $(wildcard source/graphics/sdl2/*.c
 sdl2: $($(wildcard $(source/graphics/sdl2)/*.c):%.c=$(BUILD)%.o)
 sdl2: $(BUILD)source/sdl_main.o
 
+wasm: TARGET = sbc.html
 wasm: CC = emcc
-wasm: CFLAGS += -DSDL2 --target=wasm32 -pthread -s USE_SDL=2 -s USE_PTHREADS=1
-wasm: LFLAGS += -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s PTHREAD_POOL_SIZE=2
+wasm: CFLAGS += -DSDL2 --target=wasm32 -pthread -s USE_SDL=2 -s USE_PTHREADS=1 -gsource-map
+wasm: LFLAGS += -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s STACK_OVERFLOW_CHECK=2 -s STACK_SIZE=262144 -s OFFSCREEN_FRAMEBUFFER=1
+wasm: LFLAGS += --embed-file resources -lGL -sFULL_ES2
 # -s PROXY_TO_PTHREAD=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread
 wasm: main_objs += $(BUILD)source/sdl_main.o $(wildcard source/graphics/sdl2/*.c)
 wasm: $($(wildcard $(source/graphics/sdl2)/*.c):%.c=$(BUILD)%.o)
@@ -82,7 +85,7 @@ profile: CFLAGS += --coverage
 test: CFLAGS += -g -pg --coverage -DPC
 
 main_build: $(main_objs)
-	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o sbc $(LIBFLAGS)
+	$(CC) $(CFLAGS) $(LFLAGS) $(main_objs) -o $(TARGET) $(LIBFLAGS)
 
 # TODO:CODE:NONE csfml probably shouldn't be a dependency here
 test: $(test_objs) csfml

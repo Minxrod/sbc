@@ -421,7 +421,13 @@ int launch_system(void* launch_info){
 					p->exec.error_info[0] = 0; // clear signal info
 					break;
 				}
+				// don't run prompt contents
 				if (p->exec.error == ERR_SHUTDOWN){
+					break;
+				}
+				// don't run prompt if break is pressed
+				if (p->exec.error == ERR_BREAK){
+					p->exec.error = ERR_NONE;
 					break;
 				}
 				
